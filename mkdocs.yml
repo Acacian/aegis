@@ -3,6 +3,7 @@ site_url: https://acacian.github.io/aegis/
 site_description: Open-source policy & approval runtime for AI agents
 repo_url: https://github.com/Acacian/aegis
 repo_name: Acacian/aegis
+edit_uri: edit/main/docs/
 
 theme:
   name: material
@@ -25,8 +26,12 @@ theme:
     - navigation.instant
     - navigation.sections
     - navigation.expand
+    - navigation.top
     - content.code.copy
     - content.code.annotate
+    - content.action.edit
+    - search.highlight
+    - search.share
   icon:
     repo: fontawesome/brands/github
 
@@ -60,3 +65,5 @@ nav:
       - Action & Result: api/models.md
       - Adapters: api/adapters.md
       - Audit: api/audit.md
+  - FAQ: faq.md
+  - Troubleshooting: troubleshooting.md

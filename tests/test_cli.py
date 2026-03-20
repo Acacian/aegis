@@ -71,3 +71,24 @@ def test_version(capsys):
     main(["--version"])
     captured = capsys.readouterr()
     assert "aegis 0.1.1" in captured.out
+
+
+def test_init_creates_policy(tmp_path: Path, capsys):
+    output = tmp_path / "policy.yaml"
+    main(["init", "-o", str(output)])
+    captured = capsys.readouterr()
+    assert "Created" in captured.out
+    assert output.exists()
+    content = output.read_text()
+    assert 'version: "1"' in content
+    assert "read_auto" in content
+    assert "delete_block" in content
+
+
+def test_init_refuses_overwrite(tmp_path: Path):
+    output = tmp_path / "existing.yaml"
+    output.write_text("existing")
+    import pytest
+
+    with pytest.raises(SystemExit):
+        main(["init", "-o", str(output)])

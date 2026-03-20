@@ -1,0 +1,15 @@
+# Global owners
+* @Acacian
+
+# Core engine
+/src/aegis/core/ @Acacian
+/src/aegis/runtime/ @Acacian
+
+# Adapters
+/src/aegis/adapters/ @Acacian
+
+# Documentation
+/docs/ @Acacian
+
+# CI/CD
+/.github/ @Acacian

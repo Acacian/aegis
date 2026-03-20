@@ -1,0 +1,12 @@
+image: gitpod/workspace-python-3.12
+
+tasks:
+  - name: Setup
+    init: pip install -e ".[dev]"
+    command: pytest tests/ -v
+
+vscode:
+  extensions:
+    - ms-python.python
+    - charliermarsh.ruff
+    - redhat.vscode-yaml
