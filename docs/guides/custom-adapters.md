@@ -27,7 +27,32 @@ class MyExecutor(BaseExecutor):
 
 Only `execute()` is required. The others have sensible defaults.
 
-## Example: REST API Executor
+## Built-in: HttpxExecutor
+
+For REST APIs, use the built-in `HttpxExecutor` instead of building your own:
+
+```python
+from aegis.adapters.httpx_adapter import HttpxExecutor
+
+executor = HttpxExecutor(
+    base_url="https://api.example.com",
+    default_headers={"Authorization": "Bearer ..."},
+    timeout=30.0,
+)
+runtime = Runtime(executor=executor, policy=Policy.from_yaml("policy.yaml"))
+
+# Action types map to HTTP methods: get, post, put, patch, delete
+plan = runtime.plan([
+    Action("get", "/users"),
+    Action("post", "/users", params={"json": {"name": "Alice"}}),
+])
+```
+
+Install with: `pip install 'agent-aegis[httpx]'`
+
+## Example: Custom REST API Executor
+
+If you need custom behavior beyond what `HttpxExecutor` provides:
 
 ```python
 import httpx
@@ -35,7 +60,7 @@ from aegis.adapters.base import BaseExecutor
 from aegis.core.action import Action
 from aegis.core.result import Result, ResultStatus
 
-class RESTExecutor(BaseExecutor):
+class MyAPIExecutor(BaseExecutor):
     def __init__(self, base_url: str, headers: dict | None = None):
         self._base_url = base_url
         self._headers = headers or {}
@@ -81,7 +106,7 @@ class RESTExecutor(BaseExecutor):
 
 ```python
 runtime = Runtime(
-    executor=RESTExecutor(
+    executor=MyAPIExecutor(
         base_url="https://api.example.com",
         headers={"Authorization": "Bearer ..."},
     ),
