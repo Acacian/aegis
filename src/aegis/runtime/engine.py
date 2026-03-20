@@ -54,6 +54,16 @@ class Runtime:
         self.audit = audit_logger or AuditLogger()
         self.session_id = session_id or uuid.uuid4().hex[:12]
 
+    async def __aenter__(self) -> Runtime:
+        """Enter async context: set up the executor."""
+        await self.executor.setup()
+        return self
+
+    async def __aexit__(self, *exc: object) -> None:
+        """Exit async context: tear down the executor and close the audit log."""
+        await self.executor.teardown()
+        self.audit.close()
+
     def plan(self, actions: list[Action]) -> ExecutionPlan:
         """Evaluate actions against the policy and produce an execution plan."""
         decisions = [self.policy.evaluate(action) for action in actions]
@@ -92,6 +102,16 @@ class Runtime:
             await self.executor.teardown()
 
         return results
+
+    async def run_one(self, action: Action) -> Result:
+        """Convenience: evaluate + execute a single action.
+
+        Equivalent to ``plan([action])`` + ``execute(plan)`` but returns
+        a single :class:`Result` instead of a list.
+        """
+        plan = self.plan([action])
+        results = await self.execute(plan)
+        return results[0]
 
     async def _execute_one(self, decision: PolicyDecision) -> Result:
         """Execute a single action through the governance pipeline."""
