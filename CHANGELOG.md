@@ -1,16 +1,14 @@
 # Changelog
 
-## 0.1.0 (Unreleased)
+## 0.1.0 (2026-03-21)
 
 ### Added
-- Policy engine with YAML-based rules (glob matching, risk levels, approval requirements)
-- `PlaywrightExecutor` adapter (navigate, click, fill, read, screenshot)
-- `LangChainExecutor` adapter + `AegisTool` for LangChain integration
-- `AegisCrewAITool` for CrewAI integration
-- `@governed_tool` decorator for OpenAI Agents SDK integration
-- CLI approval gate (interactive y/n) + `AutoApprovalHandler` for testing
-- SQLite audit logger
-- `Runtime` orchestrator: plan -> approve -> execute -> verify -> audit
-- CLI commands: `aegis validate`, `aegis audit`
-- Example policy, quickstart demo, Salesforce demo script
-- GitHub Actions CI (Python 3.11/3.12/3.13) + PyPI publish workflow
+- **Policy engine** with YAML-based rules (glob matching, 4 risk levels, 3 approval modes)
+- **Adapters**: Playwright, LangChain, CrewAI, OpenAI Agents SDK, Anthropic Claude
+- **Approval handlers**: CLI interactive, auto-approve, callback-based (sync/async)
+- **Audit logger**: SQLite-backed with session tracking and full action lifecycle
+- **Runtime**: plan -> approve -> execute -> verify -> audit pipeline
+- **CLI**: `aegis validate` (policy checking), `aegis audit` (log viewer, table/JSON)
+- **Documentation**: mkdocs-material site with guides and API reference
+- **Examples**: quickstart, browser demo (httpbin), Anthropic E2E, LangChain E2E
+- **CI/CD**: GitHub Actions (lint + test on 3.11/3.12/3.13), PyPI publish, docs deploy
