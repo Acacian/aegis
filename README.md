@@ -273,6 +273,18 @@ python examples/quickstart.py
         delete | risk=CRITICAL | decision=block    | result=blocked
 ```
 
+## Why Not Build Your Own?
+
+| | DIY Governance | Aegis |
+|---|---|---|
+| **Policy engine** | Custom if/else per action | YAML rules, glob matching, hot-reloadable |
+| **Risk classification** | Hardcoded | 4-tier model with per-rule overrides |
+| **Human approval** | Build your own UI/CLI | Pluggable handlers (CLI, Slack, custom) |
+| **Audit trail** | printf / custom logging | Structured SQLite with session tracking |
+| **Framework support** | Rewrite per framework | LangChain, CrewAI, OpenAI SDK, Playwright |
+| **Verification** | Hope it worked | Post-execution verification hooks |
+| **Time to integrate** | Days to weeks | Minutes |
+
 ## Roadmap
 
 | Version | Features |
