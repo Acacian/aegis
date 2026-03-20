@@ -22,7 +22,7 @@ Agent action → Policy check → Approval gate → Execute → Verify → Audit
 ## Quick start
 
 ```bash
-pip install aegis
+pip install agent-aegis  # PyPI package name; import as "aegis"
 ```
 
 ### 1. Define a policy

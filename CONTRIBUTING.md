@@ -6,7 +6,7 @@
 git clone https://github.com/Acacian/aegis.git
 cd aegis
 python -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev]"
+pip install -e ".[dev]"  # installs as agent-aegis, import as aegis
 pytest
 ```
 
