@@ -6,24 +6,29 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Docs](https://img.shields.io/badge/docs-acacian.github.io%2Faegis-blue)](https://acacian.github.io/aegis/)
 
-**Open-source policy & approval runtime for AI agents acting on systems you don't own.**
+**Your AI agent can browse the web, call APIs, and modify SaaS data. Aegis makes sure it asks permission first.**
 
-Aegis is a governance layer that sits between AI agents and the external systems they operate on. It provides policy-based access control, human approval gates, and a complete audit trail — so you can let agents act on Salesforce, Stripe, or any SaaS, without giving up control.
-
-## Why Aegis?
-
-AI agents are getting browser access via tools like Playwright, Browser Use, and Stagehand. But **who decides what they're allowed to do?**
-
-Aegis answers that question with a simple pipeline:
+> Policy engine + approval gate + audit log for AI agents acting on systems you don't own.
 
 ```
-Agent action → Policy check → Approval gate → Execute → Verify → Audit log
+Agent action  →  Policy check  →  Approval gate  →  Execute  →  Verify  →  Audit log
+  (read CRM)      (auto: low)      (skip)            (run)      (ok)       (logged)
+  (bulk update)   (approve: high)  (human y/n)       (run)      (ok)       (logged)
+  (delete all)    (block: critical) —                  —          —         (logged)
 ```
 
-- **Policy engine**: YAML rules that classify actions by risk level (low/medium/high/critical) and set approval requirements (auto/approve/block)
-- **Approval gate**: Human-in-the-loop confirmation for sensitive operations
-- **Audit trail**: Every decision and result logged to SQLite for compliance and debugging
-- **Adapter pattern**: Pluggable executors — Playwright included, bring your own for APIs
+### Works with your stack
+
+**LangChain** | **CrewAI** | **OpenAI Agents SDK** | **Anthropic Claude** | **Playwright** | **Custom adapters**
+
+### Why?
+
+AI agents are getting real-world access — but without governance, a hallucinating agent can bulk-delete your CRM, submit wrong forms, or trigger irreversible API calls. Aegis gives you:
+
+- **YAML policy rules** — classify actions by risk, set approval requirements per action pattern
+- **Human-in-the-loop** — approval gates that pause for confirmation on sensitive ops
+- **Full audit trail** — every decision and result logged to SQLite
+- **5-minute integration** — add 3 lines to your existing agent code
 
 ## Quick start
 
