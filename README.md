@@ -26,6 +26,11 @@
   <a href="https://github.com/Acacian/aegis/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22">Contributing</a>
 </p>
 
+<p align="center">
+  <b>English</b> &bull;
+  <a href="./README.ko.md">한국어</a>
+</p>
+
 ---
 
 ## The Problem
