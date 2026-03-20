@@ -7,7 +7,6 @@ from aegis.core.action import Action
 from aegis.core.policy import Approval, Policy, PolicyDecision, PolicyRule
 from aegis.core.risk import RiskLevel
 
-
 # -- PolicyRule ----------------------------------------------------------
 
 

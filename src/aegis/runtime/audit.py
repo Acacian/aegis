@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from aegis.core.policy import PolicyDecision
@@ -73,7 +73,7 @@ class AuditLogger:
             """,
             (
                 session_id,
-                datetime.now(timezone.utc).isoformat(),
+                datetime.now(UTC).isoformat(),
                 decision.action.type,
                 decision.action.target,
                 json.dumps(decision.action.params),
@@ -101,7 +101,7 @@ class AuditLogger:
             cursor = self._conn.execute("SELECT * FROM audit_log ORDER BY id")
 
         columns = [desc[0] for desc in cursor.description]
-        return [dict(zip(columns, row)) for row in cursor.fetchall()]
+        return [dict(zip(columns, row, strict=True)) for row in cursor.fetchall()]
 
     def close(self) -> None:
         """Close the database connection."""
