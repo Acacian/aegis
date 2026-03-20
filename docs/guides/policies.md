@@ -78,6 +78,78 @@ Both `type` and `target` support glob patterns:
 | `approve` | Pause and show the action details to a human. |
 | `block` | Always reject. Use for dangerous operations. |
 
+## Conditions
+
+Rules can include conditions that go beyond glob matching. All conditions must pass for the rule to match.
+
+### Time-based conditions
+
+```yaml
+rules:
+  - name: after_hours_block
+    match: { type: "write*" }
+    conditions:
+      time_after: "18:00"    # Current time >= 18:00
+    risk_level: critical
+    approval: block
+
+  - name: morning_only
+    match: { type: "deploy*" }
+    conditions:
+      time_after: "09:00"
+      time_before: "12:00"
+    risk_level: medium
+    approval: approve
+```
+
+### Weekday conditions
+
+```yaml
+rules:
+  - name: weekday_deploys
+    match: { type: "deploy*" }
+    conditions:
+      weekdays: [1, 2, 3, 4, 5]  # 1=Monday, 7=Sunday
+    risk_level: medium
+    approval: approve
+```
+
+### Param-based conditions
+
+```yaml
+rules:
+  - name: bulk_ops_require_approval
+    match: { type: "update*" }
+    conditions:
+      param_gt: { count: 100 }   # Only when count > 100
+    risk_level: high
+    approval: approve
+
+  - name: admin_only_ops
+    match: { type: "*" }
+    conditions:
+      param_eq: { role: "admin" }
+    risk_level: low
+    approval: auto
+```
+
+### Available condition operators
+
+| Condition | Description | Example |
+|-----------|-------------|---------|
+| `time_after` | Current time >= HH:MM | `time_after: "18:00"` |
+| `time_before` | Current time < HH:MM | `time_before: "08:00"` |
+| `weekdays` | Current day in list | `weekdays: [1, 2, 3, 4, 5]` |
+| `param_eq` | Param equals value | `param_eq: { status: "active" }` |
+| `param_gt` | Param > value | `param_gt: { count: 100 }` |
+| `param_lt` | Param < value | `param_lt: { count: 10 }` |
+| `param_gte` | Param >= value | `param_gte: { count: 100 }` |
+| `param_lte` | Param <= value | `param_lte: { count: 10 }` |
+| `param_contains` | Value in param | `param_contains: { tags: "admin" }` |
+| `param_matches` | Regex match | `param_matches: { email: "@corp\\.com$" }` |
+
+All conditions in a rule are AND-combined — every condition must pass for the rule to match. If a condition fails, evaluation continues to the next rule.
+
 ## Validation
 
 Validate your policy file before deploying:
