@@ -1,0 +1,37 @@
+# Configuration for actions/labeler
+core:
+  - changed-files:
+    - any-glob-to-any-file: "src/aegis/core/**"
+
+adapters:
+  - changed-files:
+    - any-glob-to-any-file: "src/aegis/adapters/**"
+
+runtime:
+  - changed-files:
+    - any-glob-to-any-file: "src/aegis/runtime/**"
+
+cli:
+  - changed-files:
+    - any-glob-to-any-file: "src/aegis/cli/**"
+
+documentation:
+  - changed-files:
+    - any-glob-to-any-file:
+      - "docs/**"
+      - "*.md"
+      - "mkdocs.yml"
+
+tests:
+  - changed-files:
+    - any-glob-to-any-file: "tests/**"
+
+ci:
+  - changed-files:
+    - any-glob-to-any-file: ".github/**"
+
+dependencies:
+  - changed-files:
+    - any-glob-to-any-file:
+      - "pyproject.toml"
+      - "requirements*.txt"
