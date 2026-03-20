@@ -57,12 +57,28 @@ class RiskLevel(IntEnum):
 ```python
 @dataclass
 class PolicyRule:
-    match_type: str = "*"      # Glob pattern
-    match_target: str = "*"    # Glob pattern
+    match_type: str = "*"        # Glob pattern
+    match_target: str = "*"      # Glob pattern
     risk_level: RiskLevel = RiskLevel.MEDIUM
     approval: Approval = Approval.APPROVE
     name: str = ""
+    conditions: dict = {}        # Optional conditions
 ```
+
+### Conditions
+
+Rules can include conditions that must all pass for the rule to match:
+
+```python
+PolicyRule(
+    match_type="update*",
+    conditions={"param_gt": {"count": 100}},
+    risk_level=RiskLevel.HIGH,
+    approval=Approval.APPROVE,
+)
+```
+
+See [Writing Policies](../guides/policies.md#conditions) for the full conditions reference.
 
 ## ExecutionPlan
 
