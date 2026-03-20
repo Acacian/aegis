@@ -97,11 +97,13 @@ def _make_runtime(
 @pytest.mark.asyncio
 async def test_plan_evaluates_actions(tmp_path: Path):
     runtime = _make_runtime(tmp_path)
-    plan = runtime.plan([
-        Action("read", "salesforce"),
-        Action("write", "salesforce"),
-        Action("delete", "salesforce"),
-    ])
+    plan = runtime.plan(
+        [
+            Action("read", "salesforce"),
+            Action("write", "salesforce"),
+            Action("delete", "salesforce"),
+        ]
+    )
     assert len(plan) == 3
     assert plan.decisions[0].approval == Approval.AUTO
     assert plan.decisions[1].approval == Approval.APPROVE
@@ -153,11 +155,13 @@ async def test_execute_approved_action(tmp_path: Path):
 async def test_fail_fast_skips_remaining(tmp_path: Path):
     executor = FakeExecutor(fail_on={"write"})
     runtime = _make_runtime(tmp_path, executor=executor)
-    plan = runtime.plan([
-        Action("read", "salesforce"),
-        Action("write", "salesforce"),  # This will fail
-        Action("read", "stripe"),  # This should be skipped
-    ])
+    plan = runtime.plan(
+        [
+            Action("read", "salesforce"),
+            Action("write", "salesforce"),  # This will fail
+            Action("read", "stripe"),  # This should be skipped
+        ]
+    )
     results = await runtime.execute(plan)
 
     assert len(results) == 3
@@ -170,10 +174,12 @@ async def test_fail_fast_skips_remaining(tmp_path: Path):
 async def test_blocked_does_not_trigger_fail_fast(tmp_path: Path):
     executor = FakeExecutor()
     runtime = _make_runtime(tmp_path, executor=executor)
-    plan = runtime.plan([
-        Action("delete", "salesforce"),  # Blocked
-        Action("read", "salesforce"),  # Should still execute
-    ])
+    plan = runtime.plan(
+        [
+            Action("delete", "salesforce"),  # Blocked
+            Action("read", "salesforce"),  # Should still execute
+        ]
+    )
     results = await runtime.execute(plan)
 
     assert len(results) == 2
@@ -184,10 +190,12 @@ async def test_blocked_does_not_trigger_fail_fast(tmp_path: Path):
 @pytest.mark.asyncio
 async def test_audit_trail(tmp_path: Path):
     runtime = _make_runtime(tmp_path)
-    plan = runtime.plan([
-        Action("read", "salesforce"),
-        Action("delete", "salesforce"),
-    ])
+    plan = runtime.plan(
+        [
+            Action("read", "salesforce"),
+            Action("delete", "salesforce"),
+        ]
+    )
     await runtime.execute(plan)
 
     entries = runtime.audit.get_log(session_id="test-session")
@@ -229,11 +237,13 @@ async def test_teardown_called_on_error(tmp_path: Path):
 @pytest.mark.asyncio
 async def test_plan_summary(tmp_path: Path):
     runtime = _make_runtime(tmp_path)
-    plan = runtime.plan([
-        Action("read", "salesforce"),
-        Action("write", "salesforce"),
-        Action("delete", "salesforce"),
-    ])
+    plan = runtime.plan(
+        [
+            Action("read", "salesforce"),
+            Action("write", "salesforce"),
+            Action("delete", "salesforce"),
+        ]
+    )
     summary = plan.summary()
     assert "AUTO" in summary
     assert "APPROVE" in summary

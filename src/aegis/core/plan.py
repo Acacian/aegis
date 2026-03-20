@@ -37,8 +37,7 @@ class ExecutionPlan:
             else:
                 tag = "APPROVE"
             lines.append(
-                f"  {i}. [{tag:>7}] {d.action}  "
-                f"(risk={d.risk_level.name}, rule={d.matched_rule})"
+                f"  {i}. [{tag:>7}] {d.action}  (risk={d.risk_level.name}, rule={d.matched_rule})"
             )
         return "\n".join(lines)
 
