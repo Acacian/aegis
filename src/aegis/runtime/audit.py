@@ -90,7 +90,7 @@ class AuditLogger:
         self._conn.commit()
         return cursor.lastrowid  # type: ignore[return-value]
 
-    def get_log(self, session_id: str | None = None) -> list[dict]:
+    def get_log(self, session_id: str | None = None) -> list[dict[str, object]]:
         """Retrieve audit log entries, optionally filtered by session."""
         if session_id:
             cursor = self._conn.execute(

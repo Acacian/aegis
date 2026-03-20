@@ -153,5 +153,5 @@ class HttpxExecutor(BaseExecutor):
         """Verify HTTP response is successful (2xx status code)."""
         if not result.ok or not result.data:
             return False
-        status_code = result.data.get("status_code", 0)
+        status_code: int = result.data.get("status_code", 0)
         return 200 <= status_code < 300

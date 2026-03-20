@@ -52,7 +52,7 @@ def governed_tool(
     action_type: str,
     action_target: str = "default",
     description: str | None = None,
-) -> Callable:
+) -> Callable[..., Any]:
     """Decorator that wraps a function tool with Aegis governance.
 
     The decorated function becomes an OpenAI Agents SDK-compatible tool
@@ -75,7 +75,7 @@ def governed_tool(
             ...
     """
 
-    def decorator(fn: Callable) -> Callable:
+    def decorator(fn: Callable[..., Any]) -> Callable[..., Any]:
         fn_desc = description or fn.__doc__ or fn.__name__
 
         @functools.wraps(fn)

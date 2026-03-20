@@ -34,6 +34,32 @@ runtime = Runtime(
 )
 ```
 
+### CallbackApprovalHandler
+
+Use a sync or async callback function for programmatic approval:
+
+```python
+from aegis.runtime.approval_callback import CallbackApprovalHandler
+
+# Sync callback
+handler = CallbackApprovalHandler(
+    callback=lambda decision: decision.risk_level.value <= 2  # Auto-approve low/medium
+)
+
+# Async callback
+async def check_approval(decision):
+    # Query your approval system
+    return await my_approval_api.check(decision.action.type)
+
+handler = CallbackApprovalHandler(callback=check_approval)
+
+runtime = Runtime(
+    executor=my_executor,
+    policy=my_policy,
+    approval_handler=handler,
+)
+```
+
 ## Custom Handlers
 
 Implement the `ApprovalHandler` interface:

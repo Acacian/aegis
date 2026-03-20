@@ -69,7 +69,7 @@ async def govern_tool_call(
     )
 
     plan = runtime.plan([action])
-    results = await runtime.execute(plan)
+    results: list[Result] = await runtime.execute(plan)
     return results[0]
 
 

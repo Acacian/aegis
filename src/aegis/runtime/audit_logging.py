@@ -19,6 +19,7 @@ import json
 import logging
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 from aegis.core.policy import PolicyDecision
 from aegis.core.result import Result
@@ -49,7 +50,7 @@ class LoggingAuditLogger:
 
     def __init__(self, logger: logging.Logger | None = None) -> None:
         self._logger = logger or logging.getLogger("aegis.audit")
-        self._entries: list[dict] = []
+        self._entries: list[dict[str, Any]] = []
 
     def log(
         self,
@@ -84,7 +85,7 @@ class LoggingAuditLogger:
 
         return len(self._entries)
 
-    def get_log(self, session_id: str | None = None) -> list[dict]:
+    def get_log(self, session_id: str | None = None) -> list[dict[str, Any]]:
         """Retrieve in-memory audit entries, optionally filtered by session."""
         if session_id:
             return [e for e in self._entries if e["session_id"] == session_id]

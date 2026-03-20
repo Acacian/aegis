@@ -66,13 +66,39 @@ The `Runtime` orchestrates the full governance pipeline:
 5. Audit   — log everything to the audit trail
 ```
 
+## Conditions
+
+Rules can include optional conditions for fine-grained matching beyond glob patterns:
+
+```yaml
+rules:
+  - name: after_hours_block
+    match: { type: "write*" }
+    conditions:
+      time_after: "18:00"
+    risk_level: critical
+    approval: block
+```
+
+Available conditions: `time_after`, `time_before`, `weekdays`, `param_eq`, `param_gt`, `param_lt`, `param_gte`, `param_lte`, `param_contains`, `param_matches`.
+
 ## Adapter
 
 An adapter (executor) is the bridge between Aegis and the actual system. Aegis ships with:
 
 - **PlaywrightExecutor** — browser automation
+- **HttpxExecutor** — REST API calls
 - **LangChainExecutor** — LangChain tool wrapping
 - **AegisCrewAITool** — CrewAI integration
 - **@governed_tool** — OpenAI Agents SDK decorator
+- **AnthropicAdapter** — Anthropic Claude tool use
 
 You can create your own by subclassing `BaseExecutor`.
+
+## Audit
+
+Every action is logged to an audit trail. Aegis supports multiple backends:
+
+- **AuditLogger** — SQLite database (default)
+- **LoggingAuditLogger** — Python `logging` module
+- **JSONL export** — `aegis audit --format jsonl`
