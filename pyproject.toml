@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "aegis"
+name = "agent-aegis"
 version = "0.1.0"
 description = "Open-source policy & approval runtime for AI agents acting on systems you don't own"
 readme = "README.md"
