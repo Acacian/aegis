@@ -5,6 +5,7 @@
 [![Python](https://img.shields.io/pypi/pyversions/agent-aegis)](https://pypi.org/project/agent-aegis/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Docs](https://img.shields.io/badge/docs-acacian.github.io%2Faegis-blue)](https://acacian.github.io/aegis/)
+[![codecov](https://codecov.io/gh/Acacian/aegis/graph/badge.svg)](https://codecov.io/gh/Acacian/aegis)
 
 **Your AI agent can browse the web, call APIs, and modify SaaS data. Aegis makes sure it asks permission first.**
 
@@ -366,10 +367,18 @@ See [CHANGELOG.md](CHANGELOG.md) for release history.
 ```bash
 git clone https://github.com/Acacian/aegis.git
 cd aegis
-pip install -e ".[dev]"
-pytest
+make dev     # Install + pre-commit hooks
+make test    # Run tests
+make lint    # Run linter
+make coverage  # Coverage report
 ```
+
+Or use a cloud dev environment:
+
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/Acacian/aegis)
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide.
 
 ## License
 
-MIT
+MIT — see [LICENSE](LICENSE) for details.

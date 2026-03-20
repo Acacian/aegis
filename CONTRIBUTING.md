@@ -1,58 +1,126 @@
 # Contributing to Aegis
 
-## Getting started
+Thank you for considering contributing to Aegis! This document explains how to get started.
+
+## Quick Setup
 
 ```bash
 git clone https://github.com/Acacian/aegis.git
 cd aegis
 python -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev]"  # installs as agent-aegis, import as aegis
-pytest
+pip install -e ".[dev]"   # installs as agent-aegis, import as aegis
+pre-commit install         # optional: auto-lint on commit
 ```
 
-## Development workflow
-
-1. Fork the repo and create a feature branch from `main`
-2. Write code with type hints and docstrings
-3. Add tests for new functionality
-4. Ensure all checks pass:
-   ```bash
-   ruff check src/ tests/
-   ruff format src/ tests/
-   pytest
-   ```
-5. Open a PR against `main`
-
-## Code style
-
-- Python 3.11+
-- Formatted and linted with [Ruff](https://docs.astral.sh/ruff/)
-- Type hints on all public APIs
-- Docstrings on all public classes and methods
-
-## What to contribute
-
-- Bug fixes
-- New adapters (API executors, browser-use, etc.)
-- Policy engine features (conditions, templates, inheritance)
-- Approval handlers (Slack, web UI, etc.)
-- Documentation improvements
-
-## What NOT to contribute (yet)
-
-- Dashboard/frontend (planned for later)
-- MCP integration (planned for later)
-- Breaking changes to the core API without an issue discussion first
-
-## Tests
-
-All PRs must include tests. Run the full suite:
+Or use the **Makefile**:
 
 ```bash
-pytest -v
+make dev    # Install with dev deps + pre-commit
+make test   # Run tests
+make lint   # Run linter
 ```
 
-## Commit messages
+### GitHub Codespaces / Gitpod
+
+Click "Open in Codespaces" on the repo or use Gitpod — both are pre-configured.
+
+## Development Workflow
+
+1. **Fork** the repo and create a feature branch from `main`
+2. **Write code** with type hints and docstrings
+3. **Add tests** for new functionality
+4. **Check everything passes:**
+   ```bash
+   make lint       # or: ruff check src/ tests/
+   make test       # or: pytest -v
+   make typecheck  # or: mypy src/aegis/
+   make coverage   # Check coverage report
+   ```
+5. **Open a PR** against `main`
+
+## Code Style
+
+- **Python 3.11+** — use modern syntax (StrEnum, `X | Y` unions, etc.)
+- **Ruff** — linting and formatting (config in `pyproject.toml`)
+- **Type hints** on all public APIs
+- **Docstrings** on all public classes and methods
+- **Async-first** — all executor methods are async
+
+## Project Structure
+
+```
+src/aegis/
+├── core/        # Pure data models + policy engine (no I/O)
+├── adapters/    # Pluggable executors (each with optional deps)
+├── runtime/     # Orchestration, approval, audit
+└── cli/         # CLI entry point
+tests/           # pytest test suite
+examples/        # Runnable demo scripts
+docs/            # mkdocs-material documentation
+```
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for design details.
+
+## What to Contribute
+
+### Good first contributions
+- Bug fixes
+- Documentation improvements
+- New examples
+- Test coverage improvements
+
+### Feature contributions
+- New adapters (API executors, browser-use, etc.)
+- Policy engine features (conditions, templates, inheritance)
+- Approval handlers (Slack, Discord, web UI)
+- Audit backends (Elasticsearch, CloudWatch, etc.)
+- CLI improvements
+
+### What needs discussion first
+- Breaking changes to the core API
+- New core dependencies
+- Architectural changes
+
+Open an [issue](https://github.com/Acacian/aegis/issues) to discuss before starting large features.
+
+## Writing Tests
+
+All PRs must include tests. We use pytest with async support:
+
+```python
+import pytest
+from aegis import Action, Policy
+from aegis.core.policy import Approval
+
+def test_my_feature():
+    policy = Policy.from_dict({...})
+    decision = policy.evaluate(Action("read", "test"))
+    assert decision.approval == Approval.AUTO
+
+@pytest.mark.asyncio
+async def test_async_feature():
+    result = await runtime.run_one(Action("read", "test"))
+    assert result.ok
+```
+
+Run with coverage:
+
+```bash
+make coverage
+# or: pytest --cov=aegis --cov-report=term-missing
+```
+
+## Writing Adapters
+
+New adapters should:
+
+1. Subclass `BaseExecutor` from `aegis.adapters.base`
+2. Use lazy imports for optional dependencies
+3. Include an import guard function (see existing adapters)
+4. Have tests that work without the optional dependency installed
+5. Be added to `pyproject.toml` optional dependencies
+
+## Commit Messages
 
 Use [Conventional Commits](https://www.conventionalcommits.org/):
 
@@ -61,4 +129,18 @@ feat: add Slack approval handler
 fix: policy wildcard matching edge case
 docs: update adapter documentation
 test: add coverage for audit log filtering
+chore: update dependencies
 ```
+
+## Pull Request Checklist
+
+- [ ] Tests added/updated
+- [ ] Linting passes (`make lint`)
+- [ ] Type checking passes (`make typecheck`)
+- [ ] Documentation updated (if applicable)
+- [ ] Changelog entry added (if user-facing)
+- [ ] Commit messages follow conventional commits
+
+## License
+
+By contributing, you agree that your contributions will be licensed under the MIT License.

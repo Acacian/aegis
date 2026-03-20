@@ -4,7 +4,13 @@ This guide walks you through a complete Aegis workflow in under 5 minutes.
 
 ## 1. Create a Policy
 
-Create `policy.yaml`:
+Generate a starter policy with the CLI:
+
+```bash
+aegis init
+```
+
+Or create `policy.yaml` manually:
 
 ```yaml
 version: "1"
