@@ -3,10 +3,15 @@
 ## 0.1.1 (2026-03-21)
 
 ### Added
+- **Policy conditions** — time-based (`time_after`, `time_before`), weekday, and param-based (`param_gt`, `param_eq`, `param_matches`, etc.) rule conditions
 - **httpx/REST adapter** (`HttpxExecutor`) — map action types to HTTP methods with full request/response handling
+- **Python logging audit backend** (`LoggingAuditLogger`) — structured JSON to Python logging, maps risk levels to log levels
 - **JSONL audit export** — `aegis audit --format jsonl` and `AuditLogger.export_jsonl()` for log pipeline integration
-- **Policy JSON Schema** — `aegis schema` prints the schema; `policy.schema.json` ships with the repo for editor integration
-- 17 new tests (62 total)
+- **Policy JSON Schema** — `aegis schema` CLI command; `policy.schema.json` ships with the repo for editor integration
+- **Runtime context manager** — `async with Runtime(...) as rt:` for automatic setup/teardown
+- **`run_one()` convenience** — single-action governance shortcut
+- httpx demo example
+- 45 new tests (90 total)
 
 ## 0.1.0 (2026-03-21)
 
