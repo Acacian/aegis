@@ -27,11 +27,13 @@ playwright = ["playwright>=1.40"]
 langchain = ["langchain-core>=0.2"]
 crewai = ["crewai>=0.50"]
 openai-agents = ["openai-agents>=0.1"]
+anthropic = ["anthropic>=0.30"]
 all = [
     "playwright>=1.40",
     "langchain-core>=0.2",
     "crewai>=0.50",
     "openai-agents>=0.1",
+    "anthropic>=0.30",
 ]
 dev = [
     "pytest>=8.0",
