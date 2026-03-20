@@ -28,14 +28,16 @@ class BaseExecutor(ABC):
         """
         return result.ok
 
-    async def setup(self) -> None:
+    async def setup(self) -> None:  # noqa: B027
         """Called once before the first action in a session.
 
         Use this to initialize resources (e.g. browser instances).
+        Override in subclasses; default is a no-op.
         """
 
-    async def teardown(self) -> None:
+    async def teardown(self) -> None:  # noqa: B027
         """Called once after the last action in a session.
 
         Use this to clean up resources.
+        Override in subclasses; default is a no-op.
         """

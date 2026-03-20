@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
@@ -15,7 +15,6 @@ from aegis.core.risk import RiskLevel
 from aegis.runtime.approval import AutoApprovalHandler
 from aegis.runtime.audit import AuditLogger
 from aegis.runtime.engine import Runtime
-
 
 # -- Fake executor for testing -------------------------------------------
 
@@ -36,13 +35,13 @@ class FakeExecutor(BaseExecutor):
                 action=action,
                 status=ResultStatus.FAILED,
                 error=f"Fake failure on {action.type}",
-                completed_at=datetime.now(timezone.utc),
+                completed_at=datetime.now(UTC),
             )
         return Result(
             action=action,
             status=ResultStatus.SUCCESS,
             data={"fake": True},
-            completed_at=datetime.now(timezone.utc),
+            completed_at=datetime.now(UTC),
         )
 
     async def setup(self) -> None:

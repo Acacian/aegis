@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from aegis.adapters.base import BaseExecutor
 from aegis.core.action import Action
@@ -83,7 +83,7 @@ class Runtime:
                             action=remaining.action,
                             status=ResultStatus.SKIPPED,
                             error="Skipped due to prior failure",
-                            completed_at=datetime.now(timezone.utc),
+                            completed_at=datetime.now(UTC),
                         )
                         results.append(skip)
                         self.audit.log(self.session_id, remaining, result=skip)
@@ -101,7 +101,7 @@ class Runtime:
                 action=decision.action,
                 status=ResultStatus.BLOCKED,
                 error=f"Blocked by policy rule: {decision.matched_rule}",
-                completed_at=datetime.now(timezone.utc),
+                completed_at=datetime.now(UTC),
             )
             self.audit.log(self.session_id, decision, result=result)
             return result
@@ -115,7 +115,7 @@ class Runtime:
                     action=decision.action,
                     status=ResultStatus.DENIED,
                     error="Denied by human operator",
-                    completed_at=datetime.now(timezone.utc),
+                    completed_at=datetime.now(UTC),
                 )
                 self.audit.log(self.session_id, decision, result=result, human_decision="denied")
                 return result
@@ -131,7 +131,7 @@ class Runtime:
                 action=decision.action,
                 status=ResultStatus.FAILED,
                 error="Post-execution verification failed",
-                completed_at=datetime.now(timezone.utc),
+                completed_at=datetime.now(UTC),
             )
 
         # 5. Audit

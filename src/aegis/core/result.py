@@ -3,14 +3,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from enum import Enum
+from datetime import UTC, datetime
+from enum import StrEnum
 from typing import Any
 
 from aegis.core.action import Action
 
 
-class ResultStatus(str, Enum):
+class ResultStatus(StrEnum):
     """Status of an action execution."""
 
     SUCCESS = "success"
@@ -32,7 +32,7 @@ class Result:
     status: ResultStatus
     data: Any = None
     error: str | None = None
-    started_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    started_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     completed_at: datetime | None = None
 
     @property

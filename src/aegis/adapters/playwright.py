@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 from aegis.adapters.base import BaseExecutor
@@ -89,7 +89,7 @@ class PlaywrightExecutor(BaseExecutor):
                 action=action,
                 status=ResultStatus.FAILED,
                 error=f"Unsupported action type for Playwright: {action.type}",
-                completed_at=datetime.now(timezone.utc),
+                completed_at=datetime.now(UTC),
             )
 
         try:
@@ -98,14 +98,14 @@ class PlaywrightExecutor(BaseExecutor):
                 action=action,
                 status=ResultStatus.SUCCESS,
                 data=data,
-                completed_at=datetime.now(timezone.utc),
+                completed_at=datetime.now(UTC),
             )
         except Exception as e:
             return Result(
                 action=action,
                 status=ResultStatus.FAILED,
                 error=str(e),
-                completed_at=datetime.now(timezone.utc),
+                completed_at=datetime.now(UTC),
             )
 
     # -- Page management -------------------------------------------------

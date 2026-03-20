@@ -156,6 +156,55 @@ class MyAPIExecutor(BaseExecutor):
         return Result(action=action, status=ResultStatus.SUCCESS, data={...})
 ```
 
+## Demo
+
+Run the quickstart example (no browser required):
+
+```bash
+python examples/quickstart.py
+```
+
+```
+============================================================
+  EXECUTION PLAN
+============================================================
+  1. [   AUTO] Action(navigate -> crm)              (risk=LOW, rule=navigate_auto)
+  2. [   AUTO] Action(read -> crm - Read contact list)  (risk=LOW, rule=read_auto)
+  3. [APPROVE] Action(write -> crm - Update contact)    (risk=MEDIUM, rule=write_approve)
+  4. [APPROVE] Action(bulk_update -> crm - Bulk status change)  (risk=HIGH, rule=bulk_approve)
+  5. [  BLOCK] Action(delete -> crm - Delete all records)  (risk=CRITICAL, rule=delete_block)
+
+    [dry-run] Would execute: Action(navigate -> crm)
+    [dry-run] Would execute: Action(read -> crm - Read contact list)
+
+============================================================
+  APPROVAL REQUIRED
+============================================================
+  Action:  write
+  Target:  crm
+  Risk:    MEDIUM
+  Approve? [y/n]: y
+    [dry-run] Would execute: Action(write -> crm - Update contact)
+
+============================================================
+  RESULTS
+============================================================
+  [OK] navigate -> crm
+  [OK] read -> crm
+  [OK] write -> crm
+  [OK] bulk_update -> crm
+  [BLOCK] delete -> crm
+
+============================================================
+  AUDIT LOG
+============================================================
+      navigate | risk=LOW      | decision=auto     | result=success
+          read | risk=LOW      | decision=auto     | result=success
+         write | risk=MEDIUM   | decision=approved | result=success
+   bulk_update | risk=HIGH     | decision=approved | result=success
+        delete | risk=CRITICAL | decision=block    | result=blocked
+```
+
 ## Development
 
 ```bash

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import fnmatch
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
@@ -18,7 +18,7 @@ from aegis.core.action import Action
 from aegis.core.risk import RiskLevel
 
 
-class Approval(str, Enum):
+class Approval(StrEnum):
     """Approval requirement for an action."""
 
     AUTO = "auto"  # Execute without human approval

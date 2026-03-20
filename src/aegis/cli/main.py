@@ -59,7 +59,16 @@ def _cmd_audit(args: argparse.Namespace) -> None:
         return
 
     # Table format
-    header = f"{'ID':>4} {'Session':>12} {'Action':>15} {'Target':>15} {'Risk':>8} {'Decision':>10} {'Result':>10}"
+    cols = [
+        f"{'ID':>4}",
+        f"{'Session':>12}",
+        f"{'Action':>15}",
+        f"{'Target':>15}",
+        f"{'Risk':>8}",
+        f"{'Decision':>10}",
+        f"{'Result':>10}",
+    ]
+    header = " ".join(cols)
     print(header)
     print("-" * len(header))
     for e in entries:

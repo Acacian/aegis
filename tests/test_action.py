@@ -17,12 +17,11 @@ def test_action_with_description():
 
 
 def test_action_is_frozen():
+    import pytest
+
     action = Action(type="read", target="salesforce")
-    try:
+    with pytest.raises(AttributeError):
         action.type = "write"  # type: ignore[misc]
-        assert False, "Should have raised"
-    except AttributeError:
-        pass
 
 
 def test_action_str():
@@ -51,9 +50,8 @@ def test_action_equality():
 
 def test_action_not_hashable_with_dict_params():
     """Actions with dict params are not hashable (dict is mutable)."""
+    import pytest
+
     a = Action(type="read", target="sf")
-    try:
+    with pytest.raises(TypeError):
         hash(a)
-        assert False, "Expected TypeError"
-    except TypeError:
-        pass

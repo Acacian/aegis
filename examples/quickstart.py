@@ -11,7 +11,7 @@ Run:
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from aegis import Action, Policy, Result, ResultStatus, Runtime
 from aegis.adapters.base import BaseExecutor
@@ -27,7 +27,7 @@ class DryRunExecutor(BaseExecutor):
             action=action,
             status=ResultStatus.SUCCESS,
             data={"dry_run": True},
-            completed_at=datetime.now(timezone.utc),
+            completed_at=datetime.now(UTC),
         )
 
 
