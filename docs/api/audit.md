@@ -1,6 +1,6 @@
 # Audit Logger
 
-## AuditLogger
+## AuditLogger (SQLite)
 
 ```python
 from aegis.runtime.audit import AuditLogger
@@ -16,9 +16,42 @@ Write one audit entry. Returns the row ID.
 
 Retrieve entries, optionally filtered by session.
 
+### `export_jsonl(path, session_id=None) -> int`
+
+Export entries as JSON Lines (one JSON object per line). Returns the count of exported entries.
+
+```python
+count = logger.export_jsonl("audit.jsonl", session_id="session-123")
+```
+
 ### `close()`
 
 Close the database connection.
+
+## LoggingAuditLogger (Python logging)
+
+Drop-in replacement that emits structured JSON to Python's `logging` module instead of SQLite.
+
+```python
+import logging
+from aegis.runtime.audit_logging import LoggingAuditLogger
+
+logging.basicConfig(level=logging.DEBUG)
+audit = LoggingAuditLogger()  # Uses logger "aegis.audit"
+
+runtime = Runtime(executor=..., policy=..., audit_logger=audit)
+```
+
+Risk levels map to log levels:
+
+| Risk Level | Log Level |
+|-----------|-----------|
+| LOW | DEBUG |
+| MEDIUM | INFO |
+| HIGH | WARNING |
+| CRITICAL | ERROR |
+
+This is ideal for cloud-native deployments where you want to pipe audit data to log aggregators (DataDog, CloudWatch, ELK) instead of local SQLite.
 
 ## Schema
 
@@ -49,6 +82,9 @@ aegis audit
 
 # JSON format
 aegis audit --format json
+
+# JSONL export
+aegis audit --format jsonl -o audit_export.jsonl
 
 # Filter by session
 aegis audit --session abc123

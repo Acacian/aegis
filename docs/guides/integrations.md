@@ -106,6 +106,36 @@ agent = Agent(
 )
 ```
 
+## httpx (REST APIs)
+
+```bash
+pip install 'agent-aegis[httpx]'
+```
+
+```python
+from aegis.adapters.httpx_adapter import HttpxExecutor
+
+runtime = Runtime(
+    executor=HttpxExecutor(
+        base_url="https://api.example.com",
+        default_headers={"Authorization": "Bearer ..."},
+    ),
+    policy=Policy.from_yaml("policy.yaml"),
+)
+
+# Action types map directly to HTTP methods
+plan = runtime.plan([
+    Action("get", "/users"),
+    Action("post", "/users", params={"json": {"name": "Alice"}}),
+    Action("delete", "/users/1"),
+])
+results = await runtime.execute(plan)
+```
+
+Supported action types: `get`, `post`, `put`, `patch`, `delete`, `head`, `options`.
+
+Supported `params` keys: `json`, `data`, `headers`, `query`, `timeout`.
+
 ## Playwright
 
 ```bash
