@@ -25,9 +25,10 @@ Agent action  →  Policy check  →  Approval gate  →  Execute  →  Verify  
 
 AI agents are getting real-world access — but without governance, a hallucinating agent can bulk-delete your CRM, submit wrong forms, or trigger irreversible API calls. Aegis gives you:
 
-- **YAML policy rules** — classify actions by risk, set approval requirements per action pattern
+- **YAML policy rules** — classify actions by risk, set approval requirements per pattern
+- **Smart conditions** — time windows, weekday schedules, param thresholds
 - **Human-in-the-loop** — approval gates that pause for confirmation on sensitive ops
-- **Full audit trail** — every decision and result logged to SQLite
+- **Full audit trail** — SQLite, JSONL, or Python logging backends
 - **5-minute integration** — add 3 lines to your existing agent code
 
 ## Quick start
@@ -341,7 +342,7 @@ python examples/quickstart.py
 
 | | DIY Governance | Aegis |
 |---|---|---|
-| **Policy engine** | Custom if/else per action | YAML rules, glob matching, hot-reloadable |
+| **Policy engine** | Custom if/else per action | YAML rules, glob matching, conditions (time/params/weekday) |
 | **Risk classification** | Hardcoded | 4-tier model with per-rule overrides |
 | **Human approval** | Build your own UI/CLI | Pluggable handlers (CLI, Slack, custom) |
 | **Audit trail** | printf / custom logging | SQLite + JSONL export with session tracking |
