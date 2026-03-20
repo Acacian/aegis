@@ -1,0 +1,19 @@
+title: "[Idea] "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Share your idea for Aegis! We'd love to hear how you'd like to use it.
+  - type: textarea
+    id: idea
+    attributes:
+      label: Describe your idea
+      description: What would you like Aegis to support?
+    validations:
+      required: true
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Use case
+      description: How would this help your workflow?

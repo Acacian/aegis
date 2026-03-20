@@ -1,0 +1,20 @@
+title: "[Q&A] "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ask anything about Aegis! Check the [docs](https://acacian.github.io/aegis/) and [FAQ](https://acacian.github.io/aegis/faq/) first.
+  - type: textarea
+    id: question
+    attributes:
+      label: Your question
+      description: What would you like to know?
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Any relevant code, config, or error messages.
+      render: python

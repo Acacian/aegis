@@ -1,44 +1,74 @@
-# Aegis
+<p align="center">
+  <h1 align="center">Aegis</h1>
+  <p align="center">
+    <strong>Governance layer for AI agents. Policy engine + approval gate + audit log.</strong>
+  </p>
+  <p align="center">
+    Your AI agent can browse the web, call APIs, and modify SaaS data.<br/>
+    <strong>Aegis makes sure it asks permission first.</strong>
+  </p>
+</p>
 
-[![CI](https://github.com/Acacian/aegis/actions/workflows/ci.yml/badge.svg)](https://github.com/Acacian/aegis/actions/workflows/ci.yml)
-[![PyPI](https://img.shields.io/pypi/v/agent-aegis)](https://pypi.org/project/agent-aegis/)
-[![Python](https://img.shields.io/pypi/pyversions/agent-aegis)](https://pypi.org/project/agent-aegis/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Docs](https://img.shields.io/badge/docs-acacian.github.io%2Faegis-blue)](https://acacian.github.io/aegis/)
-[![codecov](https://codecov.io/gh/Acacian/aegis/graph/badge.svg)](https://codecov.io/gh/Acacian/aegis)
+<p align="center">
+  <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://github.com/Acacian/aegis/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://pypi.org/project/agent-aegis/"><img src="https://img.shields.io/pypi/v/agent-aegis?color=blue" alt="PyPI"></a>
+  <a href="https://pypi.org/project/agent-aegis/"><img src="https://img.shields.io/pypi/dm/agent-aegis?color=green" alt="Downloads"></a>
+  <a href="https://pypi.org/project/agent-aegis/"><img src="https://img.shields.io/pypi/pyversions/agent-aegis" alt="Python"></a>
+  <a href="https://codecov.io/gh/Acacian/aegis"><img src="https://codecov.io/gh/Acacian/aegis/graph/badge.svg" alt="Coverage"></a>
+  <a href="https://github.com/Acacian/aegis/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License"></a>
+  <a href="https://acacian.github.io/aegis/"><img src="https://img.shields.io/badge/docs-acacian.github.io%2Faegis-blue" alt="Docs"></a>
+</p>
 
-**Your AI agent can browse the web, call APIs, and modify SaaS data. Aegis makes sure it asks permission first.**
+<p align="center">
+  <a href="#quick-start">Quick Start</a> &bull;
+  <a href="https://acacian.github.io/aegis/">Documentation</a> &bull;
+  <a href="#integrations">Integrations</a> &bull;
+  <a href="https://github.com/Acacian/aegis/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22">Contributing</a>
+</p>
 
-> Policy engine + approval gate + audit log for AI agents acting on systems you don't own.
+---
+
+## The Problem
+
+AI agents are getting real-world access. Without governance, a hallucinating agent can:
+
+- Bulk-delete your CRM contacts
+- Submit wrong forms to government portals
+- Trigger irreversible API calls at 3am
+- Run up cloud bills with infinite loops
+
+**There's no `sudo` for AI agents. Until now.**
+
+## The Solution
 
 ```
-Agent action  →  Policy check  →  Approval gate  →  Execute  →  Verify  →  Audit log
-  (read CRM)      (auto: low)      (skip)            (run)      (ok)       (logged)
-  (bulk update)   (approve: high)  (human y/n)       (run)      (ok)       (logged)
-  (delete all)    (block: critical) —                  —          —         (logged)
+Action      Policy        Approval       Execute     Audit
+  |            |              |              |           |
+read CRM  --> auto (low)  --> skip -------> run ------> logged
+bulk edit --> approve (high) --> human y/n -> run ------> logged
+delete *  --> block (critical) ------------> X --------> logged
 ```
 
-### Works with your stack
+Aegis sits between your agent and the real world. **3 lines to add governance:**
 
-**LangChain** | **CrewAI** | **OpenAI Agents SDK** | **Anthropic Claude** | **Playwright** | **httpx** | **Custom adapters**
+```python
+from aegis import Action, Policy, Runtime
 
-### Why?
+runtime = Runtime(executor=your_executor, policy=Policy.from_yaml("policy.yaml"))
+results = await runtime.run_one(Action("write", "salesforce", params={...}))
+```
 
-AI agents are getting real-world access — but without governance, a hallucinating agent can bulk-delete your CRM, submit wrong forms, or trigger irreversible API calls. Aegis gives you:
-
-- **YAML policy rules** — classify actions by risk, set approval requirements per pattern
-- **Smart conditions** — time windows, weekday schedules, param thresholds
-- **Human-in-the-loop** — approval gates that pause for confirmation on sensitive ops
-- **Full audit trail** — SQLite, JSONL, or Python logging backends
-- **5-minute integration** — add 3 lines to your existing agent code
-
-## Quick start
+## Quick Start
 
 ```bash
-pip install agent-aegis  # PyPI package name; import as "aegis"
+pip install agent-aegis
 ```
 
-### 1. Define a policy
+### 1. Generate a policy
+
+```bash
+aegis init  # Creates policy.yaml with sensible defaults
+```
 
 ```yaml
 # policy.yaml
@@ -48,95 +78,184 @@ defaults:
   approval: approve
 
 rules:
-  - name: read_operations
-    match:
-      type: read
+  - name: read_safe
+    match: { type: "read*" }
     risk_level: low
     approval: auto
 
-  - name: bulk_update
-    match:
-      type: bulk_update
+  - name: bulk_ops_need_approval
+    match: { type: "bulk_*" }
+    conditions:
+      param_gt: { count: 100 }  # Only when count > 100
     risk_level: high
     approval: approve
 
-  - name: delete_blocked
-    match:
-      type: delete
+  - name: no_deletes
+    match: { type: "delete*" }
     risk_level: critical
     approval: block
 ```
 
-### 2. Use the runtime
+### 2. Add to your agent
 
 ```python
+import asyncio
 from aegis import Action, Policy, Runtime
-from aegis.adapters.playwright import PlaywrightExecutor
+from aegis.adapters.base import BaseExecutor
+from aegis.core.result import Result, ResultStatus
 
-runtime = Runtime(
-    executor=PlaywrightExecutor(),
-    policy=Policy.from_yaml("policy.yaml"),
-)
+class MyExecutor(BaseExecutor):
+    async def execute(self, action):
+        print(f"  Executing: {action.type} -> {action.target}")
+        return Result(action=action, status=ResultStatus.SUCCESS)
 
-# Plan: evaluate actions against the policy
-plan = runtime.plan([
-    Action("read", target="salesforce", params={"selector": ".contacts"}),
-    Action("bulk_update", target="salesforce", params={"field": "status", "value": "active"}),
-    Action("delete", target="salesforce", params={"selector": "#nuke"}),
-])
+async def main():
+    async with Runtime(
+        executor=MyExecutor(),
+        policy=Policy.from_yaml("policy.yaml"),
+    ) as runtime:
+        plan = runtime.plan([
+            Action("read", "crm", description="Fetch contacts"),
+            Action("bulk_update", "crm", params={"count": 150}),
+            Action("delete", "crm", description="Drop table"),
+        ])
+        print(plan.summary())
+        results = await runtime.execute(plan)
 
-print(plan.summary())
-#   1. [   AUTO] Action(read -> salesforce)        (risk=LOW, rule=read_operations)
-#   2. [APPROVE] Action(bulk_update -> salesforce)  (risk=HIGH, rule=bulk_update)
-#   3. [  BLOCK] Action(delete -> salesforce)       (risk=CRITICAL, rule=delete_blocked)
-
-# Execute: auto-runs reads, prompts for bulk_update, blocks delete
-results = await runtime.execute(plan)
+asyncio.run(main())
 ```
 
-### 3. Review the audit log
+### 3. See what happened
 
 ```bash
 aegis audit
-#   ID      Session          Action          Target     Risk   Decision     Result
-# ----  -----------  ---------------  ---------------  ------  ----------  ----------
-#    1  a1b2c3d4e5f6            read       salesforce     LOW       auto     success
-#    2  a1b2c3d4e5f6     bulk_update       salesforce    HIGH   approved     success
-#    3  a1b2c3d4e5f6          delete       salesforce CRITICAL      block     blocked
+```
+```
+  ID  Session       Action        Target   Risk      Decision    Result
+  1   a1b2c3d4...   read          crm      LOW       auto        success
+  2   a1b2c3d4...   bulk_update   crm      HIGH      approved    success
+  3   a1b2c3d4...   delete        crm      CRITICAL  block       blocked
 ```
 
-## Architecture
+## Features
 
-```
-aegis/
-  core/        Action, RiskLevel, Policy engine, JSON Schema, Result, ExecutionPlan
-  adapters/    BaseExecutor, Playwright, httpx, LangChain, CrewAI, OpenAI, Anthropic
-  runtime/     Runtime engine, ApprovalHandler, AuditLogger (SQLite + JSONL)
-  cli/         CLI (aegis audit, aegis validate, aegis schema)
-```
-
-### Key concepts
-
-| Concept | Description |
+| Feature | Description |
 |---------|-------------|
-| **Action** | A single operation an agent wants to perform (type + target + params) |
-| **Policy** | YAML rules mapping action patterns to risk levels and approval requirements |
-| **ExecutionPlan** | Actions evaluated against policy, ready for execution |
-| **Runtime** | Orchestrator: plan -> approve -> execute -> verify -> audit |
-| **Adapter** | Pluggable executor (Playwright for browsers, custom for APIs) |
+| **YAML policies** | Glob matching, first-match-wins, JSON Schema for validation |
+| **Smart conditions** | `time_after`, `time_before`, `weekdays`, `param_gt/lt/eq/contains/matches` |
+| **4-tier risk model** | `low` / `medium` / `high` / `critical` with per-rule overrides |
+| **Approval gates** | CLI prompt, callback functions, or build your own (Slack, Discord, etc.) |
+| **Audit trail** | SQLite (default), JSONL export, or Python `logging` backend |
+| **Context manager** | `async with Runtime(...) as rt:` — auto setup/teardown |
+| **Single-action mode** | `await runtime.run_one(action)` for simple cases |
+| **JSON Schema** | `aegis schema` — auto-complete in VS Code / JetBrains |
+| **Policy generator** | `aegis init` — starter policy in seconds |
+| **Type-safe** | Full `mypy --strict` compliance, `py.typed` marker |
 
-### Policy rules
+## Integrations
 
-Rules are evaluated in order — first match wins. Each rule specifies:
+Works with the agent frameworks you already use:
 
-- **match**: Glob patterns for `type` and `target`
-- **risk_level**: `low`, `medium`, `high`, `critical`
-- **approval**: `auto` (no human needed), `approve` (human must confirm), `block` (never execute)
-- **conditions** (optional): Time-based, param-based, or weekday constraints
+```bash
+pip install 'agent-aegis[langchain]'      # LangChain
+pip install 'agent-aegis[crewai]'         # CrewAI
+pip install 'agent-aegis[openai-agents]'  # OpenAI Agents SDK
+pip install 'agent-aegis[httpx]'          # REST APIs
+pip install 'agent-aegis[playwright]'     # Browser automation
+pip install 'agent-aegis[all]'            # Everything
+```
 
-### Conditions
+<details>
+<summary><b>LangChain</b> — wrap tools or expose governed actions</summary>
 
-Rules can include conditional logic that goes beyond glob matching:
+```python
+from aegis.adapters.langchain import LangChainExecutor, AegisTool
+
+# Wrap existing LangChain tools with governance
+executor = LangChainExecutor(tools=[DuckDuckGoSearchRun()])
+runtime = Runtime(executor=executor, policy=Policy.from_yaml("policy.yaml"))
+
+# Or expose governed actions AS LangChain tools
+tool = AegisTool.from_runtime(runtime, name="governed_search",
+    description="Policy-governed search", action_type="search", action_target="web")
+```
+</details>
+
+<details>
+<summary><b>OpenAI Agents SDK</b> — decorator-based governance</summary>
+
+```python
+from aegis.adapters.openai_agents import governed_tool
+
+@governed_tool(runtime=runtime, action_type="write", action_target="crm")
+async def update_contact(name: str, email: str) -> str:
+    """Update a CRM contact — governed by Aegis policy."""
+    return await crm.update(name=name, email=email)
+```
+</details>
+
+<details>
+<summary><b>CrewAI</b> — governed tools for crews</summary>
+
+```python
+from aegis.adapters.crewai import AegisCrewAITool
+
+tool = AegisCrewAITool(runtime=runtime, name="governed_search",
+    description="Search with governance", action_type="search",
+    action_target="web", fn=lambda query: do_search(query))
+```
+</details>
+
+<details>
+<summary><b>Anthropic Claude</b> — govern tool_use calls</summary>
+
+```python
+from aegis.adapters.anthropic import govern_tool_call
+
+for block in response.content:
+    if block.type == "tool_use":
+        result = await govern_tool_call(
+            runtime=runtime, tool_name=block.name,
+            tool_input=block.input, target="my_system")
+```
+</details>
+
+<details>
+<summary><b>httpx</b> — governed REST API calls</summary>
+
+```python
+from aegis.adapters.httpx_adapter import HttpxExecutor
+
+executor = HttpxExecutor(base_url="https://api.example.com",
+    default_headers={"Authorization": "Bearer ..."})
+runtime = Runtime(executor=executor, policy=Policy.from_yaml("policy.yaml"))
+
+# Action types map to HTTP methods: get, post, put, patch, delete
+plan = runtime.plan([Action("get", "/users"), Action("delete", "/users/1")])
+```
+</details>
+
+<details>
+<summary><b>Custom adapters</b> — 10 lines to integrate anything</summary>
+
+```python
+from aegis.adapters.base import BaseExecutor
+from aegis.core.action import Action
+from aegis.core.result import Result, ResultStatus
+
+class MyAPIExecutor(BaseExecutor):
+    async def execute(self, action: Action) -> Result:
+        response = await my_api.call(action.type, action.target, **action.params)
+        return Result(action=action, status=ResultStatus.SUCCESS, data=response)
+
+    async def verify(self, action: Action, result: Result) -> bool:
+        return result.data.get("status") == "ok"
+```
+</details>
+
+## Policy Conditions
+
+Go beyond glob matching with smart conditions:
 
 ```yaml
 rules:
@@ -148,15 +267,15 @@ rules:
     risk_level: critical
     approval: block
 
-  # Escalate bulk operations
-  - name: bulk_ops
+  # Escalate bulk operations over threshold
+  - name: large_bulk_ops
     match: { type: "update*" }
     conditions:
       param_gt: { count: 100 }
     risk_level: high
     approval: approve
 
-  # Restrict deploys to weekdays
+  # Only allow deploys on weekdays
   - name: weekday_deploys
     match: { type: "deploy*" }
     conditions:
@@ -165,220 +284,112 @@ rules:
     approval: approve
 ```
 
-Available conditions: `time_after`, `time_before`, `weekdays`, `param_eq`, `param_gt`, `param_lt`, `param_gte`, `param_lte`, `param_contains`, `param_matches` (regex).
+Available: `time_after`, `time_before`, `weekdays`, `param_eq`, `param_gt`, `param_lt`, `param_gte`, `param_lte`, `param_contains`, `param_matches` (regex).
 
-## CLI
+## Architecture
 
-```bash
-# Validate a policy file
-aegis validate policy.yaml
-
-# View the audit log
-aegis audit
-aegis audit --session abc123 --format json
-aegis audit --format jsonl -o audit_export.jsonl
-
-# Print the policy JSON Schema (for editor integration)
-aegis schema
 ```
-
-## Integrations
-
-Aegis plugs into the agent frameworks you already use. Install only what you need:
-
-```bash
-pip install 'agent-aegis[langchain]'      # LangChain
-pip install 'agent-aegis[crewai]'         # CrewAI
-pip install 'agent-aegis[openai-agents]'  # OpenAI Agents SDK
-pip install 'agent-aegis[playwright]'     # Playwright browser
-pip install 'agent-aegis[httpx]'          # REST APIs (httpx)
-pip install 'agent-aegis[all]'            # Everything
-```
-
-### LangChain
-
-```python
-from langchain_community.tools import DuckDuckGoSearchRun
-from aegis import Policy, Runtime
-from aegis.adapters.langchain import LangChainExecutor
-
-executor = LangChainExecutor(tools=[DuckDuckGoSearchRun()])
-runtime = Runtime(executor=executor, policy=Policy.from_yaml("policy.yaml"))
-```
-
-Or expose Aegis-governed actions *as* LangChain tools:
-
-```python
-from aegis.adapters.langchain import AegisTool
-
-tool = AegisTool.from_runtime(
-    runtime=runtime,
-    name="governed_search",
-    description="Policy-governed web search",
-    action_type="search",
-    action_target="web",
-)
-# Use `tool` in any LangChain agent
-```
-
-### OpenAI Agents SDK
-
-```python
-from aegis.adapters.openai_agents import governed_tool
-
-@governed_tool(runtime=runtime, action_type="write", action_target="crm")
-async def update_contact(name: str, email: str) -> str:
-    """Update a CRM contact — governed by Aegis policy."""
-    return await crm.update(name=name, email=email)
-```
-
-### CrewAI
-
-```python
-from aegis.adapters.crewai import AegisCrewAITool
-
-tool = AegisCrewAITool(
-    runtime=runtime,
-    name="governed_search",
-    description="Search with governance",
-    action_type="search", action_target="web",
-    fn=lambda query: do_search(query),
-)
-# Use `tool` in any CrewAI Agent
-```
-
-### httpx (REST APIs)
-
-```python
-from aegis.adapters.httpx_adapter import HttpxExecutor
-
-executor = HttpxExecutor(
-    base_url="https://api.example.com",
-    default_headers={"Authorization": "Bearer ..."},
-)
-runtime = Runtime(executor=executor, policy=Policy.from_yaml("policy.yaml"))
-
-plan = runtime.plan([
-    Action("get", "/users"),
-    Action("post", "/users", params={"json": {"name": "Alice"}}),
-    Action("delete", "/users/1"),
-])
-```
-
-Maps action types to HTTP methods: `get`, `post`, `put`, `patch`, `delete`
-
-### Playwright (browser automation)
-
-```python
-from aegis.adapters.playwright import PlaywrightExecutor
-
-executor = PlaywrightExecutor(headless=True, browser_type="chromium")
-```
-
-Supports: `navigate`, `click`, `fill`, `read`, `screenshot`
-
-### Custom adapters
-
-```python
-from aegis.adapters.base import BaseExecutor
-from aegis.core.action import Action
-from aegis.core.result import Result, ResultStatus
-
-class MyAPIExecutor(BaseExecutor):
-    async def execute(self, action: Action) -> Result:
-        # Your execution logic here
-        return Result(action=action, status=ResultStatus.SUCCESS, data={...})
-```
-
-## Demo
-
-Run the quickstart example (no browser required):
-
-```bash
-python examples/quickstart.py
+aegis/
+  core/        Action, Policy engine, Conditions, Risk levels, JSON Schema
+  adapters/    BaseExecutor, Playwright, httpx, LangChain, CrewAI, OpenAI, Anthropic
+  runtime/     Runtime engine, ApprovalHandler, AuditLogger (SQLite/JSONL/logging)
+  cli/         aegis validate | audit | schema | init
 ```
 
 ```
-============================================================
-  EXECUTION PLAN
-============================================================
-  1. [   AUTO] Action(navigate -> crm)              (risk=LOW, rule=navigate_auto)
-  2. [   AUTO] Action(read -> crm - Read contact list)  (risk=LOW, rule=read_auto)
-  3. [APPROVE] Action(write -> crm - Update contact)    (risk=MEDIUM, rule=write_approve)
-  4. [APPROVE] Action(bulk_update -> crm - Bulk status change)  (risk=HIGH, rule=bulk_approve)
-  5. [  BLOCK] Action(delete -> crm - Delete all records)  (risk=CRITICAL, rule=delete_block)
-
-    [dry-run] Would execute: Action(navigate -> crm)
-    [dry-run] Would execute: Action(read -> crm - Read contact list)
-
-============================================================
-  APPROVAL REQUIRED
-============================================================
-  Action:  write
-  Target:  crm
-  Risk:    MEDIUM
-  Approve? [y/n]: y
-    [dry-run] Would execute: Action(write -> crm - Update contact)
-
-============================================================
-  RESULTS
-============================================================
-  [OK] navigate -> crm
-  [OK] read -> crm
-  [OK] write -> crm
-  [OK] bulk_update -> crm
-  [BLOCK] delete -> crm
-
-============================================================
-  AUDIT LOG
-============================================================
-      navigate | risk=LOW      | decision=auto     | result=success
-          read | risk=LOW      | decision=auto     | result=success
-         write | risk=MEDIUM   | decision=approved | result=success
-   bulk_update | risk=HIGH     | decision=approved | result=success
-        delete | risk=CRITICAL | decision=block    | result=blocked
+                    +----------------+
+                    |   Your Agent   |
+                    +-------+--------+
+                            |
+                     Action(type, target, params)
+                            |
+                    +-------v--------+
+                    |  Policy Engine |  <-- policy.yaml (YAML rules + conditions)
+                    +-------+--------+
+                            |
+                   PolicyDecision(risk, approval, rule)
+                            |
+              +-------------+-------------+
+              |             |             |
+         auto: LOW    approve: HIGH   block: CRITICAL
+              |             |             |
+              v      +------v------+      v
+           execute   | Approval    |   blocked
+              |      | Handler     |      |
+              |      +------+------+      |
+              |             |             |
+              v             v             |
+         +---------+   +---------+        |
+         | Adapter |   | Adapter |        |
+         +---------+   +---------+        |
+              |             |             |
+              v             v             v
+         +------------------------------------+
+         |          Audit Logger              |
+         |   (SQLite / JSONL / logging)       |
+         +------------------------------------+
 ```
 
 ## Why Not Build Your Own?
 
-| | DIY Governance | Aegis |
+| | DIY | Aegis |
 |---|---|---|
-| **Policy engine** | Custom if/else per action | YAML rules, glob matching, conditions (time/params/weekday) |
-| **Risk classification** | Hardcoded | 4-tier model with per-rule overrides |
-| **Human approval** | Build your own UI/CLI | Pluggable handlers (CLI, Slack, custom) |
-| **Audit trail** | printf / custom logging | SQLite + JSONL export with session tracking |
-| **Framework support** | Rewrite per framework | LangChain, CrewAI, OpenAI SDK, Playwright, httpx |
+| **Policy engine** | Custom if/else per action | YAML rules + glob + conditions |
+| **Risk model** | Hardcoded | 4-tier with per-rule overrides |
+| **Human approval** | Build your own | Pluggable (CLI, Slack, custom) |
+| **Audit trail** | printf debugging | SQLite + JSONL + session tracking |
+| **Framework support** | Rewrite per framework | 6 adapters out of the box |
 | **Verification** | Hope it worked | Post-execution verification hooks |
-| **Time to integrate** | Days to weeks | Minutes |
+| **Type safety** | Maybe | mypy strict, py.typed |
+| **Time to integrate** | Days | Minutes |
+
+## CLI
+
+```bash
+aegis init                              # Generate starter policy
+aegis validate policy.yaml              # Validate policy syntax
+aegis schema                            # Print JSON Schema (for editor autocomplete)
+aegis audit                             # View audit log
+aegis audit --session abc --format json # Filter + format
+aegis audit --format jsonl -o export.jsonl  # Export
+```
 
 ## Roadmap
 
-| Version | Features |
-|---------|----------|
-| **0.1** | Policy engine, Playwright/httpx adapters, CLI approval, SQLite + JSONL audit, JSON Schema, LangChain/CrewAI/OpenAI/Anthropic integrations |
-| **0.2** | Dashboard (React), Slack/Discord approval handlers, policy inheritance |
-| **0.3** | MCP server adapter, rollback support, webhook notifications |
-| **0.4** | Multi-tenant policies, team-based approvals, cloud audit storage |
+| Version | Status | Features |
+|---------|--------|----------|
+| **0.1** | **Released** | Policy engine, 6 adapters, CLI, audit (SQLite + JSONL), conditions, JSON Schema |
+| **0.2** | Planned | Dashboard UI, Slack/Discord approval, policy inheritance, hot-reload |
+| **0.3** | Planned | MCP server adapter, rollback support, webhook notifications |
+| **0.4** | Planned | Multi-tenant policies, team approvals, cloud audit storage |
 
-See [CHANGELOG.md](CHANGELOG.md) for release history.
+## Contributing
 
-## Development
+We welcome contributions! Check out:
+
+- [**Good First Issues**](https://github.com/Acacian/aegis/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) — great starting points
+- [**Contributing Guide**](CONTRIBUTING.md) — setup, code style, PR process
+- [**Architecture**](ARCHITECTURE.md) — how the codebase is structured
 
 ```bash
-git clone https://github.com/Acacian/aegis.git
-cd aegis
-make dev     # Install + pre-commit hooks
-make test    # Run tests
-make lint    # Run linter
-make coverage  # Coverage report
+git clone https://github.com/Acacian/aegis.git && cd aegis
+make dev      # Install deps + hooks
+make test     # Run tests
+make lint     # Lint + format check
+make coverage # Coverage report
 ```
 
-Or use a cloud dev environment:
+Or jump straight into a cloud environment:
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/Acacian/aegis)
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide.
-
 ## License
 
-MIT — see [LICENSE](LICENSE) for details.
+MIT -- see [LICENSE](LICENSE) for details.
+
+---
+
+<p align="center">
+  <sub>Built for the era of autonomous AI agents.</sub><br/>
+  <sub>If Aegis helps you, consider giving it a star -- it helps others find it too.</sub>
+</p>

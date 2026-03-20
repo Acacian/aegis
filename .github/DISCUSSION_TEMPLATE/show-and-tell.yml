@@ -1,0 +1,20 @@
+title: "[Show] "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Show off what you've built with Aegis! We'd love to see your integration.
+  - type: textarea
+    id: description
+    attributes:
+      label: What did you build?
+      description: Describe your project or integration.
+    validations:
+      required: true
+  - type: textarea
+    id: code
+    attributes:
+      label: Code snippet or link
+      description: Share a code example, screenshot, or link to your project.
+      render: python
