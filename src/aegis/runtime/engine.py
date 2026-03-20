@@ -117,9 +117,7 @@ class Runtime:
                     error="Denied by human operator",
                     completed_at=datetime.now(timezone.utc),
                 )
-                self.audit.log(
-                    self.session_id, decision, result=result, human_decision="denied"
-                )
+                self.audit.log(self.session_id, decision, result=result, human_decision="denied")
                 return result
             human_decision = "approved"
 
@@ -137,8 +135,6 @@ class Runtime:
             )
 
         # 5. Audit
-        self.audit.log(
-            self.session_id, decision, result=result, human_decision=human_decision
-        )
+        self.audit.log(self.session_id, decision, result=result, human_decision=human_decision)
 
         return result

@@ -22,9 +22,7 @@ def main(argv: list[str] | None = None) -> None:
     audit_parser = subparsers.add_parser("audit", help="View the audit log")
     audit_parser.add_argument("--db", default="aegis_audit.db", help="Database path")
     audit_parser.add_argument("--session", help="Filter by session ID")
-    audit_parser.add_argument(
-        "--format", choices=["table", "json"], default="table", dest="fmt"
-    )
+    audit_parser.add_argument("--format", choices=["table", "json"], default="table", dest="fmt")
 
     # aegis validate
     validate_parser = subparsers.add_parser("validate", help="Validate a policy file")
