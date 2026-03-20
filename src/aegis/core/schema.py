@@ -67,16 +67,14 @@ POLICY_SCHEMA: dict[str, object] = {
                             "type": {
                                 "type": "string",
                                 "description": (
-                                    "Glob pattern for action type"
-                                    " (e.g. 'read', 'delete*')."
+                                    "Glob pattern for action type (e.g. 'read', 'delete*')."
                                 ),
                                 "default": "*",
                             },
                             "target": {
                                 "type": "string",
                                 "description": (
-                                    "Glob pattern for action target"
-                                    " (e.g. 'salesforce', '*')."
+                                    "Glob pattern for action target (e.g. 'salesforce', '*')."
                                 ),
                                 "default": "*",
                             },
