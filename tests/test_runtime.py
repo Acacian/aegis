@@ -247,3 +247,36 @@ async def test_plan_summary(tmp_path: Path):
     assert "AUTO" in summary
     assert "APPROVE" in summary
     assert "BLOCK" in summary
+
+
+@pytest.mark.asyncio
+async def test_run_one_convenience(tmp_path: Path):
+    """run_one() should plan + execute a single action."""
+    executor = FakeExecutor()
+    runtime = _make_runtime(tmp_path, executor=executor)
+    result = await runtime.run_one(Action("read", "salesforce"))
+
+    assert result.ok
+    assert len(executor.executed) == 1
+
+
+@pytest.mark.asyncio
+async def test_context_manager(tmp_path: Path):
+    """Runtime should work as an async context manager."""
+    executor = FakeExecutor()
+    runtime = Runtime(
+        executor=executor,
+        policy=Policy(
+            rules=[PolicyRule(match_type="*", approval=Approval.AUTO)]
+        ),
+        approval_handler=AutoApprovalHandler(),
+        audit_logger=AuditLogger(db_path=tmp_path / "ctx.db"),
+    )
+
+    async with runtime:
+        assert executor.setup_called
+        plan = runtime.plan([Action("read", "test")])
+        results = await runtime.execute(plan)
+        assert results[0].ok
+
+    assert executor.teardown_called
