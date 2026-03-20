@@ -10,8 +10,22 @@
 - **Policy JSON Schema** — `aegis schema` CLI command; `policy.schema.json` ships with the repo for editor integration
 - **Runtime context manager** — `async with Runtime(...) as rt:` for automatic setup/teardown
 - **`run_one()` convenience** — single-action governance shortcut
-- httpx demo example
-- 45 new tests (90 total)
+- **`aegis init`** — CLI command to generate starter policy
+- Korean README translation (`README.ko.md`)
+- 9 example scripts (httpx, conditions, CrewAI, OpenAI Agents, Anthropic, etc.)
+- 187 tests, 98% code coverage
+- Mermaid architecture diagrams
+
+### Infrastructure
+- Full `mypy --strict` compliance (0 errors)
+- GitHub Actions bumped to latest (checkout v6, setup-python v6, etc.)
+- Dependabot for pip + GitHub Actions
+- Release Drafter, stale bot, CODEOWNERS, FUNDING.yml
+- `.devcontainer` (Codespaces), `.gitpod.yml`, `.pre-commit-config.yaml`
+- ARCHITECTURE.md, GOVERNANCE.md, CITATION.cff, SECURITY.md
+- 8 good-first-issues for new contributors
+- GitHub Discussions enabled
+- 20 GitHub topics for discoverability
 
 ## 0.1.0 (2026-03-21)
 
