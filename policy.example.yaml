@@ -1,0 +1,58 @@
+version: "1"
+
+defaults:
+  risk_level: medium
+  approval: approve
+
+rules:
+  # Read-only operations are safe to auto-execute
+  - name: read_operations
+    match:
+      type: read
+    risk_level: low
+    approval: auto
+
+  - name: navigate
+    match:
+      type: navigate
+    risk_level: low
+    approval: auto
+
+  - name: screenshot
+    match:
+      type: screenshot
+    risk_level: low
+    approval: auto
+
+  # Single-write operations require approval
+  - name: click_action
+    match:
+      type: click
+    risk_level: medium
+    approval: approve
+
+  - name: fill_form
+    match:
+      type: fill
+    risk_level: medium
+    approval: approve
+
+  - name: single_write
+    match:
+      type: write
+    risk_level: medium
+    approval: approve
+
+  # Bulk operations: high risk, require approval
+  - name: bulk_update
+    match:
+      type: bulk_update
+    risk_level: high
+    approval: approve
+
+  # Destructive operations: always blocked
+  - name: delete_blocked
+    match:
+      type: delete
+    risk_level: critical
+    approval: block
