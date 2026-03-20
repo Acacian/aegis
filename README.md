@@ -19,7 +19,7 @@ Agent action  →  Policy check  →  Approval gate  →  Execute  →  Verify  
 
 ### Works with your stack
 
-**LangChain** | **CrewAI** | **OpenAI Agents SDK** | **Anthropic Claude** | **Playwright** | **Custom adapters**
+**LangChain** | **CrewAI** | **OpenAI Agents SDK** | **Anthropic Claude** | **Playwright** | **httpx** | **Custom adapters**
 
 ### Why?
 
@@ -107,10 +107,10 @@ aegis audit
 
 ```
 aegis/
-  core/        Action, RiskLevel, Policy engine, Result, ExecutionPlan
-  adapters/    BaseExecutor, PlaywrightExecutor
-  runtime/     Runtime engine, ApprovalHandler, AuditLogger
-  cli/         CLI entry point (aegis audit, aegis validate)
+  core/        Action, RiskLevel, Policy engine, JSON Schema, Result, ExecutionPlan
+  adapters/    BaseExecutor, Playwright, httpx, LangChain, CrewAI, OpenAI, Anthropic
+  runtime/     Runtime engine, ApprovalHandler, AuditLogger (SQLite + JSONL)
+  cli/         CLI (aegis audit, aegis validate, aegis schema)
 ```
 
 ### Key concepts
@@ -140,6 +140,10 @@ aegis validate policy.yaml
 # View the audit log
 aegis audit
 aegis audit --session abc123 --format json
+aegis audit --format jsonl -o audit_export.jsonl
+
+# Print the policy JSON Schema (for editor integration)
+aegis schema
 ```
 
 ## Integrations
@@ -147,11 +151,12 @@ aegis audit --session abc123 --format json
 Aegis plugs into the agent frameworks you already use. Install only what you need:
 
 ```bash
-pip install 'agent-aegis[langchain]'   # LangChain
-pip install 'agent-aegis[crewai]'      # CrewAI
+pip install 'agent-aegis[langchain]'      # LangChain
+pip install 'agent-aegis[crewai]'         # CrewAI
 pip install 'agent-aegis[openai-agents]'  # OpenAI Agents SDK
-pip install 'agent-aegis[playwright]'  # Playwright browser
-pip install 'agent-aegis[all]'         # Everything
+pip install 'agent-aegis[playwright]'     # Playwright browser
+pip install 'agent-aegis[httpx]'          # REST APIs (httpx)
+pip install 'agent-aegis[all]'            # Everything
 ```
 
 ### LangChain
@@ -205,6 +210,26 @@ tool = AegisCrewAITool(
 )
 # Use `tool` in any CrewAI Agent
 ```
+
+### httpx (REST APIs)
+
+```python
+from aegis.adapters.httpx_adapter import HttpxExecutor
+
+executor = HttpxExecutor(
+    base_url="https://api.example.com",
+    default_headers={"Authorization": "Bearer ..."},
+)
+runtime = Runtime(executor=executor, policy=Policy.from_yaml("policy.yaml"))
+
+plan = runtime.plan([
+    Action("get", "/users"),
+    Action("post", "/users", params={"json": {"name": "Alice"}}),
+    Action("delete", "/users/1"),
+])
+```
+
+Maps action types to HTTP methods: `get`, `post`, `put`, `patch`, `delete`
 
 ### Playwright (browser automation)
 
@@ -285,8 +310,8 @@ python examples/quickstart.py
 | **Policy engine** | Custom if/else per action | YAML rules, glob matching, hot-reloadable |
 | **Risk classification** | Hardcoded | 4-tier model with per-rule overrides |
 | **Human approval** | Build your own UI/CLI | Pluggable handlers (CLI, Slack, custom) |
-| **Audit trail** | printf / custom logging | Structured SQLite with session tracking |
-| **Framework support** | Rewrite per framework | LangChain, CrewAI, OpenAI SDK, Playwright |
+| **Audit trail** | printf / custom logging | SQLite + JSONL export with session tracking |
+| **Framework support** | Rewrite per framework | LangChain, CrewAI, OpenAI SDK, Playwright, httpx |
 | **Verification** | Hope it worked | Post-execution verification hooks |
 | **Time to integrate** | Days to weeks | Minutes |
 
@@ -294,7 +319,7 @@ python examples/quickstart.py
 
 | Version | Features |
 |---------|----------|
-| **0.1** | Policy engine, Playwright adapter, CLI approval, SQLite audit, LangChain/CrewAI/OpenAI integrations |
+| **0.1** | Policy engine, Playwright/httpx adapters, CLI approval, SQLite + JSONL audit, JSON Schema, LangChain/CrewAI/OpenAI/Anthropic integrations |
 | **0.2** | Dashboard (React), Slack/Discord approval handlers, policy inheritance |
 | **0.3** | MCP server adapter, rollback support, webhook notifications |
 | **0.4** | Multi-tenant policies, team-based approvals, cloud audit storage |

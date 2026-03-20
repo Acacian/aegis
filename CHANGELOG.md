@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.1 (2026-03-21)
+
+### Added
+- **httpx/REST adapter** (`HttpxExecutor`) — map action types to HTTP methods with full request/response handling
+- **JSONL audit export** — `aegis audit --format jsonl` and `AuditLogger.export_jsonl()` for log pipeline integration
+- **Policy JSON Schema** — `aegis schema` prints the schema; `policy.schema.json` ships with the repo for editor integration
+- 17 new tests (62 total)
+
 ## 0.1.0 (2026-03-21)
 
 ### Added

@@ -103,6 +103,23 @@ class AuditLogger:
         columns = [desc[0] for desc in cursor.description]
         return [dict(zip(columns, row, strict=True)) for row in cursor.fetchall()]
 
+    def export_jsonl(self, path: str | Path, session_id: str | None = None) -> int:
+        """Export audit entries as JSON Lines (one JSON object per line).
+
+        Args:
+            path: Output file path.
+            session_id: Optional session filter.
+
+        Returns:
+            Number of entries exported.
+        """
+        entries = self.get_log(session_id=session_id)
+        out = Path(path)
+        with out.open("w") as f:
+            for entry in entries:
+                f.write(json.dumps(entry) + "\n")
+        return len(entries)
+
     def close(self) -> None:
         """Close the database connection."""
         self._conn.close()

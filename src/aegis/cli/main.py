@@ -22,11 +22,22 @@ def main(argv: list[str] | None = None) -> None:
     audit_parser = subparsers.add_parser("audit", help="View the audit log")
     audit_parser.add_argument("--db", default="aegis_audit.db", help="Database path")
     audit_parser.add_argument("--session", help="Filter by session ID")
-    audit_parser.add_argument("--format", choices=["table", "json"], default="table", dest="fmt")
+    audit_parser.add_argument(
+        "--format",
+        choices=["table", "json", "jsonl"],
+        default="table",
+        dest="fmt",
+    )
+    audit_parser.add_argument(
+        "--output", "-o", help="Output file path (for jsonl export)"
+    )
 
     # aegis validate
     validate_parser = subparsers.add_parser("validate", help="Validate a policy file")
     validate_parser.add_argument("policy_file", help="Path to policy YAML file")
+
+    # aegis schema
+    subparsers.add_parser("schema", help="Print the policy JSON Schema")
 
     args = parser.parse_args(argv)
 
@@ -40,6 +51,8 @@ def main(argv: list[str] | None = None) -> None:
         _cmd_audit(args)
     elif args.command == "validate":
         _cmd_validate(args)
+    elif args.command == "schema":
+        _cmd_schema()
     else:
         parser.print_help()
 
@@ -47,6 +60,14 @@ def main(argv: list[str] | None = None) -> None:
 def _cmd_audit(args: argparse.Namespace) -> None:
     """Display audit log entries."""
     logger = AuditLogger(db_path=args.db)
+
+    if args.fmt == "jsonl":
+        output = args.output or "aegis_audit.jsonl"
+        count = logger.export_jsonl(output, session_id=args.session)
+        logger.close()
+        print(f"Exported {count} entries to {output}")
+        return
+
     entries = logger.get_log(session_id=args.session)
     logger.close()
 
@@ -95,6 +116,13 @@ def _cmd_validate(args: argparse.Namespace) -> None:
     except Exception as e:
         print(f"Policy validation failed: {e}", file=sys.stderr)
         sys.exit(1)
+
+
+def _cmd_schema() -> None:
+    """Print the policy JSON Schema."""
+    from aegis.core.schema import get_schema_json
+
+    print(get_schema_json())
 
 
 if __name__ == "__main__":

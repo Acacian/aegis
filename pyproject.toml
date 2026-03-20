@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "agent-aegis"
-version = "0.1.0"
+version = "0.1.1"
 description = "Open-source policy & approval runtime for AI agents acting on systems you don't own"
 readme = "README.md"
 license = "MIT"
@@ -28,18 +28,21 @@ langchain = ["langchain-core>=0.2"]
 crewai = ["crewai>=0.50"]
 openai-agents = ["openai-agents>=0.1"]
 anthropic = ["anthropic>=0.30"]
+httpx = ["httpx>=0.27"]
 all = [
     "playwright>=1.40",
     "langchain-core>=0.2",
     "crewai>=0.50",
     "openai-agents>=0.1",
     "anthropic>=0.30",
+    "httpx>=0.27",
 ]
 dev = [
     "pytest>=8.0",
     "pytest-asyncio>=0.23",
     "ruff>=0.3",
     "playwright>=1.40",
+    "httpx>=0.27",
 ]
 
 [project.scripts]
