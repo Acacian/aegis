@@ -15,6 +15,7 @@ from typing import Any
 import yaml
 
 from aegis.core.action import Action
+from aegis.core.conditions import evaluate_conditions
 from aegis.core.risk import RiskLevel
 
 
@@ -49,7 +50,8 @@ class PolicyDecision:
 class PolicyRule:
     """A single rule in the policy.
 
-    Matches actions by type and target using glob patterns.
+    Matches actions by type and target using glob patterns,
+    with optional conditions for time-based and param-based logic.
     """
 
     match_type: str = "*"
@@ -57,12 +59,21 @@ class PolicyRule:
     risk_level: RiskLevel = RiskLevel.MEDIUM
     approval: Approval = Approval.APPROVE
     name: str = ""
+    conditions: dict[str, Any] = field(default_factory=dict)
 
     def matches(self, action: Action) -> bool:
-        """Check if this rule matches the given action."""
-        return fnmatch.fnmatch(action.type, self.match_type) and fnmatch.fnmatch(
+        """Check if this rule matches the given action.
+
+        Both glob patterns and conditions (if any) must match.
+        """
+        glob_match = fnmatch.fnmatch(action.type, self.match_type) and fnmatch.fnmatch(
             action.target, self.match_target
         )
+        if not glob_match:
+            return False
+        if self.conditions:
+            return evaluate_conditions(self.conditions, action.params)
+        return True
 
 
 @dataclass
@@ -137,6 +148,7 @@ class Policy:
                     risk_level=RiskLevel[rule_data.get("risk_level", "medium").upper()],
                     approval=Approval(rule_data.get("approval", "approve")),
                     name=rule_data.get("name", f"rule_{i}"),
+                    conditions=rule_data.get("conditions", {}),
                 )
             )
 
