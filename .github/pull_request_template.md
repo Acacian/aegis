@@ -4,7 +4,7 @@
 
 ## Why
 
-<!-- What problem does this solve? Link to issue if applicable -->
+<!-- What problem does this solve? Link to issue if applicable (closes #123) -->
 
 ## How
 
@@ -13,5 +13,11 @@
 ## Checklist
 
 - [ ] Tests added/updated
-- [ ] `ruff check` and `ruff format` pass
-- [ ] Docs updated if needed
+- [ ] Lint passes (`make lint`)
+- [ ] Type checking passes (`make typecheck`)
+- [ ] Docs updated (if user-facing change)
+- [ ] CHANGELOG entry added (if user-facing change)
+
+## Test plan
+
+<!-- How can reviewers verify this works? -->
