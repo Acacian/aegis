@@ -1,0 +1,20 @@
+{
+  "projectName": "aegis",
+  "projectOwner": "Acacian",
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "files": ["README.md"],
+  "imageSize": 100,
+  "commit": true,
+  "commitConvention": "angular",
+  "contributors": [
+    {
+      "login": "Acacian",
+      "name": "Acacian",
+      "avatar_url": "https://avatars.githubusercontent.com/Acacian",
+      "profile": "https://github.com/Acacian",
+      "contributions": ["code", "doc", "test", "maintenance", "infra"]
+    }
+  ],
+  "contributorsPerLine": 7
+}

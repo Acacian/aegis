@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Documentation
+    url: https://acacian.github.io/aegis/
+    about: Check the docs before opening an issue
+  - name: FAQ
+    url: https://acacian.github.io/aegis/faq/
+    about: Frequently asked questions

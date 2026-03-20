@@ -1,0 +1,36 @@
+name: Adapter Request
+description: Request a new adapter for a framework or service
+title: "[Adapter] "
+labels: ["enhancement", "adapter"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Request support for a new framework or service adapter.
+  - type: input
+    id: framework
+    attributes:
+      label: Framework / Service
+      description: What framework or service should Aegis support?
+      placeholder: e.g., "AWS Bedrock", "AutoGen", "Semantic Kernel"
+    validations:
+      required: true
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Use Case
+      description: How would you use this adapter?
+    validations:
+      required: true
+  - type: textarea
+    id: api
+    attributes:
+      label: Proposed API
+      description: What would the integration look like? (code example)
+      render: python
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Would you like to contribute this?
+      options:
+        - label: I'd be willing to submit a PR for this adapter
