@@ -144,25 +144,27 @@ def test_rule_without_conditions_backward_compat():
 
 def test_policy_from_dict_with_conditions():
     """Conditions should be loaded from dict/YAML."""
-    policy = Policy.from_dict({
-        "version": "1",
-        "defaults": {"risk_level": "medium", "approval": "approve"},
-        "rules": [
-            {
-                "name": "bulk_block",
-                "match": {"type": "update*"},
-                "conditions": {"param_gt": {"count": 1000}},
-                "risk_level": "critical",
-                "approval": "block",
-            },
-            {
-                "name": "update_ok",
-                "match": {"type": "update*"},
-                "risk_level": "low",
-                "approval": "auto",
-            },
-        ],
-    })
+    policy = Policy.from_dict(
+        {
+            "version": "1",
+            "defaults": {"risk_level": "medium", "approval": "approve"},
+            "rules": [
+                {
+                    "name": "bulk_block",
+                    "match": {"type": "update*"},
+                    "conditions": {"param_gt": {"count": 1000}},
+                    "risk_level": "critical",
+                    "approval": "block",
+                },
+                {
+                    "name": "update_ok",
+                    "match": {"type": "update*"},
+                    "risk_level": "low",
+                    "approval": "auto",
+                },
+            ],
+        }
+    )
 
     # Bulk update (count > 1000) → blocked
     d1 = policy.evaluate(Action("update", "db", params={"count": 5000}))

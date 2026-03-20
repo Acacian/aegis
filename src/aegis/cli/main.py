@@ -81,9 +81,7 @@ def main(argv: list[str] | None = None) -> None:
         default="table",
         dest="fmt",
     )
-    audit_parser.add_argument(
-        "--output", "-o", help="Output file path (for jsonl export)"
-    )
+    audit_parser.add_argument("--output", "-o", help="Output file path (for jsonl export)")
 
     # aegis validate
     validate_parser = subparsers.add_parser("validate", help="Validate a policy file")
@@ -94,9 +92,7 @@ def main(argv: list[str] | None = None) -> None:
 
     # aegis init
     init_parser = subparsers.add_parser("init", help="Generate a starter policy file")
-    init_parser.add_argument(
-        "--output", "-o", default="policy.yaml", help="Output file path"
-    )
+    init_parser.add_argument("--output", "-o", default="policy.yaml", help="Output file path")
 
     args = parser.parse_args(argv)
 

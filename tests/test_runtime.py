@@ -266,9 +266,7 @@ async def test_context_manager(tmp_path: Path):
     executor = FakeExecutor()
     runtime = Runtime(
         executor=executor,
-        policy=Policy(
-            rules=[PolicyRule(match_type="*", approval=Approval.AUTO)]
-        ),
+        policy=Policy(rules=[PolicyRule(match_type="*", approval=Approval.AUTO)]),
         approval_handler=AutoApprovalHandler(),
         audit_logger=AuditLogger(db_path=tmp_path / "ctx.db"),
     )

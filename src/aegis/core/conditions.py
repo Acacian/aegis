@@ -52,15 +52,10 @@ def evaluate_conditions(
         return True
 
     now = now or datetime.now(UTC)
-    return all(
-        _evaluate_one(key, value, params, now)
-        for key, value in conditions.items()
-    )
+    return all(_evaluate_one(key, value, params, now) for key, value in conditions.items())
 
 
-def _evaluate_one(
-    key: str, value: Any, params: dict[str, Any], now: datetime
-) -> bool:
+def _evaluate_one(key: str, value: Any, params: dict[str, Any], now: datetime) -> bool:
     """Evaluate a single condition."""
     match key:
         case "time_after":
