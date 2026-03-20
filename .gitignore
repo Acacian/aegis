@@ -20,5 +20,8 @@ venv/
 .coverage
 htmlcov/
 
+# Docs build
+site/
+
 # Aegis runtime artifacts
 aegis_audit.db
