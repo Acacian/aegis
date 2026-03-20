@@ -43,11 +43,37 @@ rules:
     risk_level: medium
     approval: approve
 
-  # Bulk operations: high risk, require approval
+  # Bulk operations: escalate when count > 100
+  - name: bulk_update_large
+    match:
+      type: bulk_update
+    conditions:
+      param_gt: { count: 100 }
+    risk_level: critical
+    approval: block
+
   - name: bulk_update
     match:
       type: bulk_update
     risk_level: high
+    approval: approve
+
+  # Block writes after business hours (UTC)
+  - name: after_hours_write_block
+    match:
+      type: "write*"
+    conditions:
+      time_after: "18:00"
+    risk_level: critical
+    approval: block
+
+  # Restrict deploys to weekdays only
+  - name: weekday_deploys_only
+    match:
+      type: "deploy*"
+    conditions:
+      weekdays: [1, 2, 3, 4, 5]
+    risk_level: medium
     approval: approve
 
   # Destructive operations: always blocked

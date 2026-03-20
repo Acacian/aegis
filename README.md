@@ -130,6 +130,40 @@ Rules are evaluated in order — first match wins. Each rule specifies:
 - **match**: Glob patterns for `type` and `target`
 - **risk_level**: `low`, `medium`, `high`, `critical`
 - **approval**: `auto` (no human needed), `approve` (human must confirm), `block` (never execute)
+- **conditions** (optional): Time-based, param-based, or weekday constraints
+
+### Conditions
+
+Rules can include conditional logic that goes beyond glob matching:
+
+```yaml
+rules:
+  # Block writes after business hours
+  - name: after_hours_block
+    match: { type: "write*" }
+    conditions:
+      time_after: "18:00"
+    risk_level: critical
+    approval: block
+
+  # Escalate bulk operations
+  - name: bulk_ops
+    match: { type: "update*" }
+    conditions:
+      param_gt: { count: 100 }
+    risk_level: high
+    approval: approve
+
+  # Restrict deploys to weekdays
+  - name: weekday_deploys
+    match: { type: "deploy*" }
+    conditions:
+      weekdays: [1, 2, 3, 4, 5]
+    risk_level: medium
+    approval: approve
+```
+
+Available conditions: `time_after`, `time_before`, `weekdays`, `param_eq`, `param_gt`, `param_lt`, `param_gte`, `param_lte`, `param_contains`, `param_matches` (regex).
 
 ## CLI
 
