@@ -33,12 +33,13 @@ Example YAML::
 from __future__ import annotations
 
 import re
+from collections.abc import Callable
 from datetime import UTC, datetime, time
 from typing import Any
 
 
 def evaluate_conditions(
-    conditions: dict[str, Any], params: dict, now: datetime | None = None
+    conditions: dict[str, Any], params: dict[str, Any], now: datetime | None = None
 ) -> bool:
     """Evaluate all conditions. Returns True if ALL conditions pass.
 
@@ -58,7 +59,7 @@ def evaluate_conditions(
 
 
 def _evaluate_one(
-    key: str, value: Any, params: dict, now: datetime
+    key: str, value: Any, params: dict[str, Any], now: datetime
 ) -> bool:
     """Evaluate a single condition."""
     match key:
@@ -108,27 +109,27 @@ def _check_time_before(value: str, now: datetime) -> bool:
 
 
 def _op_eq(actual: Any, expected: Any) -> bool:
-    return actual == expected
+    return bool(actual == expected)
 
 
 def _op_gt(actual: Any, expected: Any) -> bool:
-    return actual > expected
+    return bool(actual > expected)
 
 
 def _op_lt(actual: Any, expected: Any) -> bool:
-    return actual < expected
+    return bool(actual < expected)
 
 
 def _op_gte(actual: Any, expected: Any) -> bool:
-    return actual >= expected
+    return bool(actual >= expected)
 
 
 def _op_lte(actual: Any, expected: Any) -> bool:
-    return actual <= expected
+    return bool(actual <= expected)
 
 
 def _op_contains(actual: Any, expected: Any) -> bool:
-    return expected in actual
+    return bool(expected in actual)
 
 
 def _op_matches(actual: Any, expected: Any) -> bool:
@@ -137,8 +138,8 @@ def _op_matches(actual: Any, expected: Any) -> bool:
 
 def _check_param_compare(
     spec: dict[str, Any],
-    params: dict,
-    op: Any,
+    params: dict[str, Any],
+    op: Callable[[Any, Any], bool],
 ) -> bool:
     """Check param conditions. spec is {param_name: expected_value}."""
     for param_name, expected in spec.items():

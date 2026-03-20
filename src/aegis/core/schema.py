@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import json
 
-POLICY_SCHEMA: dict = {
+POLICY_SCHEMA: dict[str, object] = {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://github.com/Acacian/aegis/blob/main/policy.schema.json",
     "title": "Aegis Policy",

@@ -28,8 +28,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install -e ".[dev]" mypy
-      - run: mypy src/aegis/ --ignore-missing-imports
+      - run: pip install -e ".[dev]"
+      - run: mypy src/aegis/
 
   test:
     runs-on: ubuntu-latest
@@ -41,7 +41,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - run: pip install -e ".[dev]" pytest-cov
+      - run: pip install -e ".[dev]"
       - run: pytest -v --tb=short --cov=aegis --cov-report=xml --cov-report=term-missing
       - name: Upload coverage
         if: matrix.python-version == '3.12'
