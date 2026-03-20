@@ -4,6 +4,7 @@
 [![PyPI](https://img.shields.io/pypi/v/agent-aegis)](https://pypi.org/project/agent-aegis/)
 [![Python](https://img.shields.io/pypi/pyversions/agent-aegis)](https://pypi.org/project/agent-aegis/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Docs](https://img.shields.io/badge/docs-acacian.github.io%2Faegis-blue)](https://acacian.github.io/aegis/)
 
 **Open-source policy & approval runtime for AI agents acting on systems you don't own.**
 
