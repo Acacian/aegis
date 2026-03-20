@@ -78,6 +78,32 @@ tool = AegisCrewAITool(
 
 Requires: `pip install 'agent-aegis[crewai]'`
 
+## HttpxExecutor
+
+```python
+from aegis.adapters.httpx_adapter import HttpxExecutor
+
+executor = HttpxExecutor(
+    base_url="https://api.example.com",
+    default_headers={"Authorization": "Bearer ..."},
+    timeout=30.0,
+)
+```
+
+| Action Type | HTTP Method |
+|-------------|-------------|
+| `get` | GET |
+| `post` | POST |
+| `put` | PUT |
+| `patch` | PATCH |
+| `delete` | DELETE |
+| `head` | HEAD |
+| `options` | OPTIONS |
+
+Supported `params` keys: `json`, `data`, `headers`, `query`, `timeout`.
+
+Requires: `pip install 'agent-aegis[httpx]'`
+
 ## @governed_tool (OpenAI Agents SDK)
 
 ```python
@@ -89,3 +115,18 @@ async def my_tool(query: str) -> str:
 ```
 
 Requires: `pip install 'agent-aegis[openai-agents]'`
+
+## govern_tool_call (Anthropic Claude)
+
+```python
+from aegis.adapters.anthropic import govern_tool_call
+
+result = await govern_tool_call(
+    runtime=runtime,
+    tool_name="update_contact",
+    tool_input={"name": "Alice"},
+    target="crm",
+)
+```
+
+Requires: `pip install 'agent-aegis[anthropic]'`

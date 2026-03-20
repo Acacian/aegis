@@ -1,7 +1,5 @@
 # Runtime
 
-::: aegis.runtime.engine.Runtime
-
 ## Constructor
 
 ```python
@@ -22,6 +20,16 @@ Runtime(
 | `approval_handler` | `ApprovalHandler` | `CLIApprovalHandler()` | How to ask humans for approval |
 | `audit_logger` | `AuditLogger` | `AuditLogger()` | Where to log the audit trail |
 | `session_id` | `str` | auto-generated | Identifier for grouping audit entries |
+
+## Context Manager
+
+Runtime supports async context manager for automatic setup/teardown:
+
+```python
+async with Runtime(executor=..., policy=...) as runtime:
+    results = await runtime.execute(plan)
+# executor.teardown() and audit.close() called automatically
+```
 
 ## Methods
 
@@ -48,3 +56,14 @@ for r in results:
 ```
 
 **Fail-fast behavior:** If an action fails (not blocked/skipped), all remaining actions are skipped.
+
+### `await run_one(action) -> Result`
+
+Convenience method: evaluate + execute a single action.
+
+```python
+result = await runtime.run_one(Action("read", "salesforce"))
+assert result.ok
+```
+
+Equivalent to `plan([action])` + `execute(plan)` but returns a single `Result`.
