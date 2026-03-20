@@ -65,5 +65,6 @@ nav:
       - Action & Result: api/models.md
       - Adapters: api/adapters.md
       - Audit: api/audit.md
+  - Cheatsheet: cheatsheet.md
   - FAQ: faq.md
   - Troubleshooting: troubleshooting.md
