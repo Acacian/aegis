@@ -44,41 +44,73 @@ src/aegis/
 
 ## Data Flow
 
+```mermaid
+graph TD
+    A[Your Agent Code] -->|"Action(type, target, params)"| B[Runtime.plan]
+    B -->|"PolicyDecision(risk, approval, rule)"| C{Approval Mode}
+
+    C -->|"auto: LOW"| D[Execute]
+    C -->|"approve: HIGH"| E[Approval Handler]
+    C -->|"block: CRITICAL"| F[Blocked]
+
+    E -->|approved| D
+    E -->|denied| F
+
+    D -->|"Result(status, data)"| G[Verify]
+    G --> H[Audit Logger]
+    F --> H
+
+    style A fill:#4a90d9,color:#fff
+    style C fill:#f5a623,color:#fff
+    style D fill:#7ed321,color:#fff
+    style F fill:#d0021b,color:#fff
+    style H fill:#9013fe,color:#fff
 ```
-                    ┌──────────────┐
-                    │  Agent Code  │
-                    └──────┬───────┘
-                           │ Action(type, target, params)
-                           ▼
-                    ┌──────────────┐
-                    │   Runtime    │
-                    │   .plan()   │
-                    └──────┬───────┘
-                           │ PolicyDecision(risk, approval, rule)
-                           ▼
-              ┌────────────┴────────────┐
-              │                         │
-        ┌─────▼─────┐           ┌───────▼───────┐
-        │   AUTO     │           │   APPROVE     │
-        │ (execute)  │           │ (ask human)   │
-        └─────┬─────┘           └───────┬───────┘
-              │                         │ approved/denied
-              └────────────┬────────────┘
-                           ▼
-                    ┌──────────────┐
-                    │   Executor   │ ← Adapter (Playwright, httpx, etc.)
-                    │  .execute()  │
-                    └──────┬───────┘
-                           │ Result(status, data)
-                           ▼
-                    ┌──────────────┐
-                    │   Verify     │ ← Optional post-execution check
-                    └──────┬───────┘
-                           │
-                           ▼
-                    ┌──────────────┐
-                    │  Audit Log   │ ← SQLite, logging, or JSONL
-                    └──────────────┘
+
+## Adapter Architecture
+
+```mermaid
+graph LR
+    R[Runtime] --> B[BaseExecutor]
+    B --> P[PlaywrightExecutor]
+    B --> HX[HttpxExecutor]
+    B --> LC[LangChainExecutor]
+    B --> CR[AegisCrewAITool]
+    B --> OA["@governed_tool"]
+    B --> AN[AnthropicAdapter]
+    B --> CU[Your Custom Executor]
+
+    P -.->|optional| PW["playwright"]
+    HX -.->|optional| HP["httpx"]
+    LC -.->|optional| LK["langchain-core"]
+    CR -.->|optional| CW["crewai"]
+    OA -.->|optional| OAI["openai-agents"]
+    AN -.->|optional| ANT["anthropic"]
+
+    style R fill:#4a90d9,color:#fff
+    style B fill:#f5a623,color:#fff
+    style CU fill:#7ed321,color:#fff
+```
+
+## Policy Evaluation Flow
+
+```mermaid
+flowchart TD
+    A["Action(type='bulk_update', target='crm')"] --> B{Match Rule 1?}
+    B -->|No| C{Match Rule 2?}
+    B -->|Yes| D[Check Conditions]
+    C -->|No| E{Match Rule N?}
+    C -->|Yes| D
+    E -->|No| F[Apply Defaults]
+    E -->|Yes| D
+
+    D -->|All pass| G["PolicyDecision(rule, risk, approval)"]
+    D -->|Any fail| C
+    F --> G
+
+    style A fill:#4a90d9,color:#fff
+    style D fill:#f5a623,color:#fff
+    style G fill:#7ed321,color:#fff
 ```
 
 ## Key Design Decisions
@@ -100,16 +132,19 @@ AI agent frameworks are predominantly async. Sync wrappers are trivial to add, b
 
 ## Dependency Graph
 
-```
-aegis (core)
-├── pyyaml          # Only required dependency
-│
-├── [playwright]    # Optional: PlaywrightExecutor
-├── [langchain]     # Optional: LangChainExecutor, AegisTool
-├── [crewai]        # Optional: AegisCrewAITool
-├── [openai-agents] # Optional: governed_tool decorator
-├── [anthropic]     # Optional: govern_tool_call
-└── [httpx]         # Optional: HttpxExecutor
+```mermaid
+graph TD
+    AEGIS["aegis (core)"] --> YAML["pyyaml *(required)*"]
+
+    AEGIS -.-> PW["playwright *(optional)*"]
+    AEGIS -.-> LC["langchain-core *(optional)*"]
+    AEGIS -.-> CR["crewai *(optional)*"]
+    AEGIS -.-> OA["openai-agents *(optional)*"]
+    AEGIS -.-> AN["anthropic *(optional)*"]
+    AEGIS -.-> HX["httpx *(optional)*"]
+
+    style AEGIS fill:#4a90d9,color:#fff
+    style YAML fill:#7ed321,color:#fff
 ```
 
 ## Testing Strategy
