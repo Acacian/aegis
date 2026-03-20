@@ -24,6 +24,15 @@ dependencies = ["pyyaml>=6.0"]
 
 [project.optional-dependencies]
 playwright = ["playwright>=1.40"]
+langchain = ["langchain-core>=0.2"]
+crewai = ["crewai>=0.50"]
+openai-agents = ["openai-agents>=0.1"]
+all = [
+    "playwright>=1.40",
+    "langchain-core>=0.2",
+    "crewai>=0.50",
+    "openai-agents>=0.1",
+]
 dev = [
     "pytest>=8.0",
     "pytest-asyncio>=0.23",
@@ -55,5 +64,5 @@ warn_return_any = true
 warn_unused_configs = true
 
 [[tool.mypy.overrides]]
-module = ["playwright.*"]
+module = ["playwright.*", "langchain_core.*", "crewai.*", "agents.*"]
 ignore_missing_imports = true

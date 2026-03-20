@@ -1,5 +1,10 @@
 # Aegis
 
+[![CI](https://github.com/Acacian/aegis/actions/workflows/ci.yml/badge.svg)](https://github.com/Acacian/aegis/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/agent-aegis)](https://pypi.org/project/agent-aegis/)
+[![Python](https://img.shields.io/pypi/pyversions/agent-aegis)](https://pypi.org/project/agent-aegis/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 **Open-source policy & approval runtime for AI agents acting on systems you don't own.**
 
 Aegis is a governance layer that sits between AI agents and the external systems they operate on. It provides policy-based access control, human approval gates, and a complete audit trail — so you can let agents act on Salesforce, Stripe, or any SaaS, without giving up control.
@@ -131,9 +136,71 @@ aegis audit
 aegis audit --session abc123 --format json
 ```
 
-## Adapters
+## Integrations
 
-### Playwright (included)
+Aegis plugs into the agent frameworks you already use. Install only what you need:
+
+```bash
+pip install 'agent-aegis[langchain]'   # LangChain
+pip install 'agent-aegis[crewai]'      # CrewAI
+pip install 'agent-aegis[openai-agents]'  # OpenAI Agents SDK
+pip install 'agent-aegis[playwright]'  # Playwright browser
+pip install 'agent-aegis[all]'         # Everything
+```
+
+### LangChain
+
+```python
+from langchain_community.tools import DuckDuckGoSearchRun
+from aegis import Policy, Runtime
+from aegis.adapters.langchain import LangChainExecutor
+
+executor = LangChainExecutor(tools=[DuckDuckGoSearchRun()])
+runtime = Runtime(executor=executor, policy=Policy.from_yaml("policy.yaml"))
+```
+
+Or expose Aegis-governed actions *as* LangChain tools:
+
+```python
+from aegis.adapters.langchain import AegisTool
+
+tool = AegisTool.from_runtime(
+    runtime=runtime,
+    name="governed_search",
+    description="Policy-governed web search",
+    action_type="search",
+    action_target="web",
+)
+# Use `tool` in any LangChain agent
+```
+
+### OpenAI Agents SDK
+
+```python
+from aegis.adapters.openai_agents import governed_tool
+
+@governed_tool(runtime=runtime, action_type="write", action_target="crm")
+async def update_contact(name: str, email: str) -> str:
+    """Update a CRM contact — governed by Aegis policy."""
+    return await crm.update(name=name, email=email)
+```
+
+### CrewAI
+
+```python
+from aegis.adapters.crewai import AegisCrewAITool
+
+tool = AegisCrewAITool(
+    runtime=runtime,
+    name="governed_search",
+    description="Search with governance",
+    action_type="search", action_target="web",
+    fn=lambda query: do_search(query),
+)
+# Use `tool` in any CrewAI Agent
+```
+
+### Playwright (browser automation)
 
 ```python
 from aegis.adapters.playwright import PlaywrightExecutor
@@ -204,6 +271,17 @@ python examples/quickstart.py
    bulk_update | risk=HIGH     | decision=approved | result=success
         delete | risk=CRITICAL | decision=block    | result=blocked
 ```
+
+## Roadmap
+
+| Version | Features |
+|---------|----------|
+| **0.1** | Policy engine, Playwright adapter, CLI approval, SQLite audit, LangChain/CrewAI/OpenAI integrations |
+| **0.2** | Dashboard (React), Slack/Discord approval handlers, policy inheritance |
+| **0.3** | MCP server adapter, rollback support, webhook notifications |
+| **0.4** | Multi-tenant policies, team-based approvals, cloud audit storage |
+
+See [CHANGELOG.md](CHANGELOG.md) for release history.
 
 ## Development
 
