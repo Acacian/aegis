@@ -779,8 +779,19 @@ async function validatePolicy() {
   }
 }
 
+let activeLineWidgets = [];
+
+function clearEditorErrors() {
+  activeLineWidgets.forEach((w) => editor.removeLineWidget(w));
+  activeLineWidgets = [];
+  const errorEl = document.getElementById("editor-error");
+  if (errorEl) errorEl.remove();
+}
+
 function showEditorError(msg, line) {
-  // Highlight error line
+  clearEditorErrors();
+
+  // Highlight error line + add inline widget
   if (line !== undefined && line !== null && line >= 0) {
     const lineIdx = Math.max(0, line - 1);
     editor.markText(
@@ -788,6 +799,13 @@ function showEditorError(msg, line) {
       { line: lineIdx, ch: editor.getLine(lineIdx)?.length || 0 },
       { className: "cm-error-line" }
     );
+
+    // Inline error widget at the error line
+    const widgetEl = document.createElement("div");
+    widgetEl.className = "cm-error-widget";
+    widgetEl.textContent = msg;
+    const widget = editor.addLineWidget(lineIdx, widgetEl, { coverGutter: false, noHScroll: true });
+    activeLineWidgets.push(widget);
   }
 
   // Check for auto-fixable patterns
@@ -815,7 +833,7 @@ function showEditorError(msg, line) {
     fixBtn.title = fix.description;
     fixBtn.addEventListener("click", () => {
       editor.setValue(fix.result);
-      errorEl.remove();
+      clearEditorErrors();
     });
     errorEl.appendChild(fixBtn);
   }
@@ -872,6 +890,32 @@ function suggestFix(msg, line, yaml) {
       label: "Quote version",
       description: 'Wrap version number in quotes',
       result: yaml.replace(/version:\s*(\d+)/m, 'version: "$1"'),
+    };
+  }
+
+  // Duplicate key detection
+  if (lower.includes("duplicate")) {
+    const seen = {};
+    const deduped = [];
+    for (const l of lines) {
+      const m = l.match(/^(\s*)([\w-]+):/);
+      if (m) {
+        const key = m[1].length + ":" + m[2];
+        if (seen[key]) { deduped.push("# REMOVED DUPLICATE: " + l.trim()); continue; }
+        seen[key] = true;
+      }
+      deduped.push(l);
+    }
+    return { label: "Remove duplicates", description: "Comment out duplicate keys", result: deduped.join("\n") };
+  }
+
+  // Invalid approval value
+  const invalidApproval = yaml.match(/approval:\s*(\S+)/);
+  if (invalidApproval && !["auto", "approve", "block"].includes(invalidApproval[1].replace(/"/g, ""))) {
+    return {
+      label: "Fix approval",
+      description: `Replace "${invalidApproval[1]}" with "approve"`,
+      result: yaml.replace(invalidApproval[0], "approval: approve"),
     };
   }
 

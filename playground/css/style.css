@@ -567,6 +567,17 @@ main {
   border-bottom: 2px wavy var(--risk-high);
 }
 
+.cm-error-widget {
+  font-size: 0.75rem;
+  color: #f85149;
+  background: rgba(248, 81, 73, 0.08);
+  border-left: 3px solid #f85149;
+  padding: 3px 8px;
+  margin: 2px 0 2px 20px;
+  border-radius: 0 4px 4px 0;
+  font-family: monospace;
+}
+
 .editor-error {
   padding: 6px 12px;
   font-size: 0.78rem;
