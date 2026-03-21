@@ -2253,8 +2253,8 @@ function renderResult(r) {
   card.querySelector("._desc").textContent = r.description || "-";
   const allowedDiv = card.querySelector(".result-allowed");
   allowedDiv.className = `result-allowed ${isAllowed ? "yes" : "no"}`;
-  allowedDiv.innerHTML = isAllowed ? "&#x2705; ALLOWED" : "&#x1F6AB; BLOCKED" +
-    (r.approval === "block" ? " — Policy explicitly blocks this action" : "");
+  allowedDiv.textContent = isAllowed ? "\u2705 ALLOWED" : "\uD83D\uDEAB BLOCKED" +
+    (r.approval === "block" ? " \u2014 Policy explicitly blocks this action" : "");
 
   // Store result data on card for delegated copy handler
   card._resultData = r;
