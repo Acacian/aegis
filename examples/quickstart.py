@@ -15,6 +15,7 @@ from datetime import UTC, datetime
 
 from aegis import Action, Policy, Result, ResultStatus, Runtime
 from aegis.adapters.base import BaseExecutor
+from aegis.runtime.approval import AutoApprovalHandler
 from aegis.runtime.audit import AuditLogger
 
 
@@ -68,6 +69,7 @@ async def main() -> None:
     runtime = Runtime(
         executor=DryRunExecutor(),
         policy=Policy.from_dict(POLICY),
+        approval_handler=AutoApprovalHandler(),
         audit_logger=AuditLogger(db_path=":memory:"),
     )
 

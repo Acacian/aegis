@@ -1,7 +1,9 @@
 """Demo: AI agent managing Salesforce contacts with Aegis governance.
 
 This example shows how Aegis provides policy checks, approval gates,
-and audit logging for AI agent browser automation.
+and audit logging for a simulated Salesforce CRM workflow.
+
+No external dependencies needed -- uses a mock executor.
 
 Run:
     python examples/salesforce_demo.py
@@ -10,19 +12,80 @@ Run:
 from __future__ import annotations
 
 import asyncio
+from datetime import UTC, datetime
 
-from aegis import Action, Policy, Runtime
-from aegis.adapters.playwright import PlaywrightExecutor
+from aegis import Action, Policy, Result, ResultStatus, Runtime
+from aegis.adapters.base import BaseExecutor
+from aegis.runtime.approval import AutoApprovalHandler
+from aegis.runtime.audit import AuditLogger
+
+
+class SalesforceSimulator(BaseExecutor):
+    """Mock executor that simulates Salesforce CRM operations."""
+
+    async def execute(self, action: Action) -> Result:
+        print(f"    [salesforce] {action.type} -> {action.target}: {action.description}")
+        return Result(
+            action=action,
+            status=ResultStatus.SUCCESS,
+            data={"simulated": True},
+            completed_at=datetime.now(UTC),
+        )
+
+
+POLICY = {
+    "version": "1",
+    "defaults": {"risk_level": "medium", "approval": "approve"},
+    "rules": [
+        {
+            "name": "navigate_auto",
+            "match": {"type": "navigate"},
+            "risk_level": "low",
+            "approval": "auto",
+        },
+        {
+            "name": "read_auto",
+            "match": {"type": "read"},
+            "risk_level": "low",
+            "approval": "auto",
+        },
+        {
+            "name": "fill_approve",
+            "match": {"type": "fill"},
+            "risk_level": "medium",
+            "approval": "approve",
+        },
+        {
+            "name": "click_approve",
+            "match": {"type": "click"},
+            "risk_level": "medium",
+            "approval": "approve",
+        },
+        {
+            "name": "bulk_ops_high",
+            "match": {"type": "bulk_*"},
+            "conditions": {"param_gt": {"count": 100}},
+            "risk_level": "high",
+            "approval": "approve",
+        },
+        {
+            "name": "delete_block",
+            "match": {"type": "delete"},
+            "risk_level": "critical",
+            "approval": "block",
+        },
+    ],
+}
 
 
 async def main() -> None:
-    # 1. Set up the runtime with policy
     runtime = Runtime(
-        executor=PlaywrightExecutor(headless=False),
-        policy=Policy.from_yaml("policy.example.yaml"),
+        executor=SalesforceSimulator(),
+        policy=Policy.from_dict(POLICY),
+        approval_handler=AutoApprovalHandler(),
+        audit_logger=AuditLogger(db_path=":memory:"),
     )
 
-    # 2. Define the actions the AI agent wants to take
     actions = [
         Action(
             "navigate",
@@ -62,7 +125,6 @@ async def main() -> None:
         ),
     ]
 
-    # 3. Plan: evaluate all actions against policy
     plan = runtime.plan(actions)
     print("=" * 60)
     print("  EXECUTION PLAN")
@@ -70,10 +132,8 @@ async def main() -> None:
     print(plan.summary())
     print()
 
-    # 4. Execute with governance
     results = await runtime.execute(plan)
 
-    # 5. Print results
     print()
     print("=" * 60)
     print("  RESULTS")
@@ -81,16 +141,14 @@ async def main() -> None:
     for r in results:
         print(f"  {r}")
 
-    # 6. Show audit log
     print()
     print("=" * 60)
     print("  AUDIT LOG")
     print("=" * 60)
     for entry in runtime.audit.get_log(session_id=runtime.session_id):
         print(
-            f"  [{entry['timestamp'][:19]}] {entry['action_type']:>12} -> "
-            f"{entry['action_target']}  "
-            f"risk={entry['risk_level']}  result={entry.get('result_status', '-')}"
+            f"  {entry['action_type']:>14} | risk={entry['risk_level']:<8} | "
+            f"result={entry.get('result_status') or '-'}"
         )
 
 
