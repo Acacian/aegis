@@ -1424,15 +1424,17 @@ function toggleExportMenu() {
   });
 }
 
-function downloadBlob(content, type, ext) {
-  const blob = new Blob([content], { type });
+function _downloadBlobDirect(blob, ext) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
   a.download = `aegis-audit-${new Date().toISOString().slice(0, 10)}.${ext}`;
   a.click();
-  // Defer revoke to ensure download starts before URL is freed
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function downloadBlob(content, type, ext) {
+  _downloadBlobDirect(new Blob([content], { type }), ext);
 }
 
 function exportAuditJSON() {
@@ -1452,8 +1454,9 @@ function exportAuditJSON() {
     entries,
   };
   const json = JSON.stringify(report, null, 2);
-  downloadBlob(json, "application/json", "json");
-  const sizeKb = (new Blob([json]).size / 1024).toFixed(1);
+  const blob = new Blob([json], { type: "application/json" });
+  const sizeKb = (blob.size / 1024).toFixed(1);
+  _downloadBlobDirect(blob, "json");
   const filterNote = filter !== "all" ? ` (${filter} only)` : "";
   showToast(`Exported ${entries.length} entries${filterNote} (${sizeKb} KB)`);
 }
