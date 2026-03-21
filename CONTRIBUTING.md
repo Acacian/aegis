@@ -63,6 +63,14 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for design details.
 
 ## What to Contribute
 
+### Non-code contributions
+- Report bugs and suggest features via [Issues](https://github.com/Acacian/aegis/issues)
+- Ask and answer questions in [Discussions](https://github.com/Acacian/aegis/discussions)
+- Share your Aegis integration in [Show & Tell](https://github.com/Acacian/aegis/discussions/categories/show-and-tell)
+- Translate documentation (see README.ko.md as an example)
+- Write blog posts or tutorials about Aegis
+- Star the repo to help others find it
+
 ### Good first contributions
 - Bug fixes
 - Documentation improvements

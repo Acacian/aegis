@@ -67,3 +67,44 @@ assert result.ok
 ```
 
 Equivalent to `plan([action])` + `execute(plan)` but returns a single `Result`.
+
+## Approval Handlers
+
+Aegis ships with three approval handlers:
+
+| Handler | Use Case |
+|---------|----------|
+| `CLIApprovalHandler` | Interactive terminal prompt (default) |
+| `AutoApprovalHandler` | Auto-approve everything (testing only) |
+| `CallbackApprovalHandler` | Programmatic approval via sync/async callback |
+
+```python
+from aegis.runtime.approval import AutoApprovalHandler, CLIApprovalHandler
+from aegis.runtime.approval_callback import CallbackApprovalHandler
+
+# Auto-approve low/medium risk
+handler = CallbackApprovalHandler(
+    callback=lambda d: d.risk_level.value <= 2
+)
+runtime = Runtime(executor=..., policy=..., approval_handler=handler)
+```
+
+See [Approval Handlers guide](../guides/approval-handlers.md) for custom handlers.
+
+## Audit Backends
+
+| Backend | Import | Storage |
+|---------|--------|---------|
+| `AuditLogger` | `aegis.runtime.audit` | SQLite database (default) |
+| `LoggingAuditLogger` | `aegis.runtime.audit_logging` | Python `logging` module |
+
+Both support `.export_jsonl(path)` for JSONL export.
+
+```python
+from aegis.runtime.audit_logging import LoggingAuditLogger
+
+runtime = Runtime(
+    executor=..., policy=...,
+    audit_logger=LoggingAuditLogger(),  # Logs to aegis.audit logger
+)
+```
