@@ -540,6 +540,19 @@ result = await runtime.run_one(Action("delete", "crm", params={"id": "all"}))
       </div>
     </div>
 
+    <div class="eval-timeline">
+      <div class="timeline-label">What happens on each action:</div>
+      <div class="timeline-steps">
+        <div class="tl-step"><span class="tl-num">1</span><span class="tl-text">Agent calls <code>rt.run_one(action)</code></span></div>
+        <div class="tl-arrow">&rarr;</div>
+        <div class="tl-step"><span class="tl-num">2</span><span class="tl-text">Aegis matches rules in &lt;1ms</span></div>
+        <div class="tl-arrow">&rarr;</div>
+        <div class="tl-step"><span class="tl-num">3</span><span class="tl-text">Returns <code>auto</code> / <code>approve</code> / <code>block</code></span></div>
+        <div class="tl-arrow">&rarr;</div>
+        <div class="tl-step"><span class="tl-num">4</span><span class="tl-text">Audit entry logged automatically</span></div>
+      </div>
+    </div>
+
     <div class="steps-grid">
       <div class="step-card">
         <div class="step-number">1</div>

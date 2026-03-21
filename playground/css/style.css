@@ -1491,6 +1491,79 @@ kbd {
   white-space: nowrap;
 }
 
+/* ---- Eval Timeline ---- */
+.eval-timeline {
+  max-width: 700px;
+  margin: 24px auto 0;
+  text-align: center;
+}
+
+.timeline-label {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.timeline-steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.tl-step {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+}
+
+.tl-step code {
+  font-size: 0.72rem;
+  color: var(--accent, #58a6ff);
+  background: rgba(88, 166, 255, 0.08);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+.tl-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent, #58a6ff);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.tl-arrow {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+@media (max-width: 640px) {
+  .timeline-steps {
+    flex-direction: column;
+    gap: 4px;
+  }
+  .tl-arrow {
+    transform: rotate(90deg);
+  }
+}
+
 /* ---- Architecture Flow Diagram ---- */
 .arch-flow {
   display: flex;
