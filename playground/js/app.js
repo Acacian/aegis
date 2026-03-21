@@ -2304,7 +2304,10 @@ function renderResult(r) {
 }
 
 /* ---- Block Particles (visual feedback for blocked actions) ---- */
+const _prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
 function spawnBlockParticles(card) {
+  if (_prefersReducedMotion.matches) return;
   const symbols = ["\u{1F6E1}", "\u{1F6AB}", "\u{26D4}", "\u{2716}"];
   const rect = card.getBoundingClientRect();
 
@@ -2323,6 +2326,7 @@ function spawnBlockParticles(card) {
 
 /* ---- Auto-Approve Checkmark Burst ---- */
 function spawnAutoCheckmarks(card) {
+  if (_prefersReducedMotion.matches) return;
   const rect = card.getBoundingClientRect();
   for (let i = 0; i < 5; i++) {
     const p = document.createElement("div");
@@ -2348,6 +2352,7 @@ function showPulseRing(card) {
 
 /* ---- Celebration (milestone at 50 & 100 evals) ---- */
 function spawnCelebration() {
+  if (_prefersReducedMotion.matches) return;
   const symbols = ["\u2B50", "\u{1F389}", "\u{1F38A}", "\u2728", "\u{1F3C6}", "\u{1F680}", "\u{1F31F}"];
   const count = 16;
   for (let i = 0; i < count; i++) {
