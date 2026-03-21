@@ -21,6 +21,11 @@ pip install 'agent-aegis[all]'           # Everything
 | `aegis audit --format json` | JSON output |
 | `aegis audit --format jsonl -o out.jsonl` | Export as JSONL |
 | `aegis audit --session abc123` | Filter by session |
+| `aegis audit --tail` | Live monitoring (1s poll) |
+| `aegis audit --risk-level HIGH` | Filter by risk |
+| `aegis stats` | Rule statistics |
+| `aegis simulate policy.yaml read:crm delete:db` | Test policies without executing |
+| `aegis serve policy.yaml --port 8000` | Start REST API server |
 
 ## Policy YAML
 
@@ -125,4 +130,68 @@ audit = LoggingAuditLogger()
 
 # Use with runtime
 runtime = Runtime(executor=..., policy=..., audit_logger=audit)
+```
+
+## Approval Handlers
+
+```python
+from aegis.runtime.approval import CLIApprovalHandler, AutoApprovalHandler
+
+# CLI prompt (default)
+runtime = Runtime(executor=..., policy=..., approval_handler=CLIApprovalHandler())
+
+# Auto-approve everything (testing)
+runtime = Runtime(executor=..., policy=..., approval_handler=AutoApprovalHandler())
+```
+
+## Hot-Reload Policy
+
+```python
+# Change policy at runtime (no restart needed)
+runtime.update_policy(Policy.from_yaml("new_policy.yaml"))
+```
+
+## Policy Merge
+
+```python
+# Layer multiple policies (overrides win)
+policy = Policy.from_yaml_files("base.yaml", "env-overrides.yaml")
+
+# Or merge programmatically
+merged = base_policy.merge(override_policy)
+```
+
+## REST API Server
+
+```bash
+aegis serve policy.yaml --port 8000
+
+# Evaluate (dry-run)
+curl -X POST localhost:8000/api/v1/evaluate \
+  -d '{"action_type": "delete", "target": "db"}'
+
+# Hot-reload
+curl -X PUT localhost:8000/api/v1/policy \
+  -d '{"yaml": "..."}'
+```
+
+## Common Patterns
+
+```python
+# Retry with rollback
+runtime = Runtime(
+    executor=MyExecutor(),
+    policy=policy,
+    max_retries=3,
+    retry_backoff=1.0,
+)
+
+# Runtime hooks
+async def on_block(action, decision):
+    alert(f"Blocked: {action.type}")
+
+runtime = Runtime(
+    executor=..., policy=...,
+    on_decision=on_block,
+)
 ```
