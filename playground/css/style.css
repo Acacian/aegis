@@ -2960,6 +2960,20 @@ footer code {
   .mobile-fab, .mobile-fab-menu { display: none !important; }
 }
 
+/* Editor focus mode — expands editor, hides distractions */
+.editor-focus-mode .top-section {
+  grid-template-columns: 1fr;
+}
+.editor-focus-mode .top-section > :not(:first-child),
+.editor-focus-mode .bottom-section,
+.editor-focus-mode .how-it-works,
+.editor-focus-mode .usecases-section,
+.editor-focus-mode .comparison-section,
+.editor-focus-mode .cta-section,
+.editor-focus-mode footer { display: none; }
+.editor-focus-mode .CodeMirror { min-height: 70vh; }
+.editor-focus-mode .stats-bar { opacity: 0.5; }
+
 @media (max-width: 400px) {
   .quick-actions {
     grid-template-columns: 1fr;

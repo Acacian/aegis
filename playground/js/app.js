@@ -579,6 +579,7 @@ function buildShortcutOverlay() {
         <div class="shortcut-group">View</div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>D</kbd><span>Toggle theme</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>B</kbd><span>Toggle audit panel</span></div>
+        <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd><span>Editor focus mode</span></div>
         <div class="shortcut-row"><kbd>?</kbd><span>Show this help</span></div>
         <div class="shortcut-row"><kbd>Esc</kbd><span>Close dialogs / clear results</span></div>
       </div>
@@ -995,6 +996,14 @@ function bindEvents() {
         copyToClipboard(code, latestCard);
         showToast("Copied latest result");
       }
+      return;
+    }
+    // Ctrl/Cmd + Shift + F → toggle editor focus mode (expand editor, hide other panels)
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === "F" || e.key === "f")) {
+      e.preventDefault();
+      document.body.classList.toggle("editor-focus-mode");
+      showToast(document.body.classList.contains("editor-focus-mode") ? "Focus mode ON" : "Focus mode OFF");
+      editor.refresh();
       return;
     }
     // 1-9, 0 → switch preset (when not in input)
