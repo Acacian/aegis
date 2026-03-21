@@ -1010,6 +1010,16 @@ kbd {
 .run-all-btn:hover {
   background: rgba(88, 166, 255, 0.1);
 }
+.run-all-btn:disabled {
+  cursor: wait;
+  background: linear-gradient(90deg, transparent 0%, rgba(88, 166, 255, 0.1) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: runAllShimmer 1.5s ease infinite;
+}
+@keyframes runAllShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
 
 /* ---- Result Panel ---- */
 .result-content {
