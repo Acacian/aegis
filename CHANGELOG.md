@@ -37,7 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - MCP (Model Context Protocol) adapter
 - Multi-agent orchestration foundations
-- 486 tests with 92% code coverage
+- 518 tests with 92% code coverage
 
 ## [0.1.2] - 2026-03-20
 
