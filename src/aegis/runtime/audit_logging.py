@@ -48,9 +48,14 @@ class LoggingAuditLogger:
         logger: Python logger instance. Defaults to ``aegis.audit``.
     """
 
-    def __init__(self, logger: logging.Logger | None = None) -> None:
+    _DEFAULT_MAX_ENTRIES = 10_000
+
+    def __init__(
+        self, logger: logging.Logger | None = None, max_entries: int | None = None
+    ) -> None:
         self._logger = logger or logging.getLogger("aegis.audit")
         self._entries: list[dict[str, Any]] = []
+        self._max_entries = max_entries if max_entries is not None else self._DEFAULT_MAX_ENTRIES
 
     def log(
         self,
@@ -80,6 +85,8 @@ class LoggingAuditLogger:
         }
 
         self._entries.append(entry)
+        if len(self._entries) > self._max_entries:
+            self._entries = self._entries[-self._max_entries :]
         level = _RISK_TO_LEVEL.get(decision.risk_level, logging.INFO)
         self._logger.log(level, json.dumps(entry))
 

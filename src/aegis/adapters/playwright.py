@@ -149,7 +149,8 @@ class PlaywrightExecutor(BaseExecutor):
         page = await self._ensure_page()
         raw_path = action.params.get("path", "screenshot.png")
         resolved = Path(raw_path).resolve()
-        if ".." in Path(raw_path).parts:
+        allowed_dir = Path.cwd().resolve()
+        if ".." in Path(raw_path).parts or not str(resolved).startswith(str(allowed_dir)):
             raise ValueError(f"Path traversal not allowed: {raw_path}")
         await page.screenshot(path=str(resolved))
         return {"path": str(resolved)}

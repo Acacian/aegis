@@ -169,11 +169,11 @@ class TestPlaywrightExecutor:
 
         mock_page.screenshot = AsyncMock()
 
-        action = Action("screenshot", "test", params={"path": "/tmp/screen.png"})
+        action = Action("screenshot", "test", params={"path": "screen.png"})
         result = await executor.execute(action)
 
         assert result.status == ResultStatus.SUCCESS
-        assert result.data["path"].endswith("/tmp/screen.png")
+        assert result.data["path"].endswith("screen.png")
         mock_page.screenshot.assert_called_once_with(path=result.data["path"])
 
     @pytest.mark.asyncio
@@ -212,6 +212,20 @@ class TestPlaywrightExecutor:
         mock_page.screenshot = AsyncMock()
 
         action = Action("screenshot", "test", params={"path": "/tmp/safe/../../../etc/out.png"})
+        result = await executor.execute(action)
+
+        assert result.status == ResultStatus.FAILED
+        assert "traversal" in result.error.lower()
+        mock_page.screenshot.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_execute_screenshot_absolute_outside_cwd_blocked(self):
+        """screenshot with absolute path outside cwd should be rejected."""
+        executor, mock_page, _ = self._setup_executor_with_mock_browser()
+
+        mock_page.screenshot = AsyncMock()
+
+        action = Action("screenshot", "test", params={"path": "/tmp/screen.png"})
         result = await executor.execute(action)
 
         assert result.status == ResultStatus.FAILED

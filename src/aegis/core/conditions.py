@@ -98,11 +98,11 @@ def _evaluate_one(key: str, value: Any, params: dict[str, Any], now: datetime) -
             return _check_param_compare(value, params, _op_matches)
         case _:
             logger.warning(
-                "Unknown policy condition '%s' ignored (treated as pass). Known conditions: %s",
+                "Unknown policy condition '%s' denied (fail-closed). Known conditions: %s",
                 key,
                 ", ".join(sorted(_KNOWN_KEYS)),
             )
-            return True  # Unknown conditions are ignored — warn to catch typos
+            return False  # Unknown conditions deny — fail-closed for safety
 
 
 def _parse_time(s: str) -> time:
@@ -150,9 +150,16 @@ def _op_contains(actual: Any, expected: Any) -> bool:
     return bool(expected in actual)
 
 
+_MAX_REGEX_LEN = 1000
+
+
 def _op_matches(actual: Any, expected: Any) -> bool:
+    pattern = str(expected)
+    if len(pattern) > _MAX_REGEX_LEN:
+        logger.warning("Regex pattern too long (%d chars, max %d), denied", len(pattern), _MAX_REGEX_LEN)
+        return False
     try:
-        return bool(re.search(str(expected), str(actual)))
+        return bool(re.search(pattern, str(actual)))
     except re.error:
         return False
 

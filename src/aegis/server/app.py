@@ -81,6 +81,15 @@ def create_app(
         policy = Policy()
 
     audit_logger = AuditLogger(db_path=audit_db_path) if audit_db_path else AuditLogger()
+    import logging as _logging
+
+    _server_logger = _logging.getLogger("aegis.server")
+    _server_logger.warning(
+        "Aegis REST server uses AutoApprovalHandler by default. "
+        "All approval-required actions will be auto-approved. "
+        "Deploy behind an authenticating reverse proxy for production use."
+    )
+
     runtime = Runtime(
         executor=executor or _NoOpExecutor(),
         policy=policy,
@@ -91,9 +100,20 @@ def create_app(
     async def health(request: Request) -> JSONResponse:
         return JSONResponse({"status": "ok", "version": _get_version()})
 
+    _MAX_BODY_BYTES = 1_048_576  # 1 MB
+
+    async def _read_json(request: Request) -> Any:
+        """Read JSON body with size limit."""
+        body_bytes = await request.body()
+        if len(body_bytes) > _MAX_BODY_BYTES:
+            return JSONResponse({"error": "Request body too large (max 1MB)"}, status_code=413)
+        return json.loads(body_bytes)
+
     async def evaluate(request: Request) -> JSONResponse:
         """Evaluate action(s) against policy without executing."""
-        body = await request.json()
+        body = await _read_json(request)
+        if isinstance(body, JSONResponse):
+            return body
         actions = _parse_actions(body)
 
         results = []
@@ -116,7 +136,9 @@ def create_app(
 
     async def execute_action(request: Request) -> JSONResponse:
         """Execute action through full governance pipeline."""
-        body = await request.json()
+        body = await _read_json(request)
+        if isinstance(body, JSONResponse):
+            return body
         actions = _parse_actions(body)
 
         results = []
@@ -187,7 +209,9 @@ def create_app(
 
     async def update_policy(request: Request) -> JSONResponse:
         """Hot-reload policy from YAML string or dict."""
-        body = await request.json()
+        body = await _read_json(request)
+        if isinstance(body, JSONResponse):
+            return body
 
         if "yaml" in body:
             import yaml
@@ -241,9 +265,12 @@ def _parse_actions(body: dict[str, Any] | list[dict[str, Any]]) -> list[Action]:
 
     actions = []
     for item in items:
+        action_type = item.get("action_type", item.get("type", ""))
+        if not action_type:
+            raise ValueError("action_type is required and cannot be empty")
         actions.append(
             Action(
-                type=item.get("action_type", item.get("type", "")),
+                type=action_type,
                 target=item.get("target", ""),
                 params=item.get("params", {}),
                 description=item.get("description", ""),

@@ -112,8 +112,9 @@ def test_multiple_conditions_one_fails():
     assert evaluate_conditions(conditions, {}, now=now) is False
 
 
-def test_unknown_condition_ignored():
-    assert evaluate_conditions({"unknown_key": "val"}, {}) is True
+def test_unknown_condition_denied():
+    """Unknown conditions should fail-closed for safety."""
+    assert evaluate_conditions({"unknown_key": "val"}, {}) is False
 
 
 # -- Integration with PolicyRule ---
