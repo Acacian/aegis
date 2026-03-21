@@ -566,6 +566,7 @@ function buildShortcutOverlay() {
         <div class="shortcut-group">Export &amp; Data</div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>E</kbd><span>Export audit log (JSON)</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd><span>Save snapshot (JSON)</span></div>
+        <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>C</kbd><span>Copy latest result</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>X</kbd><span>Full reset</span></div>
         <div class="shortcut-group">View</div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>D</kbd><span>Toggle theme</span></div>
@@ -975,6 +976,17 @@ function bindEvents() {
       const dir = e.key === "]" ? 1 : -1;
       const nextIdx = (activeIdx + dir + presetBtns.length) % presetBtns.length;
       presetBtns[nextIdx].click();
+      return;
+    }
+    // Ctrl/Cmd + Shift + C → copy latest result as one-liner
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === "C" || e.key === "c")) {
+      const latestCard = $result.querySelector(".result-card");
+      if (latestCard && latestCard._resultData) {
+        e.preventDefault();
+        const code = generateCode("oneliner", latestCard._resultData);
+        copyToClipboard(code, latestCard);
+        showToast("Copied latest result");
+      }
       return;
     }
     // 1-9, 0 → switch preset (when not in input)
