@@ -548,6 +548,24 @@ result = await runtime.run_one(Action("delete", "crm", params={"id": "all"}))
       </div>
     </div>
 
+    <div class="decision-matrix">
+      <div class="dm-row dm-header">
+        <span>Risk Level</span><span>Example Action</span><span>Default Decision</span>
+      </div>
+      <div class="dm-row dm-low">
+        <span class="dm-risk">LOW</span><span>Read contacts</span><span class="dm-decision">&#x2705; Auto-approve</span>
+      </div>
+      <div class="dm-row dm-medium">
+        <span class="dm-risk">MEDIUM</span><span>Update record</span><span class="dm-decision">&#x1F7E1; Human review</span>
+      </div>
+      <div class="dm-row dm-high">
+        <span class="dm-risk">HIGH</span><span>Bulk export</span><span class="dm-decision">&#x1F7E1; Human review</span>
+      </div>
+      <div class="dm-row dm-critical">
+        <span class="dm-risk">CRITICAL</span><span>Delete all data</span><span class="dm-decision">&#x1F534; Blocked</span>
+      </div>
+    </div>
+
     <div class="trust-signals">
       <span class="trust-badge">PyPI v0.1.4</span>
       <span class="trust-badge">483+ tests</span>

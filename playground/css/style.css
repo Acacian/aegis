@@ -1440,6 +1440,38 @@ kbd {
 .arch-approve { background: rgba(210, 153, 34, 0.12); color: #d29922; }
 .arch-block { background: rgba(248, 81, 73, 0.12); color: #f85149; }
 
+/* ---- Decision Matrix ---- */
+.decision-matrix {
+  max-width: 520px;
+  margin: 24px auto 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  font-size: 0.82rem;
+}
+.dm-row {
+  display: grid;
+  grid-template-columns: 100px 1fr 140px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border);
+  align-items: center;
+}
+.dm-row:last-child { border-bottom: none; }
+.dm-header {
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.dm-risk { font-weight: 700; font-size: 0.72rem; letter-spacing: 0.04em; }
+.dm-low .dm-risk { color: #3fb950; }
+.dm-medium .dm-risk { color: #d29922; }
+.dm-high .dm-risk { color: #f0883e; }
+.dm-critical .dm-risk { color: #f85149; }
+.dm-decision { font-size: 0.78rem; }
+
 /* ---- Quickstart Code Snippet ---- */
 .trust-signals {
   display: flex;
