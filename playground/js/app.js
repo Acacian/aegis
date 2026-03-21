@@ -52,8 +52,32 @@ document.addEventListener("DOMContentLoaded", async () => {
   loadPolicyFromURL();
   bindEvents();
   rotateTips();
+  initLazyReveal();
   await initPyodide();
 });
+
+/* ---- Lazy Reveal (fade-in below-fold sections) ---- */
+function initLazyReveal() {
+  const sections = document.querySelectorAll(
+    ".how-it-works, .usecases-section, .comparison-section, .cta-section"
+  );
+  if (!sections.length || !("IntersectionObserver" in window)) return;
+
+  sections.forEach((s) => s.classList.add("reveal-hidden"));
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("reveal-visible");
+          observer.unobserve(entry.target);
+        }
+      });
+    },
+    { threshold: 0.1, rootMargin: "0px 0px -40px 0px" }
+  );
+  sections.forEach((s) => observer.observe(s));
+}
 
 /* ---- CodeMirror Setup ---- */
 function initEditor() {

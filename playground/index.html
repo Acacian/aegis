@@ -48,6 +48,13 @@
   <!-- Favicon (shield emoji as SVG data URI) -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
 
+  <!-- Preload critical resources -->
+  <link rel="preload" href="https://cdn.jsdelivr.net/pyodide/v0.27.5/full/pyodide.js" as="script">
+  <link rel="preload" href="js/presets.js" as="script">
+  <link rel="preload" href="js/app.js" as="script">
+  <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+  <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+
   <!-- CodeMirror 5 -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/codemirror.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/theme/dracula.min.css">

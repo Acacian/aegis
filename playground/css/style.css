@@ -1226,6 +1226,56 @@ footer code {
   }
 }
 
+/* ---- Lazy Reveal Animations ---- */
+.reveal-hidden {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.reveal-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Stagger child cards */
+.reveal-visible .step-card,
+.reveal-visible .usecase-card {
+  animation: fadeSlideUp 0.4s ease both;
+}
+
+.reveal-visible .step-card:nth-child(1),
+.reveal-visible .usecase-card:nth-child(1) { animation-delay: 0s; }
+.reveal-visible .step-card:nth-child(2),
+.reveal-visible .usecase-card:nth-child(2) { animation-delay: 0.08s; }
+.reveal-visible .step-card:nth-child(3),
+.reveal-visible .usecase-card:nth-child(3) { animation-delay: 0.16s; }
+.reveal-visible .usecase-card:nth-child(4) { animation-delay: 0.24s; }
+.reveal-visible .usecase-card:nth-child(5) { animation-delay: 0.32s; }
+.reveal-visible .usecase-card:nth-child(6) { animation-delay: 0.4s; }
+.reveal-visible .usecase-card:nth-child(7) { animation-delay: 0.48s; }
+.reveal-visible .usecase-card:nth-child(8) { animation-delay: 0.56s; }
+.reveal-visible .usecase-card:nth-child(9) { animation-delay: 0.64s; }
+.reveal-visible .usecase-card:nth-child(10) { animation-delay: 0.72s; }
+
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .reveal-hidden {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .reveal-visible .step-card,
+  .reveal-visible .usecase-card {
+    animation: none;
+  }
+}
+
 /* ---- Keyboard Shortcut Overlay ---- */
 .shortcut-overlay {
   position: fixed;
