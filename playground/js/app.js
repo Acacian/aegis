@@ -553,6 +553,7 @@ function buildShortcutOverlay() {
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>G</kbd> / <kbd>Ctrl</kbd>+<kbd>L</kbd><span>Go to line</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>E</kbd><span>Export audit log (JSON)</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>F</kbd><span>Focus audit search</span></div>
+        <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>J</kbd><span>Jump to latest result</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>B</kbd><span>Toggle audit panel</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>D</kbd><span>Toggle theme</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd><span>Duplicate line</span></div>
@@ -912,6 +913,17 @@ function bindEvents() {
       e.preventDefault();
       const customInput = document.getElementById("custom-type");
       if (customInput) { customInput.focus(); customInput.select(); }
+      return;
+    }
+    // Ctrl/Cmd + J → scroll to latest result card
+    if ((e.ctrlKey || e.metaKey) && e.key === "j" && !e.shiftKey) {
+      e.preventDefault();
+      const firstCard = $result.querySelector(".result-card");
+      if (firstCard) {
+        firstCard.scrollIntoView({ behavior: "smooth", block: "center" });
+        firstCard.classList.add("flash-auto");
+        firstCard.addEventListener("animationend", () => firstCard.classList.remove("flash-auto"), { once: true });
+      }
       return;
     }
     // Ctrl/Cmd + F → focus audit search filter
