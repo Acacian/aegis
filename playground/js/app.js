@@ -265,12 +265,22 @@ function initMobileFab() {
     else if (action === "top") window.scrollTo({ top: 0, behavior: "smooth" });
   });
 
-  // Auto-hide FAB menu on scroll
+  // Auto-hide FAB menu on scroll + scroll-to-top button
+  const scrollTopBtn = document.getElementById("scroll-top");
   let scrollTimer;
   window.addEventListener("scroll", () => {
     clearTimeout(scrollTimer);
     scrollTimer = setTimeout(() => menu.classList.add("hidden"), 200);
+    if (scrollTopBtn) {
+      scrollTopBtn.classList.toggle("visible", window.scrollY > 500);
+    }
   }, { passive: true });
+
+  if (scrollTopBtn) {
+    scrollTopBtn.addEventListener("click", () => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  }
 }
 
 /* ---- Touch swipe to cycle presets on mobile ---- */

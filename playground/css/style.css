@@ -3237,6 +3237,44 @@ footer code {
 .editor-focus-mode .CodeMirror { min-height: 70vh; }
 .editor-focus-mode .stats-bar { opacity: 0.5; }
 
+/* Scroll-to-top button (mobile only) */
+.scroll-top-btn {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .scroll-top-btn {
+    display: flex;
+    position: fixed;
+    bottom: calc(72px + env(safe-area-inset-bottom));
+    left: calc(16px + env(safe-area-inset-left));
+    z-index: 898;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    font-size: 1rem;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    opacity: 0;
+    transform: scale(0.8);
+    transition: opacity 0.2s, transform 0.2s;
+    pointer-events: none;
+  }
+  .scroll-top-btn.visible {
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: auto;
+  }
+  .scroll-top-btn:active {
+    transform: scale(0.9);
+  }
+}
+
 @media (max-width: 400px) {
   .quick-actions {
     grid-template-columns: 1fr;
