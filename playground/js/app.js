@@ -1434,10 +1434,19 @@ function renderResult(r) {
     });
   });
 
-  // Prepend (latest first)
+  // Prepend (latest first) and cap result cards to prevent DOM bloat
+  const MAX_RESULT_CARDS = 50;
   const empty = $result.querySelector(".empty-state");
   if (empty) empty.remove();
   $result.prepend(card);
+
+  // Remove oldest cards beyond limit
+  const cards = $result.querySelectorAll(".result-card");
+  if (cards.length > MAX_RESULT_CARDS) {
+    for (let i = MAX_RESULT_CARDS; i < cards.length; i++) {
+      cards[i].remove();
+    }
+  }
 
   // Decision-specific visual feedback
   if (r.approval === "block") {
@@ -1577,9 +1586,19 @@ function addAuditEntry(r) {
     row.style.display = "none";
   }
 
+  const MAX_AUDIT_ROWS = 200;
   const empty = $audit.querySelector(".empty-state");
   if (empty) empty.remove();
   $audit.prepend(row);
+
+  // Cap audit DOM rows
+  const auditRows = $audit.querySelectorAll(".audit-row");
+  if (auditRows.length > MAX_AUDIT_ROWS) {
+    for (let i = MAX_AUDIT_ROWS; i < auditRows.length; i++) {
+      auditRows[i].remove();
+    }
+  }
+
   $auditCount.textContent = `${auditEntries.length} entries`;
   updateAuditChart();
 }
