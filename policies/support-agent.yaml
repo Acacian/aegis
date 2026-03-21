@@ -1,0 +1,93 @@
+# Customer Support Agent Governance Policy
+# Use case: AI agents handling customer support tickets, knowledge base, escalation
+#
+# pip install agent-aegis
+# policy = Policy.from_yaml("policies/support-agent.yaml")
+
+version: "1"
+defaults:
+  risk_level: medium
+  approval: approve
+
+rules:
+  # Reading tickets and knowledge base is safe
+  - name: read_auto
+    match: { type: "read_*" }
+    risk_level: low
+    approval: auto
+
+  # Searching is safe
+  - name: search_auto
+    match: { type: "search" }
+    risk_level: low
+    approval: auto
+
+  # Viewing customer info is safe
+  - name: view_customer_auto
+    match: { type: "view_customer" }
+    risk_level: low
+    approval: auto
+
+  # Drafting responses (not sending) is safe
+  - name: draft_auto
+    match: { type: "draft" }
+    risk_level: low
+    approval: auto
+
+  # Sending responses needs review
+  - name: send_response_approve
+    match: { type: "send_response" }
+    risk_level: medium
+    approval: approve
+
+  # Tagging and categorizing tickets
+  - name: tag_auto
+    match: { type: "tag" }
+    risk_level: low
+    approval: auto
+
+  # Escalating to human agent
+  - name: escalate_auto
+    match: { type: "escalate" }
+    risk_level: low
+    approval: auto
+
+  # Closing tickets
+  - name: close_ticket_approve
+    match: { type: "close_ticket" }
+    risk_level: medium
+    approval: approve
+
+  # Issuing coupons/credits
+  - name: issue_credit_approve
+    match: { type: "issue_credit" }
+    conditions:
+      param_lte: { amount: 50 }
+    risk_level: medium
+    approval: approve
+
+  # Large credits need approval
+  - name: issue_credit_large
+    match: { type: "issue_credit" }
+    conditions:
+      param_gt: { amount: 50 }
+    risk_level: high
+    approval: approve
+
+  # Modifying customer accounts
+  - name: modify_account_high
+    match: { type: "modify_account" }
+    risk_level: high
+    approval: approve
+
+  # Deleting tickets is blocked
+  - name: delete_ticket_block
+    match: { type: "delete_ticket" }
+    risk_level: critical
+    approval: block
+
+  # Deleting customer data is blocked
+  - name: delete_customer_block
+    match: { type: "delete_customer" }
+    risk_level: critical
+    approval: block
