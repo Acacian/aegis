@@ -131,6 +131,22 @@ function bindEvents() {
   document.getElementById("copy-pip").addEventListener("click", (e) => {
     copyToClipboard("pip install agent-aegis", e.target);
   });
+
+  // Export audit log
+  document.getElementById("export-audit").addEventListener("click", () => {
+    if (auditEntries.length === 0) {
+      showToast("No audit entries to export");
+      return;
+    }
+    const json = JSON.stringify(auditEntries, null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `aegis-audit-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
 }
 
 /* ---- Pyodide Init ---- */
