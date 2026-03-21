@@ -1270,17 +1270,19 @@ function exportAuditYAML() {
 }
 
 function exportAuditHTML() {
+  if (!auditEntries.length) { showToast("No audit entries to export"); return; }
   const rows = auditEntries.map((e) =>
-    `<tr><td>${e.timestamp}</td><td>${e.action_type}</td><td>${e.target}</td><td>${e.risk}</td><td><strong>${e.approval}</strong></td></tr>`
+    `<tr><td>${e.time || e.timestamp || ""}</td><td>${e.type || e.action_type || ""}</td><td class="${(e.risk || "").toLowerCase()}">${e.risk || ""}</td><td><strong>${e.decision || e.approval || ""}</strong></td><td>${e.rule || ""}</td></tr>`
   ).join("");
+  const avgMs = stats.total > 0 ? (stats.totalMs / stats.total).toFixed(1) : "0";
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Aegis Audit Report</title>
 <style>body{font-family:system-ui;max-width:900px;margin:2rem auto;color:#e6edf3;background:#0d1117}
 table{border-collapse:collapse;width:100%}th,td{border:1px solid #30363d;padding:8px 12px;text-align:left}
-th{background:#161b22}h1{color:#58a6ff}</style></head><body>
+th{background:#161b22}h1{color:#58a6ff}.low{color:#3fb950}.medium{color:#d29922}.high{color:#f0883e}.critical{color:#f85149}
+.summary{display:flex;gap:16px;margin:12px 0;font-size:0.9rem}</style></head><body>
 <h1>Aegis Audit Report</h1><p>Generated: ${new Date().toISOString()}</p>
-<p>Total: ${stats.total} | Auto: ${stats.auto} | Approve: ${stats.approve} | Block: ${stats.block}</p>
-<table><tr><th>Time</th><th>Action</th><th>Target</th><th>Risk</th><th>Decision</th></tr>${rows}</table></body></html>`;
-  if (!auditEntries.length) { showToast("No audit entries to export"); return; }
+<div class="summary"><span>Total: <strong>${stats.total}</strong></span><span>Auto: <strong>${stats.auto}</strong></span><span>Approve: <strong>${stats.approve}</strong></span><span>Block: <strong>${stats.block}</strong></span><span>Avg: <strong>${avgMs}ms</strong></span></div>
+<table><tr><th>Time</th><th>Action</th><th>Risk</th><th>Decision</th><th>Rule</th></tr>${rows}</table></body></html>`;
   downloadBlob(html, "text/html", "html");
   showToast(`Exported ${auditEntries.length} entries as HTML`);
 }
