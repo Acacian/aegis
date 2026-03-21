@@ -2,16 +2,18 @@
 
 Runnable examples demonstrating Aegis with different frameworks and use cases.
 
+> **Want to try without installing?** [Open the Playground](https://acacian.github.io/aegis/playground/) — runs Aegis entirely in your browser.
+
 ## No External Dependencies
 
 These examples run with just `pip install agent-aegis`:
 
-| Example | Description |
-|---------|-------------|
-| [`quickstart.py`](quickstart.py) | Basic policy engine demo with dry-run executor |
-| [`conditions_demo.py`](conditions_demo.py) | Time-based, weekday, and param conditions |
-| [`salesforce_demo.py`](salesforce_demo.py) | Real-world CRM governance scenario |
-| [`mcp_demo.py`](mcp_demo.py) | MCP tool call governance with per-server policies |
+| Example | Description | What You'll See |
+|---------|-------------|----------------|
+| [`quickstart.py`](quickstart.py) | Basic policy engine demo with dry-run executor | Execution plan + risk levels + audit log |
+| [`conditions_demo.py`](conditions_demo.py) | Time-based, weekday, and param conditions | Conditional rule matching in action |
+| [`salesforce_demo.py`](salesforce_demo.py) | Real-world CRM governance scenario | Full Salesforce workflow with policy gates |
+| [`mcp_demo.py`](mcp_demo.py) | MCP tool call governance with per-server policies | MCP server-aware policy evaluation |
 
 ## Framework Integrations
 
@@ -32,6 +34,7 @@ These require additional dependencies (`pip install 'agent-aegis[all]'`):
 # Basic examples (no extra deps)
 python examples/quickstart.py
 python examples/conditions_demo.py
+python examples/salesforce_demo.py
 
 # httpx example
 pip install 'agent-aegis[httpx]'
@@ -41,4 +44,33 @@ python examples/httpx_demo.py
 pip install 'agent-aegis[playwright]'
 playwright install chromium
 python examples/browser_demo.py
+```
+
+## Expected Output
+
+Running `quickstart.py`:
+
+```
+============================================================
+  EXECUTION PLAN
+============================================================
+  5 actions | 2 auto-approved, 2 need approval, 1 blocked
+  ...
+
+============================================================
+  RESULTS
+============================================================
+  navigate  → SUCCESS (auto-approved, low risk)
+  read      → SUCCESS (auto-approved, low risk)
+  write     → SUCCESS (approved, medium risk)
+  bulk_update → SUCCESS (approved, high risk)
+  delete    → BLOCKED (critical risk, policy blocks this)
+
+============================================================
+  AUDIT LOG
+============================================================
+  navigate | risk=LOW      | decision=auto     | result=SUCCESS
+  read     | risk=LOW      | decision=auto     | result=SUCCESS
+  write    | risk=MEDIUM   | decision=approve  | result=SUCCESS
+  ...
 ```
