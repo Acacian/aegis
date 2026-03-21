@@ -1540,7 +1540,6 @@ kbd {
   gap: 10px;
   padding: 6px 0;
   border-bottom: 1px solid rgba(48, 54, 61, 0.5);
-  animation: slideIn 0.15s ease;
   contain: layout style;
 }
 
