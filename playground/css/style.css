@@ -2109,6 +2109,50 @@ footer code {
     padding: 8px 12px;
     font-size: 0.7rem;
   }
+
+  /* Architecture flow stacks vertically on mobile */
+  .arch-flow {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .arch-arrow {
+    transform: rotate(90deg);
+    padding: 4px 0;
+  }
+
+  .arch-decisions {
+    flex-direction: row;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  /* Code panels full-width */
+  .quickstart-code {
+    margin-left: -16px;
+    margin-right: -16px;
+    border-radius: 0;
+  }
+
+  /* Audit export dropdown positions correctly */
+  .export-menu {
+    right: 0;
+    left: auto;
+  }
+
+  /* Share modal fits screen */
+  .share-modal-inner {
+    width: 95vw;
+    max-width: none;
+    padding: 16px;
+  }
+
+  /* Tour tooltip narrower */
+  .tour-tooltip {
+    max-width: 260px;
+    font-size: 0.82rem;
+  }
 }
 
 @media (max-width: 400px) {
