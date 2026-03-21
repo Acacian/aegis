@@ -2360,16 +2360,28 @@ function addAuditEntry(r) {
   const riskClass = entry.risk.toLowerCase();
   const decisionClass = entry.decision.toLowerCase();
 
-  const row = document.createElement("div");
-  row.className = "audit-entry audit-row";
+  // Template-cloned audit row (faster than innerHTML per row)
+  if (!addAuditEntry._tpl) {
+    const t = document.createElement("template");
+    t.innerHTML = `<div class="audit-entry audit-row">
+      <span class="audit-time"></span>
+      <span class="audit-type"></span>
+      <span class="audit-risk"></span>
+      <span class="audit-decision"></span>
+      <span class="audit-rule"></span>
+    </div>`;
+    addAuditEntry._tpl = t;
+  }
+  const row = addAuditEntry._tpl.content.firstElementChild.cloneNode(true);
   row.dataset.approval = decisionClass;
-  row.innerHTML = `
-    <span class="audit-time">${entry.time}</span>
-    <span class="audit-type">${escHtml(entry.type)}</span>
-    <span class="audit-risk ${riskClass}">${entry.risk}</span>
-    <span class="audit-decision ${decisionClass}">${entry.decision}</span>
-    <span class="audit-rule">${escHtml(entry.rule)}</span>
-  `;
+  const spans = row.children;
+  spans[0].textContent = entry.time;
+  spans[1].textContent = entry.type;
+  spans[2].textContent = entry.risk;
+  spans[2].className = `audit-risk ${riskClass}`;
+  spans[3].textContent = entry.decision;
+  spans[3].className = `audit-decision ${decisionClass}`;
+  spans[4].textContent = entry.rule;
 
   // CSS-based filter respects data-filter attribute on container — no inline style needed
 
