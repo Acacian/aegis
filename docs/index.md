@@ -4,6 +4,8 @@
 
 `pip install agent-aegis` → YAML policy → governance in 5 minutes. Works with LangChain, CrewAI, OpenAI, Anthropic, MCP, and more.
 
+[**Try it live in your browser**](playground/){ .md-button .md-button--primary } — no install needed.
+
 ## What is Aegis?
 
 AI agents are calling APIs, modifying databases, and running tools across multiple frameworks and providers. Aegis is a **Python library** (not a platform) that adds governance to all of them through one unified policy:
