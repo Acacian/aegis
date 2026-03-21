@@ -3,8 +3,6 @@ on:
   branch_protection_rule:
   schedule:
     - cron: '0 6 * * 1'  # Weekly on Monday
-  push:
-    branches: [main]
 
 permissions: read-all
 

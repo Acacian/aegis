@@ -1,5 +1,8 @@
 .claude/
+CLAUDE.md
 .idea/
+.mypy_cache/
+.ruff_cache/
 
 # Python
 __pycache__/

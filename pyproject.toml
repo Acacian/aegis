@@ -35,6 +35,7 @@ Homepage = "https://github.com/Acacian/aegis"
 Documentation = "https://acacian.github.io/aegis/"
 Repository = "https://github.com/Acacian/aegis"
 Issues = "https://github.com/Acacian/aegis/issues"
+Discussions = "https://github.com/Acacian/aegis/discussions"
 Changelog = "https://github.com/Acacian/aegis/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
