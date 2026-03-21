@@ -1340,6 +1340,12 @@ function findWarningLine(yaml, warning) {
     const lineMatch = warning.match(/line (\d+)/);
     if (lineMatch) return parseInt(lineMatch[1]) - 1;
   }
+  if (lower.includes("empty rule name")) {
+    return lines.findIndex((l) => /- name:\s*$/.test(l));
+  }
+  if (lower.includes("version should be quoted")) {
+    return lines.findIndex((l) => /^version:\s*\d+\s*$/.test(l));
+  }
   return -1;
 }
 
@@ -1353,6 +1359,12 @@ function lintPolicyWarnings(yaml) {
   const names = (yaml.match(/- name:\s*(\S+)/g) || []).map((m) => m.replace("- name:", "").trim());
   const dupes = names.filter((n, i) => names.indexOf(n) !== i);
   if (dupes.length) warnings.push(`Duplicate rule name: ${dupes[0]}`);
+
+  // Empty or whitespace-only rule names
+  if (/- name:\s*$/m.test(yaml)) warnings.push("Empty rule name detected");
+
+  // Version should be a string "1", not integer
+  if (/^version:\s*\d+\s*$/m.test(yaml)) warnings.push("Version should be quoted: version: \"1\"");
 
   // Check for rules without match patterns
   const lines = yaml.split("\n");
