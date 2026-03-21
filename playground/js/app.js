@@ -2178,12 +2178,21 @@ function updateAuditChart() {
 }
 
 /* ---- Toast ---- */
+let _toastEl = null;
+let _toastTimer = null;
 function showToast(msg) {
-  const toast = document.createElement("div");
-  toast.className = "toast";
-  toast.textContent = msg;
-  document.body.appendChild(toast);
-  setTimeout(() => toast.remove(), 4000);
+  if (!_toastEl) {
+    _toastEl = document.createElement("div");
+    _toastEl.className = "toast";
+    document.body.appendChild(_toastEl);
+  }
+  _toastEl.textContent = msg;
+  _toastEl.style.display = "";
+  _toastEl.style.animation = "none";
+  void _toastEl.offsetWidth; // force reflow to restart animation
+  _toastEl.style.animation = "";
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => { _toastEl.style.display = "none"; }, 4000);
 }
 
 /* ---- Utils ---- */
