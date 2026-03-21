@@ -1,6 +1,6 @@
 site_name: Aegis
 site_url: https://acacian.github.io/aegis/
-site_description: Open-source policy & approval runtime for AI agents
+site_description: The simplest way to govern AI agent actions. No infra. No lock-in. Just Python.
 repo_url: https://github.com/Acacian/aegis
 repo_name: Acacian/aegis
 edit_uri: edit/main/docs/
@@ -68,6 +68,7 @@ nav:
   - Guides:
       - Writing Policies: guides/policies.md
       - Integrations: guides/integrations.md
+      - MCP Governance: guides/mcp-governance.md
       - Custom Adapters: guides/custom-adapters.md
       - Approval Handlers: guides/approval-handlers.md
       - REST API Server: guides/rest-api.md
@@ -79,6 +80,8 @@ nav:
       - Action & Result: api/models.md
       - Adapters: api/adapters.md
       - Audit: api/audit.md
+  - Cookbook:
+      - LangChain Governance: cookbook/langchain-governance.md
   - Cheatsheet: cheatsheet.md
   - Examples: https://github.com/Acacian/aegis/tree/main/examples
   - FAQ: faq.md
