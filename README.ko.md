@@ -301,7 +301,7 @@ Aegis 감사 추적은 규제 및 내부 컴플라이언스 증빙을 제공합�
 | **HIPAA** | 전체 액션 컨텍스트와 승인 체인이 포함된 PHI 접근 추적 |
 | **내부 규정** | 변경 관리 증빙, 액션별 위험 평가 |
 
-JSONL로 내보내기, CLI/API로 조회, 또는 웹훅으로 외부 SIEM에 스트리밍 가능.
+JSONL로 내보내기, CLI/API로 조회, 또는 웹훅으로 외부 SIEM에 스트리밍 가능. 컨테이너 격리와 함께 쓰는 심층 방어 전략은 [Security Model](https://acacian.github.io/aegis/guides/security-model/) 가이드를 참고하세요.
 
 ## 통합
 

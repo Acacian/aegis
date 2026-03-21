@@ -301,7 +301,7 @@ Aegis audit trails provide evidence for regulatory and internal compliance:
 | **HIPAA** | PHI access trail with full action context and approval chain |
 | **Internal** | Change management evidence, risk assessment per action |
 
-Export as JSONL, query via CLI/API, or stream to external SIEM via webhook.
+Export as JSONL, query via CLI/API, or stream to external SIEM via webhook. For defense-in-depth with container isolation, see the [Security Model](https://acacian.github.io/aegis/guides/security-model/) guide.
 
 ## Integrations
 
