@@ -1505,7 +1505,7 @@ function exportAuditHTML() {
   const entries = getFilteredEntries();
   if (!entries.length) { showToast("No audit entries to export"); return; }
   const rows = entries.map((e) =>
-    `<tr><td>${e.time || e.timestamp || ""}</td><td>${e.type || e.action_type || ""}</td><td class="${(e.risk || "").toLowerCase()}">${e.risk || ""}</td><td><strong>${e.decision || e.approval || ""}</strong></td><td>${e.rule || ""}</td></tr>`
+    `<tr><td>${_esc(e.time || e.timestamp)}</td><td>${_esc(e.type || e.action_type)}</td><td class="${_esc((e.risk || "").toLowerCase())}">${_esc(e.risk)}</td><td><strong>${_esc(e.decision || e.approval)}</strong></td><td>${_esc(e.rule)}</td></tr>`
   ).join("");
   const avgMs = stats.total > 0 ? (stats.totalMs / stats.total).toFixed(1) : "0";
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Aegis Audit Report</title>
