@@ -140,6 +140,22 @@ function bindEvents() {
     });
   });
 
+  // Use case cards → select preset + scroll to editor
+  document.querySelectorAll(".usecase-card").forEach((card) => {
+    card.addEventListener("click", () => {
+      const preset = card.dataset.preset;
+      if (!POLICY_PRESETS[preset]) return;
+      // Update preset button state
+      document.querySelector(".preset-btn.active")?.classList.remove("active");
+      const matchBtn = document.querySelector(`.preset-btn[data-preset="${preset}"]`);
+      if (matchBtn) matchBtn.classList.add("active");
+      editor.setValue(POLICY_PRESETS[preset]);
+      updateActionButtons(preset);
+      // Scroll to editor
+      document.querySelector(".policy-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  });
+
   // Action buttons
   document.querySelectorAll(".action-btn").forEach((btn) => {
     btn.addEventListener("click", () => {

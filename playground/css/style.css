@@ -857,6 +857,77 @@ kbd {
   display: none;
 }
 
+/* ---- Use Cases Section ---- */
+.usecases-section {
+  text-align: center;
+  padding: 32px 24px;
+  margin: 16px auto;
+  max-width: 1200px;
+}
+
+.usecases-section h2 {
+  font-size: 1.5rem;
+  margin-bottom: 4px;
+}
+
+.usecases-subtitle {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-bottom: 20px;
+}
+
+.usecases-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.usecase-card {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--text-primary);
+  font-family: inherit;
+}
+
+.usecase-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.usecase-icon {
+  font-size: 2rem;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.usecase-card h3 {
+  font-size: 1rem;
+  margin-bottom: 6px;
+}
+
+.usecase-card p {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.usecase-tag {
+  display: inline-block;
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #000;
+  font-weight: 600;
+}
+
 /* ---- CTA Section ---- */
 .cta-section {
   text-align: center;

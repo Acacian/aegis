@@ -243,6 +243,44 @@ result = await runtime.run_one(Action("delete", "crm", params={"id": "all"}))
     </div>
   </main>
 
+  <!-- Use Cases Section -->
+  <section class="usecases-section">
+    <h2>Real-World Scenarios</h2>
+    <p class="usecases-subtitle">Click any scenario to load its policy and test actions</p>
+    <div class="usecases-grid">
+      <button class="usecase-card" data-preset="crm">
+        <span class="usecase-icon">&#x1F4BC;</span>
+        <h3>CRM Agent</h3>
+        <p>Read contacts safely, review updates, block mass deletes</p>
+        <span class="usecase-tag">Salesforce / HubSpot</span>
+      </button>
+      <button class="usecase-card" data-preset="code">
+        <span class="usecase-icon">&#x1F4BB;</span>
+        <h3>Code Agent</h3>
+        <p>Read files freely, review edits, block deploys to production</p>
+        <span class="usecase-tag">Cursor / Copilot / Aider</span>
+      </button>
+      <button class="usecase-card" data-preset="financial">
+        <span class="usecase-icon">&#x1F4B0;</span>
+        <h3>Financial Agent</h3>
+        <p>View accounts, approve payments, block after-hours transfers</p>
+        <span class="usecase-tag">Payments / Invoicing</span>
+      </button>
+      <button class="usecase-card" data-preset="browser">
+        <span class="usecase-icon">&#x1F310;</span>
+        <h3>Browser Agent</h3>
+        <p>Navigate freely, review form fills, block JS execution</p>
+        <span class="usecase-tag">Playwright / Selenium</span>
+      </button>
+      <button class="usecase-card" data-preset="data-pipeline">
+        <span class="usecase-icon">&#x1F5C4;&#xFE0F;</span>
+        <h3>Data Pipeline</h3>
+        <p>SELECT freely, review INSERTs, block DROP TABLE on production</p>
+        <span class="usecase-tag">ETL / Database Ops</span>
+      </button>
+    </div>
+  </section>
+
   <!-- CTA Section -->
   <section class="cta-section">
     <div class="cta-content">
