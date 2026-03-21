@@ -2639,6 +2639,16 @@ footer code {
     font-size: 1.1rem;
   }
 
+  .decision-matrix {
+    font-size: 0.75rem;
+  }
+  .dm-row {
+    grid-template-columns: 76px 1fr 120px;
+    padding: 6px 10px;
+  }
+  .dm-risk { font-size: 0.68rem; }
+  .dm-decision { font-size: 0.72rem; }
+
   .trust-signals {
     gap: 6px;
   }
