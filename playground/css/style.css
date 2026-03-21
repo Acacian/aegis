@@ -1494,6 +1494,10 @@ kbd {
 .code-panel code .y { color: var(--approval-approve); }
 .code-panel code .r { color: var(--approval-block); }
 
+/* Light theme syntax colors */
+[data-theme="light"] .code-panel code .k { color: #cf222e; }
+[data-theme="light"] .code-panel code .s { color: #0550ae; }
+
 .code-copy-btn {
   position: absolute;
   top: 8px;
