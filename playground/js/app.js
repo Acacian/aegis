@@ -1549,14 +1549,20 @@ function copyAuditAsMarkdown() {
   navigator.clipboard.writeText(md).then(() => showToast(`Copied ${auditEntries.length} entries as Markdown`));
 }
 
+function _esc(s) {
+  return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
 function printAuditLog() {
   const w = window.open("", "_blank");
   if (!w) { showToast("Pop-up blocked — allow pop-ups to print"); return; }
-  const rows = auditEntries.map((e) =>
-    `<tr><td>${e.timestamp}</td><td>${e.action_type}</td><td>${e.target}</td><td>${e.risk}</td><td>${e.approval}</td></tr>`
+  const entries = getFilteredEntries();
+  const rows = entries.map((e) =>
+    `<tr><td>${_esc(e.timestamp || e.time)}</td><td>${_esc(e.action_type || e.type)}</td><td>${_esc(e.target)}</td><td>${_esc(e.risk)}</td><td>${_esc(e.approval || e.decision)}</td></tr>`
   ).join("");
-  w.document.write(`<html><head><title>Aegis Audit</title><style>body{font-family:system-ui}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ccc;padding:6px 10px}th{background:#f0f0f0}</style></head><body>
-<h1>Aegis Audit Log</h1><p>${new Date().toLocaleString()} &mdash; ${stats.total} evaluations</p>
+  const filterNote = getActiveFilter() !== "all" ? ` (filter: ${_esc(getActiveFilter())})` : "";
+  w.document.write(`<html><head><title>Aegis Audit</title><style>body{font-family:system-ui;max-width:900px;margin:2rem auto}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ccc;padding:6px 10px;text-align:left}th{background:#f0f0f0}@media print{button{display:none}}</style></head><body>
+<h1>Aegis Audit Log</h1><p>${_esc(new Date().toLocaleString())} &mdash; ${entries.length} entries${filterNote}</p>
 <table><tr><th>Time</th><th>Action</th><th>Target</th><th>Risk</th><th>Decision</th></tr>${rows}</table></body></html>`);
   w.document.close();
   w.print();
