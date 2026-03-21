@@ -54,6 +54,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   rotateTips();
   initLazyReveal();
   initMobileFab();
+  initSwipePresets();
   await initPyodide();
 });
 
@@ -252,6 +253,34 @@ function initMobileFab() {
   window.addEventListener("scroll", () => {
     clearTimeout(scrollTimer);
     scrollTimer = setTimeout(() => menu.classList.add("hidden"), 200);
+  }, { passive: true });
+}
+
+/* ---- Touch swipe to cycle presets on mobile ---- */
+function initSwipePresets() {
+  const editor = document.querySelector(".CodeMirror");
+  if (!editor || !("ontouchstart" in window)) return;
+
+  let startX = 0;
+  let startY = 0;
+  editor.addEventListener("touchstart", (e) => {
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+  }, { passive: true });
+
+  editor.addEventListener("touchend", (e) => {
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = e.changedTouches[0].clientY - startY;
+    if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx)) return; // not a horizontal swipe
+
+    const presetBtns = [...document.querySelectorAll(".preset-btn:not(.preset-divider)")];
+    const activeIdx = presetBtns.findIndex((b) => b.classList.contains("active"));
+
+    if (dx < 0 && activeIdx < presetBtns.length - 1) {
+      presetBtns[activeIdx + 1].click(); // swipe left → next
+    } else if (dx > 0 && activeIdx > 0) {
+      presetBtns[activeIdx - 1].click(); // swipe right → prev
+    }
   }, { passive: true });
 }
 
