@@ -449,6 +449,22 @@ a.integration-badge:active {
   line-height: 1.4;
 }
 
+.step-metrics {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+  justify-content: center;
+}
+
+.step-metric {
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: rgba(88, 166, 255, 0.1);
+  color: var(--accent);
+}
+
 .step-arrow {
   font-size: 1.5rem;
   color: var(--text-muted);
