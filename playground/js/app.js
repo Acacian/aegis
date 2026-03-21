@@ -852,6 +852,17 @@ function bindEvents() {
     copyToClipboard(code, btn);
   });
 
+  function goToLine() {
+    const lineCount = editor.lineCount();
+    const line = prompt(`Go to line (1-${lineCount}):`);
+    if (line) {
+      const n = Math.max(0, Math.min(parseInt(line) - 1, lineCount - 1));
+      editor.setCursor(n, 0);
+      editor.focus();
+      editor.scrollIntoView({ line: n, ch: 0 }, 100);
+    }
+  }
+
   // Keyboard shortcuts
   document.addEventListener("keydown", (e) => {
     // Ignore when typing in inputs
@@ -912,14 +923,7 @@ function bindEvents() {
     // Ctrl/Cmd + G → go to line in editor
     if ((e.ctrlKey || e.metaKey) && (e.key === "g" || e.key === "G") && !e.shiftKey) {
       e.preventDefault();
-      const lineCount = editor.lineCount();
-      const line = prompt(`Go to line (1-${lineCount}):`);
-      if (line) {
-        const n = Math.max(0, Math.min(parseInt(line) - 1, lineCount - 1));
-        editor.setCursor(n, 0);
-        editor.focus();
-        editor.scrollIntoView({ line: n, ch: 0 }, 100);
-      }
+      goToLine();
       return;
     }
     // Ctrl/Cmd + Shift + Enter → run all (check first, before plain Enter)
@@ -1015,14 +1019,7 @@ function bindEvents() {
     // Ctrl/Cmd + L → go to line in editor (alternate binding)
     if ((e.ctrlKey || e.metaKey) && e.key === "l" && !e.shiftKey) {
       e.preventDefault();
-      const lineCount = editor.lineCount();
-      const line = prompt(`Go to line (1-${lineCount}):`);
-      if (line) {
-        const n = Math.max(0, Math.min(parseInt(line) - 1, lineCount - 1));
-        editor.setCursor(n, 0);
-        editor.focus();
-        editor.scrollIntoView({ line: n, ch: 0 }, 100);
-      }
+      goToLine();
       return;
     }
     // Ctrl/Cmd + K → focus custom action input (command palette style)
