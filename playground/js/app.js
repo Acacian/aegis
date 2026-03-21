@@ -503,7 +503,10 @@ function openShareModal() {
             Share on LinkedIn
           </a>
         </div>
-        <button id="share-embed-btn" class="action-btn action-low" style="margin-top:8px;width:100%">Copy Embed Code</button>
+        <div style="display:flex;gap:6px;margin-top:8px">
+          <button id="share-embed-btn" class="action-btn action-low" style="flex:1">Copy Embed</button>
+          <button id="share-docker-btn" class="action-btn action-low" style="flex:1">Copy Docker</button>
+        </div>
         <p class="share-hint">Anyone with this link can load your policy in the playground</p>
       </div>`;
     document.body.appendChild(modal);
@@ -523,6 +526,11 @@ function openShareModal() {
       const iframe = `<iframe src="${embedUrl}" width="100%" height="600" frameborder="0" title="Aegis Playground"></iframe>`;
       copyToClipboard(iframe, document.getElementById("share-embed-btn"));
       showToast("Embed code copied!");
+    });
+    document.getElementById("share-docker-btn").addEventListener("click", () => {
+      const cmd = `echo '${editor.getValue().replace(/'/g, "'\\''")}' > policy.yaml && docker run -d -p 8000:8000 -v $(pwd)/policy.yaml:/app/policy.yaml ghcr.io/acacian/aegis:latest`;
+      copyToClipboard(cmd, document.getElementById("share-docker-btn"));
+      showToast("Docker command copied!");
     });
   }
 
