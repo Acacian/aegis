@@ -1472,6 +1472,18 @@ kbd {
   align-items: center;
 }
 .dm-row:last-child { border-bottom: none; }
+.dm-row:not(.dm-header) {
+  opacity: 0;
+  transform: translateX(-8px);
+  animation: dmRowIn 0.3s ease forwards;
+}
+.dm-low { animation-delay: 0.05s; }
+.dm-medium { animation-delay: 0.1s; }
+.dm-high { animation-delay: 0.15s; }
+.dm-critical { animation-delay: 0.2s; }
+@keyframes dmRowIn {
+  to { opacity: 1; transform: translateX(0); }
+}
 .dm-header {
   font-weight: 600;
   color: var(--text-secondary);
