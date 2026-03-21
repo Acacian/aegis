@@ -1175,19 +1175,27 @@ function bindEvents() {
       showToast("No results to copy");
       return;
     }
-    // Rich summary with stats + entries
-    const summary = {
-      summary: {
-        total: stats.total,
-        auto: stats.auto,
-        approve: stats.approve,
-        block: stats.block,
-        avg_latency: stats.total > 0 ? +(stats.totalMs / stats.total).toFixed(2) : 0,
-      },
-      entries: auditEntries,
-    };
-    copyToClipboard(JSON.stringify(summary, null, 2), e.target);
-    showToast(`Copied ${auditEntries.length} results with summary`);
+    const entries = getFilteredEntries();
+    // Rich Markdown report with stats + entries table
+    const avgMs = stats.total > 0 ? (stats.totalMs / stats.total).toFixed(1) : "0";
+    const filter = getActiveFilter();
+    const md = [
+      "# Aegis Evaluation Report",
+      `Generated: ${new Date().toISOString()}`,
+      "",
+      "## Summary",
+      `| Total | Auto | Approve | Block | Avg Latency |`,
+      `|-------|------|---------|-------|-------------|`,
+      `| ${stats.total} | ${stats.auto} | ${stats.approve} | ${stats.block} | ${avgMs}ms |`,
+      "",
+      filter !== "all" ? `> Filter: **${filter}** (${entries.length} of ${auditEntries.length} entries)\n` : "",
+      "## Evaluations",
+      `| Time | Action | Risk | Decision | Rule |`,
+      `|------|--------|------|----------|------|`,
+      ...entries.map((e) => `| ${e.time || ""} | ${e.type || ""} | ${e.risk || ""} | ${e.decision || ""} | ${e.rule || ""} |`),
+    ].join("\n");
+    copyToClipboard(md, e.target);
+    showToast(`Copied ${entries.length} results as Markdown`);
   });
 
   document.getElementById("clear-result").addEventListener("click", (ev) => {
