@@ -968,7 +968,12 @@ function bindEvents() {
   if (codeCopyBtn) {
     codeCopyBtn.addEventListener("click", (e) => {
       const active = document.querySelector(".code-panel.active code");
-      if (active) copyToClipboard(active.textContent, e.target);
+      const activeTab = document.querySelector(".code-tab.active");
+      if (active) {
+        copyToClipboard(active.textContent, e.target);
+        const tabName = activeTab?.textContent || "code";
+        showToast(`Copied ${tabName} snippet`);
+      }
     });
   }
 
