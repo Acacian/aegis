@@ -1485,6 +1485,12 @@ function lintPolicyWarnings(yaml) {
     warnings.push(`Rule at line ${ruleLine + 1} has no match pattern`);
   }
 
+  // All rules auto-approve — policy provides no guardrails
+  const approvals = yaml.match(/approval:\s*(\w+)/g) || [];
+  if (approvals.length > 1 && approvals.every((a) => /auto/.test(a))) {
+    warnings.push("All rules auto-approve — consider adding review or block rules");
+  }
+
   return warnings;
 }
 
