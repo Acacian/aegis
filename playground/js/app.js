@@ -564,6 +564,12 @@ function applyTheme(theme) {
   }
 }
 
+function getTimeBasedTheme() {
+  const hour = new Date().getHours();
+  // 7am–7pm: light, otherwise dark
+  return (hour >= 7 && hour < 19) ? "light" : "dark";
+}
+
 function initTheme() {
   const saved = localStorage.getItem("aegis-theme");
   const theme = saved || getSystemTheme();
@@ -574,6 +580,17 @@ function initTheme() {
       applyTheme(e.matches ? "light" : "dark");
     }
   });
+
+  // Auto-switch theme at dawn/dusk if user hasn't manually set one
+  if (!saved) {
+    const checkTime = () => {
+      if (localStorage.getItem("aegis-theme")) return; // user chose manually
+      const timeTheme = getTimeBasedTheme();
+      const current = document.documentElement.getAttribute("data-theme") || "dark";
+      if (timeTheme !== current) applyTheme(timeTheme);
+    };
+    setInterval(checkTime, 60000); // check every minute
+  }
 }
 
 function toggleTheme() {
