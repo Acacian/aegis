@@ -898,6 +898,7 @@ function printAuditLog() {
 
 /* ---- Pyodide Init ---- */
 async function initPyodide() {
+  const t0 = performance.now();
   try {
     setProgress(10, "Loading Python runtime...");
     pyodide = await loadPyodide();
@@ -906,16 +907,18 @@ async function initPyodide() {
     await pyodide.loadPackage("micropip");
     const micropip = pyodide.pyimport("micropip");
 
-    setProgress(60, "Installing PyYAML...");
-    await micropip.install("pyyaml");
-
-    setProgress(75, "Installing agent-aegis...");
-    await micropip.install("agent-aegis");
+    setProgress(60, "Installing packages (parallel)...");
+    await Promise.all([
+      micropip.install("pyyaml"),
+      micropip.install("agent-aegis"),
+    ]);
 
     setProgress(90, "Setting up evaluation engine...");
     await pyodide.runPythonAsync(AEGIS_SETUP_CODE);
 
-    setProgress(100, "Ready!");
+    const loadTime = ((performance.now() - t0) / 1000).toFixed(1);
+    setProgress(100, `Ready! (loaded in ${loadTime}s)`);
+    console.log(`[Aegis] Pyodide loaded in ${loadTime}s`);
     setupPolicyValidation();
     if (tipInterval) clearInterval(tipInterval);
     setTimeout(() => {
