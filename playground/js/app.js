@@ -1687,14 +1687,9 @@ function findWarningLine(yaml, warning) {
   if (lower.includes("version should be quoted")) {
     return lines.findIndex((l) => /^version:\s*\d+\s*$/.test(l));
   }
-  if (lower.includes("invalid approval") || lower.includes("invalid risk_level")) {
-    const lineMatch = warning.match(/line (\d+)/);
-    if (lineMatch) return parseInt(lineMatch[1]) - 1;
-  }
-  if (lower.includes("has no risk_level")) {
-    const lineMatch = warning.match(/line (\d+)/);
-    if (lineMatch) return parseInt(lineMatch[1]) - 1;
-  }
+  // Generic fallback: any warning containing "line N" can be located
+  const lineMatch = warning.match(/line (\d+)/);
+  if (lineMatch) return parseInt(lineMatch[1]) - 1;
   return -1;
 }
 
