@@ -126,5 +126,6 @@ executor = HttpxExecutor(base_url="https://api.example.com")
 
 ## Getting Help
 
+- [GitHub Discussions](https://github.com/Acacian/aegis/discussions) — questions, ideas, show & tell
 - [GitHub Issues](https://github.com/Acacian/aegis/issues) — bug reports and feature requests
 - [Documentation](https://acacian.github.io/aegis/) — full guides and API reference

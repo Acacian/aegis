@@ -88,3 +88,6 @@ pip install 'agent-aegis[all]'        # Everything
 
 ### Can I use multiple adapters at once?
 Each `Runtime` instance uses one executor. For multiple backends, create multiple runtimes or build a composite executor.
+
+### Where can I ask questions?
+Use [GitHub Discussions](https://github.com/Acacian/aegis/discussions) for questions, ideas, and showcases. For bugs and feature requests, use [GitHub Issues](https://github.com/Acacian/aegis/issues).
