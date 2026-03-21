@@ -1,0 +1,50 @@
+name: "Aegis Policy Validate"
+description: "Validate AI agent governance policies with Aegis"
+branding:
+  icon: "shield"
+  color: "blue"
+
+inputs:
+  policy:
+    description: "Path to policy YAML file(s). Supports glob patterns."
+    required: false
+    default: "policy.yaml"
+  python-version:
+    description: "Python version to use"
+    required: false
+    default: "3.11"
+  simulate:
+    description: "Space-separated list of actions to simulate (e.g. 'read:crm delete:db')"
+    required: false
+    default: ""
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install Aegis
+      shell: bash
+      run: pip install agent-aegis
+
+    - name: Validate policy
+      shell: bash
+      run: |
+        echo "::group::Aegis Policy Validation"
+        for f in ${{ inputs.policy }}; do
+          echo "Validating: $f"
+          aegis validate "$f"
+        done
+        echo "::endgroup::"
+
+    - name: Simulate actions
+      if: inputs.simulate != ''
+      shell: bash
+      run: |
+        echo "::group::Aegis Policy Simulation"
+        POLICY=$(echo "${{ inputs.policy }}" | awk '{print $1}')
+        aegis simulate "$POLICY" ${{ inputs.simulate }}
+        echo "::endgroup::"
