@@ -2,7 +2,7 @@
  * Aegis Playground Service Worker — caches static assets for fast repeat loads.
  * Pyodide + WASM are cached on first use for near-instant subsequent visits.
  */
-const CACHE_NAME = "aegis-playground-v1";
+const CACHE_NAME = "aegis-playground-v2";
 const STATIC_ASSETS = [
   "./",
   "./index.html",
@@ -11,12 +11,14 @@ const STATIC_ASSETS = [
   "./js/app.js",
   "./favicon.svg",
   "./manifest.json",
+  "./opensearch.xml",
 ];
 
-// CDN assets cached on first fetch (stale-while-revalidate)
+// CDN assets cached on first fetch (cache-first for versioned URLs)
 const CDN_PATTERNS = [
   "cdnjs.cloudflare.com/ajax/libs/codemirror",
   "cdn.jsdelivr.net/pyodide",
+  "files.pythonhosted.org",
 ];
 
 self.addEventListener("install", (event) => {
