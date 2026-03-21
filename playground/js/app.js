@@ -1602,11 +1602,14 @@ async function validatePolicy() {
         // Set tooltip with all warnings
         const badge = document.getElementById("validation-status");
         if (badge) badge.title = warns.join("\n");
+        // Collect fixable warnings for "Fix All"
+        let fixableCount = 0;
         warns.forEach((w) => {
           const warnEl = document.createElement("div");
           warnEl.className = "cm-warn-widget";
           const fix = suggestFix(w, null, yaml);
           if (fix) {
+            fixableCount++;
             warnEl.innerHTML = `<span class="warn-text">\u26A0 ${_escDiv.textContent = w, _escDiv.innerHTML}</span><button class="warn-fix-btn">${_escDiv.textContent = fix.label, _escDiv.innerHTML}</button>`;
             warnEl.querySelector(".warn-fix-btn").addEventListener("click", () => {
               editor.setValue(fix.result);
@@ -1621,8 +1624,31 @@ async function validatePolicy() {
             activeLineWidgets.push(widget);
           }
         });
+        // Show "Fix All" when 2+ warnings are fixable
+        if (fixableCount >= 2 && badge) {
+          let fixAllBtn = badge.parentNode.querySelector(".fix-all-btn");
+          if (!fixAllBtn) {
+            fixAllBtn = document.createElement("button");
+            fixAllBtn.className = "fix-all-btn";
+            badge.parentNode.insertBefore(fixAllBtn, badge.nextSibling);
+          }
+          fixAllBtn.textContent = `Fix all (${fixableCount})`;
+          fixAllBtn.onclick = () => {
+            let currentYaml = editor.getValue();
+            warns.forEach((w) => {
+              const f = suggestFix(w, null, currentYaml);
+              if (f) currentYaml = f.result;
+            });
+            editor.setValue(currentYaml);
+            clearEditorErrors();
+            fixAllBtn.remove();
+            showToast(`Applied ${fixableCount} fixes`);
+          };
+        }
       } else {
         setValidationStatus("ok");
+        // Remove any lingering Fix All button
+        document.querySelector(".fix-all-btn")?.remove();
       }
     }
   } catch (err) {
