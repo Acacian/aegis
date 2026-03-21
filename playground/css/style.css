@@ -1214,6 +1214,60 @@ footer code {
   font-size: 0.85rem;
 }
 
+/* ---- Decision-type result styling ---- */
+.result-card.result-auto {
+  border-left: 3px solid var(--approval-auto);
+}
+
+.result-card.result-approve {
+  border-left: 3px solid var(--approval-approve);
+}
+
+.result-card.result-block {
+  border-left: 3px solid var(--approval-block);
+}
+
+/* Entrance animation — all cards slide in */
+.result-card {
+  animation: cardSlideIn 0.25s ease-out;
+}
+
+@keyframes cardSlideIn {
+  from { opacity: 0; transform: translateX(-12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* Auto-approved flash — brief green glow */
+.result-card.flash-auto {
+  animation: cardSlideIn 0.25s ease-out, glowGreen 0.6s ease-out;
+}
+
+@keyframes glowGreen {
+  0%   { box-shadow: 0 0 0 0 rgba(63, 185, 80, 0.4); }
+  50%  { box-shadow: 0 0 12px 2px rgba(63, 185, 80, 0.25); }
+  100% { box-shadow: none; }
+}
+
+/* Needs-approval flash — amber pulse */
+.result-card.flash-approve {
+  animation: cardSlideIn 0.25s ease-out, glowAmber 0.6s ease-out;
+}
+
+@keyframes glowAmber {
+  0%   { box-shadow: 0 0 0 0 rgba(210, 153, 34, 0.4); }
+  50%  { box-shadow: 0 0 12px 2px rgba(210, 153, 34, 0.25); }
+  100% { box-shadow: none; }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .result-card,
+  .result-card.flash-auto,
+  .result-card.flash-approve {
+    animation: none;
+  }
+}
+
 /* ---- Block Particles ---- */
 .block-particle {
   position: fixed;

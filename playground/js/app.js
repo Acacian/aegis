@@ -784,7 +784,8 @@ function renderResult(r) {
   const isAllowed = r.is_allowed;
 
   const card = document.createElement("div");
-  card.className = `result-card ${isAllowed ? "result-allowed" : "result-blocked"}`;
+  const decisionClass = `result-${approvalClass}`;
+  card.className = `result-card ${isAllowed ? "result-allowed" : "result-blocked"} ${decisionClass}`;
   card.innerHTML = `
     <div class="result-header">
       <span class="result-action-type">${escHtml(r.action_type)}</span>
@@ -826,20 +827,21 @@ result = await runtime.run_one(Action("${r.action_type}", "${r.target}", ${param
     copyToClipboard(code, e.target);
   });
 
-  // Add risk-specific border color
-  if (!isAllowed) {
-    card.style.borderColor = "var(--risk-" + riskClass + ")";
-  }
-
   // Prepend (latest first)
   const empty = $result.querySelector(".empty-state");
   if (empty) empty.remove();
   $result.prepend(card);
 
-  // Shield particles on block (CSS-only, no sound)
+  // Decision-specific visual feedback
   if (r.approval === "block") {
     spawnBlockParticles(card);
     showBlockedEffect(card);
+  } else if (r.approval === "auto") {
+    card.classList.add("flash-auto");
+    card.addEventListener("animationend", () => card.classList.remove("flash-auto"), { once: true });
+  } else if (r.approval === "approve") {
+    card.classList.add("flash-approve");
+    card.addEventListener("animationend", () => card.classList.remove("flash-approve"), { once: true });
   }
 }
 
