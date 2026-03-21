@@ -2,7 +2,7 @@ cff-version: 1.2.0
 message: "If you use Aegis in your research, please cite it as below."
 type: software
 title: "Aegis: Policy & Approval Runtime for AI Agents"
-version: 0.1.1
+version: 0.1.2
 date-released: 2026-03-20
 url: "https://github.com/Acacian/aegis"
 repository-code: "https://github.com/Acacian/aegis"

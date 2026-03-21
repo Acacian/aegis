@@ -1,5 +1,37 @@
 # Changelog
 
+## 0.1.2 (2026-03-21)
+
+### Improved
+- **205 tests**, 98% code coverage (up from 92 tests / 74%)
+- All `mypy --strict` type errors resolved (17 fixes)
+- Comprehensive test suite for all 6 adapters, CLI, runtime, approval, audit
+- Example smoke tests validate all 9 examples on every CI run
+
+### Added
+- README redesign: centered layout, full badge wall, collapsible integrations
+- Korean README translation (`README.ko.md`)
+- Cheatsheet docs page (one-page quick reference)
+- Mermaid architecture diagrams (data flow, adapter tree, policy evaluation)
+- GOVERNANCE.md, CITATION.cff for academic references
+- GitHub Discussions enabled with 3 templates (Ideas, Q&A, Show & Tell)
+- 8 good-first-issues for contributor onboarding
+- OpenSSF Scorecard workflow
+- Social media launch posts (`SOCIAL.md`)
+- Examples index (`examples/README.md`)
+- Shared test fixtures (`conftest.py`)
+
+### Fixed
+- Scorecard workflow no longer triggers on push (avoids false failures)
+- CI: bumped all GitHub Actions to latest (checkout v6, setup-python v6, etc.)
+- Removed redundant `--ignore-missing-imports` from mypy CI step
+- Added `types-PyYAML` to dev dependencies
+
+### Infrastructure
+- 20 GitHub topics for discoverability
+- Discussions URL added to PyPI project metadata
+- `.mypy_cache/`, `.ruff_cache/` added to `.gitignore`
+
 ## 0.1.1 (2026-03-21)
 
 ### Added

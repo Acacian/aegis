@@ -70,7 +70,7 @@ def test_audit_empty(tmp_path: Path, capsys):
 def test_version(capsys):
     main(["--version"])
     captured = capsys.readouterr()
-    assert "aegis 0.1.1" in captured.out
+    assert "aegis 0.1.2" in captured.out
 
 
 def test_init_creates_policy(tmp_path: Path, capsys):
