@@ -560,6 +560,7 @@ function buildShortcutOverlay() {
         <div class="shortcut-group">Evaluation</div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Enter</kbd><span>Evaluate custom action</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd><span>Run all actions</span></div>
+        <div class="shortcut-row"><kbd>r</kbd><span>Re-run last action</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>K</kbd><span>Focus custom action input</span></div>
         <div class="shortcut-group">Editor</div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>H</kbd><span>Toggle YAML hints</span></div>
@@ -1018,6 +1019,19 @@ function bindEvents() {
       document.body.classList.toggle("editor-focus-mode");
       showToast(document.body.classList.contains("editor-focus-mode") ? "Focus mode ON" : "Focus mode OFF");
       editor.refresh();
+      return;
+    }
+    // r → re-run last evaluated action (when not in input)
+    if (!isInput && e.key === "r" && !e.ctrlKey && !e.metaKey) {
+      const latestCard = $result.querySelector(".result-card");
+      if (latestCard && latestCard._resultData) {
+        evaluateAction({
+          action_type: latestCard._resultData.action_type,
+          target: latestCard._resultData.target,
+          params: latestCard._resultData.params || {},
+          description: latestCard._resultData.description || "",
+        });
+      }
       return;
     }
     // 1-9, 0 → switch preset (when not in input)
