@@ -291,6 +291,19 @@ aegis audit
 | **Audit immutability** | Results are frozen dataclasses; audit writes happen before returning |
 | **No magic** | Pure Python, no monkey-patching, no global state |
 
+## Compliance & Audit
+
+Aegis audit trails provide evidence for regulatory and internal compliance:
+
+| Standard | What Aegis provides |
+|----------|-------------------|
+| **SOC2** | Immutable audit log of every agent action, decision, and approval |
+| **GDPR** | Data access documentation -- who/what accessed which system and when |
+| **HIPAA** | PHI access trail with full action context and approval chain |
+| **Internal** | Change management evidence, risk assessment per action |
+
+Export as JSONL, query via CLI/API, or stream to external SIEM via webhook.
+
 ## Integrations
 
 Works with the agent frameworks you already use:
