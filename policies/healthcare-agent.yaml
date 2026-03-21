@@ -1,0 +1,82 @@
+# Healthcare Agent Governance Policy
+# Use case: AI agents in healthcare settings (EHR access, patient data, scheduling)
+#
+# pip install agent-aegis
+# policy = Policy.from_yaml("policies/healthcare-agent.yaml")
+#
+# HIPAA compliance: All actions are logged for audit trail.
+# PHI access requires approval. Modifications are blocked by default.
+
+version: "1"
+defaults:
+  risk_level: high
+  approval: approve
+
+rules:
+  # Viewing non-PHI data (schedules, room availability)
+  - name: view_schedule_auto
+    match: { type: "view_schedule" }
+    risk_level: low
+    approval: auto
+
+  # Searching for patients (de-identified)
+  - name: search_patients_auto
+    match: { type: "search" }
+    risk_level: low
+    approval: auto
+
+  # Viewing patient records (PHI) needs approval
+  - name: view_patient_approve
+    match: { type: "view_patient" }
+    risk_level: medium
+    approval: approve
+
+  # Accessing specific PHI fields (SSN, DOB, etc.)
+  - name: access_phi_high
+    match: { type: "access_phi" }
+    risk_level: high
+    approval: approve
+
+  # Creating clinical notes (append-only)
+  - name: create_note_approve
+    match: { type: "create_note" }
+    risk_level: medium
+    approval: approve
+
+  # Ordering tests or procedures
+  - name: order_approve
+    match: { type: "order" }
+    risk_level: high
+    approval: approve
+
+  # Prescribing medication is critical
+  - name: prescribe_critical
+    match: { type: "prescribe" }
+    risk_level: critical
+    approval: approve
+
+  # Exporting patient data (bulk)
+  - name: export_phi_critical
+    match: { type: "export" }
+    risk_level: critical
+    approval: approve
+
+  # Modifying patient records is blocked
+  - name: modify_patient_block
+    match: { type: "modify_patient" }
+    risk_level: critical
+    approval: block
+
+  # Deleting any patient data is blocked
+  - name: delete_block
+    match: { type: "delete" }
+    risk_level: critical
+    approval: block
+
+  # After-hours PHI access is critical
+  - name: after_hours_phi
+    match: { type: "access_phi" }
+    conditions:
+      time_after: "22:00"
+    risk_level: critical
+    approval: approve

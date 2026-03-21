@@ -10,6 +10,7 @@ Ready-to-use governance policies for common AI agent use cases. Copy one and cus
 | [browser-agent.yaml](browser-agent.yaml) | Browser automation (Playwright) | Navigate=auto, Click=approve, JS eval=block |
 | [data-pipeline.yaml](data-pipeline.yaml) | ETL, database operations | SELECT=auto, INSERT=approve, DROP=block |
 | [devops-agent.yaml](devops-agent.yaml) | CI/CD, infrastructure, deployments | Monitor=auto, Deploy=approve, Destroy=block |
+| [healthcare-agent.yaml](healthcare-agent.yaml) | Healthcare, EHR, patient data (HIPAA) | Search=auto, PHI=approve, Delete=block |
 
 ## Usage
 
