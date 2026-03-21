@@ -2449,14 +2449,20 @@ footer code {
   position: fixed;
   bottom: 20px;
   right: 20px;
-  background: var(--risk-high-bg);
-  border: 1px solid var(--risk-high);
-  color: var(--risk-high);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
   padding: 10px 16px;
   border-radius: var(--radius);
   font-size: 0.85rem;
   z-index: 999;
-  animation: slideIn 0.2s ease;
+  animation: toastSlideIn 0.25s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+@keyframes toastSlideIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* ---- Responsive ---- */
