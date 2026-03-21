@@ -722,6 +722,63 @@ kbd {
   white-space: nowrap;
 }
 
+/* ---- Comparison Section ---- */
+.comparison-section {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 0 24px 16px;
+}
+
+.comparison-toggle {
+  display: flex;
+  gap: 0;
+  margin-bottom: 0;
+}
+
+.comp-tab {
+  flex: 1;
+  padding: 8px 16px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.comp-tab:first-child {
+  border-radius: var(--radius) 0 0 0;
+}
+
+.comp-tab:last-child {
+  border-radius: 0 var(--radius) 0 0;
+  border-left: none;
+}
+
+.comp-tab.active {
+  background: var(--bg-panel);
+  color: var(--text-primary);
+  border-bottom-color: transparent;
+}
+
+.comp-code {
+  margin: 0;
+  padding: 16px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 var(--radius) var(--radius);
+  font-size: 0.82rem;
+  line-height: 1.6;
+  overflow-x: auto;
+  color: var(--text-primary);
+}
+
+.comp-code.hidden {
+  display: none;
+}
+
 /* ---- CTA Section ---- */
 .cta-section {
   text-align: center;

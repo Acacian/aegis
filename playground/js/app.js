@@ -92,6 +92,16 @@ function bindEvents() {
   // Theme toggle
   document.getElementById("theme-toggle").addEventListener("click", toggleTheme);
 
+  // Comparison tabs
+  document.querySelectorAll(".comp-tab").forEach((tab) => {
+    tab.addEventListener("click", () => {
+      document.querySelectorAll(".comp-tab").forEach((t) => t.classList.remove("active"));
+      tab.classList.add("active");
+      document.getElementById("comp-without").classList.toggle("hidden", tab.dataset.tab !== "without");
+      document.getElementById("comp-with").classList.toggle("hidden", tab.dataset.tab !== "with");
+    });
+  });
+
   // Preset buttons
   document.querySelectorAll(".preset-btn").forEach((btn) => {
     btn.addEventListener("click", () => {

@@ -85,6 +85,32 @@
     </div>
   </section>
 
+  <!-- Before/After Comparison -->
+  <section class="comparison-section">
+    <div class="comparison-toggle">
+      <button class="comp-tab active" data-tab="without">Without Aegis</button>
+      <button class="comp-tab" data-tab="with">With Aegis</button>
+    </div>
+    <div class="comparison-panels">
+      <pre class="comp-code" id="comp-without"><code class="lang-python"># 50+ lines of DIY governance... per action type
+if action.type == "delete":
+    if action.risk > THRESHOLD:
+        logger.warning(f"High-risk: {action}")
+        if not await ask_human_approval(action):
+            raise PermissionError("Denied")
+    # No audit trail
+    # No policy hot-reload
+    # Breaks when you add a new action type
+    result = await executor.run(action)</code></pre>
+      <pre class="comp-code hidden" id="comp-with"><code class="lang-python"># 3 lines. Works for every action type.
+from aegis import Action, Policy, Runtime
+
+runtime = Runtime(executor=my_executor, policy=Policy.from_yaml("policy.yaml"))
+result = await runtime.run_one(Action("delete", "crm", params={"id": "all"}))
+# Policy checked. Approval gated. Audit logged. Done.</code></pre>
+    </div>
+  </section>
+
   <main>
     <!-- Top section: Policy Editor + Action Panel -->
     <div class="top-section">
