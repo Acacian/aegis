@@ -413,8 +413,10 @@ let saveTimer = null;
 function updateRuleCount() {
   const rc = document.getElementById("rule-count");
   if (!rc) return;
-  const count = (editor.getValue().match(/- name:/g) || []).length;
-  rc.textContent = `${count} rule${count !== 1 ? "s" : ""}`;
+  const yaml = editor.getValue();
+  const count = (yaml.match(/- name:/g) || []).length;
+  const lines = editor.lineCount();
+  rc.textContent = `${count} rule${count !== 1 ? "s" : ""} · ${lines} lines`;
 }
 
 function setupPolicySave() {
