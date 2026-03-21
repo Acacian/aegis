@@ -1329,6 +1329,17 @@ function setValidationStatus(state, text) {
   else if (state === "warn") badge.innerHTML = "\u26A0\uFE0F " + text;
   else if (state === "checking") badge.innerHTML = "\u23F3 Checking...";
   else { badge.innerHTML = "\u2705 Valid"; badge.title = ""; }
+  // Click badge to jump to first error widget
+  badge.style.cursor = (state === "error" || state === "warn") ? "pointer" : "";
+  badge.onclick = (state === "error" || state === "warn") ? () => {
+    if (activeLineWidgets.length > 0) {
+      const firstWidget = activeLineWidgets[0];
+      const line = firstWidget.line?.lineNo?.() ?? 0;
+      editor.setCursor(line, 0);
+      editor.scrollIntoView({ line, ch: 0 }, 100);
+      editor.focus();
+    }
+  } : null;
 }
 
 function findWarningLine(yaml, warning) {
