@@ -11,8 +11,8 @@ Usage::
 
 Or via CLI::
 
-    aegis schema          # Print the JSON Schema
-    aegis validate --schema policy.yaml  # Validate against schema
+    aegis schema                # Print the JSON Schema
+    aegis validate policy.yaml  # Validate a policy file
 """
 
 from __future__ import annotations
@@ -90,6 +90,15 @@ POLICY_SCHEMA: dict[str, object] = {
                         "type": "string",
                         "enum": ["auto", "approve", "block"],
                         "default": "approve",
+                    },
+                    "conditions": {
+                        "type": "object",
+                        "description": (
+                            "Optional conditions for time-based or param-based matching. "
+                            "Keys: time_after, time_before, weekdays, "
+                            "param_eq, param_gt, param_lt, param_gte, param_lte, "
+                            "param_contains, param_matches."
+                        ),
                     },
                 },
                 "additionalProperties": False,

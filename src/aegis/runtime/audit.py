@@ -76,14 +76,14 @@ class AuditLogger:
                 datetime.now(UTC).isoformat(),
                 decision.action.type,
                 decision.action.target,
-                json.dumps(decision.action.params),
+                json.dumps(decision.action.params, default=str),
                 decision.action.description or None,
                 decision.risk_level.name,
                 decision.approval.value,
                 decision.matched_rule,
                 human_decision,
                 result.status.value if result else None,
-                json.dumps(result.data) if result and result.data else None,
+                json.dumps(result.data, default=str) if result and result.data else None,
                 result.error if result else None,
             ),
         )
@@ -138,8 +138,9 @@ class AuditLogger:
         if clauses:
             query += " WHERE " + " AND ".join(clauses)
         query += " ORDER BY id"
-        if limit:
-            query += f" LIMIT {limit}"
+        if limit is not None:
+            query += " LIMIT ?"
+            params.append(int(limit))
 
         cursor = self._conn.execute(query, params)
         columns = [desc[0] for desc in cursor.description]

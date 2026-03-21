@@ -72,7 +72,7 @@ def sample_policy() -> Policy:
                 name="delete_block",
             ),
         ],
-        default_risk=RiskLevel.MEDIUM,
+        default_risk_level=RiskLevel.MEDIUM,
         default_approval=Approval.APPROVE,
     )
 

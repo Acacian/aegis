@@ -143,8 +143,15 @@ class Policy:
 
     @classmethod
     def from_yaml(cls, path: str | Path) -> Policy:
-        """Load a policy from a YAML file."""
+        """Load a policy from a YAML file.
+
+        Raises:
+            FileNotFoundError: If the file does not exist.
+            TypeError: If the YAML content is not a mapping.
+        """
         path = Path(path)
+        if not path.exists():
+            raise FileNotFoundError(f"Policy file not found: {path}")
         with path.open() as f:
             data = yaml.safe_load(f)
         return cls.from_dict(data)
@@ -169,14 +176,25 @@ class Policy:
         return base
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> Policy:
-        """Load a policy from a dictionary."""
-        defaults = data.get("defaults", {})
+    def from_dict(cls, data: dict[str, Any] | None) -> Policy:
+        """Load a policy from a dictionary.
+
+        Returns a default policy when *data* is ``None`` (e.g. an empty
+        YAML file).  Raises :class:`TypeError` for any other non-dict input.
+        """
+        if data is None:
+            return cls()
+        if not isinstance(data, dict):
+            raise TypeError(
+                f"Expected a dict for policy data, got {type(data).__name__}. "
+                "Check that your YAML file contains a mapping (key: value), not a scalar."
+            )
+        defaults = data.get("defaults") or {}
         default_risk = RiskLevel[defaults.get("risk_level", "medium").upper()]
         default_approval = Approval(defaults.get("approval", "approve"))
 
         rules: list[PolicyRule] = []
-        for i, rule_data in enumerate(data.get("rules", [])):
+        for i, rule_data in enumerate(data.get("rules") or []):
             match = rule_data.get("match", {})
             rules.append(
                 PolicyRule(

@@ -32,10 +32,28 @@ Example YAML::
 
 from __future__ import annotations
 
+import logging
 import re
 from collections.abc import Callable
 from datetime import UTC, datetime, time
 from typing import Any
+
+logger = logging.getLogger(__name__)
+
+_KNOWN_KEYS = frozenset(
+    {
+        "time_after",
+        "time_before",
+        "weekdays",
+        "param_eq",
+        "param_gt",
+        "param_lt",
+        "param_gte",
+        "param_lte",
+        "param_contains",
+        "param_matches",
+    }
+)
 
 
 def evaluate_conditions(
@@ -79,7 +97,12 @@ def _evaluate_one(key: str, value: Any, params: dict[str, Any], now: datetime) -
         case "param_matches":
             return _check_param_compare(value, params, _op_matches)
         case _:
-            return True  # Unknown conditions are ignored
+            logger.warning(
+                "Unknown policy condition '%s' ignored (treated as pass). Known conditions: %s",
+                key,
+                ", ".join(sorted(_KNOWN_KEYS)),
+            )
+            return True  # Unknown conditions are ignored — warn to catch typos
 
 
 def _parse_time(s: str) -> time:
@@ -128,7 +151,10 @@ def _op_contains(actual: Any, expected: Any) -> bool:
 
 
 def _op_matches(actual: Any, expected: Any) -> bool:
-    return bool(re.search(str(expected), str(actual)))
+    try:
+        return bool(re.search(str(expected), str(actual)))
+    except re.error:
+        return False
 
 
 def _check_param_compare(

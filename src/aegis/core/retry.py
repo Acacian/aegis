@@ -52,7 +52,9 @@ class RetryPolicy:
         """Check if the action should be retried."""
         if attempt >= self.max_retries:
             return False
-        if self.retryable_errors and error:
+        if self.retryable_errors:
+            if not error:
+                return False
             return any(e in error for e in self.retryable_errors)
         return True
 

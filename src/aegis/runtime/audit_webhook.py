@@ -15,12 +15,15 @@ Example::
 from __future__ import annotations
 
 import json
+import logging
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 from aegis.core.policy import PolicyDecision
 from aegis.core.result import Result
+
+logger = logging.getLogger(__name__)
 
 
 def _require_httpx() -> Any:
@@ -124,7 +127,8 @@ class WebhookAuditLogger:
                     timeout=self._timeout,
                 )
         except Exception:
-            pass  # Fire-and-forget: don't break the pipeline
+            # Fire-and-forget: don't break the pipeline, but log the failure
+            logger.warning("Failed to send audit event to webhook", exc_info=True)
 
     def get_log(
         self,

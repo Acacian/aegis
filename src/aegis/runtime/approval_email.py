@@ -22,6 +22,7 @@ Example::
 from __future__ import annotations
 
 import asyncio
+import html as html_mod
 import logging
 import smtplib
 from email.mime.multipart import MIMEMultipart
@@ -50,15 +51,15 @@ def _build_html(
     color = _RISK_COLOR.get(risk_name, "#95a5a6")
 
     rows = [
-        ("Action", decision.action.type),
-        ("Target", decision.action.target),
-        ("Risk Level", risk_name),
-        ("Matched Rule", decision.matched_rule),
+        ("Action", html_mod.escape(decision.action.type)),
+        ("Target", html_mod.escape(decision.action.target)),
+        ("Risk Level", html_mod.escape(risk_name)),
+        ("Matched Rule", html_mod.escape(decision.matched_rule)),
     ]
     if decision.action.description:
-        rows.append(("Description", decision.action.description))
+        rows.append(("Description", html_mod.escape(decision.action.description)))
     if decision.action.params:
-        rows.append(("Parameters", str(decision.action.params)))
+        rows.append(("Parameters", html_mod.escape(str(decision.action.params))))
 
     table_rows = "".join(
         f"<tr><td style='padding:6px 12px;font-weight:bold;'>{k}</td>"

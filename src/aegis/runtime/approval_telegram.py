@@ -15,6 +15,7 @@ Example::
 from __future__ import annotations
 
 import asyncio
+import html
 import logging
 from typing import Any
 
@@ -45,16 +46,19 @@ def _build_text(decision: PolicyDecision) -> str:
     """Build a formatted Telegram message for the approval request."""
     risk_name = decision.risk_level.name
     emoji = _RISK_EMOJI.get(risk_name, "")
+    action_type = html.escape(decision.action.type)
+    action_target = html.escape(decision.action.target)
+    matched_rule = html.escape(decision.matched_rule)
     lines = [
         "<b>Aegis Approval Required</b>",
         "",
-        f"<b>Action:</b> <code>{decision.action.type}</code>",
-        f"<b>Target:</b> <code>{decision.action.target}</code>",
+        f"<b>Action:</b> <code>{action_type}</code>",
+        f"<b>Target:</b> <code>{action_target}</code>",
         f"<b>Risk:</b> {emoji} {risk_name}",
-        f"<b>Rule:</b> <code>{decision.matched_rule}</code>",
+        f"<b>Rule:</b> <code>{matched_rule}</code>",
     ]
     if decision.action.description:
-        lines.append(f"<b>Description:</b> {decision.action.description}")
+        lines.append(f"<b>Description:</b> {html.escape(decision.action.description)}")
     return "\n".join(lines)
 
 

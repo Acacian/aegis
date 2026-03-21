@@ -148,7 +148,15 @@ def create_app(
         if result_status := request.query_params.get("result_status"):
             filters["result_status"] = result_status
         if limit := request.query_params.get("limit"):
-            filters["limit"] = int(limit)
+            try:
+                limit_int = int(limit)
+                if limit_int < 0:
+                    return JSONResponse(
+                        {"error": "limit must be a non-negative integer"}, status_code=400
+                    )
+                filters["limit"] = limit_int
+            except ValueError:
+                return JSONResponse({"error": "limit must be a valid integer"}, status_code=400)
 
         entries = runtime.audit.get_log(**filters)
         # Serialize with default=str to handle datetime objects
@@ -200,7 +208,10 @@ def create_app(
     async def handle_error(request: Request, exc: Exception) -> JSONResponse:
         if isinstance(exc, json.JSONDecodeError):
             return JSONResponse({"error": "Invalid JSON"}, status_code=400)
-        return JSONResponse({"error": str(exc)}, status_code=500)
+        if isinstance(exc, (KeyError, ValueError, TypeError)):
+            return JSONResponse({"error": "Bad request"}, status_code=400)
+        # Do not leak internal exception details to clients
+        return JSONResponse({"error": "Internal server error"}, status_code=500)
 
     routes = [
         Route("/health", health, methods=["GET"]),
@@ -211,7 +222,12 @@ def create_app(
         Route("/api/v1/policy", update_policy, methods=["PUT"]),
     ]
 
-    return Starlette(routes=routes)
+    exception_handlers = {
+        400: handle_error,
+        500: handle_error,
+    }
+
+    return Starlette(routes=routes, exception_handlers=exception_handlers)
 
 
 def _parse_actions(body: dict[str, Any] | list[dict[str, Any]]) -> list[Action]:

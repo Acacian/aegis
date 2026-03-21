@@ -2,10 +2,7 @@
 
 from __future__ import annotations
 
-import re
 from datetime import UTC, datetime
-
-import pytest
 
 from aegis.core.action import Action
 from aegis.core.conditions import evaluate_conditions
@@ -159,9 +156,9 @@ def test_condition_failure_falls_through():
 
 def test_param_matches_invalid_regex_does_not_crash():
     """Invalid regex in param_matches should not crash the engine."""
-    # re.search will raise re.error on invalid patterns
-    with pytest.raises(re.error):
-        evaluate_conditions({"param_matches": {"field": "[invalid"}}, {"field": "test"})
+    # Invalid regex patterns should return False instead of raising
+    result = evaluate_conditions({"param_matches": {"field": "[invalid"}}, {"field": "test"})
+    assert result is False
 
 
 def test_param_matches_with_special_chars():

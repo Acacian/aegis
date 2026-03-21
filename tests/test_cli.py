@@ -62,13 +62,20 @@ def test_audit_json_format(tmp_path: Path, capsys):
 
 def test_audit_empty(tmp_path: Path, capsys):
     db = tmp_path / "empty.db"
+    # Create an empty DB so the file-existence check passes
+    logger = AuditLogger(db_path=db)
+    logger.close()
+
     main(["audit", "--db", str(db)])
     captured = capsys.readouterr()
     assert "No audit entries" in captured.out
 
 
 def test_version(capsys):
-    main(["--version"])
+    import pytest
+
+    with pytest.raises(SystemExit, match="0"):
+        main(["--version"])
     captured = capsys.readouterr()
     assert "aegis 0.1.3" in captured.out
 
