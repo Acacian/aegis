@@ -1713,6 +1713,7 @@ function renderResult(r) {
         <button class="copy-code-btn" data-fmt="github" title="Copy as GitHub issue template">Issue</button>
         <button class="copy-code-btn" data-fmt="yaml" title="Copy as YAML test case">YAML</button>
         <button class="copy-code-btn" data-fmt="env" title="Copy as .env config">ENV</button>
+        <button class="copy-code-btn" data-fmt="oneliner" title="Copy one-line summary">TL;DR</button>
       </div>
     </div>
   `;
@@ -2094,6 +2095,10 @@ test_case:
     risk_level: ${r.risk_level.toLowerCase()}
     is_allowed: ${r.is_allowed}
     matched_rule: "${r.matched_rule || ""}"`;
+  }
+
+  if (fmt === "oneliner") {
+    return `${r.action_type} → ${r.target} | ${r.approval.toUpperCase()} (${r.risk_level}) ${r.is_allowed ? "ALLOWED" : "BLOCKED"} ${r.matched_rule ? "via " + r.matched_rule : ""}`.trim();
   }
 
   if (fmt === "env") {
