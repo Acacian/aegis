@@ -635,6 +635,11 @@ main {
   color: #d29922;
 }
 
+.validation-status.status-warn {
+  background: rgba(210, 153, 34, 0.12);
+  color: #d29922;
+}
+
 .editor-error {
   padding: 6px 12px;
   font-size: 0.78rem;

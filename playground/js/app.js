@@ -1091,8 +1091,24 @@ let lastValidatedYaml = "";
 function setValidationStatus(state, text) {
   const badge = document.getElementById("validation-status");
   if (!badge) return;
-  badge.className = "validation-status" + (state === "error" ? " status-error" : state === "checking" ? " status-checking" : "");
-  badge.innerHTML = state === "error" ? "\u274C " + text : state === "checking" ? "\u23F3 Checking..." : "\u2705 Valid";
+  badge.className = "validation-status" + (state === "error" ? " status-error" : state === "checking" ? " status-checking" : state === "warn" ? " status-warn" : "");
+  if (state === "error") badge.innerHTML = "\u274C " + text;
+  else if (state === "warn") badge.innerHTML = "\u26A0\uFE0F " + text;
+  else if (state === "checking") badge.innerHTML = "\u23F3 Checking...";
+  else badge.innerHTML = "\u2705 Valid";
+}
+
+function lintPolicyWarnings(yaml) {
+  const warnings = [];
+  if (/approval:\s*\*/m.test(yaml)) warnings.push("Wildcard approval pattern detected");
+  if ((yaml.match(/- name:/g) || []).length > 20) warnings.push("Over 20 rules — consider splitting");
+  if (/risk_level:\s*critical/m.test(yaml) && !/approval:\s*block/m.test(yaml)) {
+    warnings.push("Critical risk without any block rule");
+  }
+  const names = (yaml.match(/- name:\s*(\S+)/g) || []).map((m) => m.replace("- name:", "").trim());
+  const dupes = names.filter((n, i) => names.indexOf(n) !== i);
+  if (dupes.length) warnings.push(`Duplicate rule name: ${dupes[0]}`);
+  return warnings;
 }
 
 function setupPolicyValidation() {
@@ -1127,8 +1143,14 @@ async function validatePolicy() {
       showEditorError(result.error, result.line);
       setValidationStatus("error", result.error.slice(0, 40));
     } else {
-      setValidationStatus("ok");
       clearEditorErrors();
+      // Check for warnings
+      const warns = lintPolicyWarnings(yaml);
+      if (warns.length) {
+        setValidationStatus("warn", warns[0]);
+      } else {
+        setValidationStatus("ok");
+      }
     }
   } catch (err) {
     setValidationStatus("ok"); // parsing errors during typing are ok
