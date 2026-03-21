@@ -282,11 +282,31 @@ aegis audit
 | **Data Pipeline** | Block DELETE on production tables; auto-approve staging | ETL agents can't drop prod data, even if the LLM hallucinates |
 | **Compliance** | Log every external API call with full context | Auditors get a complete trail for SOC2 / GDPR evidence |
 
+## Policy Templates
+
+Pre-built YAML policies for common industries. Copy one, customize it, deploy:
+
+| Template | Use Case | Key Rules |
+|----------|----------|-----------|
+| [`crm-agent.yaml`](policies/crm-agent.yaml) | Salesforce, HubSpot, CRM | Read=auto, Write=approve, Delete=block |
+| [`code-agent.yaml`](policies/code-agent.yaml) | Cursor, Copilot, Aider | Read=auto, Shell=high, Deploy=block |
+| [`financial-agent.yaml`](policies/financial-agent.yaml) | Payments, invoicing | View=auto, Payments=approve, Transfers=critical |
+| [`browser-agent.yaml`](policies/browser-agent.yaml) | Playwright, Selenium | Navigate=auto, Click=approve, JS eval=block |
+| [`data-pipeline.yaml`](policies/data-pipeline.yaml) | ETL, database ops | SELECT=auto, INSERT=approve, DROP=block |
+| [`devops-agent.yaml`](policies/devops-agent.yaml) | CI/CD, infrastructure | Monitor=auto, Deploy=approve, Destroy=block |
+| [`healthcare-agent.yaml`](policies/healthcare-agent.yaml) | Healthcare, HIPAA | Search=auto, PHI=approve, Delete=block |
+| [`ecommerce-agent.yaml`](policies/ecommerce-agent.yaml) | Online stores | View=auto, Refund=approve, Delete=block |
+| [`support-agent.yaml`](policies/support-agent.yaml) | Customer support | Read=auto, Respond=approve, Delete=block |
+
+```python
+policy = Policy.from_yaml("policies/crm-agent.yaml")
+```
+
 ## Production Ready
 
 | Aspect | Detail |
 |--------|--------|
-| **485 tests, 92% coverage** | Every adapter, handler, and edge case tested |
+| **486 tests, 92% coverage** | Every adapter, handler, and edge case tested |
 | **Type-safe** | `mypy --strict` with zero errors, `py.typed` marker |
 | **Performance** | Policy evaluation < 1ms; auto-approved actions add < 5ms overhead |
 | **Fail-safe** | Blocked actions never execute; can't be bypassed without policy change |
