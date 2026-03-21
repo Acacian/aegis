@@ -2538,6 +2538,12 @@ footer code {
     font-size: 0.78rem;
   }
 
+  .key-benefits { margin-top: 16px; }
+  .key-benefits li { font-size: 0.78rem; padding: 5px 0; }
+
+  .framework-compat { gap: 4px; }
+  .compat-item { font-size: 0.65rem; padding: 2px 6px; }
+
   .preset-divider {
     display: none;
   }
