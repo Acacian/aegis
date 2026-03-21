@@ -1651,8 +1651,9 @@ async function autoDemo() {
 let validationTimer = null;
 let lastValidatedYaml = "";
 
+let _$validationBadge = null;
 function setValidationStatus(state, text) {
-  const badge = document.getElementById("validation-status");
+  const badge = _$validationBadge || (_$validationBadge = document.getElementById("validation-status"));
   if (!badge) return;
   badge.className = "validation-status" + (state === "error" ? " status-error" : state === "checking" ? " status-checking" : state === "warn" ? " status-warn" : "");
   if (state === "error") badge.textContent = "\u274C " + text;
@@ -1672,8 +1673,8 @@ function setValidationStatus(state, text) {
   } : null;
 }
 
-function findWarningLine(yaml, warning) {
-  const lines = yaml.split("\n");
+function findWarningLine(yaml, warning, _lines) {
+  const lines = _lines || yaml.split("\n");
   const lower = warning.toLowerCase();
   if (lower.includes("wildcard")) {
     return lines.findIndex((l) => /approval:\s*\*/.test(l));
@@ -1838,9 +1839,9 @@ async function validatePolicy() {
       if (warns.length) {
         setValidationStatus("warn", warns[0]);
         // Set tooltip with all warnings
-        const badge = document.getElementById("validation-status");
-        if (badge) badge.title = warns.join("\n");
+        if (_$validationBadge) _$validationBadge.title = warns.join("\n");
         // Collect fixable warnings for "Fix All"
+        const yamlLines = yaml.split("\n");
         let fixableCount = 0;
         warns.forEach((w) => {
           const warnEl = document.createElement("div");
@@ -1866,7 +1867,7 @@ async function validatePolicy() {
           } else {
             warnEl.append(warnText, dismissBtn);
           }
-          const wLine = findWarningLine(yaml, w);
+          const wLine = findWarningLine(yaml, w, yamlLines);
           if (wLine >= 0) {
             const widget = editor.addLineWidget(wLine, warnEl, { coverGutter: false, noHScroll: true });
             activeLineWidgets.push(widget);
@@ -1878,12 +1879,12 @@ async function validatePolicy() {
           }
         });
         // Show "Fix All" when 2+ warnings are fixable
-        if (fixableCount >= 2 && badge) {
-          let fixAllBtn = badge.parentNode.querySelector(".fix-all-btn");
+        if (fixableCount >= 2 && _$validationBadge) {
+          let fixAllBtn = _$validationBadge.parentNode.querySelector(".fix-all-btn");
           if (!fixAllBtn) {
             fixAllBtn = document.createElement("button");
             fixAllBtn.className = "fix-all-btn";
-            badge.parentNode.insertBefore(fixAllBtn, badge.nextSibling);
+            _$validationBadge.parentNode.insertBefore(fixAllBtn, _$validationBadge.nextSibling);
           }
           fixAllBtn.textContent = `Fix all (${fixableCount})`;
           fixAllBtn.onclick = () => {
