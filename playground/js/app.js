@@ -2487,12 +2487,9 @@ function addAuditEntry(r) {
   if (empty) empty.remove();
   $audit.prepend(row);
 
-  // Cap audit DOM rows
-  const auditRows = $audit.querySelectorAll(".audit-row");
-  if (auditRows.length > MAX_AUDIT_ROWS) {
-    for (let i = MAX_AUDIT_ROWS; i < auditRows.length; i++) {
-      auditRows[i].remove();
-    }
+  // Cap audit DOM rows (use lastElementChild to avoid querySelectorAll)
+  while ($audit.children.length > MAX_AUDIT_ROWS) {
+    $audit.lastElementChild.remove();
   }
 
   const countParts = [`${auditEntries.length} entries`];
