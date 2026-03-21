@@ -61,6 +61,28 @@ docs/            # mkdocs-material documentation
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for design details.
 
+## Your First PR (5-Minute Guide)
+
+Not sure where to start? Here's a step-by-step path to your first contribution:
+
+1. **Pick an issue** tagged [`good first issue`](https://github.com/Acacian/aegis/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
+2. **Fork and clone:**
+   ```bash
+   gh repo fork Acacian/aegis --clone
+   cd aegis && make dev
+   ```
+3. **Create a branch:** `git checkout -b fix/my-improvement`
+4. **Make your change** — code, tests, or docs
+5. **Verify:** `make lint && make test`
+6. **Push and PR:** `git push -u origin fix/my-improvement && gh pr create`
+
+**Easy first contributions** (no deep knowledge needed):
+- Add a new example script in `examples/` for a use case you care about
+- Add a test case for an edge case you found
+- Fix a typo in docs
+- Add a new policy template in `policies/`
+- Improve error messages
+
 ## What to Contribute
 
 ### Non-code contributions
