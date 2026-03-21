@@ -524,6 +524,7 @@ result = await runtime.run_one(Action("${r.action_type}", "${r.target}", ${param
   // Shield particles on block (CSS-only, no sound)
   if (r.approval === "block") {
     spawnBlockParticles(card);
+    showBlockedEffect(card);
   }
 }
 
@@ -543,6 +544,17 @@ function spawnBlockParticles(card) {
     document.body.appendChild(p);
     p.addEventListener("animationend", () => p.remove());
   }
+}
+
+/* ---- Blocked Effect (CSS-only particle burst) ---- */
+function showBlockedEffect(card) {
+  card.classList.add("blocked-effect");
+  card.addEventListener(
+    "animationend",
+    () => card.classList.remove("blocked-effect"),
+    { once: true }
+  );
+}
 
 /* ---- Audit Log ---- */
 /* ---- Stats Bar ---- */
