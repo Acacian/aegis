@@ -2678,12 +2678,12 @@ from aegis import Action, Policy
 def policy():
     return Policy.from_yaml("policy.yaml")
 
-def test_${r.action_type}_${r.approval}(policy):
-    \"\"\"${r.action_type} on ${r.target} should be ${r.approval}.\"\"\"
-    action = Action("${r.action_type}", "${r.target}", params=${params})
+def test_${_safeStr(r.action_type)}_${_safeStr(r.approval)}(policy):
+    \"\"\"${_safeStr(r.action_type)} on ${_safeStr(r.target)} should be ${_safeStr(r.approval)}.\"\"\"
+    action = Action("${_safeStr(r.action_type)}", "${_safeStr(r.target)}", params=${params})
     decision = policy.evaluate(action)
-    assert decision.approval.value == "${r.approval}"
-    assert decision.risk_level.value == "${r.risk_level.toLowerCase()}"
+    assert decision.approval.value == "${_safeStr(r.approval)}"
+    assert decision.risk_level.value == "${_safeStr(r.risk_level.toLowerCase())}"
     assert decision.is_allowed is ${r.is_allowed ? "True" : "False"}`;
   }
 
