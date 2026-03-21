@@ -106,6 +106,14 @@ body {
   margin-bottom: 16px;
 }
 
+.loading-tip {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 12px;
+  transition: opacity 0.3s ease;
+  font-style: italic;
+}
+
 .spinner {
   width: 40px;
   height: 40px;

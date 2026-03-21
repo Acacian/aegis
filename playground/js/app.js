@@ -11,6 +11,32 @@ let editor = null;
 let actionCount = 0;
 let auditEntries = [];
 
+/* ---- Loading Tips ---- */
+const LOADING_TIPS = [
+  "Tip: Aegis evaluates policies in under 1ms",
+  "Tip: YAML policies can be hot-reloaded without restarting",
+  "Tip: 7 adapters — LangChain, CrewAI, OpenAI, Anthropic, MCP, and more",
+  "Tip: Use 'aegis simulate' to test policies without executing",
+  "Tip: Approval handlers support Slack, Discord, Telegram, and webhooks",
+  "Tip: Audit logs export to JSONL for compliance review",
+  "Tip: Policy conditions support time-based and parameter-based rules",
+  "Tip: Try different industry presets after loading!",
+];
+let tipInterval = null;
+function rotateTips() {
+  const $tip = document.getElementById("loading-tip");
+  if (!$tip) return;
+  let idx = 0;
+  tipInterval = setInterval(() => {
+    idx = (idx + 1) % LOADING_TIPS.length;
+    $tip.style.opacity = 0;
+    setTimeout(() => {
+      $tip.textContent = LOADING_TIPS[idx];
+      $tip.style.opacity = 1;
+    }, 300);
+  }, 3000);
+}
+
 /* ---- DOM refs ---- */
 const $overlay = document.getElementById("loading-overlay");
 const $status = document.getElementById("loading-status");
@@ -24,6 +50,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   initEditor();
   loadPolicyFromURL();
   bindEvents();
+  rotateTips();
   await initPyodide();
 });
 
@@ -238,6 +265,7 @@ async function initPyodide() {
 
     setProgress(100, "Ready!");
     setupPolicyValidation();
+    if (tipInterval) clearInterval(tipInterval);
     setTimeout(() => {
       $overlay.classList.add("hidden");
       // Auto-run demo if no policy in URL
