@@ -44,6 +44,7 @@
   <meta name="twitter:title" content="Aegis Playground - AI Agent Governance in Your Browser">
   <meta name="twitter:description" content="Write YAML policies, simulate AI agent actions, see real-time risk evaluation. No install needed.">
   <meta name="twitter:image" content="https://acacian.github.io/aegis/playground/og-image.svg">
+  <meta name="twitter:image:alt" content="Aegis Playground — YAML policy editor with colored decision badges showing auto, review, and block outcomes">
 
   <meta property="og:locale" content="en_US">
   <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
@@ -154,6 +155,40 @@
         "@type": "Question",
         "name": "Can I use Aegis in production?",
         "acceptedAnswer": { "@type": "Answer", "text": "Yes. Aegis is designed for production use with sub-millisecond evaluation, complete audit logging, and zero runtime dependencies. Over 483 tests ensure reliability." }
+      }
+    ]
+  }
+  </script>
+
+  <!-- Structured Data: HowTo -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    "name": "How to add AI agent governance with Aegis",
+    "description": "Add policy-based governance to your AI agents in 3 steps using Aegis.",
+    "totalTime": "PT3M",
+    "step": [
+      {
+        "@type": "HowToStep",
+        "position": 1,
+        "name": "Write a YAML policy",
+        "text": "Define rules for each action type: auto-approve safe reads, require human review for writes, block dangerous operations.",
+        "timeRequired": "PT2M"
+      },
+      {
+        "@type": "HowToStep",
+        "position": 2,
+        "name": "Integrate with your agent",
+        "text": "Import Aegis, load your policy, and wrap your agent runtime in 2 lines of Python code.",
+        "timeRequired": "PT30S"
+      },
+      {
+        "@type": "HowToStep",
+        "position": 3,
+        "name": "Get instant decisions",
+        "text": "Aegis evaluates risk in under 1ms: auto-approve, require human approval, or block. Every decision is audit-logged.",
+        "timeRequired": "PT0S"
       }
     ]
   }
