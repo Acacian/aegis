@@ -1639,10 +1639,10 @@ function setValidationStatus(state, text) {
   const badge = document.getElementById("validation-status");
   if (!badge) return;
   badge.className = "validation-status" + (state === "error" ? " status-error" : state === "checking" ? " status-checking" : state === "warn" ? " status-warn" : "");
-  if (state === "error") badge.innerHTML = "\u274C " + text;
-  else if (state === "warn") badge.innerHTML = "\u26A0\uFE0F " + text;
-  else if (state === "checking") badge.innerHTML = "\u23F3 Checking...";
-  else { badge.innerHTML = "\u2705 Valid"; badge.title = ""; }
+  if (state === "error") badge.textContent = "\u274C " + text;
+  else if (state === "warn") badge.textContent = "\u26A0\uFE0F " + text;
+  else if (state === "checking") badge.textContent = "\u23F3 Checking...";
+  else { badge.textContent = "\u2705 Valid"; badge.title = ""; }
   // Click badge to jump to first error widget
   badge.style.cursor = (state === "error" || state === "warn") ? "pointer" : "";
   badge.onclick = (state === "error" || state === "warn") ? () => {
@@ -2088,7 +2088,16 @@ function updateActionButtons(preset) {
     const btn = document.createElement("button");
     btn.className = `action-btn ${RISK_CLASSES[risk]}`;
     btn.dataset.action = JSON.stringify(a);
-    btn.innerHTML = `<span class="action-icon">${icon}</span><span class="action-label">${a.description}</span><span class="action-risk">${risk.toUpperCase()}</span>`;
+    const iconSpan = document.createElement("span");
+    iconSpan.className = "action-icon";
+    iconSpan.textContent = icon;
+    const labelSpan = document.createElement("span");
+    labelSpan.className = "action-label";
+    labelSpan.textContent = a.description;
+    const riskSpan = document.createElement("span");
+    riskSpan.className = "action-risk";
+    riskSpan.textContent = risk.toUpperCase();
+    btn.append(iconSpan, labelSpan, riskSpan);
     btn.addEventListener("click", (ev) => {
       // Ripple effect
       const rect = btn.getBoundingClientRect();
