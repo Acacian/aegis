@@ -1287,7 +1287,7 @@ function setValidationStatus(state, text) {
   if (state === "error") badge.innerHTML = "\u274C " + text;
   else if (state === "warn") badge.innerHTML = "\u26A0\uFE0F " + text;
   else if (state === "checking") badge.innerHTML = "\u23F3 Checking...";
-  else badge.innerHTML = "\u2705 Valid";
+  else { badge.innerHTML = "\u2705 Valid"; badge.title = ""; }
 }
 
 function findWarningLine(yaml, warning) {
@@ -1390,6 +1390,9 @@ async function validatePolicy() {
       const warns = lintPolicyWarnings(yaml);
       if (warns.length) {
         setValidationStatus("warn", warns[0]);
+        // Set tooltip with all warnings
+        const badge = document.getElementById("validation-status");
+        if (badge) badge.title = warns.join("\n");
         warns.forEach((w) => {
           const warnEl = document.createElement("div");
           warnEl.className = "cm-warn-widget";
