@@ -1221,6 +1221,19 @@ function bindEvents() {
 }
 
 /* ---- Export Menu ---- */
+function getActiveFilter() {
+  return document.querySelector(".audit-filter.active")?.dataset.filter || "all";
+}
+
+function getFilteredEntries() {
+  const filter = getActiveFilter();
+  if (filter === "all") return auditEntries;
+  return auditEntries.filter((e) => {
+    const decision = (e.decision || e.approval || "").toLowerCase();
+    return decision === filter;
+  });
+}
+
 function toggleExportMenu() {
   let menu = document.getElementById("export-menu");
   if (menu) { menu.remove(); return; }
@@ -1233,9 +1246,14 @@ function toggleExportMenu() {
   menu.className = "export-menu";
   menu.style.top = rect.bottom + 4 + "px";
   menu.style.right = window.innerWidth - rect.right + "px";
-  const count = auditEntries.length;
+  const total = auditEntries.length;
+  const filtered = getFilteredEntries();
+  const filterLabel = getActiveFilter();
+  const countLabel = filterLabel !== "all" && filtered.length !== total
+    ? `${filtered.length} of ${total} entries (${filterLabel})`
+    : `${total} entries`;
   menu.innerHTML = `
-    <div class="export-header">${count} entries</div>
+    <div class="export-header">${countLabel}</div>
     <button class="export-option" data-format="json">Export as JSON</button>
     <button class="export-option" data-format="csv">Export as CSV</button>
     <button class="export-option" data-format="yaml">Export as YAML report</button>
@@ -1270,21 +1288,26 @@ function downloadBlob(content, type, ext) {
 }
 
 function exportAuditJSON() {
-  if (!auditEntries.length) { showToast("No audit entries to export"); return; }
+  const entries = getFilteredEntries();
+  if (!entries.length) { showToast("No audit entries to export"); return; }
+  const filter = getActiveFilter();
   const report = {
     meta: {
       exported_at: new Date().toISOString(),
       policy_yaml: editor.getValue(),
       version: "0.1.4",
-      entry_count: auditEntries.length,
+      entry_count: entries.length,
+      total_entries: auditEntries.length,
+      filter: filter !== "all" ? filter : undefined,
     },
     summary: { ...stats, avg_latency_ms: stats.total > 0 ? +(stats.totalMs / stats.total).toFixed(2) : 0 },
-    entries: auditEntries,
+    entries,
   };
   const json = JSON.stringify(report, null, 2);
   downloadBlob(json, "application/json", "json");
   const sizeKb = (new Blob([json]).size / 1024).toFixed(1);
-  showToast(`Exported ${auditEntries.length} entries (${sizeKb} KB)`);
+  const filterNote = filter !== "all" ? ` (${filter} only)` : "";
+  showToast(`Exported ${entries.length} entries${filterNote} (${sizeKb} KB)`);
 }
 
 function exportAuditCSV() {
