@@ -1992,6 +1992,23 @@ function showPulseRing(card) {
   ring.addEventListener("animationend", () => ring.remove());
 }
 
+/* ---- Celebration (milestone at 50 & 100 evals) ---- */
+function spawnCelebration() {
+  const symbols = ["\u2B50", "\u{1F389}", "\u{1F38A}", "\u2728", "\u{1F3C6}"];
+  for (let i = 0; i < 12; i++) {
+    const p = document.createElement("div");
+    p.className = "block-particle";
+    p.textContent = symbols[i % symbols.length];
+    p.style.left = Math.random() * window.innerWidth + "px";
+    p.style.top = window.innerHeight + "px";
+    p.style.setProperty("--dx", (Math.random() - 0.5) * 200 + "px");
+    p.style.setProperty("--dy", -(200 + Math.random() * 300) + "px");
+    p.style.fontSize = "1.5rem";
+    document.body.appendChild(p);
+    p.addEventListener("animationend", () => p.remove());
+  }
+}
+
 /* ---- Blocked Effect (CSS-only particle burst + screen shake) ---- */
 function showBlockedEffect(card) {
   card.classList.add("blocked-effect");
@@ -2042,6 +2059,11 @@ function updateStats(result) {
   if (stats.total % 10 === 0 && $t) {
     $t.parentElement.classList.add("stat-milestone");
     setTimeout(() => $t.parentElement.classList.remove("stat-milestone"), 1500);
+    // Big milestone celebration at 50 and 100
+    if (stats.total === 50 || stats.total === 100) {
+      showToast(`${stats.total} evaluations! You're a governance pro.`);
+      spawnCelebration();
+    }
   }
 }
 
