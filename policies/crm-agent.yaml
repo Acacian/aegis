@@ -1,0 +1,67 @@
+# CRM Agent Governance Policy
+# Use case: AI agent managing Salesforce, HubSpot, or any CRM
+#
+# pip install agent-aegis
+# policy = Policy.from_yaml("policies/crm-agent.yaml")
+
+version: "1"
+defaults:
+  risk_level: medium
+  approval: approve
+
+rules:
+  # Navigation is always safe
+  - name: navigate_auto
+    match: { type: "navigate" }
+    risk_level: low
+    approval: auto
+
+  # Reading data is safe
+  - name: read_auto
+    match: { type: "read" }
+    risk_level: low
+    approval: auto
+
+  # Searching is safe
+  - name: search_auto
+    match: { type: "search" }
+    risk_level: low
+    approval: auto
+
+  # Creating new records needs review
+  - name: create_approve
+    match: { type: "create" }
+    risk_level: medium
+    approval: approve
+
+  # Updating existing records needs review
+  - name: update_approve
+    match: { type: "update" }
+    risk_level: medium
+    approval: approve
+
+  # Bulk operations are high risk
+  - name: bulk_high
+    match: { type: "bulk_*" }
+    conditions:
+      param_gt: { count: 50 }
+    risk_level: high
+    approval: approve
+
+  # Exporting data needs approval (data exfiltration risk)
+  - name: export_approve
+    match: { type: "export" }
+    risk_level: high
+    approval: approve
+
+  # Deleting records is blocked by default
+  - name: delete_block
+    match: { type: "delete" }
+    risk_level: critical
+    approval: block
+
+  # Merging/deduplication is high risk (data loss potential)
+  - name: merge_approve
+    match: { type: "merge" }
+    risk_level: high
+    approval: approve

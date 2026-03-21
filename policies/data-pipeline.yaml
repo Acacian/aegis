@@ -1,0 +1,78 @@
+# Data Pipeline Agent Governance Policy
+# Use case: AI agents running ETL, data transformations, database operations
+#
+# pip install agent-aegis
+# policy = Policy.from_yaml("policies/data-pipeline.yaml")
+
+version: "1"
+defaults:
+  risk_level: medium
+  approval: approve
+
+rules:
+  # SELECT queries are safe
+  - name: select_auto
+    match: { type: "select" }
+    risk_level: low
+    approval: auto
+
+  # Reading data is safe
+  - name: read_auto
+    match: { type: "read" }
+    risk_level: low
+    approval: auto
+
+  # INSERT is medium risk
+  - name: insert_approve
+    match: { type: "insert" }
+    risk_level: medium
+    approval: approve
+
+  # UPDATE needs approval
+  - name: update_approve
+    match: { type: "update" }
+    risk_level: medium
+    approval: approve
+
+  # Staging operations auto-approve
+  - name: staging_auto
+    match: { target: "staging*" }
+    risk_level: low
+    approval: auto
+
+  # Production writes are high risk
+  - name: prod_write_high
+    match: { target: "prod*" }
+    risk_level: high
+    approval: approve
+
+  # Bulk operations with many rows
+  - name: bulk_large
+    match: { type: "bulk_*" }
+    conditions:
+      param_gt: { rows: 10000 }
+    risk_level: high
+    approval: approve
+
+  # Schema changes are critical
+  - name: schema_critical
+    match: { type: "alter_*" }
+    risk_level: critical
+    approval: approve
+
+  # DROP/DELETE on production is blocked
+  - name: drop_block
+    match: { type: "drop" }
+    risk_level: critical
+    approval: block
+
+  - name: delete_block
+    match: { type: "delete" }
+    risk_level: critical
+    approval: block
+
+  # TRUNCATE is blocked
+  - name: truncate_block
+    match: { type: "truncate" }
+    risk_level: critical
+    approval: block

@@ -1,0 +1,77 @@
+# Browser Agent Governance Policy
+# Use case: AI agents controlling web browsers (Playwright, Selenium, browser-use)
+#
+# pip install 'agent-aegis[playwright]'
+# policy = Policy.from_yaml("policies/browser-agent.yaml")
+
+version: "1"
+defaults:
+  risk_level: medium
+  approval: approve
+
+rules:
+  # Navigation is generally safe
+  - name: navigate_auto
+    match: { type: "navigate" }
+    risk_level: low
+    approval: auto
+
+  # Reading page content is safe
+  - name: read_auto
+    match: { type: "read" }
+    risk_level: low
+    approval: auto
+
+  # Taking screenshots is safe
+  - name: screenshot_auto
+    match: { type: "screenshot" }
+    risk_level: low
+    approval: auto
+
+  # Scrolling is safe
+  - name: scroll_auto
+    match: { type: "scroll" }
+    risk_level: low
+    approval: auto
+
+  # Clicking needs review (could trigger actions)
+  - name: click_approve
+    match: { type: "click" }
+    risk_level: medium
+    approval: approve
+
+  # Filling forms needs review (entering data)
+  - name: fill_approve
+    match: { type: "fill" }
+    risk_level: medium
+    approval: approve
+
+  # Submitting forms is high risk
+  - name: submit_high
+    match: { type: "submit" }
+    risk_level: high
+    approval: approve
+
+  # File upload is high risk
+  - name: upload_high
+    match: { type: "upload" }
+    risk_level: high
+    approval: approve
+
+  # File download needs review
+  - name: download_approve
+    match: { type: "download" }
+    risk_level: medium
+    approval: approve
+
+  # JavaScript execution is blocked (arbitrary code)
+  - name: eval_block
+    match: { type: "eval" }
+    risk_level: critical
+    approval: block
+
+  # Executing JavaScript is blocked
+  - name: execute_js_block
+    match: { type: "execute_js" }
+    risk_level: critical
+    approval: block

@@ -575,6 +575,16 @@ Or jump straight into a cloud environment:
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/Acacian/aegis)
 
+## Badge
+
+Using Aegis? Add a badge to your project:
+
+```markdown
+[![Governed by Aegis](https://img.shields.io/badge/governed%20by-aegis-blue?logo=data:image/svg%2bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48dGV4dCB5PSIuOWVtIiBmb250LXNpemU9IjkwIj7wn5uh77iPPC90ZXh0Pjwvc3ZnPg==)](https://github.com/Acacian/aegis)
+```
+
+[![Governed by Aegis](https://img.shields.io/badge/governed%20by-aegis-blue?logo=data:image/svg%2bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48dGV4dCB5PSIuOWVtIiBmb250LXNpemU9IjkwIj7wn5uh77iPPC90ZXh0Pjwvc3ZnPg==)](https://github.com/Acacian/aegis)
+
 ## License
 
 MIT -- see [LICENSE](LICENSE) for details.

@@ -1,0 +1,77 @@
+# Code Agent Governance Policy
+# Use case: AI coding assistants (Cursor, Copilot, Aider, etc.)
+#
+# pip install agent-aegis
+# policy = Policy.from_yaml("policies/code-agent.yaml")
+
+version: "1"
+defaults:
+  risk_level: medium
+  approval: approve
+
+rules:
+  # Reading files is always safe
+  - name: read_file_auto
+    match: { type: "read_file" }
+    risk_level: low
+    approval: auto
+
+  # Listing directories is safe
+  - name: list_dir_auto
+    match: { type: "list_dir" }
+    risk_level: low
+    approval: auto
+
+  # Searching code is safe
+  - name: search_auto
+    match: { type: "search" }
+    risk_level: low
+    approval: auto
+
+  # Writing/editing files needs review
+  - name: write_file_approve
+    match: { type: "write_file" }
+    risk_level: medium
+    approval: approve
+
+  # Creating new files needs review
+  - name: create_file_approve
+    match: { type: "create_file" }
+    risk_level: medium
+    approval: approve
+
+  # Running shell commands is high risk
+  - name: shell_high
+    match: { type: "shell" }
+    risk_level: high
+    approval: approve
+
+  # Running tests is medium risk (could have side effects)
+  - name: run_tests_approve
+    match: { type: "run_tests" }
+    risk_level: medium
+    approval: approve
+
+  # Git operations need review
+  - name: git_approve
+    match: { type: "git_*" }
+    risk_level: medium
+    approval: approve
+
+  # Deleting files is blocked
+  - name: delete_file_block
+    match: { type: "delete_file" }
+    risk_level: critical
+    approval: block
+
+  # Installing packages is high risk (supply chain)
+  - name: install_high
+    match: { type: "install" }
+    risk_level: high
+    approval: approve
+
+  # Deploying is critical
+  - name: deploy_block
+    match: { type: "deploy" }
+    risk_level: critical
+    approval: block

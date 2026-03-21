@@ -1,0 +1,83 @@
+# Financial Agent Governance Policy
+# Use case: AI agents handling payments, invoices, accounting
+#
+# pip install agent-aegis
+# policy = Policy.from_yaml("policies/financial-agent.yaml")
+
+version: "1"
+defaults:
+  risk_level: high
+  approval: approve
+
+rules:
+  # Viewing account info is safe
+  - name: view_auto
+    match: { type: "view" }
+    risk_level: low
+    approval: auto
+
+  # Reading transaction history is safe
+  - name: read_auto
+    match: { type: "read" }
+    risk_level: low
+    approval: auto
+
+  # Generating reports is safe
+  - name: report_auto
+    match: { type: "report" }
+    risk_level: low
+    approval: auto
+
+  # Creating invoices needs approval
+  - name: create_invoice
+    match: { type: "create_invoice" }
+    risk_level: medium
+    approval: approve
+
+  # Small payments auto-approve (under threshold)
+  - name: payment_small_approve
+    match: { type: "payment" }
+    conditions:
+      param_lte: { amount: 100 }
+    risk_level: medium
+    approval: approve
+
+  # Large payments need approval
+  - name: payment_large_approve
+    match: { type: "payment" }
+    conditions:
+      param_gt: { amount: 100 }
+    risk_level: high
+    approval: approve
+
+  # Refunds always need approval
+  - name: refund_approve
+    match: { type: "refund" }
+    risk_level: high
+    approval: approve
+
+  # Transferring funds is critical
+  - name: transfer_critical
+    match: { type: "transfer" }
+    risk_level: critical
+    approval: approve
+
+  # Deleting financial records is blocked
+  - name: delete_block
+    match: { type: "delete" }
+    risk_level: critical
+    approval: block
+
+  # Modifying account settings is blocked
+  - name: modify_account_block
+    match: { type: "modify_account" }
+    risk_level: critical
+    approval: block
+
+  # Only allow operations during business hours
+  - name: after_hours_block
+    match: { type: "*" }
+    conditions:
+      time_after: "20:00"
+    risk_level: critical
+    approval: block
