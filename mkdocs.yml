@@ -66,5 +66,6 @@ nav:
       - Adapters: api/adapters.md
       - Audit: api/audit.md
   - Cheatsheet: cheatsheet.md
+  - Examples: https://github.com/Acacian/aegis/tree/main/examples
   - FAQ: faq.md
   - Troubleshooting: troubleshooting.md

@@ -9,7 +9,7 @@ Aegis is a policy engine that sits between your AI agent and the systems it cont
 You could, but policy rules will be scattered across your codebase, hard to audit, and impossible to change without redeploying. Aegis centralizes governance into a single YAML file.
 
 ### Does Aegis work with my framework?
-Aegis has built-in adapters for **LangChain**, **CrewAI**, **OpenAI Agents SDK**, **Anthropic Claude**, and **Playwright**. For anything else, write a custom adapter (it's ~10 lines of code).
+Aegis has built-in adapters for **LangChain**, **CrewAI**, **OpenAI Agents SDK**, **Anthropic Claude**, **Playwright**, and **httpx** (REST APIs). For anything else, write a custom adapter (it's ~10 lines of code).
 
 ### Is Aegis production-ready?
 Aegis is in alpha (v0.1.x). The core API is stable, but breaking changes may occur before v1.0. We follow semantic versioning.
