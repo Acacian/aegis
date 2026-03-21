@@ -370,6 +370,8 @@ function initEditor() {
     tabSize: 2,
     indentWithTabs: false,
     lineWrapping: true,
+    matchBrackets: true,
+    styleActiveLine: true,
     viewportMargin: Infinity,
     extraKeys: {
       Tab: (cm) => cm.execCommand("indentMore"),
