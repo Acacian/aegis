@@ -3005,6 +3005,17 @@ footer code {
     white-space: nowrap;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     text-align: right;
+    opacity: 0;
+    transform: translateY(8px);
+    animation: fabItemIn 0.2s ease forwards;
+  }
+  .fab-action:nth-child(1) { animation-delay: 0s; }
+  .fab-action:nth-child(2) { animation-delay: 0.05s; }
+  .fab-action:nth-child(3) { animation-delay: 0.1s; }
+  .fab-action:nth-child(4) { animation-delay: 0.15s; }
+  .fab-action:nth-child(5) { animation-delay: 0.2s; }
+  @keyframes fabItemIn {
+    to { opacity: 1; transform: translateY(0); }
   }
 
   .fab-action:hover {
