@@ -488,21 +488,72 @@ function bindEvents() {
     openShareModal();
   });
 
-  // Export audit log
-  document.getElementById("export-audit").addEventListener("click", () => {
+  // Export audit log — toggle dropdown
+  document.getElementById("export-audit").addEventListener("click", (e) => {
+    e.stopPropagation();
     if (auditEntries.length === 0) {
       showToast("No audit entries to export");
       return;
     }
-    const json = JSON.stringify(auditEntries, null, 2);
-    const blob = new Blob([json], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `aegis-audit-${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    toggleExportMenu();
   });
+
+  // Close dropdown on outside click
+  document.addEventListener("click", () => {
+    const menu = document.getElementById("export-menu");
+    if (menu) menu.remove();
+  });
+}
+
+/* ---- Export Menu ---- */
+function toggleExportMenu() {
+  let menu = document.getElementById("export-menu");
+  if (menu) { menu.remove(); return; }
+
+  const btn = document.getElementById("export-audit");
+  const rect = btn.getBoundingClientRect();
+
+  menu = document.createElement("div");
+  menu.id = "export-menu";
+  menu.className = "export-menu";
+  menu.style.top = rect.bottom + 4 + "px";
+  menu.style.right = window.innerWidth - rect.right + "px";
+  menu.innerHTML = `
+    <button class="export-option" data-format="json">Export as JSON</button>
+    <button class="export-option" data-format="csv">Export as CSV</button>`;
+  document.body.appendChild(menu);
+
+  menu.addEventListener("click", (e) => {
+    const format = e.target.dataset.format;
+    if (format === "json") exportAuditJSON();
+    if (format === "csv") exportAuditCSV();
+    menu.remove();
+  });
+}
+
+function downloadBlob(content, type, ext) {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `aegis-audit-${new Date().toISOString().slice(0, 10)}.${ext}`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportAuditJSON() {
+  downloadBlob(JSON.stringify(auditEntries, null, 2), "application/json", "json");
+}
+
+function exportAuditCSV() {
+  const headers = ["timestamp", "action_type", "target", "risk", "approval", "rule", "description"];
+  const rows = auditEntries.map((e) =>
+    headers.map((h) => {
+      const v = e[h] ?? "";
+      return typeof v === "string" && v.includes(",") ? `"${v}"` : v;
+    }).join(",")
+  );
+  downloadBlob([headers.join(","), ...rows].join("\n"), "text/csv", "csv");
 }
 
 /* ---- Pyodide Init ---- */
@@ -862,6 +913,33 @@ function addAuditEntry(r) {
   if (empty) empty.remove();
   $audit.prepend(row);
   $auditCount.textContent = `${auditEntries.length} entries`;
+  updateAuditChart();
+}
+
+function updateAuditChart() {
+  let chart = document.getElementById("audit-chart");
+  if (!chart) {
+    chart = document.createElement("div");
+    chart.id = "audit-chart";
+    chart.className = "audit-chart";
+    $auditCount.parentNode.insertBefore(chart, $auditCount.nextSibling);
+  }
+  const total = auditEntries.length;
+  if (total === 0) { chart.innerHTML = ""; return; }
+  const auto = auditEntries.filter((e) => e.approval === "auto").length;
+  const approve = auditEntries.filter((e) => e.approval === "approve").length;
+  const block = total - auto - approve;
+  chart.innerHTML = `
+    <div class="chart-bar">
+      <div class="chart-seg chart-auto" style="width:${(auto / total) * 100}%"></div>
+      <div class="chart-seg chart-approve" style="width:${(approve / total) * 100}%"></div>
+      <div class="chart-seg chart-block" style="width:${(block / total) * 100}%"></div>
+    </div>
+    <div class="chart-legend">
+      <span class="legend-auto">${auto} auto</span>
+      <span class="legend-approve">${approve} approve</span>
+      <span class="legend-block">${block} block</span>
+    </div>`;
 }
 
 /* ---- Toast ---- */

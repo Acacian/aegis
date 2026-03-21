@@ -1226,6 +1226,71 @@ footer code {
   }
 }
 
+/* ---- Export Menu ---- */
+.export-menu {
+  position: fixed;
+  z-index: 1000;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+.export-option {
+  display: block;
+  width: 100%;
+  padding: 10px 20px;
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.export-option:hover {
+  background: var(--bg-hover);
+}
+
+.export-option + .export-option {
+  border-top: 1px solid var(--border);
+}
+
+/* ---- Audit Chart ---- */
+.audit-chart {
+  flex: 1;
+  min-width: 120px;
+  max-width: 220px;
+}
+
+.chart-bar {
+  display: flex;
+  height: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: var(--bg-secondary);
+  margin-bottom: 4px;
+}
+
+.chart-seg {
+  transition: width 0.3s ease;
+}
+
+.chart-auto { background: var(--approval-auto); }
+.chart-approve { background: var(--approval-approve); }
+.chart-block { background: var(--approval-block); }
+
+.chart-legend {
+  display: flex;
+  gap: 8px;
+  font-size: 0.65rem;
+}
+
+.legend-auto { color: var(--approval-auto); }
+.legend-approve { color: var(--approval-approve); }
+.legend-block { color: var(--approval-block); }
+
 /* ---- Guided Tour ---- */
 .tour-highlight {
   position: relative;
