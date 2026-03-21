@@ -90,18 +90,96 @@ class AuditLogger:
         self._conn.commit()
         return cursor.lastrowid  # type: ignore[return-value]
 
-    def get_log(self, session_id: str | None = None) -> list[dict[str, object]]:
-        """Retrieve audit log entries, optionally filtered by session."""
-        if session_id:
-            cursor = self._conn.execute(
-                "SELECT * FROM audit_log WHERE session_id = ? ORDER BY id",
-                (session_id,),
-            )
-        else:
-            cursor = self._conn.execute("SELECT * FROM audit_log ORDER BY id")
+    def get_log(
+        self,
+        session_id: str | None = None,
+        *,
+        action_type: str | None = None,
+        risk_level: str | None = None,
+        result_status: str | None = None,
+        since: datetime | None = None,
+        until: datetime | None = None,
+        limit: int | None = None,
+    ) -> list[dict[str, object]]:
+        """Retrieve audit log entries with flexible filtering.
 
+        Args:
+            session_id: Filter by session.
+            action_type: Filter by action type (exact match).
+            risk_level: Filter by risk level name (e.g. "HIGH").
+            result_status: Filter by result status (e.g. "blocked").
+            since: Only entries after this timestamp.
+            until: Only entries before this timestamp.
+            limit: Maximum number of entries to return.
+        """
+        clauses: list[str] = []
+        params: list[object] = []
+
+        if session_id:
+            clauses.append("session_id = ?")
+            params.append(session_id)
+        if action_type:
+            clauses.append("action_type = ?")
+            params.append(action_type)
+        if risk_level:
+            clauses.append("risk_level = ?")
+            params.append(risk_level.upper())
+        if result_status:
+            clauses.append("result_status = ?")
+            params.append(result_status)
+        if since:
+            clauses.append("timestamp >= ?")
+            params.append(since.isoformat())
+        if until:
+            clauses.append("timestamp <= ?")
+            params.append(until.isoformat())
+
+        query = "SELECT * FROM audit_log"
+        if clauses:
+            query += " WHERE " + " AND ".join(clauses)
+        query += " ORDER BY id"
+        if limit:
+            query += f" LIMIT {limit}"
+
+        cursor = self._conn.execute(query, params)
         columns = [desc[0] for desc in cursor.description]
         return [dict(zip(columns, row, strict=True)) for row in cursor.fetchall()]
+
+    def count(
+        self,
+        *,
+        session_id: str | None = None,
+        action_type: str | None = None,
+        risk_level: str | None = None,
+        result_status: str | None = None,
+    ) -> int:
+        """Count audit entries matching the given filters.
+
+        Useful for monitoring and dashboards without loading full records.
+        """
+        clauses: list[str] = []
+        params: list[object] = []
+
+        if session_id:
+            clauses.append("session_id = ?")
+            params.append(session_id)
+        if action_type:
+            clauses.append("action_type = ?")
+            params.append(action_type)
+        if risk_level:
+            clauses.append("risk_level = ?")
+            params.append(risk_level.upper())
+        if result_status:
+            clauses.append("result_status = ?")
+            params.append(result_status)
+
+        query = "SELECT COUNT(*) FROM audit_log"
+        if clauses:
+            query += " WHERE " + " AND ".join(clauses)
+
+        cursor = self._conn.execute(query, params)
+        row = cursor.fetchone()
+        return int(row[0]) if row else 0
 
     def export_jsonl(self, path: str | Path, session_id: str | None = None) -> int:
         """Export audit entries as JSON Lines (one JSON object per line).

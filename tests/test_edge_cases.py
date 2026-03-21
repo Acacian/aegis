@@ -12,7 +12,6 @@ from aegis.core.conditions import evaluate_conditions
 from aegis.core.policy import Approval, Policy, PolicyRule
 from aegis.core.risk import RiskLevel
 
-
 # -- Empty / minimal policies -----------------------------------------------
 
 
@@ -86,15 +85,13 @@ def test_param_lt_with_equal_value():
 
 def test_param_contains_with_string():
     """Contains should work with string values too."""
-    assert evaluate_conditions(
-        {"param_contains": {"name": "admin"}}, {"name": "superadmin"}
-    ) is True
+    assert (
+        evaluate_conditions({"param_contains": {"name": "admin"}}, {"name": "superadmin"}) is True
+    )
 
 
 def test_param_matches_with_empty_string():
-    assert evaluate_conditions(
-        {"param_matches": {"field": ".*"}}, {"field": ""}
-    ) is True
+    assert evaluate_conditions({"param_matches": {"field": ".*"}}, {"field": ""}) is True
 
 
 def test_param_eq_with_none_param():
@@ -164,17 +161,18 @@ def test_param_matches_invalid_regex_does_not_crash():
     """Invalid regex in param_matches should not crash the engine."""
     # re.search will raise re.error on invalid patterns
     with pytest.raises(re.error):
-        evaluate_conditions(
-            {"param_matches": {"field": "[invalid"}}, {"field": "test"}
-        )
+        evaluate_conditions({"param_matches": {"field": "[invalid"}}, {"field": "test"})
 
 
 def test_param_matches_with_special_chars():
     """Regex special characters in the value being matched."""
-    assert evaluate_conditions(
-        {"param_matches": {"url": r"https://example\.com"}},
-        {"url": "https://example.com/path"},
-    ) is True
+    assert (
+        evaluate_conditions(
+            {"param_matches": {"url": r"https://example\.com"}},
+            {"url": "https://example.com/path"},
+        )
+        is True
+    )
 
 
 # -- PolicyDecision properties -----------------------------------------------

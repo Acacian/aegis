@@ -5,7 +5,7 @@ from aegis.core.plan import ExecutionPlan
 from aegis.core.policy import Approval, Policy, PolicyDecision
 from aegis.core.result import Result, ResultStatus
 from aegis.core.risk import RiskLevel
-from aegis.runtime.engine import Runtime
+from aegis.runtime.engine import Runtime, RuntimeHooks
 
 __all__ = [
     "Action",
@@ -17,6 +17,7 @@ __all__ = [
     "ResultStatus",
     "RiskLevel",
     "Runtime",
+    "RuntimeHooks",
 ]
 
 __version__ = "0.1.2"

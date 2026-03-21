@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import uuid
+from collections.abc import Awaitable, Callable
+from dataclasses import dataclass
 from datetime import UTC, datetime
 
 from aegis.adapters.base import BaseExecutor
@@ -12,6 +14,27 @@ from aegis.core.policy import Approval, Policy, PolicyDecision
 from aegis.core.result import Result, ResultStatus
 from aegis.runtime.approval import ApprovalHandler, CLIApprovalHandler
 from aegis.runtime.audit import AuditLogger
+
+
+@dataclass
+class RuntimeHooks:
+    """Optional callbacks for runtime lifecycle events.
+
+    Attach hooks to observe or react to governance pipeline events
+    without modifying the core execution flow.
+
+    Example::
+
+        async def log_decision(decision: PolicyDecision) -> None:
+            print(f"{decision.action.type}: {decision.approval.value}")
+
+        hooks = RuntimeHooks(on_decision=log_decision)
+        runtime = Runtime(executor=..., policy=..., hooks=hooks)
+    """
+
+    on_decision: Callable[[PolicyDecision], Awaitable[None]] | None = None
+    on_approval: Callable[[PolicyDecision, bool], Awaitable[None]] | None = None
+    on_execute: Callable[[Result], Awaitable[None]] | None = None
 
 
 class Runtime:
@@ -26,6 +49,7 @@ class Runtime:
         approval_handler: Handler for human-in-the-loop approval. Defaults to CLI.
         audit_logger: Logger for audit trail. Defaults to local SQLite.
         session_id: Optional session identifier for audit grouping.
+        hooks: Optional callbacks for lifecycle events.
 
     Example::
 
@@ -47,12 +71,14 @@ class Runtime:
         approval_handler: ApprovalHandler | None = None,
         audit_logger: AuditLogger | None = None,
         session_id: str | None = None,
+        hooks: RuntimeHooks | None = None,
     ) -> None:
         self.executor = executor
         self.policy = policy
         self.approval = approval_handler or CLIApprovalHandler()
         self.audit = audit_logger or AuditLogger()
         self.session_id = session_id or uuid.uuid4().hex[:12]
+        self.hooks = hooks or RuntimeHooks()
 
     async def __aenter__(self) -> Runtime:
         """Enter async context: set up the executor."""
@@ -69,24 +95,52 @@ class Runtime:
         decisions = [self.policy.evaluate(action) for action in actions]
         return ExecutionPlan(decisions=decisions)
 
-    async def execute(self, plan: ExecutionPlan) -> list[Result]:
+    def update_policy(self, policy: Policy) -> None:
+        """Hot-reload the policy without restarting the runtime.
+
+        This replaces the current policy atomically. All subsequent
+        ``plan()`` calls will use the new policy. In-flight executions
+        are not affected.
+
+        Example::
+
+            runtime.update_policy(Policy.from_yaml("new_policy.yaml"))
+        """
+        self.policy = policy
+
+    async def execute(self, plan: ExecutionPlan, *, dry_run: bool = False) -> list[Result]:
         """Execute a plan through the full governance pipeline.
 
         Actions are executed sequentially. If an action fails,
         all remaining actions are marked as skipped (fail-fast).
+
+        Args:
+            plan: The execution plan to run.
+            dry_run: If True, evaluate policy and approval requirements
+                but do not actually execute actions. Returns results with
+                predicted statuses. Useful for testing policies.
         """
         results: list[Result] = []
 
-        await self.executor.setup()
+        if not dry_run:
+            await self.executor.setup()
         try:
             for idx, decision in enumerate(plan.decisions):
-                result = await self._execute_one(decision)
+                result = await self._execute_one(decision, dry_run=dry_run)
                 results.append(result)
 
+                if self.hooks.on_execute:
+                    await self.hooks.on_execute(result)
+
                 # Fail-fast: skip remaining on non-skip failure
-                if not result.ok and result.status not in (
-                    ResultStatus.BLOCKED,
-                    ResultStatus.SKIPPED,
+                if (
+                    not dry_run
+                    and not result.ok
+                    and result.status
+                    not in (
+                        ResultStatus.BLOCKED,
+                        ResultStatus.SKIPPED,
+                    )
                 ):
                     for remaining in plan.decisions[idx + 1 :]:
                         skip = Result(
@@ -99,22 +153,26 @@ class Runtime:
                         self.audit.log(self.session_id, remaining, result=skip)
                     break
         finally:
-            await self.executor.teardown()
+            if not dry_run:
+                await self.executor.teardown()
 
         return results
 
-    async def run_one(self, action: Action) -> Result:
+    async def run_one(self, action: Action, *, dry_run: bool = False) -> Result:
         """Convenience: evaluate + execute a single action.
 
         Equivalent to ``plan([action])`` + ``execute(plan)`` but returns
         a single :class:`Result` instead of a list.
         """
         plan = self.plan([action])
-        results = await self.execute(plan)
+        results = await self.execute(plan, dry_run=dry_run)
         return results[0]
 
-    async def _execute_one(self, decision: PolicyDecision) -> Result:
+    async def _execute_one(self, decision: PolicyDecision, *, dry_run: bool = False) -> Result:
         """Execute a single action through the governance pipeline."""
+        if self.hooks.on_decision:
+            await self.hooks.on_decision(decision)
+
         # 1. Blocked by policy
         if not decision.is_allowed:
             result = Result(
@@ -123,13 +181,26 @@ class Runtime:
                 error=f"Blocked by policy rule: {decision.matched_rule}",
                 completed_at=datetime.now(UTC),
             )
-            self.audit.log(self.session_id, decision, result=result)
+            if not dry_run:
+                self.audit.log(self.session_id, decision, result=result)
             return result
 
         # 2. Approval gate
         human_decision: str | None = None
         if decision.approval == Approval.APPROVE:
+            if dry_run:
+                # In dry-run, report that approval would be required
+                result = Result(
+                    action=decision.action,
+                    status=ResultStatus.SUCCESS,
+                    data={"dry_run": True, "approval_required": True},
+                    completed_at=datetime.now(UTC),
+                )
+                return result
+
             approved = await self.approval.request_approval(decision)
+            if self.hooks.on_approval:
+                await self.hooks.on_approval(decision, approved)
             if not approved:
                 result = Result(
                     action=decision.action,
@@ -141,10 +212,19 @@ class Runtime:
                 return result
             human_decision = "approved"
 
-        # 3. Execute
+        # 3. Dry-run: skip actual execution
+        if dry_run:
+            return Result(
+                action=decision.action,
+                status=ResultStatus.SUCCESS,
+                data={"dry_run": True, "would_execute": True},
+                completed_at=datetime.now(UTC),
+            )
+
+        # 4. Execute
         result = await self.executor.execute(decision.action)
 
-        # 4. Verify
+        # 5. Verify
         verified = await self.executor.verify(decision.action, result)
         if not verified and result.ok:
             result = Result(
@@ -154,7 +234,7 @@ class Runtime:
                 completed_at=datetime.now(UTC),
             )
 
-        # 5. Audit
+        # 6. Audit
         self.audit.log(self.session_id, decision, result=result, human_decision=human_decision)
 
         return result
