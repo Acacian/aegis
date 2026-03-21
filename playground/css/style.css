@@ -1530,6 +1530,28 @@ kbd {
   height: 2px;
   background: var(--text-muted);
   position: relative;
+  overflow: hidden;
+}
+
+/* Animated data pulse traveling along the arrow */
+.arch-flow.animate-flow .arch-arrow-line::before {
+  content: "";
+  position: absolute;
+  top: -2px;
+  left: -6px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent, #58a6ff);
+  box-shadow: 0 0 6px var(--accent, #58a6ff);
+  animation: archPulse 1.8s 0.8s ease-in-out infinite;
+}
+
+@keyframes archPulse {
+  0%   { left: -6px; opacity: 0; }
+  10%  { opacity: 1; }
+  80%  { opacity: 1; }
+  100% { left: calc(100% + 6px); opacity: 0; }
 }
 
 .arch-arrow-line::after {
@@ -1542,6 +1564,11 @@ kbd {
 }
 
 .arch-arrow-text { font-size: 0.65rem; color: var(--text-muted); margin-top: 4px; }
+
+/* Stagger second arrow pulse */
+.arch-flow.animate-flow > :nth-child(4) .arch-arrow-line::before {
+  animation-delay: 1.6s;
+}
 
 .arch-decisions {
   display: flex;
@@ -2461,6 +2488,10 @@ footer code {
   .reveal-visible .step-card,
   .reveal-visible .usecase-card {
     animation: none;
+  }
+  .arch-flow.animate-flow .arch-arrow-line::before {
+    animation: none;
+    display: none;
   }
 }
 
