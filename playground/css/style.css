@@ -123,6 +123,24 @@
 [data-theme="high-contrast"] .theme-icon-light { display: none; }
 [data-theme="high-contrast"] .theme-icon-hc { display: inline; }
 
+/* High-contrast focus and border enhancements */
+[data-theme="high-contrast"] :focus-visible {
+  outline: 3px solid #6cb6ff;
+  outline-offset: 2px;
+}
+
+[data-theme="high-contrast"] .panel {
+  border-width: 2px;
+}
+
+[data-theme="high-contrast"] .result-card {
+  border-width: 2px;
+}
+
+[data-theme="high-contrast"] button:hover {
+  outline: 1px solid #6cb6ff;
+}
+
 * {
   margin: 0;
   padding: 0;
