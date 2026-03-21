@@ -356,6 +356,12 @@ function getSystemTheme() {
 
 const THEMES = ["dark", "light", "high-contrast"];
 
+const THEME_META = {
+  dark: { color: "#0d1117", icon: "\u{1F319}", label: "Dark" },
+  light: { color: "#ffffff", icon: "\u2600\uFE0F", label: "Light" },
+  "high-contrast": { color: "#000000", icon: "\u{1F506}", label: "High Contrast" },
+};
+
 function applyTheme(theme) {
   document.documentElement.classList.add("theme-transition");
   document.documentElement.removeAttribute("data-theme");
@@ -369,6 +375,17 @@ function applyTheme(theme) {
     if (editor) editor.setOption("theme", "dracula");
   }
   setTimeout(() => document.documentElement.classList.remove("theme-transition"), 400);
+
+  // Update meta theme-color
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta && THEME_META[theme]) meta.content = THEME_META[theme].color;
+
+  // Update toggle button label
+  const btn = document.getElementById("theme-toggle");
+  if (btn && THEME_META[theme]) {
+    btn.setAttribute("aria-label", `Current: ${THEME_META[theme].label}. Click to switch.`);
+    btn.title = `Theme: ${THEME_META[theme].label}`;
+  }
 }
 
 function initTheme() {
