@@ -1090,6 +1090,28 @@ footer code {
   font-size: 0.78rem;
 }
 
+.footer-shortcuts {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 10px;
+}
+
+.shortcut {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.shortcut kbd {
+  font-size: 0.7rem;
+  padding: 1px 5px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-family: inherit;
+}
+
 .copy-btn {
   display: inline-flex;
   align-items: center;
