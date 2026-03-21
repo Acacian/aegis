@@ -1936,6 +1936,59 @@ footer code {
   display: none;
 }
 
+/* ---- Command Palette ---- */
+.command-palette-inner {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  max-width: 480px;
+  width: 90%;
+  max-height: 400px;
+  overflow: hidden;
+}
+
+.command-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.command-input:focus { border-color: var(--accent); }
+
+.command-list {
+  margin-top: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.command-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.command-item:hover, .command-item:focus {
+  background: rgba(88, 166, 255, 0.1);
+  color: var(--accent);
+}
+
 .shortcut-modal {
   background: var(--bg-panel);
   border: 1px solid var(--border);

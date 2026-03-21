@@ -157,6 +157,78 @@ function startTour() {
   setTimeout(showStep, 800);
 }
 
+/* ---- Command Palette ---- */
+function toggleCommandPalette() {
+  let palette = document.getElementById("command-palette");
+  if (palette && !palette.classList.contains("hidden")) {
+    palette.classList.add("hidden");
+    return;
+  }
+  if (!palette) {
+    palette = document.createElement("div");
+    palette.id = "command-palette";
+    palette.className = "shortcut-overlay";
+    palette.innerHTML = `
+      <div class="command-palette-inner">
+        <input type="text" class="command-input" placeholder="Type a command or preset name..." autofocus>
+        <div class="command-list"></div>
+      </div>`;
+    document.body.appendChild(palette);
+    palette.addEventListener("click", (e) => {
+      if (e.target === palette) palette.classList.add("hidden");
+    });
+  }
+  palette.classList.remove("hidden");
+  const input = palette.querySelector(".command-input");
+  input.value = "";
+  input.focus();
+  renderCommands(input, "");
+
+  input.addEventListener("input", () => renderCommands(input, input.value));
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      const first = palette.querySelector(".command-item");
+      if (first) first.click();
+    }
+  });
+}
+
+function getCommandItems() {
+  const items = [
+    { label: "Run All Actions", icon: "\u25B6", action: () => document.getElementById("run-all")?.click() },
+    { label: "Toggle Theme", icon: "\uD83C\uDFA8", action: () => toggleTheme() },
+    { label: "Copy Policy", icon: "\uD83D\uDCCB", action: () => { copyToClipboard(editor.getValue(), document.getElementById("copy-policy")); showToast("Copied!"); } },
+    { label: "Export Audit JSON", icon: "\uD83D\uDCC4", action: () => exportAuditJSON() },
+    { label: "Export Audit CSV", icon: "\uD83D\uDCC4", action: () => exportAuditCSV() },
+    { label: "Keyboard Shortcuts", icon: "\u2328\uFE0F", action: () => toggleShortcutHelp() },
+    { label: "Clear Results", icon: "\uD83D\uDDD1\uFE0F", action: () => document.getElementById("clear-result")?.click() },
+    { label: "Share Policy", icon: "\uD83D\uDD17", action: () => openShareModal() },
+  ];
+  // Add presets
+  const presetBtns = document.querySelectorAll(".preset-btn:not(.preset-divider)");
+  presetBtns.forEach((btn) => {
+    items.push({ label: `Preset: ${btn.textContent.trim()}`, icon: "\uD83D\uDCD1", action: () => btn.click() });
+  });
+  return items;
+}
+
+function renderCommands(input, query) {
+  const list = document.querySelector(".command-list");
+  const items = getCommandItems().filter((i) =>
+    !query || i.label.toLowerCase().includes(query.toLowerCase())
+  );
+  list.innerHTML = items.slice(0, 12).map((i, idx) =>
+    `<button class="command-item" data-idx="${idx}">${i.icon} ${i.label}</button>`
+  ).join("");
+  list.querySelectorAll(".command-item").forEach((el) => {
+    el.addEventListener("click", () => {
+      const idx = parseInt(el.dataset.idx);
+      items[idx]?.action();
+      document.getElementById("command-palette")?.classList.add("hidden");
+    });
+  });
+}
+
 /* ---- Mobile FAB ---- */
 function initMobileFab() {
   const fab = document.getElementById("mobile-fab");
@@ -350,6 +422,7 @@ function buildShortcutOverlay() {
       <div class="shortcut-list">
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Enter</kbd><span>Evaluate custom action</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd><span>Run all actions</span></div>
+        <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>P</kbd><span>Command palette</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>K</kbd><span>Focus custom action input</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>S</kbd><span>Copy policy to clipboard</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>/</kbd><span>Toggle YAML comment</span></div>
@@ -540,6 +613,12 @@ function bindEvents() {
       }
       return;
     }
+    // Ctrl/Cmd + P → open command palette
+    if ((e.ctrlKey || e.metaKey) && e.key === "p") {
+      e.preventDefault();
+      toggleCommandPalette();
+      return;
+    }
     // ? → toggle keyboard shortcut help overlay
     if (e.key === "?" && !isInput) {
       e.preventDefault();
@@ -561,6 +640,11 @@ function bindEvents() {
     }
     // Escape → close overlays, then clear results
     if (e.key === "Escape") {
+      const cmdPalette = document.getElementById("command-palette");
+      if (cmdPalette && !cmdPalette.classList.contains("hidden")) {
+        cmdPalette.classList.add("hidden");
+        return;
+      }
       const shortcutOv = document.getElementById("shortcut-overlay");
       if (shortcutOv && !shortcutOv.classList.contains("hidden")) {
         shortcutOv.classList.add("hidden");
