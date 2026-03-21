@@ -30,6 +30,12 @@
   --radius: 8px;
 }
 
+/* Global keyboard focus indicator */
+:focus-visible {
+  outline: 2px solid var(--accent, #58a6ff);
+  outline-offset: 2px;
+}
+
 /* Smooth theme transition */
 .theme-transition,
 .theme-transition *,

@@ -491,8 +491,8 @@ result = await runtime.run_one(Action("delete", "crm", params={"id": "all"}))
       <div class="panel result-panel">
         <div class="panel-header">
           <h2>Evaluation Result</h2>
-          <button id="copy-all-results" class="clear-btn" title="Copy all results as JSON">Copy All</button>
-          <button id="clear-result" class="clear-btn">Clear</button>
+          <button id="copy-all-results" class="clear-btn" title="Copy all results as JSON" aria-label="Copy all results">Copy All</button>
+          <button id="clear-result" class="clear-btn" aria-label="Clear evaluation results">Clear</button>
         </div>
         <div id="result-content" class="result-content" role="log" aria-live="polite">
           <div class="empty-state">Click an action above to see the policy evaluation result</div>
@@ -504,11 +504,11 @@ result = await runtime.run_one(Action("delete", "crm", params={"id": "all"}))
         <div class="panel-header">
           <h2>Audit Log</h2>
           <span id="audit-count" class="audit-count">0 entries</span>
-          <button id="export-audit" class="clear-btn">Export</button>
+          <button id="export-audit" class="clear-btn" aria-label="Export audit log">Export</button>
           <label class="clear-btn import-btn" title="Load a saved JSON snapshot">
-            Import <input type="file" id="import-snapshot" accept=".json" hidden>
+            Import <input type="file" id="import-snapshot" accept=".json" hidden aria-label="Import snapshot file">
           </label>
-          <button id="clear-audit" class="clear-btn">Clear</button>
+          <button id="clear-audit" class="clear-btn" aria-label="Clear audit log">Clear</button>
         </div>
         <div class="audit-filters" id="audit-filters">
           <button class="audit-filter active" data-filter="all">All</button>
