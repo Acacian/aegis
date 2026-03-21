@@ -444,14 +444,29 @@ function escHtml(s) {
 const AEGIS_SETUP_CODE = `
 import json
 import yaml
+import hashlib
 from aegis.core.action import Action
 from aegis.core.policy import Policy
+
+# Policy cache — avoids re-parsing identical YAML
+_policy_cache = {}
+
+def _get_policy(yaml_str):
+    """Get or create cached Policy from YAML string."""
+    key = hashlib.md5(yaml_str.encode()).hexdigest()
+    if key not in _policy_cache:
+        data = yaml.safe_load(yaml_str)
+        _policy_cache[key] = Policy.from_dict(data)
+        # Keep cache bounded
+        if len(_policy_cache) > 20:
+            oldest = next(iter(_policy_cache))
+            del _policy_cache[oldest]
+    return _policy_cache[key]
 
 def evaluate_action(yaml_str, action_dict):
     """Evaluate a single action against a YAML policy. Returns JSON string."""
     try:
-        policy_data = yaml.safe_load(yaml_str)
-        policy = Policy.from_dict(policy_data)
+        policy = _get_policy(yaml_str)
 
         action = Action(
             type=action_dict.get("action_type", action_dict.get("type", "")),
