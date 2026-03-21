@@ -428,7 +428,14 @@ function updateRuleCount() {
   const yaml = editor.getValue();
   const count = (yaml.match(/- name:/g) || []).length;
   const lines = editor.lineCount();
-  rc.textContent = `${count} rule${count !== 1 ? "s" : ""} · ${lines} lines`;
+  // Complexity score: rules × avg conditions per rule
+  const matchCount = (yaml.match(/match:/g) || []).length;
+  const hasWildcard = /type:\s*["']?\*["']?/.test(yaml);
+  const hasRiskLevels = new Set((yaml.match(/risk_level:\s*(\w+)/g) || []).map((m) => m.split(":")[1]?.trim())).size;
+  const complexity = Math.min(count * (matchCount + 1) + hasRiskLevels * 2 + (hasWildcard ? 5 : 0), 99);
+  const label = complexity <= 10 ? "simple" : complexity <= 30 ? "moderate" : "complex";
+  rc.textContent = `${count} rule${count !== 1 ? "s" : ""} · ${lines} lines · ${label}`;
+  rc.title = `Complexity score: ${complexity}/99 (${count} rules, ${matchCount} match patterns, ${hasRiskLevels} risk levels)`;
 }
 
 function setupPolicySave() {
