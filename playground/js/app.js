@@ -380,18 +380,18 @@ function initEditor() {
   initTheme();
   setupThemeLongPress();
 
-  // Show field hints on cursor activity
+  // Show field hints on cursor activity (cached DOM ref for hot path)
+  const $hint = document.getElementById("editor-hint");
   editor.on("cursorActivity", () => {
+    if (!$hint || $hint.dataset.disabled === "true") return;
     const line = editor.getLine(editor.getCursor().line) || "";
     const keyMatch = line.match(/^\s*(\w[\w_]*):/);
     const hint = keyMatch && YAML_HINTS[keyMatch[1]];
-    const hintEl = document.getElementById("editor-hint");
-    if (hintEl && hintEl.dataset.disabled === "true") return;
-    if (hint && hintEl) {
-      hintEl.textContent = hint;
-      hintEl.style.display = "";
-    } else if (hintEl) {
-      hintEl.style.display = "none";
+    if (hint) {
+      $hint.textContent = hint;
+      $hint.style.display = "";
+    } else {
+      $hint.style.display = "none";
     }
   });
 }
@@ -422,8 +422,9 @@ function loadPolicyFromURL() {
 
 // Auto-save policy to localStorage on change (debounced)
 let saveTimer = null;
+let _$ruleCount = null;
 function updateRuleCount() {
-  const rc = document.getElementById("rule-count");
+  const rc = _$ruleCount || (_$ruleCount = document.getElementById("rule-count"));
   if (!rc) return;
   const yaml = editor.getValue();
   const count = (yaml.match(/- name:/g) || []).length;
