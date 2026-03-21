@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.1.3 (2026-03-21)
+
+### Added
+- **Dry-run mode**: `runtime.execute(plan, dry_run=True)` evaluates policy without executing actions
+- **Policy hot-reload**: `runtime.update_policy(new_policy)` replaces policy without restarting
+- **Plan filtering**: `plan.filter(allowed_only=True, approval=..., risk_level=...)` for selective execution
+- **Plan inspection**: `plan.to_dict()` structured output, `plan.auto_only` property, iteration/indexing
+- **Runtime hooks**: `RuntimeHooks(on_decision=..., on_approval=..., on_execute=...)` for observability
+- **`aegis simulate`** CLI command — test actions against policies without executing
+- **Policy merge**: `policy.merge(other)` and `Policy.from_yaml_files()` for multi-file policies
+- **Audit query filters**: filter by `action_type`, `risk_level`, `result_status`, date range; `audit.count()`
+- **Audit CLI filters**: `aegis audit --action-type read --risk-level HIGH`
+
+### Improved
+- 256 tests, 98% coverage
+- Korean README now at full parity with English
+- `__all__` exports in all submodule `__init__.py` files
+- MANIFEST.in for explicit sdist packaging
+- Expanded `.pre-commit-config.yaml` with standard hooks
+- Enhanced DevContainer (port forwarding, TOML extension) and Gitpod (docs serve)
+- `make check` target runs lint + typecheck + test in one command
+- Policy evaluation benchmark (`benchmarks/bench_policy.py`)
+
 ## 0.1.2 (2026-03-21)
 
 ### Improved
