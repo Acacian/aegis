@@ -5,8 +5,10 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import time
 from pathlib import Path
 
+from aegis.cli import colors
 from aegis.runtime.audit import AuditLogger
 
 _INIT_POLICY = """\
@@ -69,6 +71,12 @@ def main(argv: list[str] | None = None) -> None:
         description="Aegis: Policy & approval runtime for AI agents",
     )
     parser.add_argument("--version", action="store_true", help="Show version")
+    parser.add_argument(
+        "--no-color",
+        action="store_true",
+        default=False,
+        help="Disable colored output",
+    )
     subparsers = parser.add_subparsers(dest="command")
 
     # aegis audit
@@ -84,6 +92,12 @@ def main(argv: list[str] | None = None) -> None:
         dest="fmt",
     )
     audit_parser.add_argument("--output", "-o", help="Output file path (for jsonl export)")
+    audit_parser.add_argument(
+        "--tail",
+        action="store_true",
+        default=False,
+        help="Live-tail new audit entries (poll every 1s, Ctrl+C to stop)",
+    )
 
     # aegis validate
     validate_parser = subparsers.add_parser("validate", help="Validate a policy file")
@@ -124,7 +138,24 @@ def main(argv: list[str] | None = None) -> None:
     serve_parser.add_argument("--port", type=int, default=8000, help="Bind port")
     serve_parser.add_argument("--audit-db", help="Audit database path")
 
+    # aegis stats
+    stats_parser = subparsers.add_parser(
+        "stats",
+        help="Show policy rule statistics from the audit DB",
+    )
+    stats_parser.add_argument("--db", default="aegis_audit.db", help="Database path")
+    stats_parser.add_argument(
+        "--format",
+        choices=["table", "json"],
+        default="table",
+        dest="fmt",
+    )
+
     args = parser.parse_args(argv)
+
+    # Handle --no-color flag
+    if args.no_color:
+        colors.force_color(False)
 
     if args.version:
         from aegis import __version__
@@ -144,6 +175,8 @@ def main(argv: list[str] | None = None) -> None:
         _cmd_simulate(args)
     elif args.command == "serve":
         _cmd_serve(args)
+    elif args.command == "stats":
+        _cmd_stats(args)
     else:
         parser.print_help()
 
@@ -151,6 +184,10 @@ def main(argv: list[str] | None = None) -> None:
 def _cmd_audit(args: argparse.Namespace) -> None:
     """Display audit log entries."""
     logger = AuditLogger(db_path=args.db)
+
+    if args.tail:
+        _audit_tail(logger, args)
+        return
 
     if args.fmt == "jsonl":
         output = args.output or "aegis_audit.jsonl"
@@ -175,6 +212,11 @@ def _cmd_audit(args: argparse.Namespace) -> None:
         return
 
     # Table format
+    _print_audit_table(entries)
+
+
+def _print_audit_table(entries: list[dict[str, object]]) -> None:
+    """Print audit entries as a colored table."""
     cols = [
         f"{'ID':>4}",
         f"{'Session':>12}",
@@ -185,15 +227,89 @@ def _cmd_audit(args: argparse.Namespace) -> None:
         f"{'Result':>10}",
     ]
     header = " ".join(cols)
-    print(header)
+    print(colors.bold(header))
     print("-" * len(header))
     for e in entries:
+        risk_str = str(e.get("risk_level", ""))
+        risk_display = colors.risk_color(f"{risk_str:>8}")
+        result_str = str(e.get("result_status") or "-")
+        result_display = colors.status_color(f"{result_str:>10}")
+        decision_str = str(e.get("human_decision") or e.get("approval", ""))
         print(
             f"{e['id']:>4} {e['session_id']:>12} {e['action_type']:>15} "
-            f"{e['action_target']:>15} {e['risk_level']:>8} "
-            f"{(e.get('human_decision') or e['approval']):>10} "
-            f"{(e.get('result_status') or '-'):>10}"
+            f"{e['action_target']:>15} {risk_display} "
+            f"{decision_str:>10} "
+            f"{result_display}"
         )
+
+
+def _audit_tail(logger: AuditLogger, args: argparse.Namespace) -> None:
+    """Live-tail audit entries, polling every 1 second."""
+    last_id = 0
+
+    # Get current max ID to start tailing from
+    entries = logger.get_log(
+        session_id=args.session,
+        action_type=getattr(args, "action_type", None),
+        risk_level=getattr(args, "risk_level", None),
+    )
+    if entries:
+        last_id = int(entries[-1].get("id", 0))  # type: ignore[call-overload]
+
+    # Print header
+    cols = [
+        f"{'ID':>4}",
+        f"{'Session':>12}",
+        f"{'Action':>15}",
+        f"{'Target':>15}",
+        f"{'Risk':>8}",
+        f"{'Decision':>10}",
+        f"{'Result':>10}",
+    ]
+    header = " ".join(cols)
+    print(colors.bold(header))
+    print("-" * len(header))
+    print(colors.cyan("[tail] Watching for new entries... (Ctrl+C to stop)"))
+    sys.stdout.flush()
+
+    try:
+        while True:
+            new_entries = _poll_new_entries(logger, last_id, args)
+            for e in new_entries:
+                entry_id = int(e.get("id", 0))  # type: ignore[call-overload]
+                if entry_id > last_id:
+                    last_id = entry_id
+                risk_str = str(e.get("risk_level", ""))
+                risk_display = colors.risk_color(f"{risk_str:>8}")
+                result_str = str(e.get("result_status") or "-")
+                result_display = colors.status_color(f"{result_str:>10}")
+                decision_str = str(e.get("human_decision") or e.get("approval", ""))
+                print(
+                    f"{e['id']:>4} {e['session_id']:>12} {e['action_type']:>15} "
+                    f"{e['action_target']:>15} {risk_display} "
+                    f"{decision_str:>10} "
+                    f"{result_display}"
+                )
+                sys.stdout.flush()
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print(colors.cyan("\n[tail] Stopped."))
+    finally:
+        logger.close()
+
+
+def _poll_new_entries(
+    logger: AuditLogger,
+    last_id: int,
+    args: argparse.Namespace,
+) -> list[dict[str, object]]:
+    """Query entries with ID > last_id, respecting session/action/risk filters."""
+    all_entries = logger.get_log(
+        session_id=getattr(args, "session", None),
+        action_type=getattr(args, "action_type", None),
+        risk_level=getattr(args, "risk_level", None),
+    )
+    return [e for e in all_entries if int(e.get("id", 0)) > last_id]  # type: ignore[call-overload]
 
 
 def _cmd_validate(args: argparse.Namespace) -> None:
@@ -202,14 +318,14 @@ def _cmd_validate(args: argparse.Namespace) -> None:
 
     try:
         policy = Policy.from_yaml(args.policy_file)
-        print(f"Policy valid: {len(policy.rules)} rule(s) loaded.")
+        print(colors.green(f"Policy valid: {len(policy.rules)} rule(s) loaded."))
         for rule in policy.rules:
             print(
                 f"  - {rule.name}: {rule.match_type}@{rule.match_target} "
-                f"-> {rule.risk_level.name}/{rule.approval.value}"
+                f"-> {colors.risk_color(rule.risk_level.name)}/{rule.approval.value}"
             )
     except Exception as e:
-        print(f"Policy validation failed: {e}", file=sys.stderr)
+        print(colors.red(f"Policy validation failed: {e}"), file=sys.stderr)
         sys.exit(1)
 
 
@@ -276,17 +392,24 @@ def _cmd_simulate(args: argparse.Namespace) -> None:
         elif d.approval.value == "approve":
             approval_needed += 1
 
+        colored_status = colors.status_color(status)
+        colored_risk = colors.risk_color(d.risk_level.name)
+
         print(
             f"  {i}. {d.action.type}:{d.action.target}"
-            f"  [{icon}]  risk={d.risk_level.name}"
-            f"  rule={d.matched_rule}  -> {status}"
+            f"  [{icon}]  risk={colored_risk}"
+            f"  rule={d.matched_rule}  -> {colored_status}"
         )
 
     print()
     total = len(plan.decisions)
     auto = total - blocked - approval_needed
     print(f"Summary: {total} actions")
-    print(f"  {auto} auto-execute, {approval_needed} need approval, {blocked} blocked")
+    print(
+        f"  {colors.green(str(auto))} auto-execute, "
+        f"{colors.yellow(str(approval_needed))} need approval, "
+        f"{colors.red(str(blocked))} blocked"
+    )
 
 
 def _cmd_serve(args: argparse.Namespace) -> None:
@@ -310,6 +433,79 @@ def _cmd_serve(args: argparse.Namespace) -> None:
     print(f"Policy: {args.policy_file}")
     print(f"Docs: http://{args.host}:{args.port}/health")
     uvicorn.run(app, host=args.host, port=args.port)
+
+
+def _cmd_stats(args: argparse.Namespace) -> None:
+    """Show policy rule statistics from the audit DB."""
+    import sqlite3
+
+    db_path = Path(args.db)
+    if not db_path.exists():
+        print(f"Database not found: {db_path}", file=sys.stderr)
+        sys.exit(1)
+
+    conn = sqlite3.connect(str(db_path))
+
+    # Total actions
+    total = conn.execute("SELECT COUNT(*) FROM audit_log").fetchone()[0]
+
+    # By risk level
+    risk_rows = conn.execute(
+        "SELECT risk_level, COUNT(*) FROM audit_log GROUP BY risk_level ORDER BY COUNT(*) DESC"
+    ).fetchall()
+
+    # By result status
+    status_rows = conn.execute(
+        "SELECT result_status, COUNT(*) FROM audit_log "
+        "WHERE result_status IS NOT NULL "
+        "GROUP BY result_status ORDER BY COUNT(*) DESC"
+    ).fetchall()
+
+    # Top 5 action types
+    action_rows = conn.execute(
+        "SELECT action_type, COUNT(*) FROM audit_log "
+        "GROUP BY action_type ORDER BY COUNT(*) DESC LIMIT 5"
+    ).fetchall()
+
+    # Top 5 matched rules
+    rule_rows = conn.execute(
+        "SELECT matched_rule, COUNT(*) FROM audit_log "
+        "WHERE matched_rule IS NOT NULL "
+        "GROUP BY matched_rule ORDER BY COUNT(*) DESC LIMIT 5"
+    ).fetchall()
+
+    conn.close()
+
+    if args.fmt == "json":
+        data = {
+            "total_actions": total,
+            "by_risk_level": {row[0]: row[1] for row in risk_rows},
+            "by_result_status": {row[0]: row[1] for row in status_rows},
+            "top_action_types": {row[0]: row[1] for row in action_rows},
+            "top_matched_rules": {row[0]: row[1] for row in rule_rows},
+        }
+        print(json.dumps(data, indent=2))
+        return
+
+    # Table format
+    print(colors.bold("=== Aegis Audit Statistics ==="))
+    print(f"\nTotal actions processed: {colors.bold(str(total))}")
+
+    print(colors.bold("\n--- Risk Level Breakdown ---"))
+    for level, count in risk_rows:
+        print(f"  {colors.risk_color(f'{level:<10}')} {count}")
+
+    print(colors.bold("\n--- Result Status Breakdown ---"))
+    for status, count in status_rows:
+        print(f"  {colors.status_color(f'{status:<10}')} {count}")
+
+    print(colors.bold("\n--- Top 5 Action Types ---"))
+    for action_type, count in action_rows:
+        print(f"  {action_type:<20} {count}")
+
+    print(colors.bold("\n--- Top 5 Matched Rules ---"))
+    for rule, count in rule_rows:
+        print(f"  {rule:<20} {count}")
 
 
 if __name__ == "__main__":
