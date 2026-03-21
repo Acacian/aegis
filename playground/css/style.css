@@ -1427,6 +1427,29 @@ kbd {
   font-weight: 500;
 }
 
+.framework-compat {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  margin-top: 16px;
+}
+
+.compat-label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.compat-item {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  padding: 2px 8px;
+  border: 1px dashed var(--border);
+  border-radius: 4px;
+}
+
 .quickstart-code {
   margin-top: 40px;
   background: var(--bg-secondary);
