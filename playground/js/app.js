@@ -681,6 +681,7 @@ function initTheme() {
   const saved = localStorage.getItem("aegis-theme");
   const theme = saved || getSystemTheme();
   applyTheme(theme);
+  _updateNextThemeHint(theme);
 
   window.matchMedia("(prefers-color-scheme: light)").addEventListener("change", (e) => {
     if (!localStorage.getItem("aegis-theme")) {
@@ -700,6 +701,15 @@ function initTheme() {
   }
 }
 
+function _updateNextThemeHint(current) {
+  const btn = document.getElementById("theme-toggle");
+  if (!btn) return;
+  const idx = THEMES.indexOf(current);
+  const next = THEMES[(idx + 1) % THEMES.length];
+  const hint = THEME_META[next];
+  if (hint) btn.dataset.nextTheme = `${hint.icon} ${hint.label}`;
+}
+
 function toggleTheme() {
   const current = document.documentElement.getAttribute("data-theme") || "dark";
   const idx = THEMES.indexOf(current);
@@ -717,6 +727,7 @@ function toggleTheme() {
   });
 
   applyTheme(next);
+  _updateNextThemeHint(next);
   showToast(`${THEME_META[next]?.icon || ""} Theme: ${THEME_META[next]?.label || next}`);
 }
 

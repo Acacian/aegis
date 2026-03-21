@@ -479,8 +479,27 @@ header {
   transition: border-color 0.15s, transform 0.3s ease;
 }
 
+.theme-toggle {
+  position: relative;
+}
 .theme-toggle:hover {
   border-color: var(--text-secondary);
+}
+.theme-toggle[data-next-theme]:hover::after {
+  content: attr(data-next-theme);
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-panel);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 0.7rem;
+  white-space: nowrap;
+  z-index: 100;
+  pointer-events: none;
 }
 
 .theme-toggle:active {
