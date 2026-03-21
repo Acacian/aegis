@@ -10,6 +10,7 @@ let pyodide = null;
 let editor = null;
 let actionCount = 0;
 let auditEntries = [];
+let stats = { total: 0, auto: 0, approve: 0, block: 0, totalMs: 0 };
 
 /* ---- Loading Tips ---- */
 const LOADING_TIPS = [
@@ -422,13 +423,16 @@ async function evaluateAction(action) {
   const yaml = editor.getValue();
 
   try {
+    const t0 = performance.now();
     const resultJson = await pyodide.runPythonAsync(`
 evaluate_action(
   ${JSON.stringify(yaml)},
   ${JSON.stringify(action)}
 )
 `);
+    const t1 = performance.now();
     const result = JSON.parse(resultJson);
+    result.latency_ms = t1 - t0;
 
     if (result.error) {
       showToast(result.error);
@@ -440,6 +444,7 @@ evaluate_action(
     actionCount++;
     const counter = document.getElementById("action-counter");
     if (counter) counter.textContent = actionCount;
+    updateStats(result);
   } catch (err) {
     showToast(`Evaluation error: ${err.message}`);
     console.error(err);
@@ -540,6 +545,29 @@ function spawnBlockParticles(card) {
   }
 
 /* ---- Audit Log ---- */
+/* ---- Stats Bar ---- */
+function updateStats(result) {
+  stats.total++;
+  const approval = (result.approval || "").toLowerCase();
+  if (approval === "auto") stats.auto++;
+  else if (approval === "approve") stats.approve++;
+  else if (approval === "block") stats.block++;
+  if (result.latency_ms) stats.totalMs += result.latency_ms;
+
+  const $t = document.getElementById("stat-total");
+  const $a = document.getElementById("stat-auto");
+  const $ap = document.getElementById("stat-approve");
+  const $b = document.getElementById("stat-block");
+  const $l = document.getElementById("stat-latency");
+  if ($t) $t.textContent = stats.total;
+  if ($a) $a.textContent = stats.auto;
+  if ($ap) $ap.textContent = stats.approve;
+  if ($b) $b.textContent = stats.block;
+  if ($l && stats.total > 0) {
+    $l.textContent = (stats.totalMs / stats.total).toFixed(1) + "ms";
+  }
+}
+
 function addAuditEntry(r) {
   const now = new Date();
   const time = now.toLocaleTimeString("en-US", {

@@ -249,6 +249,42 @@ header {
   background: var(--bg-primary);
 }
 
+/* ---- Stats Bar ---- */
+.stats-bar {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  padding: 10px 24px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 70px;
+}
+
+.stat-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-label {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-auto .stat-value { color: var(--risk-low); }
+.stat-approve .stat-value { color: var(--risk-medium); }
+.stat-block .stat-value { color: var(--risk-high); }
+
 /* ---- How It Works ---- */
 .how-it-works {
   padding: 20px 24px 4px;
