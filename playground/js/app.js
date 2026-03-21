@@ -761,6 +761,16 @@ function bindEvents() {
   // Run all
   document.getElementById("run-all").addEventListener("click", runAllActions);
 
+  // Delegated copy handler for result cards (single listener instead of 11 per card)
+  $result.addEventListener("click", (e) => {
+    const btn = e.target.closest(".copy-code-btn");
+    if (!btn) return;
+    const card = btn.closest(".result-card");
+    if (!card || !card._resultData) return;
+    const code = generateCode(btn.dataset.fmt, card._resultData);
+    copyToClipboard(code, btn);
+  });
+
   // Keyboard shortcuts
   document.addEventListener("keydown", (e) => {
     // Ignore when typing in inputs
@@ -1822,14 +1832,8 @@ function renderResult(r) {
     </div>
   `;
 
-  // Copy code handlers
-  card.querySelectorAll(".copy-code-btn").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      const fmt = btn.dataset.fmt;
-      const code = generateCode(fmt, r);
-      copyToClipboard(code, e.target);
-    });
-  });
+  // Store result data on card for delegated copy handler
+  card._resultData = r;
 
   // Prepend (latest first) and cap result cards to prevent DOM bloat
   const MAX_RESULT_CARDS = 50;
@@ -2077,10 +2081,10 @@ async function copyToClipboard(text, btn) {
   }
 }
 
+const _escDiv = document.createElement("div");
 function escHtml(s) {
-  const div = document.createElement("div");
-  div.textContent = s;
-  return div.innerHTML;
+  _escDiv.textContent = s;
+  return _escDiv.innerHTML;
 }
 
 /* ---- Code Generation for Copy Buttons ---- */
