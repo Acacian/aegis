@@ -1220,7 +1220,8 @@ function downloadBlob(content, type, ext) {
   a.href = url;
   a.download = `aegis-audit-${new Date().toISOString().slice(0, 10)}.${ext}`;
   a.click();
-  URL.revokeObjectURL(url);
+  // Defer revoke to ensure download starts before URL is freed
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 function exportAuditJSON() {
