@@ -1202,11 +1202,80 @@ footer code {
     text-align: center;
   }
 
+  .header-right {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .social-proof {
+    justify-content: center;
+  }
+
   main {
     padding: 12px;
   }
 
   .quick-actions {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .preset-buttons {
+    justify-content: center;
+  }
+
+  .stats-bar {
+    gap: 12px;
+    padding: 8px 12px;
+  }
+
+  .stat-item {
+    min-width: 55px;
+  }
+
+  .stat-value {
+    font-size: 1rem;
+  }
+
+  .usecases-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .comparison-panels {
+    font-size: 0.75rem;
+  }
+
+  .cta-buttons {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .footer-shortcuts {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .integrations-bar {
+    gap: 8px;
+    padding: 8px 12px;
+    font-size: 0.7rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .quick-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .usecases-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .preset-buttons {
+    gap: 4px;
+  }
+
+  .preset-btn {
+    font-size: 0.65rem;
+    padding: 2px 6px;
   }
 }
