@@ -543,6 +543,7 @@ result = await runtime.run_one(Action("delete", "crm", params={"id": "all"}))
         <button class="code-tab active" data-tab="install">Install</button>
         <button class="code-tab" data-tab="policy">Policy</button>
         <button class="code-tab" data-tab="integrate">Integrate</button>
+        <button class="code-tab" data-tab="docker">Docker</button>
       </div>
       <div class="code-panel active" data-panel="install"><pre><code><span class="c">$ </span>pip install agent-aegis</code></pre></div>
       <div class="code-panel" data-panel="policy"><pre><code><span class="k">version</span>: <span class="s">"1"</span>
@@ -559,6 +560,10 @@ policy = Policy.from_yaml(<span class="s">"policy.yaml"</span>)
 <span class="k">async with</span> Runtime(executor, policy) <span class="k">as</span> rt:
     result = <span class="k">await</span> rt.run_one(action)
     <span class="c"># result.is_allowed → True/False</span></code></pre></div>
+      <div class="code-panel" data-panel="docker"><pre><code><span class="c">$ </span>docker run -p 8000:8000 \
+  -v ./policy.yaml:/app/policy.yaml \
+  ghcr.io/acacian/aegis:latest
+<span class="c"># REST API at http://localhost:8000</span></code></pre></div>
       <button class="code-copy-btn" title="Copy code">Copy</button>
     </div>
 
