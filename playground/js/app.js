@@ -1872,7 +1872,11 @@ function addAuditEntry(r) {
     }
   }
 
-  $auditCount.textContent = `${auditEntries.length} entries`;
+  const countParts = [`${auditEntries.length} entries`];
+  if (stats.auto) countParts.push(`${stats.auto} auto`);
+  if (stats.approve) countParts.push(`${stats.approve} review`);
+  if (stats.block) countParts.push(`${stats.block} block`);
+  $auditCount.textContent = countParts.join(" · ");
   updateAuditChart();
 }
 
