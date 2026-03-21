@@ -1,12 +1,12 @@
 # Aegis
 
-**Open-source policy & approval runtime for AI agents acting on systems you don't own.**
+**The simplest way to govern AI agent actions. No infra. No lock-in. Just Python.**
 
-Your AI agent can browse the web, call APIs, and modify SaaS data. **Aegis makes sure it asks permission first.**
+`pip install agent-aegis` → YAML policy → governance in 5 minutes. Works with LangChain, CrewAI, OpenAI, Anthropic, MCP, and more.
 
 ## What is Aegis?
 
-AI agents are getting access to external systems -- Salesforce, Stripe, your internal tools -- via browsers and APIs. Aegis is the governance layer that sits between the agent and those systems:
+AI agents are calling APIs, modifying databases, and running tools across multiple frameworks and providers. Aegis is a **Python library** (not a platform) that adds governance to all of them through one unified policy:
 
 ```
 Action      Policy        Approval       Execute     Audit

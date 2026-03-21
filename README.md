@@ -1,11 +1,11 @@
 <p align="center">
   <h1 align="center">Aegis</h1>
   <p align="center">
-    <strong>Governance layer for AI agents. Policy engine + approval gate + audit log.</strong>
+    <strong>The simplest way to govern AI agent actions. No infra. No lock-in. Just Python.</strong>
   </p>
   <p align="center">
-    Your AI agent can browse the web, call APIs, and modify SaaS data.<br/>
-    <strong>Aegis makes sure it asks permission first.</strong>
+    <code>pip install agent-aegis</code> &#8594; YAML policy &#8594; governance in 5 minutes.<br/>
+    <strong>Works with LangChain, CrewAI, OpenAI, Anthropic, MCP, and more.</strong>
   </p>
 </p>
 
@@ -83,6 +83,8 @@ from aegis import Action, Policy, Runtime
 runtime = Runtime(executor=your_executor, policy=Policy.from_yaml("policy.yaml"))
 results = await runtime.run_one(Action("write", "salesforce", params={...}))
 ```
+
+**No servers to deploy. No Kubernetes. No vendor lock-in.** One `pip install`, one YAML file, and your agent has policy checks, human approval gates, and a full audit trail — across any AI provider.
 
 ## How It Works
 
@@ -500,7 +502,11 @@ aegis/
   cli/         aegis validate | audit | schema | init | simulate | serve | stats
 ```
 
-## Why Not Build Your Own?
+## Why Aegis?
+
+There are many ways to add governance to AI agents. Here's how they compare:
+
+### vs. Writing Your Own
 
 | | DIY | Aegis |
 |---|---|---|
@@ -509,10 +515,17 @@ aegis/
 | **Human approval** | Build your own | Pluggable (CLI, Slack, Discord, Telegram, email, webhook) |
 | **Audit trail** | printf debugging | SQLite + JSONL + session tracking |
 | **Framework support** | Rewrite per framework | 7 adapters out of the box |
-| **Verification** | Hope it worked | Post-execution verification hooks |
 | **Retry & rollback** | DIY error handling | Exponential backoff + automatic rollback |
 | **Type safety** | Maybe | mypy strict, py.typed |
 | **Time to integrate** | Days | Minutes |
+
+### vs. Platform-Native Guardrails
+
+OpenAI, Google, and Anthropic each ship built-in guardrails — but they only govern their own ecosystem. If your agent calls OpenAI **and** Anthropic, or uses LangChain **and** MCP tools, you need one governance layer that works across all of them. That's Aegis.
+
+### vs. Enterprise Governance Platforms
+
+Enterprise platforms like centralized control planes need Kubernetes clusters, cloud infrastructure, and procurement cycles. Aegis is a **library** — `pip install` and you have governance in 5 minutes. Start with a library, graduate to a platform when you need to.
 
 ## CLI
 

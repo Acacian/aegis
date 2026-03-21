@@ -1,11 +1,11 @@
 <p align="center">
   <h1 align="center">Aegis</h1>
   <p align="center">
-    <strong>AI 에이전트를 위한 거버넌스 레이어. 정책 엔진 + 승인 게이트 + 감사 로그.</strong>
+    <strong>AI 에이전트 거버넌스를 가장 단순하게. 인프라 불필요. 벤더 종속 없음. 순수 Python.</strong>
   </p>
   <p align="center">
-    AI 에이전트가 웹 브라우징, API 호출, SaaS 데이터 수정을 할 수 있습니다.<br/>
-    <strong>Aegis는 먼저 허락을 구하도록 만듭니다.</strong>
+    <code>pip install agent-aegis</code> &#8594; YAML 정책 &#8594; 5분 만에 거버넌스 적용.<br/>
+    <strong>LangChain, CrewAI, OpenAI, Anthropic, MCP 등 7개 프레임워크 지원.</strong>
   </p>
 </p>
 
@@ -83,6 +83,8 @@ from aegis import Action, Policy, Runtime
 runtime = Runtime(executor=your_executor, policy=Policy.from_yaml("policy.yaml"))
 results = await runtime.run_one(Action("write", "salesforce", params={...}))
 ```
+
+**서버 배포 불필요. 쿠버네티스 불필요. 벤더 종속 없음.** `pip install` 하나, YAML 파일 하나면 정책 체크 + 사람 승인 게이트 + 완전한 감사 추적이 모든 AI 프로바이더에 걸쳐 동작합니다.
 
 ## 작동 방식
 
@@ -500,7 +502,11 @@ aegis/
   cli/         aegis validate | audit | schema | init | simulate | serve | stats
 ```
 
-## 직접 만들기 vs Aegis
+## 왜 Aegis인가?
+
+AI 에이전트에 거버넌스를 추가하는 방법은 여러 가지입니다. 비교해보겠습니다:
+
+### vs. 직접 구현
 
 | | 직접 구현 | Aegis |
 |---|---|---|
@@ -509,10 +515,17 @@ aegis/
 | **사람 승인** | 직접 구현 | 플러그형 (CLI, Slack, Discord, Telegram, 이메일, 웹훅) |
 | **감사 추적** | printf 디버깅 | SQLite + JSONL + 세션 추적 |
 | **프레임워크 지원** | 프레임워크마다 재작성 | 7개 어댑터 기본 제공 |
-| **검증** | 잘 됐기를 바라기 | 실행 후 검증 훅 |
 | **재시도 & 롤백** | 직접 에러 처리 | 지수 백오프 + 자동 롤백 |
 | **타입 안전** | 아마도 | mypy strict, py.typed |
 | **연동 소요** | 며칠 | 몇 분 |
+
+### vs. 플랫폼 내장 Guardrails
+
+OpenAI, Google, Anthropic 각각 자체 guardrails를 제공하지만, 자기 에코시스템만 관리합니다. 에이전트가 OpenAI **와** Anthropic을 동시에 쓰거나, LangChain **과** MCP 도구를 섞어 쓴다면, 모든 것을 하나의 정책으로 관리하는 레이어가 필요합니다. 그게 Aegis입니다.
+
+### vs. 엔터프라이즈 거버넌스 플랫폼
+
+중앙 컨트롤 플레인 같은 엔터프라이즈 플랫폼은 쿠버네티스 클러스터, 클라우드 인프라, 도입 프로세스가 필요합니다. Aegis는 **라이브러리**입니다 — `pip install`이면 5분 안에 거버넌스가 동작합니다. 라이브러리로 시작하고, 필요할 때 플랫폼으로 올리세요.
 
 ## CLI
 
