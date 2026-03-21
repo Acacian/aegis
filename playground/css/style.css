@@ -3173,6 +3173,31 @@ footer code {
     gap: 6px 10px;
   }
 
+  /* Command palette: fullscreen on mobile */
+  .command-palette-inner {
+    width: 95%;
+    max-width: none;
+    max-height: 70vh;
+  }
+  .command-input {
+    font-size: 16px; /* prevents iOS zoom on focus */
+  }
+  .command-item {
+    padding: 10px 12px;
+    min-height: 40px;
+  }
+
+  /* Shortcut overlay: scrollable on mobile */
+  .shortcut-modal {
+    max-height: 80vh;
+    overflow-y: auto;
+    width: 95vw;
+    max-width: none;
+  }
+  .shortcut-row {
+    padding: 6px 0;
+  }
+
   /* Tour tooltip narrower */
   .tour-tooltip {
     max-width: 260px;
