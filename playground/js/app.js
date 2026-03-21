@@ -2130,6 +2130,9 @@ function updateActionButtons(preset) {
 }
 
 /* ---- Evaluate Action ---- */
+let _$actionCounter = null;
+const _deferIdle = window.requestIdleCallback || ((cb) => setTimeout(cb, 16));
+
 async function evaluateAction(action) {
   if (!pyodide) {
     showToast("Python runtime is still loading...");
@@ -2157,14 +2160,13 @@ evaluate_action(
 
     renderResult(result);
     actionCount++;
-    const counter = document.getElementById("action-counter");
+    const counter = _$actionCounter || (_$actionCounter = document.getElementById("action-counter"));
     if (counter) counter.textContent = actionCount;
     updateStats(result);
 
     // Defer non-critical audit log updates to idle time
     // (addAuditEntry already calls updateAuditChart internally)
-    const deferFn = window.requestIdleCallback || ((cb) => setTimeout(cb, 16));
-    deferFn(() => addAuditEntry(result));
+    _deferIdle(() => addAuditEntry(result));
   } catch (err) {
     showToast(`Evaluation error: ${err.message}`);
     console.error(err);
