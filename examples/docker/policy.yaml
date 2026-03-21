@@ -1,0 +1,24 @@
+# Default policy for the Docker container.
+# Override by mounting your own policy.yaml:
+#   docker run -v ./my-policy.yaml:/app/policy.yaml aegis-server
+
+version: "1"
+defaults:
+  risk_level: medium
+  approval: approve
+
+rules:
+  - name: read_auto
+    match: { type: "read*" }
+    risk_level: low
+    approval: auto
+
+  - name: write_approve
+    match: { type: "write*" }
+    risk_level: medium
+    approval: approve
+
+  - name: delete_block
+    match: { type: "delete*" }
+    risk_level: critical
+    approval: block
