@@ -1518,6 +1518,18 @@ function suggestFix(msg, line, yaml) {
     return { label: "Remove duplicates", description: "Comment out duplicate keys", result: deduped.join("\n") };
   }
 
+  // Trailing whitespace causing parse issues
+  if (lower.includes("mapping") || lower.includes("expected") || lower.includes("syntax")) {
+    const trimmed = lines.map((l) => l.trimEnd()).join("\n");
+    if (trimmed !== yaml) {
+      return {
+        label: "Trim whitespace",
+        description: "Remove trailing whitespace from all lines",
+        result: trimmed,
+      };
+    }
+  }
+
   // Invalid approval value
   const invalidApproval = yaml.match(/approval:\s*(\S+)/);
   if (invalidApproval && !["auto", "approve", "block"].includes(invalidApproval[1].replace(/"/g, ""))) {
