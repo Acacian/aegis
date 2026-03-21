@@ -552,7 +552,9 @@ function buildShortcutOverlay() {
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>/</kbd><span>Toggle YAML comment</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>G</kbd><span>Go to line</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>E</kbd><span>Export audit log (JSON)</span></div>
+        <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>F</kbd><span>Focus audit search</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>D</kbd><span>Toggle theme</span></div>
+        <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd><span>Duplicate line</span></div>
         <div class="shortcut-row"><kbd>0</kbd>-<kbd>9</kbd><span>Switch preset (by position)</span></div>
         <div class="shortcut-row"><kbd>?</kbd><span>Show this help</span></div>
         <div class="shortcut-row"><kbd>Esc</kbd><span>Close dialogs / clear results</span></div>
@@ -862,6 +864,25 @@ function bindEvents() {
       e.preventDefault();
       const customInput = document.getElementById("custom-type");
       if (customInput) { customInput.focus(); customInput.select(); }
+      return;
+    }
+    // Ctrl/Cmd + F → focus audit search filter
+    if ((e.ctrlKey || e.metaKey) && e.key === "f" && !e.shiftKey) {
+      const auditSearch = document.getElementById("audit-search");
+      if (auditSearch) {
+        e.preventDefault();
+        auditSearch.focus();
+        auditSearch.select();
+        return;
+      }
+    }
+    // Ctrl/Cmd + Shift + D → duplicate current line in editor
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === "D" || e.key === "d")) {
+      e.preventDefault();
+      const cursor = editor.getCursor();
+      const line = editor.getLine(cursor.line);
+      editor.replaceRange("\n" + line, { line: cursor.line, ch: line.length });
+      editor.setCursor(cursor.line + 1, cursor.ch);
       return;
     }
     // 1-9, 0 → switch preset (when not in input)
