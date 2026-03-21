@@ -89,6 +89,13 @@
 [data-theme="light"] .ba-after { background: rgba(26, 127, 55, 0.06); border-color: rgba(26, 127, 55, 0.2); }
 [data-theme="light"] .ba-after .ba-label { color: #1a7f37; }
 
+/* Light theme decision matrix */
+[data-theme="light"] .dm-low .dm-risk { color: #1a7f37; }
+[data-theme="light"] .dm-medium .dm-risk { color: #9a6700; }
+[data-theme="light"] .dm-high .dm-risk { color: #bc4c00; }
+[data-theme="light"] .dm-critical .dm-risk { color: #cf222e; }
+[data-theme="light"] .dm-header { background: rgba(175, 184, 193, 0.12); }
+
 /* Light theme panel refinements */
 [data-theme="light"] .panel {
   box-shadow: 0 1px 2px rgba(31, 35, 40, 0.06);
@@ -155,6 +162,15 @@
 [data-theme="high-contrast"] button:hover {
   outline: 1px solid #6cb6ff;
 }
+
+[data-theme="high-contrast"] .decision-matrix {
+  border-width: 2px;
+}
+[data-theme="high-contrast"] .dm-row { border-color: #666; }
+[data-theme="high-contrast"] .dm-low .dm-risk { color: #56d364; }
+[data-theme="high-contrast"] .dm-medium .dm-risk { color: #f0c000; }
+[data-theme="high-contrast"] .dm-high .dm-risk { color: #ff6b6b; }
+[data-theme="high-contrast"] .dm-critical .dm-risk { color: #ff4444; }
 
 * {
   margin: 0;
