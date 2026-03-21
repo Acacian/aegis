@@ -1267,6 +1267,7 @@ function renderResult(r) {
         <button class="copy-code-btn" data-fmt="curl" title="Copy as cURL command">cURL</button>
         <button class="copy-code-btn" data-fmt="docker" title="Copy as Docker + curl command">Docker</button>
         <button class="copy-code-btn" data-fmt="markdown" title="Copy as Markdown table">MD</button>
+        <button class="copy-code-btn" data-fmt="github" title="Copy as GitHub issue template">Issue</button>
       </div>
     </div>
   `;
@@ -1547,6 +1548,27 @@ curl -s http://localhost:8000/api/v1/evaluate \\
   -H "Content-Type: application/json" \\
   -d '${body}' | python3 -m json.tool
 # Expected: ${r.approval} (${r.risk_level})`;
+  }
+
+  if (fmt === "github") {
+    return `### Bug Report / Discussion
+
+**Policy evaluation result:**
+- Action: \`${r.action_type}\` on \`${r.target}\`
+- Expected: \`${r.approval}\` (${r.risk_level})
+- Allowed: ${r.is_allowed ? "Yes" : "No"}
+- Matched Rule: \`${r.matched_rule || "(default)"}\`
+
+<details>
+<summary>Policy YAML</summary>
+
+\`\`\`yaml
+${editor.getValue()}
+\`\`\`
+</details>
+
+**Environment:** Aegis Playground (browser, Pyodide)
+**Version:** 0.1.4`;
   }
 
   if (fmt === "markdown") {
