@@ -127,7 +127,35 @@ All subsequent `plan()` calls use the new policy immediately. In-flight executio
 ### Does Aegis add memory overhead?
 Minimal. Aegis keeps the policy rules in memory (typically < 1KB for 100 rules) and writes audit entries to SQLite asynchronously. No background threads or persistent connections.
 
+## Security
+
+### How does Aegis handle policy injection?
+Policies are loaded from trusted YAML files, not user input. The YAML parser rejects custom tags and constructors. If you load policies from external sources, validate them with `aegis validate` first.
+
+### Can Aegis prevent prompt injection?
+Aegis governs **actions** (API calls, database queries, file operations), not **prompts**. It can block a hallucinating agent from executing a dangerous action, but it doesn't inspect or filter LLM prompts themselves. Combine Aegis with prompt-level guardrails for defense in depth.
+
+### Is there a way to enforce Aegis in production?
+Aegis is a library — it relies on the developer routing all agent actions through `runtime.run_one()`. For stronger enforcement in containerized environments, see the [Security Model guide](guides/security-model.md) which covers Docker defense-in-depth patterns.
+
+## Compliance
+
+### Does Aegis help with SOC2 compliance?
+Yes. Aegis provides an immutable audit trail of every agent action, decision, and approval — which maps directly to SOC2 Change Management and Access Control evidence requirements. Export audit logs as JSONL for your auditor.
+
+### Does Aegis help with GDPR?
+Aegis logs which system accessed what data and when, providing data access documentation for GDPR Article 30 records. Combine with your data classification to track PII access.
+
+### Can I use Aegis for HIPAA audit trails?
+Yes. The audit log captures PHI access patterns with full action context and approval chains. See the [compliance demo](https://github.com/Acacian/aegis/blob/main/examples/compliance_demo.py) for a worked example.
+
 ## Community
 
 ### Where can I ask questions?
 Use [GitHub Discussions](https://github.com/Acacian/aegis/discussions) for questions, ideas, and showcases. For bugs and feature requests, use [GitHub Issues](https://github.com/Acacian/aegis/issues).
+
+### How can I contribute?
+Check [Good First Issues](https://github.com/Acacian/aegis/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) for starter tasks, or read the [Contributing Guide](https://github.com/Acacian/aegis/blob/main/CONTRIBUTING.md) for setup instructions.
+
+### Can I use Aegis commercially?
+Yes. Aegis is MIT-licensed — use it freely in commercial projects with no restrictions.
