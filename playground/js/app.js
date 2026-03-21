@@ -1527,6 +1527,7 @@ function renderResult(r) {
         <button class="copy-code-btn" data-fmt="curl" title="Copy as cURL command">cURL</button>
         <button class="copy-code-btn" data-fmt="docker" title="Copy as Docker + curl command">Docker</button>
         <button class="copy-code-btn" data-fmt="markdown" title="Copy as Markdown table">MD</button>
+        <button class="copy-code-btn" data-fmt="ci" title="Copy as GitHub Actions step">CI</button>
         <button class="copy-code-btn" data-fmt="github" title="Copy as GitHub issue template">Issue</button>
       </div>
     </div>
@@ -1833,6 +1834,20 @@ curl -s http://localhost:8000/api/v1/evaluate \\
   -H "Content-Type: application/json" \\
   -d '${body}' | python3 -m json.tool
 # Expected: ${r.approval} (${r.risk_level})`;
+  }
+
+  if (fmt === "ci") {
+    return `# GitHub Actions step — Aegis policy check
+- name: Check ${r.action_type} policy
+  run: |
+    pip install agent-aegis
+    python -c "
+    from aegis import Action, Policy
+    p = Policy.from_yaml('policy.yaml')
+    r = p.evaluate(Action('${r.action_type}', '${r.target}'))
+    assert r.approval.value == '${r.approval}', f'Expected ${r.approval}, got {r.approval.value}'
+    print('Policy check passed: ${r.action_type} → ${r.approval}')
+    "`;
   }
 
   if (fmt === "github") {
