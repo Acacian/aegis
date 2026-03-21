@@ -74,6 +74,7 @@ nav:
       - Approval Handlers: guides/approval-handlers.md
       - REST API Server: guides/rest-api.md
       - Security Model: guides/security-model.md
+      - Governance Checklist: guides/governance-checklist.md
       - Testing: guides/testing.md
   - API Reference:
       - Runtime: api/runtime.md
