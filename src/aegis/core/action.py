@@ -21,7 +21,12 @@ class Action:
     target: str
     params: dict[str, Any] = field(default_factory=dict)
     description: str = ""
+    agent_id: str = ""
+    parent_agent_id: str = ""
+    chain_id: str = ""
+    chain_depth: int = 0
 
     def __str__(self) -> str:
         desc = f" - {self.description}" if self.description else ""
-        return f"Action({self.type} -> {self.target}{desc})"
+        agent = f" [agent={self.agent_id}]" if self.agent_id else ""
+        return f"Action({self.type} -> {self.target}{desc}{agent})"

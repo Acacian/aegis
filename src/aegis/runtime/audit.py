@@ -29,9 +29,20 @@ CREATE TABLE IF NOT EXISTS audit_log (
     human_decision  TEXT,
     result_status   TEXT,
     result_data     TEXT,
-    result_error    TEXT
+    result_error    TEXT,
+    agent_id        TEXT,
+    parent_agent_id TEXT,
+    chain_id        TEXT,
+    chain_depth     INTEGER DEFAULT 0
 );
 """
+
+_MIGRATE_AGENT_COLUMNS = [
+    ("agent_id", "TEXT"),
+    ("parent_agent_id", "TEXT"),
+    ("chain_id", "TEXT"),
+    ("chain_depth", "INTEGER DEFAULT 0"),
+]
 
 
 class AuditLogger:
@@ -48,6 +59,18 @@ class AuditLogger:
         self._db_path = Path(db_path)
         self._conn = sqlite3.connect(str(self._db_path), check_same_thread=False)
         self._conn.execute(_SCHEMA)
+        self._conn.commit()
+        self._migrate()
+
+    def _migrate(self) -> None:
+        """Add agent context columns to existing databases if missing."""
+        cursor = self._conn.execute("PRAGMA table_info(audit_log)")
+        existing = {row[1] for row in cursor.fetchall()}
+        for col_name, col_type in _MIGRATE_AGENT_COLUMNS:
+            if col_name not in existing:
+                self._conn.execute(
+                    f"ALTER TABLE audit_log ADD COLUMN {col_name} {col_type}"
+                )
         self._conn.commit()
 
     def log(
@@ -68,8 +91,9 @@ class AuditLogger:
             INSERT INTO audit_log
                 (session_id, timestamp, action_type, action_target, action_params,
                  action_desc, risk_level, approval, matched_rule, human_decision,
-                 result_status, result_data, result_error)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 result_status, result_data, result_error,
+                 agent_id, parent_agent_id, chain_id, chain_depth)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 session_id,
@@ -85,6 +109,10 @@ class AuditLogger:
                 result.status.value if result else None,
                 json.dumps(result.data, default=str) if result and result.data else None,
                 result.error if result else None,
+                decision.action.agent_id or None,
+                decision.action.parent_agent_id or None,
+                decision.action.chain_id or None,
+                decision.action.chain_depth,
             ),
         )
         self._conn.commit()
@@ -100,6 +128,8 @@ class AuditLogger:
         since: datetime | None = None,
         until: datetime | None = None,
         limit: int | None = None,
+        agent_id: str | None = None,
+        chain_id: str | None = None,
     ) -> list[dict[str, object]]:
         """Retrieve audit log entries with flexible filtering.
 
@@ -111,6 +141,8 @@ class AuditLogger:
             since: Only entries after this timestamp.
             until: Only entries before this timestamp.
             limit: Maximum number of entries to return.
+            agent_id: Filter by agent ID (exact match).
+            chain_id: Filter by chain ID (exact match).
         """
         clauses: list[str] = []
         params: list[object] = []
@@ -133,6 +165,12 @@ class AuditLogger:
         if until:
             clauses.append("timestamp <= ?")
             params.append(until.isoformat())
+        if agent_id:
+            clauses.append("agent_id = ?")
+            params.append(agent_id)
+        if chain_id:
+            clauses.append("chain_id = ?")
+            params.append(chain_id)
 
         query = "SELECT * FROM audit_log"
         if clauses:

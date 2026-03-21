@@ -1,6 +1,7 @@
 """Aegis: Policy & approval runtime for AI agents."""
 
 from aegis.core.action import Action
+from aegis.core.hierarchy import PolicyConflict, PolicyHierarchy
 from aegis.core.plan import ExecutionPlan
 from aegis.core.policy import Approval, Policy, PolicyDecision
 from aegis.core.result import Result, ResultStatus
@@ -14,7 +15,9 @@ __all__ = [
     "Approval",
     "ExecutionPlan",
     "Policy",
+    "PolicyConflict",
     "PolicyDecision",
+    "PolicyHierarchy",
     "PolicyWatcher",
     "Result",
     "ResultStatus",

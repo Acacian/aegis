@@ -60,17 +60,23 @@ class PolicyRule:
     approval: Approval = Approval.APPROVE
     name: str = ""
     conditions: dict[str, Any] = field(default_factory=dict)
+    match_agent: str = "*"
 
     def matches(self, action: Action) -> bool:
         """Check if this rule matches the given action.
 
         Both glob patterns and conditions (if any) must match.
+        When ``match_agent`` is set to a non-wildcard value, the
+        action's ``agent_id`` must also match.
         """
         glob_match = fnmatch.fnmatch(action.type, self.match_type) and fnmatch.fnmatch(
             action.target, self.match_target
         )
         if not glob_match:
             return False
+        if self.match_agent != "*":
+            if not fnmatch.fnmatch(action.agent_id or "*", self.match_agent):
+                return False
         if self.conditions:
             return evaluate_conditions(self.conditions, action.params)
         return True
@@ -100,6 +106,9 @@ class Policy:
     rules: list[PolicyRule] = field(default_factory=list)
     default_risk_level: RiskLevel = RiskLevel.MEDIUM
     default_approval: Approval = Approval.APPROVE
+    scope: str = "global"
+    scope_id: str = ""
+    version: int = 1
 
     def evaluate(self, action: Action) -> PolicyDecision:
         """Evaluate an action against the policy rules.
@@ -139,6 +148,9 @@ class Policy:
             rules=self.rules + other.rules,
             default_risk_level=self.default_risk_level,
             default_approval=self.default_approval,
+            scope=self.scope,
+            scope_id=self.scope_id,
+            version=self.version,
         )
 
     @classmethod
@@ -204,6 +216,7 @@ class Policy:
                     approval=Approval(rule_data.get("approval", "approve")),
                     name=rule_data.get("name", f"rule_{i}"),
                     conditions=rule_data.get("conditions", {}),
+                    match_agent=match.get("agent", "*"),
                 )
             )
 
@@ -211,4 +224,7 @@ class Policy:
             rules=rules,
             default_risk_level=default_risk,
             default_approval=default_approval,
+            scope=data.get("scope", "global"),
+            scope_id=data.get("scope_id", ""),
+            version=int(data.get("version", 1)),
         )

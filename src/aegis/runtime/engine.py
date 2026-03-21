@@ -52,6 +52,10 @@ class Runtime:
         session_id: Optional session identifier for audit grouping.
         hooks: Optional callbacks for lifecycle events.
         retry_policy: Optional retry/rollback policy for failed actions.
+        agent_id: Optional agent identifier. If provided, auto-populates
+            into Actions that don't already have an agent_id set.
+        parent_session_id: Optional session ID of the parent runtime,
+            for cross-runtime session correlation in delegation chains.
 
     Example::
 
@@ -75,6 +79,8 @@ class Runtime:
         session_id: str | None = None,
         hooks: RuntimeHooks | None = None,
         retry_policy: RetryPolicy | None = None,
+        agent_id: str = "",
+        parent_session_id: str = "",
     ) -> None:
         self.executor = executor
         self.policy = policy
@@ -83,6 +89,8 @@ class Runtime:
         self.session_id = session_id or uuid.uuid4().hex[:12]
         self.hooks = hooks or RuntimeHooks()
         self.retry_policy = retry_policy or RetryPolicy()
+        self.agent_id = agent_id
+        self.parent_session_id = parent_session_id
 
     async def __aenter__(self) -> Runtime:
         """Enter async context: set up the executor."""
@@ -96,8 +104,17 @@ class Runtime:
 
     def plan(self, actions: list[Action]) -> ExecutionPlan:
         """Evaluate actions against the policy and produce an execution plan."""
-        decisions = [self.policy.evaluate(action) for action in actions]
+        resolved = [self._with_agent_context(a) for a in actions]
+        decisions = [self.policy.evaluate(action) for action in resolved]
         return ExecutionPlan(decisions=decisions)
+
+    def _with_agent_context(self, action: Action) -> Action:
+        """Return the action with agent_id populated if not already set."""
+        if self.agent_id and not action.agent_id:
+            from dataclasses import replace
+
+            return replace(action, agent_id=self.agent_id)
+        return action
 
     def update_policy(self, policy: Policy) -> None:
         """Hot-reload the policy without restarting the runtime.
