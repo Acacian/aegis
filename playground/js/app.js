@@ -375,6 +375,7 @@ function initEditor() {
     const keyMatch = line.match(/^\s*(\w[\w_]*):/);
     const hint = keyMatch && YAML_HINTS[keyMatch[1]];
     const hintEl = document.getElementById("editor-hint");
+    if (hintEl && hintEl.dataset.disabled === "true") return;
     if (hint && hintEl) {
       hintEl.textContent = hint;
       hintEl.style.display = "";
@@ -561,6 +562,7 @@ function buildShortcutOverlay() {
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd><span>Run all actions</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>K</kbd><span>Focus custom action input</span></div>
         <div class="shortcut-group">Editor</div>
+        <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>H</kbd><span>Toggle YAML hints</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>S</kbd><span>Copy policy to clipboard</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>/</kbd><span>Toggle YAML comment</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>G</kbd> / <kbd>Ctrl</kbd>+<kbd>L</kbd><span>Go to line</span></div>
@@ -995,6 +997,18 @@ function bindEvents() {
         const code = generateCode("oneliner", latestCard._resultData);
         copyToClipboard(code, latestCard);
         showToast("Copied latest result");
+      }
+      return;
+    }
+    // Ctrl/Cmd + H → toggle YAML hints in editor
+    if ((e.ctrlKey || e.metaKey) && e.key === "h" && !e.shiftKey) {
+      e.preventDefault();
+      const hintEl = document.getElementById("editor-hint");
+      if (hintEl) {
+        const hidden = hintEl.dataset.disabled === "true";
+        hintEl.dataset.disabled = hidden ? "" : "true";
+        hintEl.style.display = hidden ? "" : "none";
+        showToast(hidden ? "YAML hints enabled" : "YAML hints hidden");
       }
       return;
     }
