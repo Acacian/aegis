@@ -1733,14 +1733,31 @@ footer code {
   }
 
   .preset-buttons {
-    justify-content: center;
-    flex-wrap: wrap;
-    max-height: 120px;
-    overflow-y: auto;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+    scrollbar-width: none;      /* Firefox */
+  }
+
+  .preset-buttons::-webkit-scrollbar {
+    display: none;              /* Chrome/Safari */
+  }
+
+  .preset-btn {
+    scroll-snap-align: start;
+    flex-shrink: 0;
   }
 
   .preset-divider {
     display: none;
+  }
+
+  /* Fade hint on right edge for scrollable presets */
+  .panel-header {
+    position: relative;
   }
 
   .comparison-table th:first-child,
@@ -1797,6 +1814,21 @@ footer code {
     grid-template-columns: 1fr 1fr;
   }
 
+  /* Touch-friendly form inputs */
+  .form-row input {
+    padding: 8px 10px;
+    font-size: 16px; /* prevents iOS zoom on focus */
+  }
+
+  .run-btn, .run-all-btn {
+    padding: 10px 16px;
+    font-size: 0.85rem;
+  }
+
+  .action-btn {
+    padding: 10px 12px;
+  }
+
   .comparison-panels {
     font-size: 0.75rem;
   }
@@ -1834,10 +1866,6 @@ footer code {
   .preset-btn {
     font-size: 0.65rem;
     padding: 2px 6px;
-  }
-
-  .preset-buttons {
-    max-height: 80px;
   }
 
   .step-card p {
