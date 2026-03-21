@@ -1255,12 +1255,17 @@ function bindEvents() {
   document.getElementById("import-snapshot").addEventListener("change", (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      showToast("Snapshot too large (max 10 MB)");
+      e.target.value = "";
+      return;
+    }
     const reader = new FileReader();
     reader.onload = () => {
       try {
         const snap = JSON.parse(reader.result);
-        if (snap.policy) editor.setValue(snap.policy);
-        if (snap.audit_entries) {
+        if (typeof snap.policy === "string") editor.setValue(snap.policy);
+        if (Array.isArray(snap.audit_entries)) {
           auditEntries = snap.audit_entries;
           $auditCount.textContent = `${auditEntries.length} entries`;
         }
