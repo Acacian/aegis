@@ -1,5 +1,6 @@
 .claude/
 CLAUDE.md
+.github/SOCIAL.md
 .idea/
 .mypy_cache/
 .ruff_cache/
