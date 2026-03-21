@@ -437,6 +437,16 @@ a.integration-badge:active {
   100% { transform: scale(1); }
 }
 
+.stat-milestone {
+  animation: milestoneGlow 1.5s ease-out;
+}
+
+@keyframes milestoneGlow {
+  0% { box-shadow: 0 0 0 0 rgba(88, 166, 255, 0.4); }
+  30% { box-shadow: 0 0 12px 4px rgba(88, 166, 255, 0.3); }
+  100% { box-shadow: none; }
+}
+
 /* ---- How It Works ---- */
 .how-it-works {
   padding: 20px 24px 4px;

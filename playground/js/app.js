@@ -1844,6 +1844,12 @@ function updateStats(result) {
   if ($l && stats.total > 0) {
     $l.textContent = (stats.totalMs / stats.total).toFixed(1) + "ms";
   }
+
+  // Milestone glow on multiples of 10
+  if (stats.total % 10 === 0 && $t) {
+    $t.parentElement.classList.add("stat-milestone");
+    setTimeout(() => $t.parentElement.classList.remove("stat-milestone"), 1500);
+  }
 }
 
 function addAuditEntry(r) {
