@@ -2156,7 +2156,18 @@ function showToast(msg) {
 /* ---- Utils ---- */
 async function copyToClipboard(text, btn) {
   try {
-    await navigator.clipboard.writeText(text);
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(text);
+    } else {
+      // Fallback for older browsers / insecure contexts
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.cssText = "position:fixed;left:-9999px";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      ta.remove();
+    }
     const orig = btn.textContent;
     btn.textContent = "\u2713 Copied!";
     btn.classList.add("copy-success");
