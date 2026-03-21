@@ -1192,16 +1192,21 @@ function downloadBlob(content, type, ext) {
 }
 
 function exportAuditJSON() {
+  if (!auditEntries.length) { showToast("No audit entries to export"); return; }
   const report = {
     meta: {
       exported_at: new Date().toISOString(),
       policy_yaml: editor.getValue(),
       version: "0.1.4",
+      entry_count: auditEntries.length,
     },
     summary: { ...stats, avg_latency_ms: stats.total > 0 ? +(stats.totalMs / stats.total).toFixed(2) : 0 },
     entries: auditEntries,
   };
-  downloadBlob(JSON.stringify(report, null, 2), "application/json", "json");
+  const json = JSON.stringify(report, null, 2);
+  downloadBlob(json, "application/json", "json");
+  const sizeKb = (new Blob([json]).size / 1024).toFixed(1);
+  showToast(`Exported ${auditEntries.length} entries (${sizeKb} KB)`);
 }
 
 function exportAuditCSV() {
