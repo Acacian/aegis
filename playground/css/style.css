@@ -2788,6 +2788,15 @@ footer code {
   .ba-vs { display: none; }
 }
 
+/* Performance: skip rendering of off-screen below-fold sections */
+.how-it-works,
+.usecases-section,
+.comparison-section,
+.cta-section {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 400px;
+}
+
 /* ---- Comparison Section ---- */
 .comparison-section {
   padding: 60px 24px;
