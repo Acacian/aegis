@@ -579,6 +579,7 @@ function toggleShortcutHelp() {
 
 /* ---- Theme Toggle ---- */
 function getSystemTheme() {
+  if (window.matchMedia("(prefers-contrast: more)").matches) return "high-contrast";
   return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
 }
 
