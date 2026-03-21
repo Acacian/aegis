@@ -477,9 +477,6 @@ header {
   font-size: 1rem;
   line-height: 1;
   transition: border-color 0.15s, transform 0.3s ease;
-}
-
-.theme-toggle {
   position: relative;
 }
 .theme-toggle:hover {
@@ -505,13 +502,6 @@ header {
 .theme-toggle:active {
   transform: rotate(180deg) scale(0.9);
 }
-
-/* Default: dark theme — show moon, hide sun */
-.theme-icon-light { display: none; }
-.theme-icon-dark { display: inline; }
-
-[data-theme="light"] .theme-icon-light { display: inline; }
-[data-theme="light"] .theme-icon-dark { display: none; }
 
 /* ---- Integrations Bar ---- */
 .integrations-bar {
@@ -1023,6 +1013,8 @@ main {
   cursor: pointer;
   transition: all 0.15s;
   font-size: 0.85rem;
+  position: relative;
+  overflow: hidden;
 }
 
 .action-btn:hover {
@@ -1034,8 +1026,6 @@ main {
 .action-btn.risk-medium:hover { border-color: var(--risk-medium); background: var(--risk-medium-bg); }
 .action-btn.risk-high:hover { border-color: var(--risk-high); background: var(--risk-high-bg); }
 .action-btn.risk-critical:hover { border-color: var(--risk-critical); background: var(--risk-critical-bg); }
-
-.action-btn { position: relative; overflow: hidden; }
 
 .btn-ripple {
   position: absolute;
@@ -1211,13 +1201,8 @@ kbd {
   border-radius: var(--radius);
   padding: 14px;
   margin-bottom: 8px;
-  animation: slideIn 0.2s ease;
+  animation: cardSlideIn 0.25s ease-out;
   contain: layout style;
-}
-
-@keyframes slideIn {
-  from { opacity: 0; transform: translateY(-4px); }
-  to { opacity: 1; transform: translateY(0); }
 }
 
 .result-card.result-allowed {
@@ -2355,10 +2340,6 @@ footer code {
 }
 
 /* Entrance animation — all cards slide in */
-.result-card {
-  animation: cardSlideIn 0.25s ease-out;
-}
-
 @keyframes cardSlideIn {
   from { opacity: 0; transform: translateX(-12px); }
   to   { opacity: 1; transform: translateX(0); }
