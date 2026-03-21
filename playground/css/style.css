@@ -1371,6 +1371,24 @@ kbd {
 .arch-block { background: rgba(248, 81, 73, 0.12); color: #f85149; }
 
 /* ---- Quickstart Code Snippet ---- */
+.trust-signals {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 24px;
+}
+
+.trust-badge {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-weight: 500;
+}
+
 .quickstart-code {
   margin-top: 40px;
   background: var(--bg-secondary);
