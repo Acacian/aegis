@@ -578,6 +578,28 @@ main {
   font-family: monospace;
 }
 
+.validation-status {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: rgba(63, 185, 80, 0.12);
+  color: #3fb950;
+  margin-left: auto;
+  white-space: nowrap;
+  transition: background 0.2s, color 0.2s;
+}
+
+.validation-status.status-error {
+  background: rgba(248, 81, 73, 0.12);
+  color: #f85149;
+}
+
+.validation-status.status-checking {
+  background: rgba(210, 153, 34, 0.12);
+  color: #d29922;
+}
+
 .editor-error {
   padding: 6px 12px;
   font-size: 0.78rem;

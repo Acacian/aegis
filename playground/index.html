@@ -296,6 +296,7 @@ result = await runtime.run_one(Action("delete", "crm", params={"id": "all"}))
           </div>
           <button id="copy-policy" class="clear-btn" title="Copy policy YAML">Copy</button>
           <button id="share-policy" class="clear-btn" title="Copy shareable URL">Share</button>
+          <span id="validation-status" class="validation-status" title="Policy validation status">&#x2705; Valid</span>
         </div>
         <div class="editor-wrapper">
           <textarea id="policy-editor"></textarea>

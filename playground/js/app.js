@@ -942,12 +942,20 @@ async function autoDemo() {
 let validationTimer = null;
 let lastValidatedYaml = "";
 
+function setValidationStatus(state, text) {
+  const badge = document.getElementById("validation-status");
+  if (!badge) return;
+  badge.className = "validation-status" + (state === "error" ? " status-error" : state === "checking" ? " status-checking" : "");
+  badge.innerHTML = state === "error" ? "\u274C " + text : state === "checking" ? "\u23F3 Checking..." : "\u2705 Valid";
+}
+
 function setupPolicyValidation() {
   editor.on("change", () => {
     clearTimeout(validationTimer);
+    setValidationStatus("checking");
     validationTimer = setTimeout(() => {
       const current = editor.getValue();
-      if (current === lastValidatedYaml) return; // skip unchanged
+      if (current === lastValidatedYaml) { setValidationStatus("ok"); return; }
       lastValidatedYaml = current;
       validatePolicy();
     }, 600);
@@ -971,9 +979,13 @@ async function validatePolicy() {
 
     if (result.error) {
       showEditorError(result.error, result.line);
+      setValidationStatus("error", result.error.slice(0, 40));
+    } else {
+      setValidationStatus("ok");
+      clearEditorErrors();
     }
   } catch (err) {
-    // Silently ignore validation errors during typing
+    setValidationStatus("ok"); // parsing errors during typing are ok
   }
 }
 
