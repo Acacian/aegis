@@ -1122,14 +1122,19 @@ function exportAuditJSON() {
 }
 
 function exportAuditCSV() {
-  const headers = ["timestamp", "action_type", "target", "risk", "approval", "rule", "description"];
+  if (!auditEntries.length) { showToast("No audit entries to export"); return; }
+  const headers = ["timestamp", "action_type", "target", "risk", "approval", "rule", "allowed", "description"];
   const rows = auditEntries.map((e) =>
     headers.map((h) => {
       const v = e[h] ?? "";
-      return typeof v === "string" && v.includes(",") ? `"${v}"` : v;
+      const s = String(v);
+      return s.includes(",") || s.includes('"') || s.includes("\n") ? `"${s.replace(/"/g, '""')}"` : s;
     }).join(",")
   );
-  downloadBlob([headers.join(","), ...rows].join("\n"), "text/csv", "csv");
+  // BOM for Excel UTF-8 compatibility
+  const bom = "\uFEFF";
+  downloadBlob(bom + [headers.join(","), ...rows].join("\n"), "text/csv;charset=utf-8", "csv");
+  showToast(`Exported ${auditEntries.length} entries as CSV`);
 }
 
 function exportAuditYAML() {
