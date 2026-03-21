@@ -56,6 +56,106 @@ document.addEventListener("DOMContentLoaded", async () => {
   await initPyodide();
 });
 
+/* ---- Guided Tour (first-time visitors) ---- */
+const TOUR_STEPS = [
+  {
+    target: ".CodeMirror",
+    title: "1. Policy Editor",
+    text: "Write YAML governance rules here. Try switching presets above to see different industry policies.",
+    position: "right",
+  },
+  {
+    target: ".quick-actions",
+    title: "2. Test Actions",
+    text: "Click any action button to simulate an AI agent request and see how your policy evaluates it.",
+    position: "bottom",
+  },
+  {
+    target: ".result-panel",
+    title: "3. See Results",
+    text: "Each evaluation shows the decision (auto/approve/block), risk level, and which rule matched.",
+    position: "left",
+  },
+  {
+    target: ".audit-panel",
+    title: "4. Audit Trail",
+    text: "Every decision is logged here. Export as JSON for compliance review.",
+    position: "left",
+  },
+];
+
+function shouldShowTour() {
+  return !localStorage.getItem("aegis-tour-done") && !window.location.hash.startsWith("#policy=");
+}
+
+function startTour() {
+  if (!shouldShowTour()) return;
+  let step = 0;
+
+  function showStep() {
+    // Remove previous
+    document.querySelectorAll(".tour-overlay, .tour-tooltip").forEach((el) => el.remove());
+    document.querySelectorAll(".tour-highlight").forEach((el) => el.classList.remove("tour-highlight"));
+
+    if (step >= TOUR_STEPS.length) {
+      localStorage.setItem("aegis-tour-done", "1");
+      return;
+    }
+
+    const s = TOUR_STEPS[step];
+    const el = document.querySelector(s.target);
+    if (!el) { step++; showStep(); return; }
+
+    el.classList.add("tour-highlight");
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+
+    setTimeout(() => {
+      const rect = el.getBoundingClientRect();
+      const tip = document.createElement("div");
+      tip.className = `tour-tooltip tour-${s.position}`;
+      tip.innerHTML = `
+        <div class="tour-title">${s.title}</div>
+        <div class="tour-text">${s.text}</div>
+        <div class="tour-actions">
+          <button class="tour-skip">Skip tour</button>
+          <button class="tour-next">${step < TOUR_STEPS.length - 1 ? "Next" : "Got it!"}</button>
+        </div>
+        <div class="tour-progress">${step + 1} / ${TOUR_STEPS.length}</div>`;
+
+      // Position tooltip
+      const gap = 12;
+      if (s.position === "right") {
+        tip.style.top = rect.top + rect.height / 2 + "px";
+        tip.style.left = rect.right + gap + "px";
+        tip.style.transform = "translateY(-50%)";
+      } else if (s.position === "bottom") {
+        tip.style.top = rect.bottom + gap + "px";
+        tip.style.left = rect.left + rect.width / 2 + "px";
+        tip.style.transform = "translateX(-50%)";
+      } else {
+        tip.style.top = rect.top + rect.height / 2 + "px";
+        tip.style.left = rect.left - gap + "px";
+        tip.style.transform = "translate(-100%, -50%)";
+      }
+
+      document.body.appendChild(tip);
+
+      tip.querySelector(".tour-next").addEventListener("click", () => {
+        step++;
+        showStep();
+      });
+      tip.querySelector(".tour-skip").addEventListener("click", () => {
+        document.querySelectorAll(".tour-overlay, .tour-tooltip").forEach((e) => e.remove());
+        document.querySelectorAll(".tour-highlight").forEach((e) => e.classList.remove("tour-highlight"));
+        localStorage.setItem("aegis-tour-done", "1");
+      });
+    }, 350);
+  }
+
+  // Delay tour start so user sees the interface first
+  setTimeout(showStep, 800);
+}
+
 /* ---- Lazy Reveal (fade-in below-fold sections) ---- */
 function initLazyReveal() {
   const sections = document.querySelectorAll(
@@ -433,6 +533,8 @@ async function initPyodide() {
       if (!window.location.hash.startsWith("#policy=")) {
         autoDemo();
       }
+      // Start guided tour for first-time visitors (after demo completes)
+      setTimeout(startTour, 2000);
     }, 400);
   } catch (err) {
     setProgress(0, `Error: ${err.message}`);
