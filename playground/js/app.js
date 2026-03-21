@@ -545,7 +545,7 @@ function buildShortcutOverlay() {
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Enter</kbd><span>Evaluate custom action</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd><span>Run all actions</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd><span>Save snapshot (JSON)</span></div>
-        <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>X</kbd><span>Clear results + audit</span></div>
+        <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>X</kbd><span>Full reset (results + audit + stats)</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>P</kbd><span>Command palette</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>K</kbd><span>Focus custom action input</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>S</kbd><span>Copy policy to clipboard</span></div>
@@ -772,12 +772,23 @@ function bindEvents() {
       showToast("Snapshot saved");
       return;
     }
-    // Ctrl/Cmd + Shift + X → clear all results + audit
+    // Ctrl/Cmd + Shift + X → full reset: clear results, audit, and stats
     if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === "X" || e.key === "x")) {
       e.preventDefault();
       document.getElementById("clear-result")?.click();
       document.getElementById("clear-audit")?.click();
-      showToast("Cleared results and audit log");
+      // Reset stats
+      stats.total = 0; stats.auto = 0; stats.approve = 0; stats.block = 0; stats.totalMs = 0;
+      ["stat-total", "stat-auto", "stat-approve", "stat-block"].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = "0";
+      });
+      const $l = document.getElementById("stat-latency");
+      if ($l) $l.textContent = "-";
+      auditEntries.length = 0;
+      const $ac = document.getElementById("audit-count");
+      if ($ac) $ac.textContent = "0 entries";
+      showToast("Full reset: results, audit, and stats cleared");
       return;
     }
     // Ctrl/Cmd + G → go to line in editor
