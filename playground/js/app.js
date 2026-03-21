@@ -452,6 +452,7 @@ function openShareModal() {
             Share on LinkedIn
           </a>
         </div>
+        <button id="share-embed-btn" class="action-btn action-low" style="margin-top:8px;width:100%">Copy Embed Code</button>
         <p class="share-hint">Anyone with this link can load your policy in the playground</p>
       </div>`;
     document.body.appendChild(modal);
@@ -465,6 +466,12 @@ function openShareModal() {
     document.getElementById("share-copy-btn").addEventListener("click", () => {
       const input = document.getElementById("share-url-input");
       copyToClipboard(input.value, document.getElementById("share-copy-btn"));
+    });
+    document.getElementById("share-embed-btn").addEventListener("click", () => {
+      const embedUrl = document.getElementById("share-url-input").value;
+      const iframe = `<iframe src="${embedUrl}" width="100%" height="600" frameborder="0" title="Aegis Playground"></iframe>`;
+      copyToClipboard(iframe, document.getElementById("share-embed-btn"));
+      showToast("Embed code copied!");
     });
   }
 
