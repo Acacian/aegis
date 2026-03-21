@@ -561,6 +561,7 @@ function buildShortcutOverlay() {
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>B</kbd><span>Toggle audit panel</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>D</kbd><span>Toggle theme</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd><span>Duplicate line</span></div>
+        <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>[</kbd> / <kbd>]</kbd><span>Previous / next preset</span></div>
         <div class="shortcut-row"><kbd>0</kbd>-<kbd>9</kbd><span>Switch preset (by position)</span></div>
         <div class="shortcut-row"><kbd>?</kbd><span>Show this help</span></div>
         <div class="shortcut-row"><kbd>Esc</kbd><span>Close dialogs / clear results</span></div>
@@ -947,6 +948,16 @@ function bindEvents() {
       const line = editor.getLine(cursor.line);
       editor.replaceRange("\n" + line, { line: cursor.line, ch: line.length });
       editor.setCursor(cursor.line + 1, cursor.ch);
+      return;
+    }
+    // Ctrl/Cmd + [ / ] → navigate presets back/forward
+    if ((e.ctrlKey || e.metaKey) && (e.key === "[" || e.key === "]")) {
+      e.preventDefault();
+      const presetBtns = [...document.querySelectorAll(".preset-btn:not(.preset-divider)")];
+      const activeIdx = presetBtns.findIndex((b) => b.classList.contains("active"));
+      const dir = e.key === "]" ? 1 : -1;
+      const nextIdx = (activeIdx + dir + presetBtns.length) % presetBtns.length;
+      presetBtns[nextIdx].click();
       return;
     }
     // 1-9, 0 → switch preset (when not in input)
