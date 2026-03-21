@@ -812,6 +812,15 @@ function bindEvents() {
   buildShortcutOverlay();
 
   // Clear buttons
+  document.getElementById("copy-all-results").addEventListener("click", (e) => {
+    if (auditEntries.length === 0) {
+      showToast("No results to copy");
+      return;
+    }
+    copyToClipboard(JSON.stringify(auditEntries, null, 2), e.target);
+    showToast(`Copied ${auditEntries.length} results as JSON`);
+  });
+
   document.getElementById("clear-result").addEventListener("click", () => {
     $result.innerHTML =
       '<div class="empty-state">Click an action above to see the policy evaluation result</div>';

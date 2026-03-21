@@ -382,6 +382,7 @@ result = await runtime.run_one(Action("delete", "crm", params={"id": "all"}))
       <div class="panel result-panel">
         <div class="panel-header">
           <h2>Evaluation Result</h2>
+          <button id="copy-all-results" class="clear-btn" title="Copy all results as JSON">Copy All</button>
           <button id="clear-result" class="clear-btn">Clear</button>
         </div>
         <div id="result-content" class="result-content" role="log" aria-live="polite">
