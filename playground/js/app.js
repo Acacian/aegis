@@ -24,18 +24,34 @@ const LOADING_TIPS = [
   "Tip: Try different industry presets after loading!",
 ];
 let tipInterval = null;
+function typewriterEffect($el, text, speed = 25) {
+  $el.textContent = "";
+  let i = 0;
+  const timer = setInterval(() => {
+    if (i < text.length) {
+      $el.textContent += text[i];
+      i++;
+    } else {
+      clearInterval(timer);
+    }
+  }, speed);
+  return timer;
+}
+
 function rotateTips() {
   const $tip = document.getElementById("loading-tip");
   if (!$tip) return;
   let idx = 0;
+  let typeTimer = null;
   tipInterval = setInterval(() => {
     idx = (idx + 1) % LOADING_TIPS.length;
     $tip.style.opacity = 0;
+    clearInterval(typeTimer);
     setTimeout(() => {
-      $tip.textContent = LOADING_TIPS[idx];
       $tip.style.opacity = 1;
+      typeTimer = typewriterEffect($tip, LOADING_TIPS[idx]);
     }, 300);
-  }, 3000);
+  }, 4000);
 }
 
 /* ---- DOM refs ---- */
