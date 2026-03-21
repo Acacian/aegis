@@ -1277,6 +1277,10 @@ function findWarningLine(yaml, warning) {
       return found;
     }
   }
+  if (lower.includes("no match pattern")) {
+    const lineMatch = warning.match(/line (\d+)/);
+    if (lineMatch) return parseInt(lineMatch[1]) - 1;
+  }
   return -1;
 }
 
@@ -1290,6 +1294,28 @@ function lintPolicyWarnings(yaml) {
   const names = (yaml.match(/- name:\s*(\S+)/g) || []).map((m) => m.replace("- name:", "").trim());
   const dupes = names.filter((n, i) => names.indexOf(n) !== i);
   if (dupes.length) warnings.push(`Duplicate rule name: ${dupes[0]}`);
+
+  // Check for rules without match patterns
+  const lines = yaml.split("\n");
+  let inRule = false;
+  let hasMatch = false;
+  let ruleLine = -1;
+  for (let i = 0; i < lines.length; i++) {
+    if (/^\s*- name:/.test(lines[i])) {
+      if (inRule && !hasMatch && ruleLine >= 0) {
+        warnings.push(`Rule at line ${ruleLine + 1} has no match pattern`);
+      }
+      inRule = true;
+      hasMatch = false;
+      ruleLine = i;
+    } else if (inRule && /^\s+match:/.test(lines[i])) {
+      hasMatch = true;
+    }
+  }
+  if (inRule && !hasMatch && ruleLine >= 0) {
+    warnings.push(`Rule at line ${ruleLine + 1} has no match pattern`);
+  }
+
   return warnings;
 }
 
