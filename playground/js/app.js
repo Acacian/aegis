@@ -1302,6 +1302,12 @@ function bindEvents() {
     copyToClipboard("pip install agent-aegis", e.target.closest("button"));
   });
 
+  const copyPyprojectBtn = document.getElementById("copy-pyproject");
+  if (copyPyprojectBtn) copyPyprojectBtn.addEventListener("click", (e) => {
+    copyToClipboard('dependencies = [\n    "agent-aegis>=0.1.3",\n]', e.target);
+    showToast("pyproject.toml dependency copied");
+  });
+
   const copyDockerBtn = document.getElementById("copy-docker");
   if (copyDockerBtn) copyDockerBtn.addEventListener("click", (e) => {
     copyToClipboard("docker run --rm -p 8000:8000 ghcr.io/acacian/aegis:latest", e.target);
@@ -2172,6 +2178,7 @@ function _getCardTemplate() {
         <button class="copy-code-btn" data-fmt="python" title="Copy as Python snippet">Python</button>
         <button class="copy-code-btn" data-fmt="pytest" title="Copy as pytest test case">pytest</button>
         <button class="copy-code-btn" data-fmt="curl" title="Copy as cURL command">cURL</button>
+        <button class="copy-code-btn" data-fmt="httpie" title="Copy as HTTPie command">HTTPie</button>
         <button class="copy-code-btn" data-fmt="docker" title="Copy as Docker + curl command">Docker</button>
         <button class="copy-code-btn" data-fmt="markdown" title="Copy as Markdown table">MD</button>
         <button class="copy-code-btn" data-fmt="ci" title="Copy as GitHub Actions step">CI</button>
@@ -2606,6 +2613,14 @@ def test_${r.action_type}_${r.approval}(policy):
     return `curl -X POST http://localhost:8000/api/v1/evaluate \\
   -H "Content-Type: application/json" \\
   -d '${body}'
+# Expected: ${r.approval} (${r.risk_level})`;
+  }
+
+  if (fmt === "httpie") {
+    return `http POST http://localhost:8000/api/v1/evaluate \\
+  action_type="${r.action_type}" \\
+  target="${r.target}" \\
+  params:='${params}'
 # Expected: ${r.approval} (${r.risk_level})`;
   }
 

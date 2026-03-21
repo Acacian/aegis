@@ -425,6 +425,15 @@ header {
   color: var(--accent);
 }
 
+.pyproject-btn {
+  border-color: rgba(46, 160, 67, 0.4);
+  color: #2ea043;
+}
+.pyproject-btn:hover {
+  border-color: #2ea043;
+  color: #2ea043;
+  background: rgba(46, 160, 67, 0.08);
+}
 .docker-btn {
   border-color: rgba(38, 128, 235, 0.4);
   color: #2680eb;
