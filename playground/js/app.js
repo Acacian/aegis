@@ -2592,19 +2592,42 @@ function showShortcutHint(id, shortcut) {
   showToast(`Tip: ${shortcut.replace("Ctrl", _mod)}`);
 }
 
+const _toastQueue = [];
+let _toastBusy = false;
+
 function showToast(msg) {
   if (!_toastEl) {
     _toastEl = document.createElement("div");
     _toastEl.className = "toast";
     document.body.appendChild(_toastEl);
   }
+  // If same message is already showing, just reset timer
+  if (_toastEl.style.display !== "none" && _toastEl.textContent === msg) {
+    clearTimeout(_toastTimer);
+    _toastTimer = setTimeout(_nextToast, 3000);
+    return;
+  }
+  _toastQueue.push(msg);
+  if (!_toastBusy) _drainToast();
+}
+
+function _drainToast() {
+  if (_toastQueue.length === 0) { _toastBusy = false; return; }
+  _toastBusy = true;
+  const msg = _toastQueue.shift();
   _toastEl.textContent = msg;
   _toastEl.style.display = "";
   _toastEl.style.animation = "none";
-  void _toastEl.offsetWidth; // force reflow to restart animation
+  void _toastEl.offsetWidth;
   _toastEl.style.animation = "";
   clearTimeout(_toastTimer);
-  _toastTimer = setTimeout(() => { _toastEl.style.display = "none"; }, 4000);
+  _toastTimer = setTimeout(_nextToast, 3000);
+}
+
+function _nextToast() {
+  _toastEl.style.display = "none";
+  if (_toastQueue.length > 0) setTimeout(_drainToast, 200);
+  else _toastBusy = false;
 }
 
 /* ---- Utils ---- */
