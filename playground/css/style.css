@@ -622,6 +622,13 @@ main {
   font-family: monospace;
 }
 
+.rule-count {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  padding: 2px 6px;
+  white-space: nowrap;
+}
+
 .validation-status {
   font-size: 0.72rem;
   font-weight: 600;

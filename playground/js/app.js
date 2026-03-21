@@ -406,13 +406,22 @@ function loadPolicyFromURL() {
 
 // Auto-save policy to localStorage on change (debounced)
 let saveTimer = null;
+function updateRuleCount() {
+  const rc = document.getElementById("rule-count");
+  if (!rc) return;
+  const count = (editor.getValue().match(/- name:/g) || []).length;
+  rc.textContent = `${count} rule${count !== 1 ? "s" : ""}`;
+}
+
 function setupPolicySave() {
   editor.on("change", () => {
     clearTimeout(saveTimer);
     saveTimer = setTimeout(() => {
       localStorage.setItem("aegis-last-policy", editor.getValue());
     }, 1000);
+    updateRuleCount();
   });
+  updateRuleCount(); // initial count
 }
 
 /* ---- YAML Comment Toggle ---- */
