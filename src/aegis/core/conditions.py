@@ -156,7 +156,11 @@ _MAX_REGEX_LEN = 1000
 def _op_matches(actual: Any, expected: Any) -> bool:
     pattern = str(expected)
     if len(pattern) > _MAX_REGEX_LEN:
-        logger.warning("Regex pattern too long (%d chars, max %d), denied", len(pattern), _MAX_REGEX_LEN)
+        logger.warning(
+            "Regex pattern too long (%d chars, max %d), denied",
+            len(pattern),
+            _MAX_REGEX_LEN,
+        )
         return False
     try:
         return bool(re.search(pattern, str(actual)))
