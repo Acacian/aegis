@@ -3162,10 +3162,14 @@ footer code {
   .code-panel { padding: 12px 14px; }
   .code-panel code { font-size: 0.72rem; }
 
-  /* Audit export dropdown positions correctly */
+  /* Audit export dropdown: constrained on narrow screens */
   .export-menu {
     right: 0;
     left: auto;
+    max-width: calc(100vw - 24px);
+    max-height: 60vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   /* Share modal fits screen */
