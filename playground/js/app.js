@@ -1501,6 +1501,14 @@ function lintPolicyWarnings(yaml) {
     warnings.push(`Rule at line ${ruleLine + 1} has no match pattern`);
   }
 
+  // Catch-all rule with type: "*" and auto/approve (shadows later rules)
+  if (/type:\s*["']?\*["']?\s*$/m.test(yaml) && /target:\s*["']?\*["']?\s*$/m.test(yaml)) {
+    const catchAllApproval = yaml.match(/type:\s*["']?\*["']?[\s\S]*?approval:\s*(\w+)/);
+    if (catchAllApproval && catchAllApproval[1] === "auto") {
+      warnings.push("Catch-all rule (type: *, target: *) with auto-approve — later rules are shadowed");
+    }
+  }
+
   // All rules auto-approve — policy provides no guardrails
   const approvals = yaml.match(/approval:\s*(\w+)/g) || [];
   if (approvals.length > 1 && approvals.every((a) => /auto/.test(a))) {
