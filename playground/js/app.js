@@ -540,6 +540,23 @@ function bindEvents() {
     }
   });
 
+  // Quickstart code tabs
+  document.querySelectorAll(".code-tab").forEach((tab) => {
+    tab.addEventListener("click", () => {
+      document.querySelector(".code-tab.active")?.classList.remove("active");
+      document.querySelector(".code-panel.active")?.classList.remove("active");
+      tab.classList.add("active");
+      document.querySelector(`.code-panel[data-panel="${tab.dataset.tab}"]`)?.classList.add("active");
+    });
+  });
+  const codeCopyBtn = document.querySelector(".code-copy-btn");
+  if (codeCopyBtn) {
+    codeCopyBtn.addEventListener("click", (e) => {
+      const active = document.querySelector(".code-panel.active code");
+      if (active) copyToClipboard(active.textContent, e.target);
+    });
+  }
+
   // Build shortcut help overlay
   buildShortcutOverlay();
 

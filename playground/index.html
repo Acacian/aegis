@@ -356,6 +356,31 @@ result = await runtime.run_one(Action("delete", "crm", params={"id": "all"}))
         <p>Aegis evaluates risk in &lt;1ms: auto-approve, require human approval, or block. Every decision is audit-logged.</p>
       </div>
     </div>
+
+    <!-- Quick-start code snippet -->
+    <div class="quickstart-code">
+      <div class="code-tabs">
+        <button class="code-tab active" data-tab="install">Install</button>
+        <button class="code-tab" data-tab="policy">Policy</button>
+        <button class="code-tab" data-tab="integrate">Integrate</button>
+      </div>
+      <div class="code-panel active" data-panel="install"><pre><code><span class="c">$ </span>pip install agent-aegis</code></pre></div>
+      <div class="code-panel" data-panel="policy"><pre><code><span class="k">version</span>: <span class="s">"1"</span>
+<span class="k">rules</span>:
+  - <span class="k">name</span>: <span class="s">read_auto</span>
+    <span class="k">approval</span>: <span class="g">auto</span>
+  - <span class="k">name</span>: <span class="s">write_review</span>
+    <span class="k">approval</span>: <span class="y">approve</span>
+  - <span class="k">name</span>: <span class="s">delete_block</span>
+    <span class="k">approval</span>: <span class="r">block</span></code></pre></div>
+      <div class="code-panel" data-panel="integrate"><pre><code><span class="k">from</span> aegis <span class="k">import</span> Policy, Runtime
+
+policy = Policy.from_yaml(<span class="s">"policy.yaml"</span>)
+<span class="k">async with</span> Runtime(executor, policy) <span class="k">as</span> rt:
+    result = <span class="k">await</span> rt.run_one(action)
+    <span class="c"># result.is_allowed → True/False</span></code></pre></div>
+      <button class="code-copy-btn" title="Copy code">Copy</button>
+    </div>
   </section>
 
   <!-- Use Cases Section -->
