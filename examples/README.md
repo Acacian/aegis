@@ -14,6 +14,10 @@ These examples run with just `pip install agent-aegis`:
 | [`conditions_demo.py`](conditions_demo.py) | Time-based, weekday, and param conditions | Conditional rule matching in action |
 | [`salesforce_demo.py`](salesforce_demo.py) | Real-world CRM governance scenario | Full Salesforce workflow with policy gates |
 | [`mcp_demo.py`](mcp_demo.py) | MCP tool call governance with per-server policies | MCP server-aware policy evaluation |
+| [`multi_agent_demo.py`](multi_agent_demo.py) | Org → team → agent policy hierarchy | Conflict detection + most-restrictive-wins |
+| [`compliance_demo.py`](compliance_demo.py) | SOC2/GDPR/HIPAA audit trail evidence | Full audit export for compliance review |
+| [`saas_ops_demo.py`](saas_ops_demo.py) | AI support agent handling customer tickets | Tiered access: view=auto, refund=approve, delete=block |
+| [`terminal_demo.py`](terminal_demo.py) | Colorized terminal demo for GIF recording | Terminal-friendly visual flow |
 
 ## Framework Integrations
 
