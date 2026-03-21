@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://acacian.github.io/aegis/sitemap.xml
