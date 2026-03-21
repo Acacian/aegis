@@ -313,11 +313,38 @@ function renderResult(r) {
     </div>
   `;
 
+  // Add risk-specific border color
+  if (!isAllowed) {
+    card.style.borderColor = "var(--risk-" + riskClass + ")";
+  }
+
   // Prepend (latest first)
   const empty = $result.querySelector(".empty-state");
   if (empty) empty.remove();
   $result.prepend(card);
+
+  // Shield particles on block (CSS-only, no sound)
+  if (r.approval === "block") {
+    spawnBlockParticles(card);
+  }
 }
+
+/* ---- Block Particles (visual feedback for blocked actions) ---- */
+function spawnBlockParticles(card) {
+  const symbols = ["\u{1F6E1}", "\u{1F6AB}", "\u{26D4}", "\u{2716}"];
+  const rect = card.getBoundingClientRect();
+
+  for (let i = 0; i < 8; i++) {
+    const p = document.createElement("div");
+    p.className = "block-particle";
+    p.textContent = symbols[i % symbols.length];
+    p.style.left = rect.left + Math.random() * rect.width + "px";
+    p.style.top = rect.top + "px";
+    p.style.setProperty("--dx", (Math.random() - 0.5) * 120 + "px");
+    p.style.setProperty("--dy", -(40 + Math.random() * 80) + "px");
+    document.body.appendChild(p);
+    p.addEventListener("animationend", () => p.remove());
+  }
 
 /* ---- Audit Log ---- */
 function addAuditEntry(r) {

@@ -717,6 +717,26 @@ footer code {
   font-size: 0.85rem;
 }
 
+/* ---- Block Particles ---- */
+.block-particle {
+  position: fixed;
+  font-size: 1.2rem;
+  pointer-events: none;
+  z-index: 1000;
+  animation: particleFly 0.8s ease-out forwards;
+}
+
+@keyframes particleFly {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy)) scale(0.4);
+  }
+}
+
 /* ---- Error toast ---- */
 .toast {
   position: fixed;
