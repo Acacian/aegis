@@ -2156,11 +2156,9 @@ evaluate_action(
     updateStats(result);
 
     // Defer non-critical audit log updates to idle time
+    // (addAuditEntry already calls updateAuditChart internally)
     const deferFn = window.requestIdleCallback || ((cb) => setTimeout(cb, 16));
-    deferFn(() => {
-      addAuditEntry(result);
-      updateAuditChart();
-    });
+    deferFn(() => addAuditEntry(result));
   } catch (err) {
     showToast(`Evaluation error: ${err.message}`);
     console.error(err);
@@ -2275,12 +2273,9 @@ function renderResult(r) {
   if (empty) empty.remove();
   $result.prepend(card);
 
-  // Remove oldest cards beyond limit
-  const cards = $result.querySelectorAll(".result-card");
-  if (cards.length > MAX_RESULT_CARDS) {
-    for (let i = MAX_RESULT_CARDS; i < cards.length; i++) {
-      cards[i].remove();
-    }
+  // Remove oldest cards beyond limit (lastElementChild avoids querySelectorAll)
+  while ($result.children.length > MAX_RESULT_CARDS) {
+    $result.lastElementChild.remove();
   }
 
   // Decision-specific visual feedback
