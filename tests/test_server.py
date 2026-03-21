@@ -194,10 +194,7 @@ def test_audit_after_execute(client) -> None:
 
 
 def test_create_app_from_yaml(tmp_path: Path) -> None:
-    try:
-        from aegis.server.app import create_app
-    except ImportError:
-        pytest.skip("starlette not installed")
+    from aegis.server.app import create_app
 
     policy_file = tmp_path / "policy.yaml"
     policy_file.write_text("""
@@ -212,5 +209,8 @@ rules:
     risk_level: critical
     approval: block
 """)
-    app = create_app(policy_path=policy_file)
+    try:
+        app = create_app(policy_path=policy_file)
+    except ImportError:
+        pytest.skip("starlette not installed")
     assert app is not None

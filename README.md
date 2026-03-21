@@ -148,12 +148,15 @@ aegis audit
 | **YAML policies** | Glob matching, first-match-wins, JSON Schema for validation |
 | **Smart conditions** | `time_after`, `time_before`, `weekdays`, `param_gt/lt/eq/contains/matches` |
 | **4-tier risk model** | `low` / `medium` / `high` / `critical` with per-rule overrides |
-| **Approval gates** | CLI prompt, callback functions, or build your own (Slack, Discord, etc.) |
-| **Audit trail** | SQLite (default), JSONL export, or Python `logging` backend |
-| **Context manager** | `async with Runtime(...) as rt:` — auto setup/teardown |
-| **Single-action mode** | `await runtime.run_one(action)` for simple cases |
-| **JSON Schema** | `aegis schema` — auto-complete in VS Code / JetBrains |
-| **Policy generator** | `aegis init` — starter policy in seconds |
+| **Approval gates** | CLI, callback, webhook (Slack/Discord/PagerDuty), or custom |
+| **Audit trail** | SQLite, JSONL export, Python `logging`, or webhook to external SIEM |
+| **REST API server** | `aegis serve policy.yaml` — govern from any language via HTTP |
+| **MCP adapter** | Govern Model Context Protocol tool calls |
+| **Retry & rollback** | Exponential backoff, error filters, automatic rollback on failure |
+| **Dry-run & simulate** | Test policies without executing: `aegis simulate policy.yaml read:crm` |
+| **Hot-reload** | `runtime.update_policy(...)` — swap policies without restart |
+| **Policy merge** | `Policy.from_yaml_files("base.yaml", "prod.yaml")` — layer configs |
+| **Runtime hooks** | Async callbacks for `on_decision`, `on_approval`, `on_execute` |
 | **Type-safe** | Full `mypy --strict` compliance, `py.typed` marker |
 
 ## Integrations
@@ -164,8 +167,9 @@ Works with the agent frameworks you already use:
 pip install 'agent-aegis[langchain]'      # LangChain
 pip install 'agent-aegis[crewai]'         # CrewAI
 pip install 'agent-aegis[openai-agents]'  # OpenAI Agents SDK
-pip install 'agent-aegis[httpx]'          # REST APIs
+pip install 'agent-aegis[httpx]'          # Webhook approval/audit
 pip install 'agent-aegis[playwright]'     # Browser automation
+pip install 'agent-aegis[server]'         # REST API server
 pip install 'agent-aegis[all]'            # Everything
 ```
 
@@ -240,6 +244,56 @@ plan = runtime.plan([Action("get", "/users"), Action("delete", "/users/1")])
 </details>
 
 <details>
+<summary><b>MCP (Model Context Protocol)</b> — govern any MCP tool call</summary>
+
+```python
+from aegis.adapters.mcp import govern_mcp_tool_call, AegisMCPToolFilter
+
+# Option 1: Govern individual tool calls
+result = await govern_mcp_tool_call(
+    runtime=runtime, tool_name="read_file",
+    arguments={"path": "/data.csv"}, server_name="filesystem")
+
+# Option 2: Filter-based governance
+tool_filter = AegisMCPToolFilter(runtime=runtime)
+result = await tool_filter.check(server="filesystem", tool="delete_file")
+if result.ok:
+    # Proceed with actual MCP call
+    pass
+```
+</details>
+
+<details>
+<summary><b>REST API</b> — govern from any language</summary>
+
+```bash
+pip install 'agent-aegis[server]'
+aegis serve policy.yaml --port 8000
+```
+
+```bash
+# Evaluate an action (dry-run)
+curl -X POST http://localhost:8000/api/v1/evaluate \
+    -H "Content-Type: application/json" \
+    -d '{"action_type": "delete", "target": "db"}'
+# => {"risk_level": "CRITICAL", "approval": "block", "is_allowed": false}
+
+# Execute through full governance pipeline
+curl -X POST http://localhost:8000/api/v1/execute \
+    -H "Content-Type: application/json" \
+    -d '{"action_type": "read", "target": "crm"}'
+
+# Query audit log
+curl http://localhost:8000/api/v1/audit?action_type=delete
+
+# Hot-reload policy
+curl -X PUT http://localhost:8000/api/v1/policy \
+    -H "Content-Type: application/json" \
+    -d '{"yaml": "rules:\n  - name: block_all\n    match: {type: \"*\"}\n    approval: block"}'
+```
+</details>
+
+<details>
 <summary><b>Custom adapters</b> — 10 lines to integrate anything</summary>
 
 ```python
@@ -294,10 +348,11 @@ Available: `time_after`, `time_before`, `weekdays`, `param_eq`, `param_gt`, `par
 
 ```
 aegis/
-  core/        Action, Policy engine, Conditions, Risk levels, JSON Schema
-  adapters/    BaseExecutor, Playwright, httpx, LangChain, CrewAI, OpenAI, Anthropic
-  runtime/     Runtime engine, ApprovalHandler, AuditLogger (SQLite/JSONL/logging)
-  cli/         aegis validate | audit | schema | init
+  core/        Action, Policy engine, Conditions, Risk levels, Retry, JSON Schema
+  adapters/    BaseExecutor, Playwright, httpx, LangChain, CrewAI, OpenAI, Anthropic, MCP
+  runtime/     Runtime engine, ApprovalHandler, AuditLogger (SQLite/JSONL/webhook/logging)
+  server/      REST API (Starlette ASGI) — evaluate, execute, audit, policy endpoints
+  cli/         aegis validate | audit | schema | init | simulate | serve
 ```
 
 ```
@@ -353,19 +408,21 @@ aegis/
 aegis init                              # Generate starter policy
 aegis validate policy.yaml              # Validate policy syntax
 aegis schema                            # Print JSON Schema (for editor autocomplete)
+aegis simulate policy.yaml read:crm delete:db  # Test policies without executing
 aegis audit                             # View audit log
 aegis audit --session abc --format json # Filter + format
 aegis audit --format jsonl -o export.jsonl  # Export
+aegis serve policy.yaml --port 8000     # Start REST API server
 ```
 
 ## Roadmap
 
 | Version | Status | Features |
 |---------|--------|----------|
-| **0.1** | **Released** | Policy engine, 6 adapters, CLI, audit (SQLite + JSONL), conditions, JSON Schema |
-| **0.2** | Planned | Dashboard UI, Slack/Discord approval, policy inheritance, hot-reload |
-| **0.3** | Planned | MCP server adapter, rollback support, webhook notifications |
-| **0.4** | Planned | Multi-tenant policies, team approvals, cloud audit storage |
+| **0.1** | **Released** | Policy engine, 7 adapters (incl. MCP), CLI, audit (SQLite + JSONL + webhook), conditions, JSON Schema |
+| **0.1.3** | **Released** | REST API server, retry/rollback, dry-run, hot-reload, policy merge, webhook approval/audit, simulate CLI, runtime hooks |
+| **0.2** | Planned | Dashboard UI, rate limiting, queue-based async execution |
+| **0.3** | Planned | Multi-tenant policies, team approvals, cloud audit storage |
 
 ## Contributing
 

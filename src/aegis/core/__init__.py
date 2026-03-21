@@ -9,6 +9,7 @@ from aegis.core.action import Action
 from aegis.core.plan import ExecutionPlan
 from aegis.core.policy import Approval, Policy, PolicyDecision, PolicyRule
 from aegis.core.result import Result, ResultStatus
+from aegis.core.retry import RetryPolicy
 from aegis.core.risk import RiskLevel
 
 __all__ = [
@@ -20,5 +21,6 @@ __all__ = [
     "PolicyRule",
     "Result",
     "ResultStatus",
+    "RetryPolicy",
     "RiskLevel",
 ]
