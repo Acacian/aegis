@@ -925,11 +925,22 @@ kbd {
 
 .result-card.result-allowed {
   border-left: 3px solid var(--risk-low);
+  animation: slideInGreen 0.25s ease;
+}
+
+@keyframes slideInGreen {
+  from { opacity: 0; transform: translateX(8px); border-left-color: transparent; }
+  to { opacity: 1; transform: translateX(0); }
 }
 
 .result-card.result-blocked {
   border-left: 3px solid var(--risk-high);
-  animation: slideIn 0.2s ease, pulseRed 0.5s ease;
+  animation: slideInRed 0.25s ease, pulseRed 0.5s ease;
+}
+
+@keyframes slideInRed {
+  from { opacity: 0; transform: translateX(-8px); border-left-color: transparent; }
+  to { opacity: 1; transform: translateX(0); }
 }
 
 @keyframes pulseRed {
