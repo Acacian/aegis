@@ -1,0 +1,71 @@
+# Research Agent Governance Policy
+# Use case: AI agents performing web research, document analysis, citation
+#
+# pip install agent-aegis
+# policy = Policy.from_yaml("policies/research-agent.yaml")
+
+version: "1"
+defaults:
+  risk_level: medium
+  approval: approve
+
+rules:
+  # Web search is safe
+  - name: search_auto
+    match: { type: "search" }
+    risk_level: low
+    approval: auto
+
+  # Reading documents is safe
+  - name: read_auto
+    match: { type: "read*" }
+    risk_level: low
+    approval: auto
+
+  # Fetching URLs is safe
+  - name: fetch_auto
+    match: { type: "fetch" }
+    risk_level: low
+    approval: auto
+
+  # Summarizing is safe
+  - name: summarize_auto
+    match: { type: "summarize" }
+    risk_level: low
+    approval: auto
+
+  # Creating notes/drafts is safe
+  - name: draft_auto
+    match: { type: "draft" }
+    risk_level: low
+    approval: auto
+
+  # Saving to knowledge base needs review
+  - name: save_approve
+    match: { type: "save" }
+    risk_level: medium
+    approval: approve
+
+  # Sending/publishing needs review
+  - name: send_approve
+    match: { type: "send" }
+    risk_level: medium
+    approval: approve
+
+  # Publishing externally is high risk
+  - name: publish_high
+    match: { type: "publish" }
+    risk_level: high
+    approval: approve
+
+  # Downloading large files needs review
+  - name: download_approve
+    match: { type: "download" }
+    risk_level: medium
+    approval: approve
+
+  # Deleting research data is blocked
+  - name: delete_block
+    match: { type: "delete" }
+    risk_level: critical
+    approval: block

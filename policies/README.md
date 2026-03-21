@@ -13,6 +13,7 @@ Ready-to-use governance policies for common AI agent use cases. Copy one and cus
 | [healthcare-agent.yaml](healthcare-agent.yaml) | Healthcare, EHR, patient data (HIPAA) | Search=auto, PHI=approve, Delete=block |
 | [ecommerce-agent.yaml](ecommerce-agent.yaml) | Online stores, orders, inventory | View=auto, Refund=approve, Delete=block |
 | [support-agent.yaml](support-agent.yaml) | Customer support, tickets, escalation | Read=auto, Respond=approve, Delete=block |
+| [research-agent.yaml](research-agent.yaml) | Web research, document analysis | Search=auto, Publish=approve, Delete=block |
 
 ## Usage
 
