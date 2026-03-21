@@ -1193,6 +1193,12 @@ function bindEvents() {
     copyToClipboard("pip install agent-aegis", e.target.closest("button"));
   });
 
+  const copyDockerBtn = document.getElementById("copy-docker");
+  if (copyDockerBtn) copyDockerBtn.addEventListener("click", (e) => {
+    copyToClipboard("docker run --rm -p 8000:8000 ghcr.io/acacian/aegis:latest", e.target);
+    showToast("Docker command copied");
+  });
+
   document.getElementById("share-policy").addEventListener("click", () => {
     openShareModal();
   });

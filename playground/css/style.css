@@ -373,6 +373,16 @@ header {
   color: var(--accent);
 }
 
+.docker-btn {
+  border-color: rgba(38, 128, 235, 0.4);
+  color: #2680eb;
+}
+.docker-btn:hover {
+  border-color: #2680eb;
+  color: #2680eb;
+  background: rgba(38, 128, 235, 0.08);
+}
+
 .header-right {
   display: flex;
   gap: 12px;
