@@ -93,6 +93,7 @@ nav:
       - MCP Governance: cookbook/mcp-governance.md
       - httpx REST API: cookbook/httpx-governance.md
       - Playwright Browser: cookbook/playwright-governance.md
+      - CI/CD Integration: cookbook/ci-governance.md
   - Cheatsheet: cheatsheet.md
   - Examples: https://github.com/Acacian/aegis/tree/main/examples
   - FAQ: faq.md
