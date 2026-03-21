@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="ltr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -101,7 +101,7 @@
         GitHub
       </a>
       <a href="https://pypi.org/project/agent-aegis/" class="pypi-link" target="_blank" rel="noopener">PyPI</a>
-      <button id="theme-toggle" class="theme-toggle" title="Toggle light/dark theme">
+      <button id="theme-toggle" class="theme-toggle" title="Toggle light/dark theme" aria-label="Toggle theme">
         <span class="theme-icon-dark">&#x1F319;</span>
         <span class="theme-icon-light">&#x2600;&#xFE0F;</span>
       </button>
@@ -295,7 +295,7 @@ result = await runtime.run_one(Action("delete", "crm", params={"id": "all"}))
           <h2>Evaluation Result</h2>
           <button id="clear-result" class="clear-btn">Clear</button>
         </div>
-        <div id="result-content" class="result-content">
+        <div id="result-content" class="result-content" role="log" aria-live="polite">
           <div class="empty-state">Click an action above to see the policy evaluation result</div>
         </div>
       </div>
@@ -308,7 +308,7 @@ result = await runtime.run_one(Action("delete", "crm", params={"id": "all"}))
           <button id="export-audit" class="clear-btn">Export JSON</button>
           <button id="clear-audit" class="clear-btn">Clear</button>
         </div>
-        <div id="audit-content" class="audit-content">
+        <div id="audit-content" class="audit-content" role="log" aria-live="polite">
           <div class="empty-state">Audit entries will appear here as you evaluate actions</div>
         </div>
       </div>
