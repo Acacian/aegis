@@ -28,7 +28,6 @@ from aegis.adapters.mcp import AegisMCPToolFilter, govern_mcp_tool_call
 from aegis.runtime.approval import AutoApprovalHandler
 from aegis.runtime.audit import AuditLogger
 
-
 # ---------------------------------------------------------------------------
 # Mock executor — Aegis governs the decision; actual MCP dispatch is yours
 # ---------------------------------------------------------------------------
@@ -162,7 +161,7 @@ async def demo_tool_filter(runtime: Runtime) -> None:
         allowed = "ALLOWED" if result.ok else "DENIED"
         print(f"    {tool:>16} @ {server:<12}  ->  {allowed}")
         if result.data and result.data.get("approval_required"):
-            print(f"                     (would require human approval)")
+            print("                     (would require human approval)")
 
     print()
 
