@@ -443,7 +443,8 @@ function setupPolicySave() {
   editor.on("change", () => {
     clearTimeout(saveTimer);
     saveTimer = setTimeout(() => {
-      localStorage.setItem("aegis-last-policy", editor.getValue());
+      try { localStorage.setItem("aegis-last-policy", editor.getValue()); }
+      catch { /* QuotaExceededError — silently skip save */ }
     }, 1000);
     updateRuleCount();
   });
@@ -715,7 +716,7 @@ function toggleTheme() {
   const current = document.documentElement.getAttribute("data-theme") || "dark";
   const idx = THEMES.indexOf(current);
   const next = THEMES[(idx + 1) % THEMES.length];
-  localStorage.setItem("aegis-theme", next);
+  try { localStorage.setItem("aegis-theme", next); } catch { /* quota */ }
 
   // Flash overlay for smooth perceived transition
   const flash = document.createElement("div");
