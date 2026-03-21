@@ -728,6 +728,23 @@ main {
 .action-btn.risk-high:hover { border-color: var(--risk-high); background: var(--risk-high-bg); }
 .action-btn.risk-critical:hover { border-color: var(--risk-critical); background: var(--risk-critical-bg); }
 
+.action-btn { position: relative; overflow: hidden; }
+
+.btn-ripple {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  transform: translate(-50%, -50%) scale(0);
+  animation: rippleExpand 0.5s ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes rippleExpand {
+  to { transform: translate(-50%, -50%) scale(30); opacity: 0; }
+}
+
 .action-btn.action-running {
   border-color: var(--accent);
   box-shadow: 0 0 0 2px rgba(88, 166, 255, 0.3);

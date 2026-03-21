@@ -1407,7 +1407,17 @@ function updateActionButtons(preset) {
     btn.className = `action-btn ${RISK_CLASSES[risk]}`;
     btn.dataset.action = JSON.stringify(a);
     btn.innerHTML = `<span class="action-icon">${icon}</span><span class="action-label">${a.description}</span><span class="action-risk">${risk.toUpperCase()}</span>`;
-    btn.addEventListener("click", () => evaluateAction(a));
+    btn.addEventListener("click", (ev) => {
+      // Ripple effect
+      const rect = btn.getBoundingClientRect();
+      const ripple = document.createElement("span");
+      ripple.className = "btn-ripple";
+      ripple.style.left = ev.clientX - rect.left + "px";
+      ripple.style.top = ev.clientY - rect.top + "px";
+      btn.appendChild(ripple);
+      ripple.addEventListener("animationend", () => ripple.remove());
+      evaluateAction(a);
+    });
     container.appendChild(btn);
   });
 }
