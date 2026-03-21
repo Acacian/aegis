@@ -75,6 +75,8 @@ def main(argv: list[str] | None = None) -> None:
     audit_parser = subparsers.add_parser("audit", help="View the audit log")
     audit_parser.add_argument("--db", default="aegis_audit.db", help="Database path")
     audit_parser.add_argument("--session", help="Filter by session ID")
+    audit_parser.add_argument("--action-type", help="Filter by action type")
+    audit_parser.add_argument("--risk-level", help="Filter by risk level")
     audit_parser.add_argument(
         "--format",
         choices=["table", "json", "jsonl"],
@@ -94,6 +96,24 @@ def main(argv: list[str] | None = None) -> None:
     init_parser = subparsers.add_parser("init", help="Generate a starter policy file")
     init_parser.add_argument("--output", "-o", default="policy.yaml", help="Output file path")
 
+    # aegis simulate
+    sim_parser = subparsers.add_parser(
+        "simulate",
+        help="Test actions against a policy without executing",
+    )
+    sim_parser.add_argument("policy_file", help="Path to policy YAML file")
+    sim_parser.add_argument(
+        "actions",
+        nargs="+",
+        help="Actions as type:target (e.g. read:crm delete:db)",
+    )
+    sim_parser.add_argument(
+        "--format",
+        choices=["table", "json"],
+        default="table",
+        dest="fmt",
+    )
+
     args = parser.parse_args(argv)
 
     if args.version:
@@ -110,6 +130,8 @@ def main(argv: list[str] | None = None) -> None:
         _cmd_schema()
     elif args.command == "init":
         _cmd_init(args)
+    elif args.command == "simulate":
+        _cmd_simulate(args)
     else:
         parser.print_help()
 
@@ -125,7 +147,11 @@ def _cmd_audit(args: argparse.Namespace) -> None:
         print(f"Exported {count} entries to {output}")
         return
 
-    entries = logger.get_log(session_id=args.session)
+    entries = logger.get_log(
+        session_id=args.session,
+        action_type=getattr(args, "action_type", None),
+        risk_level=getattr(args, "risk_level", None),
+    )
     logger.close()
 
     if not entries:
@@ -193,6 +219,62 @@ def _cmd_init(args: argparse.Namespace) -> None:
     print(f"Created {output}")
     print("Edit the rules to match your agent's actions, then:")
     print(f"  aegis validate {output}")
+
+
+def _cmd_simulate(args: argparse.Namespace) -> None:
+    """Test actions against a policy without executing."""
+    from aegis.core.action import Action
+    from aegis.core.plan import ExecutionPlan
+    from aegis.core.policy import Policy
+
+    try:
+        policy = Policy.from_yaml(args.policy_file)
+    except Exception as e:
+        print(f"Failed to load policy: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    actions: list[Action] = []
+    for spec in args.actions:
+        parts = spec.split(":", 1)
+        if len(parts) == 2:
+            actions.append(Action(parts[0], parts[1]))
+        else:
+            actions.append(Action(parts[0], "*"))
+
+    decisions = [policy.evaluate(a) for a in actions]
+    plan = ExecutionPlan(decisions=decisions)
+
+    if args.fmt == "json":
+        print(json.dumps(plan.to_dict(), indent=2))
+        return
+
+    # Table format
+    _icons = {"auto": "AUTO", "approve": "APPROVE", "block": "BLOCK"}
+    print(f"Policy: {args.policy_file} ({len(policy.rules)} rules)")
+    print(f"Actions: {len(actions)}\n")
+
+    blocked = 0
+    approval_needed = 0
+
+    for i, d in enumerate(plan.decisions, 1):
+        icon = _icons.get(d.approval.value, "?")
+        status = "ALLOWED" if d.is_allowed else "BLOCKED"
+        if not d.is_allowed:
+            blocked += 1
+        elif d.approval.value == "approve":
+            approval_needed += 1
+
+        print(
+            f"  {i}. {d.action.type}:{d.action.target}"
+            f"  [{icon}]  risk={d.risk_level.name}"
+            f"  rule={d.matched_rule}  -> {status}"
+        )
+
+    print()
+    total = len(plan.decisions)
+    auto = total - blocked - approval_needed
+    print(f"Summary: {total} actions")
+    print(f"  {auto} auto-execute, {approval_needed} need approval, {blocked} blocked")
 
 
 if __name__ == "__main__":
