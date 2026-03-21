@@ -2474,6 +2474,21 @@ footer code {
     border-radius: 0;
   }
 
+  /* Scrollable code tabs on mobile */
+  .code-tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .code-tabs::-webkit-scrollbar { display: none; }
+  .code-tab {
+    flex-shrink: 0;
+    padding: 8px 12px;
+    font-size: 0.75rem;
+  }
+  .code-panel { padding: 12px 14px; }
+  .code-panel code { font-size: 0.72rem; }
+
   /* Audit export dropdown positions correctly */
   .export-menu {
     right: 0;
