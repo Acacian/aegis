@@ -276,6 +276,20 @@ function initLazyReveal() {
     { threshold: 0.1, rootMargin: "0px 0px -40px 0px" }
   );
   sections.forEach((s) => observer.observe(s));
+
+  // Trigger arch-flow stagger animation on scroll
+  const archFlow = document.querySelector(".arch-flow");
+  if (archFlow) {
+    const archObs = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (e.isIntersecting) {
+          e.target.classList.add("animate-flow");
+          archObs.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.3 });
+    archObs.observe(archFlow);
+  }
 }
 
 /* ---- CodeMirror Setup ---- */
