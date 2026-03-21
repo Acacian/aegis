@@ -480,11 +480,16 @@ function applyTheme(theme) {
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta && THEME_META[theme]) meta.content = THEME_META[theme].color;
 
-  // Update toggle button label
+  // Update toggle button label and show correct icon
   const btn = document.getElementById("theme-toggle");
   if (btn && THEME_META[theme]) {
     btn.setAttribute("aria-label", `Current: ${THEME_META[theme].label}. Click to switch.`);
     btn.title = `Theme: ${THEME_META[theme].label}`;
+    // Show only the active theme icon
+    btn.querySelectorAll("[class^='theme-icon-']").forEach((el) => el.style.display = "none");
+    const iconClass = theme === "high-contrast" ? "theme-icon-hc" : `theme-icon-${theme}`;
+    const activeIcon = btn.querySelector(`.${iconClass}`);
+    if (activeIcon) activeIcon.style.display = "";
   }
 }
 
@@ -506,6 +511,7 @@ function toggleTheme() {
   const next = THEMES[(idx + 1) % THEMES.length];
   localStorage.setItem("aegis-theme", next);
   applyTheme(next);
+  showToast(`${THEME_META[next]?.icon || ""} Theme: ${THEME_META[next]?.label || next}`);
 }
 
 /* ---- Event Binding ---- */
