@@ -2644,6 +2644,11 @@ async function copyToClipboard(text, btn) {
 
 const _escDiv = document.createElement("div");
 /* ---- Code Generation for Copy Buttons ---- */
+function _safeStr(s) {
+  // Escape backslashes and quotes for safe embedding in string literals
+  return String(s || "").replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/'/g, "\\'");
+}
+
 function generateCode(fmt, r) {
   const params = JSON.stringify(r.params || {});
   if (fmt === "python") {
@@ -2652,7 +2657,7 @@ function generateCode(fmt, r) {
 policy = Policy.from_yaml("policy.yaml")
 async with Runtime(executor=your_executor, policy=policy) as rt:
     result = await rt.run_one(
-        Action("${r.action_type}", "${r.target}", params=${params})
+        Action("${_safeStr(r.action_type)}", "${_safeStr(r.target)}", params=${params})
     )
     # Expected: ${r.is_allowed ? "ALLOWED" : "BLOCKED"} (${r.risk_level}, ${r.approval})`;
   }
