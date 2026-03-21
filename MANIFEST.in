@@ -1,0 +1,3 @@
+include README.md README.ko.md LICENSE SECURITY.md CHANGELOG.md
+include policy.example.yaml policy.schema.json
+recursive-include src/aegis py.typed

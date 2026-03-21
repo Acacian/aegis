@@ -8,3 +8,15 @@ Main entry point::
     from aegis.runtime.audit import AuditLogger
     from aegis.runtime.audit_logging import LoggingAuditLogger
 """
+
+from aegis.runtime.approval import ApprovalHandler, AutoApprovalHandler, CLIApprovalHandler
+from aegis.runtime.audit import AuditLogger
+from aegis.runtime.engine import Runtime
+
+__all__ = [
+    "ApprovalHandler",
+    "AuditLogger",
+    "AutoApprovalHandler",
+    "CLIApprovalHandler",
+    "Runtime",
+]
