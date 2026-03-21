@@ -2190,6 +2190,20 @@ footer code {
 }
 
 /* ---- Responsive ---- */
+
+/* Phone landscape: compact header, side-by-side panels */
+@media (max-height: 500px) and (orientation: landscape) {
+  header { padding: 4px 12px; gap: 4px; }
+  .social-proof { display: none; }
+  .stats-bar { padding: 4px 12px; gap: 8px; }
+  .stat-value { font-size: 0.9rem; }
+  main { padding: 8px; }
+  .top-section, .bottom-section { grid-template-columns: 1fr 1fr; }
+  .panel-header h2 { font-size: 0.85rem; }
+  .how-it-works, .usecases-section, .comparison-section, .cta-section { padding: 16px 12px; }
+  .mobile-fab { bottom: 8px; right: 8px; width: 36px; height: 36px; font-size: 1rem; }
+}
+
 @media (max-width: 1024px) {
   .top-section, .bottom-section {
     grid-template-columns: 1fr;
