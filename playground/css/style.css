@@ -2442,6 +2442,17 @@ footer code {
   gap: 10px;
 }
 
+.shortcut-group {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+  padding-top: 4px;
+  border-top: 1px solid var(--border);
+}
+.shortcut-group:first-child { border-top: none; padding-top: 0; }
+
 .shortcut-row {
   display: flex;
   justify-content: space-between;
