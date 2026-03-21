@@ -1,0 +1,99 @@
+# E-Commerce Agent Governance Policy
+# Use case: AI agents managing online stores, orders, inventory, customer service
+#
+# pip install agent-aegis
+# policy = Policy.from_yaml("policies/ecommerce-agent.yaml")
+
+version: "1"
+defaults:
+  risk_level: medium
+  approval: approve
+
+rules:
+  # Browsing products and orders is safe
+  - name: view_auto
+    match: { type: "view_*" }
+    risk_level: low
+    approval: auto
+
+  # Searching is safe
+  - name: search_auto
+    match: { type: "search" }
+    risk_level: low
+    approval: auto
+
+  # Checking inventory is safe
+  - name: inventory_check_auto
+    match: { type: "check_inventory" }
+    risk_level: low
+    approval: auto
+
+  # Responding to customer inquiries
+  - name: respond_approve
+    match: { type: "respond" }
+    risk_level: medium
+    approval: approve
+
+  # Updating order status
+  - name: update_order_approve
+    match: { type: "update_order" }
+    risk_level: medium
+    approval: approve
+
+  # Processing returns
+  - name: process_return_approve
+    match: { type: "process_return" }
+    risk_level: medium
+    approval: approve
+
+  # Small refunds auto-approve
+  - name: refund_small
+    match: { type: "refund" }
+    conditions:
+      param_lte: { amount: 25 }
+    risk_level: medium
+    approval: auto
+
+  # Large refunds need approval
+  - name: refund_large
+    match: { type: "refund" }
+    conditions:
+      param_gt: { amount: 25 }
+    risk_level: high
+    approval: approve
+
+  # Price changes are high risk
+  - name: change_price_high
+    match: { type: "change_price" }
+    risk_level: high
+    approval: approve
+
+  # Bulk inventory changes need approval
+  - name: bulk_inventory
+    match: { type: "bulk_*" }
+    risk_level: high
+    approval: approve
+
+  # Applying discount codes
+  - name: apply_discount
+    match: { type: "apply_discount" }
+    risk_level: medium
+    approval: approve
+
+  # Deleting products is blocked
+  - name: delete_product_block
+    match: { type: "delete_product" }
+    risk_level: critical
+    approval: block
+
+  # Canceling all orders is blocked
+  - name: cancel_all_block
+    match: { type: "cancel_all" }
+    risk_level: critical
+    approval: block
+
+  # Modifying payment settings is blocked
+  - name: payment_settings_block
+    match: { type: "modify_payment" }
+    risk_level: critical
+    approval: block
