@@ -66,6 +66,7 @@ nav:
       - Quick Start: getting-started/quickstart.md
       - Concepts: getting-started/concepts.md
   - Guides:
+      - Why Governance?: guides/why-governance.md
       - Writing Policies: guides/policies.md
       - Integrations: guides/integrations.md
       - MCP Governance: guides/mcp-governance.md
