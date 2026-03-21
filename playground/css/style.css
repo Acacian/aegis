@@ -602,6 +602,11 @@ a.integration-badge:active {
   color: #3fb950;
   border: 1px dashed rgba(63, 185, 80, 0.3);
 }
+[data-theme="light"] .step-time {
+  color: #1a7f37;
+  background: rgba(26, 127, 55, 0.08);
+  border-color: rgba(26, 127, 55, 0.25);
+}
 
 .step-arrow {
   font-size: 1.5rem;
