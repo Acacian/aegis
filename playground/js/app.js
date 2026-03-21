@@ -1526,6 +1526,16 @@ function lintPolicyWarnings(yaml) {
     warnings.push(`Rule at line ${ruleLine + 1} has no match pattern`);
   }
 
+  // Mixed indentation (2-space and 4-space within same file)
+  const indents = new Set();
+  for (const l of lines) {
+    const m = l.match(/^( +)\S/);
+    if (m) indents.add(m[1].length);
+  }
+  if (indents.has(2) && indents.has(4)) {
+    warnings.push("Mixed indentation detected (2 and 4 spaces) — use consistent 2-space indent");
+  }
+
   // Catch-all rule with type: "*" and auto/approve (shadows later rules)
   if (/type:\s*["']?\*["']?\s*$/m.test(yaml) && /target:\s*["']?\*["']?\s*$/m.test(yaml)) {
     const catchAllApproval = yaml.match(/type:\s*["']?\*["']?[\s\S]*?approval:\s*(\w+)/);
