@@ -392,6 +392,26 @@ main {
   border-color: var(--accent);
 }
 
+.preset-btn.industry {
+  border-style: dashed;
+}
+
+.preset-btn.industry.active {
+  border-style: solid;
+}
+
+.preset-divider {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  margin: 0 2px;
+  user-select: none;
+}
+
+.preset-buttons {
+  flex-wrap: wrap;
+  row-gap: 4px;
+}
+
 .editor-wrapper {
   height: 380px;
 }

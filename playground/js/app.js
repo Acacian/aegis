@@ -107,7 +107,9 @@ function bindEvents() {
     btn.addEventListener("click", () => {
       document.querySelector(".preset-btn.active")?.classList.remove("active");
       btn.classList.add("active");
-      editor.setValue(POLICY_PRESETS[btn.dataset.preset]);
+      const preset = btn.dataset.preset;
+      editor.setValue(POLICY_PRESETS[preset]);
+      updateActionButtons(preset);
     });
   });
 
@@ -323,6 +325,47 @@ function showEditorError(msg, line) {
     wrapper.parentNode.insertBefore(errorEl, wrapper.nextSibling);
   }
   errorEl.textContent = msg;
+}
+
+/* ---- Dynamic Action Buttons for Industry Presets ---- */
+const RISK_CLASSES = { low: "risk-low", medium: "risk-medium", high: "risk-high", critical: "risk-critical" };
+const RISK_ICONS = {
+  low: "&#x1F4D6;", medium: "&#x270F;&#xFE0F;", high: "&#x26A1;", critical: "&#x1F6A8;",
+  navigate: "&#x1F310;", read: "&#x1F4D6;", read_file: "&#x1F4C4;", search: "&#x1F50D;",
+  create: "&#x2795;", update: "&#x270F;&#xFE0F;", write: "&#x270F;&#xFE0F;", write_file: "&#x1F4DD;",
+  export: "&#x1F4E4;", delete: "&#x1F6A8;", merge: "&#x1F500;", shell: "&#x1F4BB;",
+  git_push: "&#x1F680;", deploy: "&#x1F6AB;", install: "&#x1F4E6;",
+  view: "&#x1F441;&#xFE0F;", report: "&#x1F4CA;", create_invoice: "&#x1F9FE;",
+  payment: "&#x1F4B3;", refund: "&#x1F4B8;", transfer: "&#x1F3E6;",
+  screenshot: "&#x1F4F7;", scroll: "&#x2195;&#xFE0F;", click: "&#x1F5B1;&#xFE0F;",
+  fill: "&#x1F4DD;", submit: "&#x1F4E8;", upload: "&#x1F4E4;", eval: "&#x26D4;", execute_js: "&#x26D4;",
+  select: "&#x1F50E;", insert: "&#x2795;", alter_table: "&#x1F527;", drop: "&#x1F4A3;", truncate: "&#x1F4A3;",
+  bulk_update: "&#x26A1;", bulk_delete: "&#x1F6A8;",
+};
+
+function guessRisk(actionType) {
+  if (["read", "read_file", "view", "report", "navigate", "search", "screenshot", "scroll", "select", "list_dir"].includes(actionType)) return "low";
+  if (["delete", "drop", "truncate", "deploy", "eval", "execute_js", "transfer"].includes(actionType)) return "critical";
+  if (["shell", "bulk_update", "export", "install", "payment", "refund", "upload", "submit", "alter_table"].includes(actionType)) return "high";
+  return "medium";
+}
+
+function updateActionButtons(preset) {
+  const actions = typeof PRESET_ACTIONS !== "undefined" && PRESET_ACTIONS[preset];
+  if (!actions) return; // keep default buttons for non-industry presets
+
+  const container = document.querySelector(".quick-actions");
+  container.innerHTML = "";
+  actions.forEach((a) => {
+    const risk = guessRisk(a.action_type);
+    const icon = RISK_ICONS[a.action_type] || RISK_ICONS[risk];
+    const btn = document.createElement("button");
+    btn.className = `action-btn ${RISK_CLASSES[risk]}`;
+    btn.dataset.action = JSON.stringify(a);
+    btn.innerHTML = `<span class="action-icon">${icon}</span><span class="action-label">${a.description}</span><span class="action-risk">${risk.toUpperCase()}</span>`;
+    btn.addEventListener("click", () => evaluateAction(a));
+    container.appendChild(btn);
+  });
 }
 
 /* ---- Evaluate Action ---- */

@@ -135,6 +135,12 @@ result = await runtime.run_one(Action("delete", "crm", params={"id": "all"}))
             <button class="preset-btn" data-preset="strict">Strict</button>
             <button class="preset-btn" data-preset="permissive">Permissive</button>
             <button class="preset-btn" data-preset="time-based">Time-Based</button>
+            <span class="preset-divider">|</span>
+            <button class="preset-btn industry" data-preset="crm">CRM</button>
+            <button class="preset-btn industry" data-preset="code">Code Agent</button>
+            <button class="preset-btn industry" data-preset="financial">Financial</button>
+            <button class="preset-btn industry" data-preset="browser">Browser</button>
+            <button class="preset-btn industry" data-preset="data-pipeline">Data Pipeline</button>
           </div>
           <button id="copy-policy" class="clear-btn" title="Copy policy YAML">Copy</button>
           <button id="share-policy" class="clear-btn" title="Copy shareable URL">Share</button>
