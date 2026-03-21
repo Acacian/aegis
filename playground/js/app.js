@@ -1991,38 +1991,26 @@ async function runAllActions() {
 }
 
 /* ---- Render Result ---- */
-function renderResult(r) {
-  const riskClass = r.risk_level.toLowerCase();
-  const approvalClass = r.approval.toLowerCase();
-  const isAllowed = r.is_allowed;
-
-  const card = document.createElement("div");
-  const decisionClass = `result-${approvalClass}`;
-  card.className = `result-card ${isAllowed ? "result-allowed" : "result-blocked"} ${decisionClass}`;
-  card.innerHTML = `
+// Template for result cards — parsed once, cloned on each render
+let _cardTemplate = null;
+function _getCardTemplate() {
+  if (_cardTemplate) return _cardTemplate;
+  const t = document.createElement("template");
+  t.innerHTML = `<div class="result-card">
     <div class="result-header">
-      <span class="result-action-type">${escHtml(r.action_type)}</span>
-      <span class="result-target">${escHtml(r.target)}</span>
+      <span class="result-action-type"></span>
+      <span class="result-target"></span>
       <div class="result-badges">
-        <span class="risk-badge ${riskClass}">${r.risk_level}</span>
-        <span class="approval-badge ${approvalClass}">${r.approval}</span>
+        <span class="risk-badge"></span>
+        <span class="approval-badge"></span>
       </div>
     </div>
     <div class="result-details">
-      <div class="result-detail">
-        <span class="label">Matched Rule: </span>
-        <span class="value">${r.matched_rule ? escHtml(r.matched_rule) : "(default)"}</span>
-      </div>
-      <div class="result-detail">
-        <span class="label">Description: </span>
-        <span class="value">${escHtml(r.description || "-")}</span>
-      </div>
+      <div class="result-detail"><span class="label">Matched Rule: </span><span class="value _rule"></span></div>
+      <div class="result-detail"><span class="label">Description: </span><span class="value _desc"></span></div>
     </div>
     <div class="result-footer">
-      <div class="result-allowed ${isAllowed ? "yes" : "no"}">
-        ${isAllowed ? "&#x2705; ALLOWED" : "&#x1F6AB; BLOCKED"}
-        ${!isAllowed && r.approval === "block" ? " — Policy explicitly blocks this action" : ""}
-      </div>
+      <div class="result-allowed"></div>
       <div class="result-copy-group">
         <button class="copy-code-btn" data-fmt="python" title="Copy as Python snippet">Python</button>
         <button class="copy-code-btn" data-fmt="pytest" title="Copy as pytest test case">pytest</button>
@@ -2037,7 +2025,35 @@ function renderResult(r) {
         <button class="copy-code-btn" data-fmt="make" title="Copy as Makefile target">Make</button>
       </div>
     </div>
-  `;
+  </div>`;
+  _cardTemplate = t;
+  return t;
+}
+
+function renderResult(r) {
+  const riskClass = r.risk_level.toLowerCase();
+  const approvalClass = r.approval.toLowerCase();
+  const isAllowed = r.is_allowed;
+
+  const card = _getCardTemplate().content.firstElementChild.cloneNode(true);
+  const decisionClass = `result-${approvalClass}`;
+  card.className = `result-card ${isAllowed ? "result-allowed" : "result-blocked"} ${decisionClass}`;
+
+  // Populate using textContent (faster than innerHTML, auto-escaped)
+  card.querySelector(".result-action-type").textContent = r.action_type;
+  card.querySelector(".result-target").textContent = r.target;
+  const riskBadge = card.querySelector(".risk-badge");
+  riskBadge.textContent = r.risk_level;
+  riskBadge.classList.add(riskClass);
+  const approvalBadge = card.querySelector(".approval-badge");
+  approvalBadge.textContent = r.approval;
+  approvalBadge.classList.add(approvalClass);
+  card.querySelector("._rule").textContent = r.matched_rule || "(default)";
+  card.querySelector("._desc").textContent = r.description || "-";
+  const allowedDiv = card.querySelector(".result-allowed");
+  allowedDiv.className = `result-allowed ${isAllowed ? "yes" : "no"}`;
+  allowedDiv.innerHTML = isAllowed ? "&#x2705; ALLOWED" : "&#x1F6AB; BLOCKED" +
+    (r.approval === "block" ? " — Policy explicitly blocks this action" : "");
 
   // Store result data on card for delegated copy handler
   card._resultData = r;
@@ -2154,7 +2170,18 @@ function showBlockedEffect(card) {
 
 /* ---- Audit Log ---- */
 /* ---- Stats Bar ---- */
+// Cache stat DOM elements to avoid repeated getElementById calls
+let _$statTotal, _$statAuto, _$statApprove, _$statBlock, _$statLatency;
+function _cacheStatEls() {
+  _$statTotal = document.getElementById("stat-total");
+  _$statAuto = document.getElementById("stat-auto");
+  _$statApprove = document.getElementById("stat-approve");
+  _$statBlock = document.getElementById("stat-block");
+  _$statLatency = document.getElementById("stat-latency");
+}
+
 function updateStats(result) {
+  if (!_$statTotal) _cacheStatEls();
   stats.total++;
   const approval = (result.approval || "").toLowerCase();
   if (approval === "auto") stats.auto++;
@@ -2162,11 +2189,11 @@ function updateStats(result) {
   else if (approval === "block") stats.block++;
   if (result.latency_ms) stats.totalMs += result.latency_ms;
 
-  const $t = document.getElementById("stat-total");
-  const $a = document.getElementById("stat-auto");
-  const $ap = document.getElementById("stat-approve");
-  const $b = document.getElementById("stat-block");
-  const $l = document.getElementById("stat-latency");
+  const $t = _$statTotal;
+  const $a = _$statAuto;
+  const $ap = _$statApprove;
+  const $b = _$statBlock;
+  const $l = _$statLatency;
   const animate = (el, val) => {
     if (!el) return;
     el.textContent = val;
