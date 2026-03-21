@@ -72,6 +72,36 @@
   }
   </script>
 
+  <!-- Structured Data: FAQPage -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What is Aegis?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Aegis is a lightweight Python library for AI agent governance. It lets you define YAML policies that control what actions your AI agents can take — auto-approve, require human review, or block." }
+      },
+      {
+        "@type": "Question",
+        "name": "Does Aegis work with LangChain and CrewAI?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes. Aegis integrates with LangChain, CrewAI, OpenAI, Anthropic, MCP, and any Python-based AI agent framework through simple adapters." }
+      },
+      {
+        "@type": "Question",
+        "name": "How fast is Aegis policy evaluation?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Policy evaluation takes less than 1 millisecond. Aegis uses compiled glob patterns and cached policy parsing for near-instant decisions." }
+      },
+      {
+        "@type": "Question",
+        "name": "Is the playground free?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes, completely free. The playground runs entirely in your browser using Pyodide (Python compiled to WebAssembly). No server, no signup, no data leaves your machine." }
+      }
+    ]
+  }
+  </script>
+
   <!-- Favicon -->
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>" type="image/svg+xml" sizes="any">
