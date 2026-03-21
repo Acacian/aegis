@@ -1220,11 +1220,32 @@ evaluate_action(
 /* ---- Run All Actions ---- */
 async function runAllActions() {
   const buttons = document.querySelectorAll(".action-btn");
+  const runAllBtn = document.getElementById("run-all");
+  const origText = runAllBtn?.textContent || "Run All";
+
+  // Show running state
+  if (runAllBtn) {
+    runAllBtn.disabled = true;
+    runAllBtn.textContent = `Running 0/${buttons.length}...`;
+  }
+
+  let i = 0;
   for (const btn of buttons) {
     const action = JSON.parse(btn.dataset.action);
+    // Highlight current button
+    btn.classList.add("action-running");
     await evaluateAction(action);
-    // Small delay for visual effect
-    await new Promise((r) => setTimeout(r, 150));
+    btn.classList.remove("action-running");
+    i++;
+    if (runAllBtn) runAllBtn.textContent = `Running ${i}/${buttons.length}...`;
+    // Stagger delay decreases as batch progresses for a "speeding up" feel
+    await new Promise((r) => setTimeout(r, Math.max(80, 200 - i * 15)));
+  }
+
+  // Restore button
+  if (runAllBtn) {
+    runAllBtn.disabled = false;
+    runAllBtn.textContent = origText;
   }
 }
 

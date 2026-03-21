@@ -672,6 +672,17 @@ main {
 .action-btn.risk-high:hover { border-color: var(--risk-high); background: var(--risk-high-bg); }
 .action-btn.risk-critical:hover { border-color: var(--risk-critical); background: var(--risk-critical-bg); }
 
+.action-btn.action-running {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(88, 166, 255, 0.3);
+  animation: actionPulse 0.6s ease-in-out infinite;
+}
+
+@keyframes actionPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
 .action-icon {
   font-size: 1.4rem;
 }
