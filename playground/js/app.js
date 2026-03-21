@@ -815,11 +815,17 @@ async function autoDemo() {
 
 /* ---- Policy Validation ---- */
 let validationTimer = null;
+let lastValidatedYaml = "";
 
 function setupPolicyValidation() {
   editor.on("change", () => {
     clearTimeout(validationTimer);
-    validationTimer = setTimeout(validatePolicy, 600);
+    validationTimer = setTimeout(() => {
+      const current = editor.getValue();
+      if (current === lastValidatedYaml) return; // skip unchanged
+      lastValidatedYaml = current;
+      validatePolicy();
+    }, 600);
   });
 }
 
@@ -1057,11 +1063,17 @@ evaluate_action(
     }
 
     renderResult(result);
-    addAuditEntry(result);
     actionCount++;
     const counter = document.getElementById("action-counter");
     if (counter) counter.textContent = actionCount;
     updateStats(result);
+
+    // Defer non-critical audit log updates to idle time
+    const deferFn = window.requestIdleCallback || ((cb) => setTimeout(cb, 16));
+    deferFn(() => {
+      addAuditEntry(result);
+      updateAuditChart();
+    });
   } catch (err) {
     showToast(`Evaluation error: ${err.message}`);
     console.error(err);
