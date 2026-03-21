@@ -636,6 +636,13 @@ main {
   background: var(--accent);
   color: #000;
   border-color: var(--accent);
+  animation: presetActivate 0.3s ease;
+}
+
+@keyframes presetActivate {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+  100% { transform: scale(1); }
 }
 
 .preset-btn.industry {
