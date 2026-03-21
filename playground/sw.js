@@ -60,8 +60,8 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Local assets: network-first with cache fallback
-  if (event.request.method === "GET") {
+  // Local assets: network-first with cache fallback (same-origin only)
+  if (event.request.method === "GET" && new URL(url).origin === self.location.origin) {
     event.respondWith(
       fetch(event.request)
         .then((response) => {
