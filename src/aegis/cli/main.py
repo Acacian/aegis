@@ -114,6 +114,16 @@ def main(argv: list[str] | None = None) -> None:
         dest="fmt",
     )
 
+    # aegis serve
+    serve_parser = subparsers.add_parser(
+        "serve",
+        help="Start the Aegis REST API server",
+    )
+    serve_parser.add_argument("policy_file", help="Path to policy YAML file")
+    serve_parser.add_argument("--host", default="127.0.0.1", help="Bind host")
+    serve_parser.add_argument("--port", type=int, default=8000, help="Bind port")
+    serve_parser.add_argument("--audit-db", help="Audit database path")
+
     args = parser.parse_args(argv)
 
     if args.version:
@@ -132,6 +142,8 @@ def main(argv: list[str] | None = None) -> None:
         _cmd_init(args)
     elif args.command == "simulate":
         _cmd_simulate(args)
+    elif args.command == "serve":
+        _cmd_serve(args)
     else:
         parser.print_help()
 
@@ -275,6 +287,29 @@ def _cmd_simulate(args: argparse.Namespace) -> None:
     auto = total - blocked - approval_needed
     print(f"Summary: {total} actions")
     print(f"  {auto} auto-execute, {approval_needed} need approval, {blocked} blocked")
+
+
+def _cmd_serve(args: argparse.Namespace) -> None:
+    """Start the Aegis REST API server."""
+    try:
+        import uvicorn
+    except ImportError:
+        print(
+            "uvicorn is required: pip install 'agent-aegis[server]'",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    from aegis.server.app import create_app
+
+    app = create_app(
+        policy_path=args.policy_file,
+        audit_db_path=getattr(args, "audit_db", None),
+    )
+    print(f"Aegis API server starting on {args.host}:{args.port}")
+    print(f"Policy: {args.policy_file}")
+    print(f"Docs: http://{args.host}:{args.port}/health")
+    uvicorn.run(app, host=args.host, port=args.port)
 
 
 if __name__ == "__main__":
