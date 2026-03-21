@@ -38,6 +38,12 @@
   transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease !important;
 }
 
+/* CodeMirror theme transition */
+.theme-transition .CodeMirror,
+.theme-transition .CodeMirror-gutters {
+  transition: background-color 0.3s ease, color 0.3s ease !important;
+}
+
 /* Light theme overrides */
 [data-theme="light"] {
   --bg-primary: #ffffff;
