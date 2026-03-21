@@ -66,6 +66,7 @@ const $auditCount = document.getElementById("audit-count");
 document.addEventListener("DOMContentLoaded", async () => {
   initEditor();
   loadPolicyFromURL();
+  setupPolicySave();
   bindEvents();
   rotateTips();
   initLazyReveal();
@@ -389,10 +390,29 @@ function loadPolicyFromURL() {
       editor.setValue(yaml);
       // Deactivate all preset buttons
       document.querySelectorAll(".preset-btn").forEach((b) => b.classList.remove("active"));
+      return;
     } catch {
       // Ignore invalid hash
     }
   }
+
+  // Restore last edited policy from localStorage
+  const saved = localStorage.getItem("aegis-last-policy");
+  if (saved && saved !== POLICY_PRESETS.default) {
+    editor.setValue(saved);
+    document.querySelectorAll(".preset-btn").forEach((b) => b.classList.remove("active"));
+  }
+}
+
+// Auto-save policy to localStorage on change (debounced)
+let saveTimer = null;
+function setupPolicySave() {
+  editor.on("change", () => {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      localStorage.setItem("aegis-last-policy", editor.getValue());
+    }, 1000);
+  });
 }
 
 /* ---- YAML Comment Toggle ---- */
