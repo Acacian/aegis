@@ -2984,6 +2984,43 @@ footer code {
     padding: 16px;
   }
 
+  .share-links {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .share-link {
+    flex: 1 1 auto;
+    justify-content: center;
+    min-width: 120px;
+    font-size: 0.8rem;
+    padding: 10px 12px;
+  }
+
+  .share-url-row {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .share-url-row .copy-share-btn {
+    align-self: stretch;
+  }
+
+  /* Audit search: fixed width on mobile, no expand-on-focus push */
+  .audit-search {
+    width: 90px;
+    font-size: 16px; /* prevents iOS zoom on focus */
+  }
+  .audit-search:focus {
+    width: 120px;
+  }
+
+  /* Panel header: wrap gracefully when buttons overflow */
+  .panel-header {
+    flex-wrap: wrap;
+    gap: 6px 10px;
+  }
+
   /* Tour tooltip narrower */
   .tour-tooltip {
     max-width: 260px;
