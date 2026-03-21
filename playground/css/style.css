@@ -1481,6 +1481,13 @@ kbd {
 }
 
 .arch-engine { border-color: var(--accent); background: rgba(88, 166, 255, 0.06); }
+.arch-summary {
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-top: 10px;
+  font-style: italic;
+}
 
 /* Stagger animation for arch flow items */
 .arch-flow.animate-flow > * {
