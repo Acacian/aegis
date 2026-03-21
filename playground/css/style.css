@@ -1279,6 +1279,10 @@ kbd {
   border-color: var(--accent);
   color: var(--accent);
 }
+.copy-code-btn:active {
+  transform: scale(0.95);
+  background: rgba(88, 166, 255, 0.08);
+}
 
 .copy-success {
   border-color: var(--approval-auto) !important;
