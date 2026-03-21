@@ -675,6 +675,9 @@ function showEditorError(msg, line) {
     );
   }
 
+  // Check for auto-fixable patterns
+  const fix = suggestFix(msg, line, editor.getValue());
+
   // Show error banner below editor
   const wrapper = document.querySelector(".editor-wrapper");
   let errorEl = document.getElementById("editor-error");
@@ -684,7 +687,80 @@ function showEditorError(msg, line) {
     errorEl.className = "editor-error";
     wrapper.parentNode.insertBefore(errorEl, wrapper.nextSibling);
   }
-  errorEl.textContent = msg;
+
+  errorEl.innerHTML = "";
+  const msgSpan = document.createElement("span");
+  msgSpan.textContent = msg;
+  errorEl.appendChild(msgSpan);
+
+  if (fix) {
+    const fixBtn = document.createElement("button");
+    fixBtn.className = "error-fix-btn";
+    fixBtn.textContent = fix.label;
+    fixBtn.title = fix.description;
+    fixBtn.addEventListener("click", () => {
+      editor.setValue(fix.result);
+      errorEl.remove();
+    });
+    errorEl.appendChild(fixBtn);
+  }
+}
+
+function suggestFix(msg, line, yaml) {
+  const lines = yaml.split("\n");
+  const lower = msg.toLowerCase();
+
+  // Missing version field
+  if (lower.includes("version") && !yaml.includes('version:')) {
+    return {
+      label: "Add version",
+      description: 'Add missing version: "1" at top',
+      result: 'version: "1"\n' + yaml,
+    };
+  }
+
+  // Tab character in YAML (common mistake)
+  if (lower.includes("tab") || (line && lines[line - 1]?.includes("\t"))) {
+    return {
+      label: "Fix tabs",
+      description: "Replace tabs with spaces",
+      result: yaml.replace(/\t/g, "  "),
+    };
+  }
+
+  // Missing rules field
+  if (lower.includes("rules") && !yaml.includes("rules:")) {
+    return {
+      label: "Add rules section",
+      description: "Add empty rules array",
+      result: yaml.trimEnd() + "\n\nrules:\n  - name: default_rule\n    match: { type: \"*\" }\n    risk_level: medium\n    approval: approve\n",
+    };
+  }
+
+  // Indentation error — try re-indenting the error line
+  if (lower.includes("indent") && line && line > 0) {
+    const idx = line - 1;
+    if (idx < lines.length) {
+      const prevIndent = lines[Math.max(0, idx - 1)].match(/^(\s*)/)[1].length;
+      lines[idx] = " ".repeat(prevIndent + 2) + lines[idx].trim();
+      return {
+        label: "Fix indentation",
+        description: `Re-indent line ${line}`,
+        result: lines.join("\n"),
+      };
+    }
+  }
+
+  // Unquoted version number (version: 1 instead of version: "1")
+  if (lower.includes("version") && yaml.match(/version:\s*\d+\s*$/m)) {
+    return {
+      label: "Quote version",
+      description: 'Wrap version number in quotes',
+      result: yaml.replace(/version:\s*(\d+)/m, 'version: "$1"'),
+    };
+  }
+
+  return null;
 }
 
 /* ---- Dynamic Action Buttons for Industry Presets ---- */
