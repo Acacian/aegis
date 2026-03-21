@@ -28,3 +28,4 @@ Aegis is a governance layer — it is security-critical by nature. The following
 | Version | Supported |
 |---------|-----------|
 | 0.1.x   | Yes       |
+| < 0.1   | No        |
