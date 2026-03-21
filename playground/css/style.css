@@ -1643,6 +1643,24 @@ kbd {
   color: var(--text-muted);
 }
 
+.key-benefits {
+  list-style: none;
+  max-width: 480px;
+  margin: 24px auto 0;
+  text-align: left;
+}
+
+.key-benefits li {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--border);
+}
+
+.key-benefits li:last-child { border-bottom: none; }
+
+.key-benefits strong { color: var(--text-primary); }
+
 /* ---- Try It CTA ---- */
 .try-it-cta {
   margin-top: 32px;
