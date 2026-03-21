@@ -351,27 +351,28 @@ function getSystemTheme() {
   return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
 }
 
+const THEMES = ["dark", "light", "high-contrast"];
+
 function applyTheme(theme) {
-  // Add transition class for smooth swap
   document.documentElement.classList.add("theme-transition");
+  document.documentElement.removeAttribute("data-theme");
   if (theme === "light") {
     document.documentElement.setAttribute("data-theme", "light");
     if (editor) editor.setOption("theme", "default");
+  } else if (theme === "high-contrast") {
+    document.documentElement.setAttribute("data-theme", "high-contrast");
+    if (editor) editor.setOption("theme", "dracula");
   } else {
-    document.documentElement.removeAttribute("data-theme");
     if (editor) editor.setOption("theme", "dracula");
   }
-  // Remove transition class after animation completes
   setTimeout(() => document.documentElement.classList.remove("theme-transition"), 400);
 }
 
 function initTheme() {
   const saved = localStorage.getItem("aegis-theme");
-  // Respect saved preference, fall back to system preference
   const theme = saved || getSystemTheme();
   applyTheme(theme);
 
-  // Listen for OS theme changes (only if user hasn't set explicit preference)
   window.matchMedia("(prefers-color-scheme: light)").addEventListener("change", (e) => {
     if (!localStorage.getItem("aegis-theme")) {
       applyTheme(e.matches ? "light" : "dark");
@@ -380,8 +381,9 @@ function initTheme() {
 }
 
 function toggleTheme() {
-  const isLight = document.documentElement.getAttribute("data-theme") === "light";
-  const next = isLight ? "dark" : "light";
+  const current = document.documentElement.getAttribute("data-theme") || "dark";
+  const idx = THEMES.indexOf(current);
+  const next = THEMES[(idx + 1) % THEMES.length];
   localStorage.setItem("aegis-theme", next);
   applyTheme(next);
 }

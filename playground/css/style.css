@@ -67,6 +67,46 @@
   --shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
+/* High-contrast theme — WCAG AAA-ready */
+[data-theme="high-contrast"] {
+  --bg-primary: #000000;
+  --bg-secondary: #0a0a0a;
+  --bg-panel: #0a0a0a;
+  --bg-hover: #1a1a1a;
+  --border: #666666;
+  --text-primary: #ffffff;
+  --text-secondary: #d0d0d0;
+  --text-muted: #a0a0a0;
+  --accent: #6cb6ff;
+  --accent-hover: #9cd4ff;
+
+  --risk-low: #56d364;
+  --risk-low-bg: rgba(86, 211, 100, 0.2);
+  --risk-medium: #f0c000;
+  --risk-medium-bg: rgba(240, 192, 0, 0.2);
+  --risk-high: #ff6b6b;
+  --risk-high-bg: rgba(255, 107, 107, 0.2);
+  --risk-critical: #ff4444;
+  --risk-critical-bg: rgba(255, 68, 68, 0.25);
+
+  --approval-auto: #56d364;
+  --approval-approve: #f0c000;
+  --approval-block: #ff6b6b;
+}
+
+/* Theme icon visibility */
+.theme-icon-light,
+.theme-icon-hc { display: none; }
+.theme-icon-dark { display: inline; }
+
+[data-theme="light"] .theme-icon-dark,
+[data-theme="light"] .theme-icon-hc { display: none; }
+[data-theme="light"] .theme-icon-light { display: inline; }
+
+[data-theme="high-contrast"] .theme-icon-dark,
+[data-theme="high-contrast"] .theme-icon-light { display: none; }
+[data-theme="high-contrast"] .theme-icon-hc { display: inline; }
+
 * {
   margin: 0;
   padding: 0;
