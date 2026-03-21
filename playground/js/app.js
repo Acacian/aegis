@@ -2248,9 +2248,22 @@ function updateStats(result) {
   const $l = _$statLatency;
   const animate = (el, val) => {
     if (!el) return;
-    el.textContent = val;
+    // Rolling counter: quickly count up from previous value
+    const prev = parseInt(el.textContent) || 0;
+    if (val - prev <= 1) {
+      el.textContent = val;
+    } else {
+      let current = prev;
+      const step = Math.max(1, Math.floor((val - prev) / 6));
+      const tick = () => {
+        current = Math.min(current + step, val);
+        el.textContent = current;
+        if (current < val) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    }
     el.classList.remove("stat-pop");
-    void el.offsetWidth; // force reflow
+    void el.offsetWidth;
     el.classList.add("stat-pop");
   };
   animate($t, stats.total);
