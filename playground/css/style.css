@@ -2443,6 +2443,9 @@ footer code {
   .preset-btn {
     scroll-snap-align: start;
     flex-shrink: 0;
+    min-height: 36px;
+    padding: 6px 12px;
+    font-size: 0.78rem;
   }
 
   .preset-divider {
@@ -2521,6 +2524,11 @@ footer code {
 
   .action-btn {
     padding: 10px 12px;
+    min-height: 44px;
+  }
+
+  .clear-btn {
+    min-height: 36px;
   }
 
   .comparison-panels {
