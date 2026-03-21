@@ -323,18 +323,18 @@ function initLazyReveal() {
   );
   sections.forEach((s) => observer.observe(s));
 
-  // Trigger arch-flow stagger animation on scroll
-  const archFlow = document.querySelector(".arch-flow");
-  if (archFlow) {
-    const archObs = new IntersectionObserver((entries) => {
+  // Trigger arch-flow and decision-matrix stagger animations on scroll
+  const scrollTargets = document.querySelectorAll(".arch-flow, .decision-matrix");
+  if (scrollTargets.length) {
+    const scrollObs = new IntersectionObserver((entries) => {
       entries.forEach((e) => {
         if (e.isIntersecting) {
           e.target.classList.add("animate-flow");
-          archObs.unobserve(e.target);
+          scrollObs.unobserve(e.target);
         }
       });
     }, { threshold: 0.3 });
-    archObs.observe(archFlow);
+    scrollTargets.forEach((t) => scrollObs.observe(t));
   }
 }
 

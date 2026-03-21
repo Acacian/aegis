@@ -1578,7 +1578,7 @@ kbd {
   align-items: center;
 }
 .dm-row:last-child { border-bottom: none; }
-.dm-row:not(.dm-header) {
+.decision-matrix.animate-flow .dm-row:not(.dm-header) {
   opacity: 0;
   transform: translateX(-8px);
   animation: dmRowIn 0.3s ease forwards;
