@@ -1151,6 +1151,10 @@ kbd {
 .run-all-btn:hover {
   background: rgba(88, 166, 255, 0.1);
 }
+.run-all-btn:not(:disabled) {
+  animation: idleAttention 3s ease-in-out 5s infinite;
+}
+.run-all-btn:hover { animation: none; }
 .run-all-btn:disabled {
   cursor: wait;
   background: linear-gradient(90deg, transparent 0%, rgba(88, 166, 255, 0.1) 50%, transparent 100%);
@@ -1160,6 +1164,11 @@ kbd {
 @keyframes runAllShimmer {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
+}
+@keyframes idleAttention {
+  0%, 85% { box-shadow: none; }
+  90% { box-shadow: 0 0 8px rgba(88, 166, 255, 0.4); }
+  100% { box-shadow: none; }
 }
 
 /* ---- Result Panel ---- */

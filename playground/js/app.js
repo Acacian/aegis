@@ -1222,8 +1222,21 @@ function bindEvents() {
 
   document.getElementById("clear-result").addEventListener("click", (ev) => {
     if (ev.isTrusted) showShortcutHint("clear-result", "Esc to clear results");
-    $result.innerHTML =
-      '<div class="empty-state">Click an action above to see the policy evaluation result</div>';
+    const cards = $result.querySelectorAll(".result-card");
+    if (cards.length === 0) {
+      $result.innerHTML =
+        '<div class="empty-state">Click an action above to see the policy evaluation result</div>';
+      return;
+    }
+    cards.forEach((card, i) => {
+      card.style.transition = `opacity 0.2s ${i * 40}ms, transform 0.2s ${i * 40}ms`;
+      card.style.opacity = "0";
+      card.style.transform = "translateY(-8px) scale(0.97)";
+    });
+    setTimeout(() => {
+      $result.innerHTML =
+        '<div class="empty-state">Click an action above to see the policy evaluation result</div>';
+    }, cards.length * 40 + 220);
   });
 
   // Import snapshot
