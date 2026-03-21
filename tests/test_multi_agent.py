@@ -22,7 +22,6 @@ from aegis.runtime.approval import AutoApprovalHandler
 from aegis.runtime.audit import AuditLogger
 from aegis.runtime.engine import Runtime
 
-
 # -- Fake executor for runtime tests ------------------------------------
 
 

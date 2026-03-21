@@ -6,7 +6,7 @@ decisions at higher levels cannot be overridden by lower levels.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from aegis.core.action import Action
 from aegis.core.policy import Approval, Policy, PolicyDecision

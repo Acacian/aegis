@@ -74,9 +74,10 @@ class PolicyRule:
         )
         if not glob_match:
             return False
-        if self.match_agent != "*":
-            if not fnmatch.fnmatch(action.agent_id or "*", self.match_agent):
-                return False
+        if self.match_agent != "*" and not fnmatch.fnmatch(
+            action.agent_id or "*", self.match_agent
+        ):
+            return False
         if self.conditions:
             return evaluate_conditions(self.conditions, action.params)
         return True
