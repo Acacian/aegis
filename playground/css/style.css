@@ -382,6 +382,18 @@ main {
 }
 
 /* ---- Custom Action Form ---- */
+kbd {
+  font-size: 0.65rem;
+  padding: 1px 5px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--bg-primary);
+  color: var(--text-muted);
+  font-family: 'SF Mono', Menlo, monospace;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
 .custom-action {
   border: 1px solid var(--border);
   border-radius: var(--radius);

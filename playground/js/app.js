@@ -90,6 +90,26 @@ function bindEvents() {
   // Run all
   document.getElementById("run-all").addEventListener("click", runAllActions);
 
+  // Keyboard shortcuts
+  document.addEventListener("keydown", (e) => {
+    // Ctrl/Cmd + Enter → run custom action (or last clicked preset)
+    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+      e.preventDefault();
+      const type = document.getElementById("custom-type").value.trim();
+      if (type) {
+        document.getElementById("run-custom").click();
+      } else {
+        // Run all actions as fallback
+        document.getElementById("run-all").click();
+      }
+    }
+    // Ctrl/Cmd + Shift + Enter → run all
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "Enter") {
+      e.preventDefault();
+      document.getElementById("run-all").click();
+    }
+  });
+
   // Clear buttons
   document.getElementById("clear-result").addEventListener("click", () => {
     $result.innerHTML =
