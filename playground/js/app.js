@@ -553,6 +553,7 @@ function buildShortcutOverlay() {
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>G</kbd><span>Go to line</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>E</kbd><span>Export audit log (JSON)</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>F</kbd><span>Focus audit search</span></div>
+        <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>B</kbd><span>Toggle audit panel</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>D</kbd><span>Toggle theme</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd><span>Duplicate line</span></div>
         <div class="shortcut-row"><kbd>0</kbd>-<kbd>9</kbd><span>Switch preset (by position)</span></div>
@@ -868,6 +869,17 @@ function bindEvents() {
     if ((e.ctrlKey || e.metaKey) && e.key === "d") {
       e.preventDefault();
       if (typeof toggleTheme === "function") toggleTheme();
+      return;
+    }
+    // Ctrl/Cmd + B → toggle audit panel visibility
+    if ((e.ctrlKey || e.metaKey) && e.key === "b" && !e.shiftKey) {
+      e.preventDefault();
+      const auditPanel = document.querySelector(".bottom-section .panel:last-child");
+      if (auditPanel) {
+        const isHidden = auditPanel.style.display === "none";
+        auditPanel.style.display = isHidden ? "" : "none";
+        showToast(isHidden ? "Audit panel shown" : "Audit panel hidden");
+      }
       return;
     }
     // Ctrl/Cmd + K → focus custom action input (command palette style)
