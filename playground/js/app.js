@@ -653,13 +653,19 @@ function toggleExportMenu() {
   menu.style.right = window.innerWidth - rect.right + "px";
   menu.innerHTML = `
     <button class="export-option" data-format="json">Export as JSON</button>
-    <button class="export-option" data-format="csv">Export as CSV</button>`;
+    <button class="export-option" data-format="csv">Export as CSV</button>
+    <button class="export-option" data-format="yaml">Export as YAML report</button>
+    <button class="export-option" data-format="html">Export as HTML report</button>
+    <button class="export-option" data-format="print">Print audit log</button>`;
   document.body.appendChild(menu);
 
   menu.addEventListener("click", (e) => {
     const format = e.target.dataset.format;
     if (format === "json") exportAuditJSON();
-    if (format === "csv") exportAuditCSV();
+    else if (format === "csv") exportAuditCSV();
+    else if (format === "yaml") exportAuditYAML();
+    else if (format === "html") exportAuditHTML();
+    else if (format === "print") printAuditLog();
     menu.remove();
   });
 }
@@ -687,6 +693,50 @@ function exportAuditCSV() {
     }).join(",")
   );
   downloadBlob([headers.join(","), ...rows].join("\n"), "text/csv", "csv");
+}
+
+function exportAuditYAML() {
+  const yamlLines = ["# Aegis Audit Report", `# Generated: ${new Date().toISOString()}`, `# Policy:`, ""];
+  yamlLines.push("policy: |");
+  editor.getValue().split("\n").forEach((l) => yamlLines.push("  " + l));
+  yamlLines.push("", "evaluations:");
+  auditEntries.forEach((e) => {
+    yamlLines.push(`  - action: ${e.action_type}`);
+    yamlLines.push(`    target: ${e.target}`);
+    yamlLines.push(`    risk: ${e.risk}`);
+    yamlLines.push(`    approval: ${e.approval}`);
+    yamlLines.push(`    rule: ${e.rule || "N/A"}`);
+    yamlLines.push(`    timestamp: "${e.timestamp}"`);
+  });
+  yamlLines.push("", `summary:`, `  total: ${stats.total}`, `  auto: ${stats.auto}`, `  approve: ${stats.approve}`, `  block: ${stats.block}`);
+  downloadBlob(yamlLines.join("\n"), "text/yaml", "yaml");
+}
+
+function exportAuditHTML() {
+  const rows = auditEntries.map((e) =>
+    `<tr><td>${e.timestamp}</td><td>${e.action_type}</td><td>${e.target}</td><td>${e.risk}</td><td><strong>${e.approval}</strong></td></tr>`
+  ).join("");
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Aegis Audit Report</title>
+<style>body{font-family:system-ui;max-width:900px;margin:2rem auto;color:#e6edf3;background:#0d1117}
+table{border-collapse:collapse;width:100%}th,td{border:1px solid #30363d;padding:8px 12px;text-align:left}
+th{background:#161b22}h1{color:#58a6ff}</style></head><body>
+<h1>Aegis Audit Report</h1><p>Generated: ${new Date().toISOString()}</p>
+<p>Total: ${stats.total} | Auto: ${stats.auto} | Approve: ${stats.approve} | Block: ${stats.block}</p>
+<table><tr><th>Time</th><th>Action</th><th>Target</th><th>Risk</th><th>Decision</th></tr>${rows}</table></body></html>`;
+  downloadBlob(html, "text/html", "html");
+}
+
+function printAuditLog() {
+  const w = window.open("", "_blank");
+  if (!w) { showToast("Pop-up blocked — allow pop-ups to print"); return; }
+  const rows = auditEntries.map((e) =>
+    `<tr><td>${e.timestamp}</td><td>${e.action_type}</td><td>${e.target}</td><td>${e.risk}</td><td>${e.approval}</td></tr>`
+  ).join("");
+  w.document.write(`<html><head><title>Aegis Audit</title><style>body{font-family:system-ui}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ccc;padding:6px 10px}th{background:#f0f0f0}</style></head><body>
+<h1>Aegis Audit Log</h1><p>${new Date().toLocaleString()} &mdash; ${stats.total} evaluations</p>
+<table><tr><th>Time</th><th>Action</th><th>Target</th><th>Risk</th><th>Decision</th></tr>${rows}</table></body></html>`);
+  w.document.close();
+  w.print();
 }
 
 /* ---- Pyodide Init ---- */
