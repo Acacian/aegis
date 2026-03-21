@@ -12,6 +12,7 @@ from aegis.core.action import Action
 from aegis.core.plan import ExecutionPlan
 from aegis.core.policy import Approval, Policy, PolicyDecision
 from aegis.core.result import Result, ResultStatus
+from aegis.core.retry import RetryPolicy
 from aegis.runtime.approval import ApprovalHandler, CLIApprovalHandler
 from aegis.runtime.audit import AuditLogger
 
@@ -50,6 +51,7 @@ class Runtime:
         audit_logger: Logger for audit trail. Defaults to local SQLite.
         session_id: Optional session identifier for audit grouping.
         hooks: Optional callbacks for lifecycle events.
+        retry_policy: Optional retry/rollback policy for failed actions.
 
     Example::
 
@@ -72,6 +74,7 @@ class Runtime:
         audit_logger: AuditLogger | None = None,
         session_id: str | None = None,
         hooks: RuntimeHooks | None = None,
+        retry_policy: RetryPolicy | None = None,
     ) -> None:
         self.executor = executor
         self.policy = policy
@@ -79,6 +82,7 @@ class Runtime:
         self.audit = audit_logger or AuditLogger()
         self.session_id = session_id or uuid.uuid4().hex[:12]
         self.hooks = hooks or RuntimeHooks()
+        self.retry_policy = retry_policy or RetryPolicy()
 
     async def __aenter__(self) -> Runtime:
         """Enter async context: set up the executor."""
@@ -221,20 +225,54 @@ class Runtime:
                 completed_at=datetime.now(UTC),
             )
 
-        # 4. Execute
-        result = await self.executor.execute(decision.action)
+        # 4. Execute (with retry support)
+        result = await self._execute_with_retry(decision.action)
 
-        # 5. Verify
-        verified = await self.executor.verify(decision.action, result)
-        if not verified and result.ok:
-            result = Result(
-                action=decision.action,
-                status=ResultStatus.FAILED,
-                error="Post-execution verification failed",
-                completed_at=datetime.now(UTC),
-            )
-
-        # 6. Audit
+        # 5. Audit
         self.audit.log(self.session_id, decision, result=result, human_decision=human_decision)
 
         return result
+
+    async def _execute_with_retry(self, action: Action) -> Result:
+        """Execute an action with retry and optional rollback."""
+        retry = self.retry_policy
+        last_result: Result | None = None
+
+        for attempt in range(retry.max_retries + 1):
+            if attempt > 0:
+                await retry.wait(attempt - 1)
+
+            result = await self.executor.execute(action)
+
+            # Verify
+            verified = await self.executor.verify(action, result)
+            if not verified and result.ok:
+                result = Result(
+                    action=action,
+                    status=ResultStatus.FAILED,
+                    error="Post-execution verification failed",
+                    completed_at=datetime.now(UTC),
+                )
+
+            if result.ok:
+                return result
+
+            last_result = result
+
+            # Check if we should retry
+            if not retry.should_retry(attempt, result.error):
+                break
+
+        # All retries exhausted — try rollback if configured
+        assert last_result is not None
+        if retry.has_rollback:
+            rollback_params = {**action.params, **retry.rollback_params}
+            rollback_action = Action(
+                type=retry.rollback_action_type,
+                target=action.target,
+                params=rollback_params,
+                description=f"Rollback for failed: {action.type}",
+            )
+            await self.executor.execute(rollback_action)
+
+        return last_result
