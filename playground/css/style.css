@@ -482,6 +482,9 @@ a.integration-badge:active {
 .stat-pop {
   animation: statPop 0.3s ease-out;
 }
+.stat-auto .stat-value.stat-pop { text-shadow: 0 0 8px var(--approval-auto); }
+.stat-approve .stat-value.stat-pop { text-shadow: 0 0 8px var(--approval-approve); }
+.stat-block .stat-value.stat-pop { text-shadow: 0 0 8px var(--approval-block); }
 
 @keyframes statPop {
   0%   { transform: scale(1); }
