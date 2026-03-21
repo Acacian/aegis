@@ -50,6 +50,17 @@ playwright install chromium
 python examples/browser_demo.py
 ```
 
+## Policy Templates
+
+Pre-built YAML policies for common industries. Use as starting points:
+
+```python
+from aegis import Policy, Runtime
+policy = Policy.from_yaml("policies/crm-agent.yaml")
+```
+
+See [`policies/`](../policies/) for the full library: CRM, Code Agent, Financial, Browser, Data Pipeline, DevOps, Healthcare, E-Commerce, Support.
+
 ## Expected Output
 
 Running `quickstart.py`:
