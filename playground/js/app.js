@@ -1275,11 +1275,21 @@ function bindEvents() {
 
   document.getElementById("clear-audit").addEventListener("click", () => {
     auditEntries = [];
+    stats = { total: 0, auto: 0, approve: 0, block: 0, totalMs: 0 };
+    actionCount = 0;
     $audit.innerHTML =
       '<div class="empty-state">Audit entries will appear here as you evaluate actions</div>';
     $auditCount.textContent = "0 entries";
+    // Reset stat display
+    if (_$statTotal) _$statTotal.textContent = "0";
+    if (_$statAuto) _$statAuto.textContent = "0";
+    if (_$statApprove) _$statApprove.textContent = "0";
+    if (_$statBlock) _$statBlock.textContent = "0";
+    if (_$statLatency) _$statLatency.textContent = "—";
+    if (_$actionCounter) _$actionCounter.textContent = "0";
     const chart = document.getElementById("audit-chart");
     if (chart) chart.innerHTML = "";
+    _chartEls = null; // reset cached chart refs so they're rebuilt on next use
   });
 
   // Audit filters
@@ -2520,8 +2530,9 @@ function addAuditEntry(r) {
   updateAuditChart();
 }
 
+let _$auditSearch = null;
 function filterAuditLog(filter) {
-  const search = (document.getElementById("audit-search")?.value || "").toLowerCase();
+  const search = ((_$auditSearch || (_$auditSearch = document.getElementById("audit-search")))?.value || "").toLowerCase();
   // Use CSS class on container for type filtering (avoids iterating all rows)
   $audit.dataset.filter = filter;
   if (search) {
