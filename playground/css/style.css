@@ -44,6 +44,16 @@
   transition: background-color 0.3s ease, color 0.3s ease !important;
 }
 
+/* Theme switch flash overlay */
+.theme-flash {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 0.4s ease;
+}
+
 /* Light theme overrides */
 [data-theme="light"] {
   --bg-primary: #ffffff;

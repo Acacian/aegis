@@ -654,6 +654,17 @@ function toggleTheme() {
   const idx = THEMES.indexOf(current);
   const next = THEMES[(idx + 1) % THEMES.length];
   localStorage.setItem("aegis-theme", next);
+
+  // Flash overlay for smooth perceived transition
+  const flash = document.createElement("div");
+  flash.className = "theme-flash";
+  flash.style.background = next === "light" ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)";
+  document.body.appendChild(flash);
+  requestAnimationFrame(() => {
+    flash.style.opacity = "0";
+    flash.addEventListener("transitionend", () => flash.remove());
+  });
+
   applyTheme(next);
   showToast(`${THEME_META[next]?.icon || ""} Theme: ${THEME_META[next]?.label || next}`);
 }
