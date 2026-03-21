@@ -1140,8 +1140,11 @@ function bindEvents() {
   });
 
   document.getElementById("download-policy").addEventListener("click", () => {
-    downloadBlob(editor.getValue(), "text/yaml", "yaml");
-    showToast("Downloaded policy.yaml");
+    const yaml = editor.getValue();
+    downloadBlob(yaml, "text/yaml", "yaml");
+    const sizeB = new Blob([yaml]).size;
+    const sizeStr = sizeB > 1024 ? (sizeB / 1024).toFixed(1) + " KB" : sizeB + " B";
+    showToast(`Downloaded policy.yaml (${sizeStr})`);
   });
 
   document.getElementById("copy-pip").addEventListener("click", (e) => {
