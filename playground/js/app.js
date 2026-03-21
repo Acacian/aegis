@@ -1363,26 +1363,32 @@ function exportAuditJSON() {
 }
 
 function exportAuditCSV() {
-  if (!auditEntries.length) { showToast("No audit entries to export"); return; }
+  const entries = getFilteredEntries();
+  if (!entries.length) { showToast("No audit entries to export"); return; }
   const headers = ["time", "type", "risk", "decision", "rule", "allowed"];
   const displayHeaders = ["timestamp", "action_type", "risk", "approval", "rule", "allowed"];
   const csvEsc = (v) => {
     const s = String(v ?? "");
     return s.includes(",") || s.includes('"') || s.includes("\n") ? `"${s.replace(/"/g, '""')}"` : s;
   };
-  const rows = auditEntries.map((e) => headers.map((h) => csvEsc(e[h])).join(","));
+  const rows = entries.map((e) => headers.map((h) => csvEsc(e[h])).join(","));
   const bom = "\uFEFF";
   downloadBlob(bom + [displayHeaders.join(","), ...rows].join("\n"), "text/csv;charset=utf-8", "csv");
-  showToast(`Exported ${auditEntries.length} entries as CSV`);
+  const filterNote = getActiveFilter() !== "all" ? ` (${getActiveFilter()})` : "";
+  showToast(`Exported ${entries.length} entries as CSV${filterNote}`);
 }
 
 function exportAuditYAML() {
-  if (!auditEntries.length) { showToast("No audit entries to export"); return; }
-  const yamlLines = ["# Aegis Audit Report", `# Generated: ${new Date().toISOString()}`, ""];
+  const entries = getFilteredEntries();
+  if (!entries.length) { showToast("No audit entries to export"); return; }
+  const filter = getActiveFilter();
+  const yamlLines = ["# Aegis Audit Report", `# Generated: ${new Date().toISOString()}`];
+  if (filter !== "all") yamlLines.push(`# Filter: ${filter}`);
+  yamlLines.push("");
   yamlLines.push("policy: |");
   editor.getValue().split("\n").forEach((l) => yamlLines.push("  " + l));
   yamlLines.push("", "evaluations:");
-  auditEntries.forEach((e) => {
+  entries.forEach((e) => {
     yamlLines.push(`  - action: ${e.type || e.action_type || ""}`);
     yamlLines.push(`    risk: ${e.risk || ""}`);
     yamlLines.push(`    decision: ${e.decision || e.approval || ""}`);
@@ -1397,12 +1403,14 @@ function exportAuditYAML() {
   yamlLines.push(`  block: ${stats.block}`);
   yamlLines.push(`  avg_latency_ms: ${avgMs}`);
   downloadBlob(yamlLines.join("\n"), "text/yaml", "yaml");
-  showToast(`Exported ${auditEntries.length} entries as YAML`);
+  const filterNote = filter !== "all" ? ` (${filter})` : "";
+  showToast(`Exported ${entries.length} entries as YAML${filterNote}`);
 }
 
 function exportAuditHTML() {
-  if (!auditEntries.length) { showToast("No audit entries to export"); return; }
-  const rows = auditEntries.map((e) =>
+  const entries = getFilteredEntries();
+  if (!entries.length) { showToast("No audit entries to export"); return; }
+  const rows = entries.map((e) =>
     `<tr><td>${e.time || e.timestamp || ""}</td><td>${e.type || e.action_type || ""}</td><td class="${(e.risk || "").toLowerCase()}">${e.risk || ""}</td><td><strong>${e.decision || e.approval || ""}</strong></td><td>${e.rule || ""}</td></tr>`
   ).join("");
   const avgMs = stats.total > 0 ? (stats.totalMs / stats.total).toFixed(1) : "0";
@@ -1415,7 +1423,8 @@ th{background:#161b22}h1{color:#58a6ff}.low{color:#3fb950}.medium{color:#d29922}
 <div class="summary"><span>Total: <strong>${stats.total}</strong></span><span>Auto: <strong>${stats.auto}</strong></span><span>Approve: <strong>${stats.approve}</strong></span><span>Block: <strong>${stats.block}</strong></span><span>Avg: <strong>${avgMs}ms</strong></span></div>
 <table><tr><th>Time</th><th>Action</th><th>Risk</th><th>Decision</th><th>Rule</th></tr>${rows}</table></body></html>`;
   downloadBlob(html, "text/html", "html");
-  showToast(`Exported ${auditEntries.length} entries as HTML`);
+  const filterNote = getActiveFilter() !== "all" ? ` (${getActiveFilter()})` : "";
+  showToast(`Exported ${entries.length} entries as HTML${filterNote}`);
 }
 
 function copyAuditToClipboard() {
