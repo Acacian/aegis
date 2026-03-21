@@ -368,6 +368,7 @@ function initEditor() {
   });
   editor.setValue(POLICY_PRESETS.default);
   initTheme();
+  setupThemeLongPress();
 
   // Show field hints on cursor activity
   editor.on("cursorActivity", () => {
@@ -695,6 +696,28 @@ function toggleTheme() {
 
   applyTheme(next);
   showToast(`${THEME_META[next]?.icon || ""} Theme: ${THEME_META[next]?.label || next}`);
+}
+
+function resetThemeToAuto() {
+  localStorage.removeItem("aegis-theme");
+  const autoTheme = getSystemTheme();
+  applyTheme(autoTheme);
+  showToast(`Theme reset to auto (${THEME_META[autoTheme]?.label || autoTheme})`);
+}
+
+// Long-press on theme toggle → reset to auto
+function setupThemeLongPress() {
+  const btn = document.getElementById("theme-toggle");
+  if (!btn) return;
+  let pressTimer = null;
+  btn.addEventListener("pointerdown", () => {
+    pressTimer = setTimeout(() => {
+      pressTimer = null;
+      resetThemeToAuto();
+    }, 800);
+  });
+  btn.addEventListener("pointerup", () => { if (pressTimer) clearTimeout(pressTimer); });
+  btn.addEventListener("pointerleave", () => { if (pressTimer) clearTimeout(pressTimer); });
 }
 
 /* ---- Event Binding ---- */
