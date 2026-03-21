@@ -330,6 +330,19 @@ header {
   border-radius: 10px;
   color: var(--text-secondary);
   background: var(--bg-primary);
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
+}
+
+a.integration-badge:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: rgba(88, 166, 255, 0.08);
+}
+
+a.integration-badge:active {
+  transform: scale(0.96);
 }
 
 /* ---- Stats Bar ---- */
