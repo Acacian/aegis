@@ -271,6 +271,9 @@ aegis audit
 | **Policy merge** | `Policy.from_yaml_files("base.yaml", "prod.yaml")` -- layer configs |
 | **Runtime hooks** | Async callbacks for `on_decision`, `on_approval`, `on_execute` |
 | **Type-safe** | Full `mypy --strict` compliance, `py.typed` marker |
+| **9 policy templates** | Pre-built for CRM, code, finance, browser, DevOps, healthcare, and more |
+| **Interactive playground** | [Try in browser](https://acacian.github.io/aegis/playground/) -- no install needed |
+| **Docker ready** | [`examples/docker/`](examples/docker/) -- deploy REST API in one command |
 
 ## Real-World Use Cases
 
