@@ -214,6 +214,31 @@
   font-weight: 600;
 }
 
+[data-theme="high-contrast"] .tl-step {
+  border-width: 2px;
+}
+
+[data-theme="high-contrast"] .tl-num {
+  background: #6cb6ff;
+}
+
+[data-theme="high-contrast"] .trust-badge {
+  border-width: 2px;
+}
+
+[data-theme="high-contrast"] .docker-btn {
+  border-color: #6cb6ff;
+  color: #6cb6ff;
+}
+
+[data-theme="high-contrast"] .fix-all-btn {
+  border-width: 2px;
+}
+
+[data-theme="high-contrast"] .scroll-top-btn {
+  border-width: 2px;
+}
+
 * {
   margin: 0;
   padding: 0;
