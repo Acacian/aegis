@@ -17,11 +17,12 @@
   <a href="https://acacian.github.io/aegis/"><img src="https://img.shields.io/badge/docs-acacian.github.io%2Faegis-blue" alt="Docs"></a>
   <a href="https://github.com/Acacian/aegis"><img src="https://img.shields.io/github/stars/Acacian/aegis?style=social" alt="GitHub stars"></a>
   <br/>
-  <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-485_passed-brightgreen" alt="Tests"></a>
+  <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-486_passed-brightgreen" alt="Tests"></a>
   <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/coverage-92%25-brightgreen" alt="Coverage"></a>
 </p>
 
 <p align="center">
+  <a href="https://acacian.github.io/aegis/playground/"><strong>브라우저에서 바로 체험하기</strong></a> &bull;
   <a href="#빠른-시작">빠른 시작</a> &bull;
   <a href="#작동-방식">작동 방식</a> &bull;
   <a href="https://acacian.github.io/aegis/">문서</a> &bull;
