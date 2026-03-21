@@ -9,6 +9,7 @@ Ready-to-use governance policies for common AI agent use cases. Copy one and cus
 | [financial-agent.yaml](financial-agent.yaml) | Payments, invoicing, accounting | View=auto, Small payments=approve, Transfers=critical |
 | [browser-agent.yaml](browser-agent.yaml) | Browser automation (Playwright) | Navigate=auto, Click=approve, JS eval=block |
 | [data-pipeline.yaml](data-pipeline.yaml) | ETL, database operations | SELECT=auto, INSERT=approve, DROP=block |
+| [devops-agent.yaml](devops-agent.yaml) | CI/CD, infrastructure, deployments | Monitor=auto, Deploy=approve, Destroy=block |
 
 ## Usage
 

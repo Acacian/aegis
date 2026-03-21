@@ -1,0 +1,108 @@
+# DevOps Agent Governance Policy
+# Use case: AI agents managing CI/CD, infrastructure, deployments
+#
+# pip install agent-aegis
+# policy = Policy.from_yaml("policies/devops-agent.yaml")
+
+version: "1"
+defaults:
+  risk_level: high
+  approval: approve
+
+rules:
+  # Monitoring and observability is safe
+  - name: monitor_auto
+    match: { type: "monitor" }
+    risk_level: low
+    approval: auto
+
+  # Viewing logs is safe
+  - name: view_logs_auto
+    match: { type: "view_logs" }
+    risk_level: low
+    approval: auto
+
+  # Checking status is safe
+  - name: status_auto
+    match: { type: "status" }
+    risk_level: low
+    approval: auto
+
+  # Listing resources is safe
+  - name: list_auto
+    match: { type: "list_*" }
+    risk_level: low
+    approval: auto
+
+  # Running tests is medium risk
+  - name: test_approve
+    match: { type: "run_tests" }
+    risk_level: medium
+    approval: approve
+
+  # Building artifacts is medium risk
+  - name: build_approve
+    match: { type: "build" }
+    risk_level: medium
+    approval: approve
+
+  # Deploying to staging auto-approves during business hours
+  - name: staging_deploy_hours
+    match: { type: "deploy" }
+    conditions:
+      param_eq: { env: "staging" }
+      time_after: "09:00"
+      time_before: "18:00"
+      weekdays: [1, 2, 3, 4, 5]
+    risk_level: medium
+    approval: auto
+
+  # Deploying to production needs approval
+  - name: prod_deploy_approve
+    match: { type: "deploy" }
+    conditions:
+      param_eq: { env: "production" }
+      time_after: "09:00"
+      time_before: "17:00"
+      weekdays: [1, 2, 3, 4, 5]
+    risk_level: high
+    approval: approve
+
+  # After-hours production deploys are blocked
+  - name: prod_deploy_afterhours
+    match: { type: "deploy" }
+    conditions:
+      param_eq: { env: "production" }
+      time_after: "17:00"
+    risk_level: critical
+    approval: block
+
+  # Scaling up is high risk
+  - name: scale_up_approve
+    match: { type: "scale_up" }
+    risk_level: high
+    approval: approve
+
+  # Scaling down is critical (could cause outages)
+  - name: scale_down_critical
+    match: { type: "scale_down" }
+    risk_level: critical
+    approval: approve
+
+  # Rollback needs approval
+  - name: rollback_approve
+    match: { type: "rollback" }
+    risk_level: high
+    approval: approve
+
+  # Deleting infrastructure is blocked
+  - name: destroy_block
+    match: { type: "destroy" }
+    risk_level: critical
+    approval: block
+
+  # Force push is blocked
+  - name: force_push_block
+    match: { type: "force_push" }
+    risk_level: critical
+    approval: block
