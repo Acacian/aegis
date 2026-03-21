@@ -465,6 +465,7 @@ function buildShortcutOverlay() {
       <div class="shortcut-list">
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Enter</kbd><span>Evaluate custom action</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd><span>Run all actions</span></div>
+        <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>X</kbd><span>Clear results + audit</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>P</kbd><span>Command palette</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>K</kbd><span>Focus custom action input</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>S</kbd><span>Copy policy to clipboard</span></div>
@@ -645,6 +646,14 @@ function bindEvents() {
     const tag = document.activeElement?.tagName;
     const isInput = tag === "INPUT" || tag === "TEXTAREA";
 
+    // Ctrl/Cmd + Shift + X → clear all results + audit
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === "X" || e.key === "x")) {
+      e.preventDefault();
+      document.getElementById("clear-result")?.click();
+      document.getElementById("clear-audit")?.click();
+      showToast("Cleared results and audit log");
+      return;
+    }
     // Ctrl/Cmd + Shift + Enter → run all (check first, before plain Enter)
     if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "Enter") {
       e.preventDefault();
