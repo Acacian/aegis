@@ -89,6 +89,8 @@ nav:
       - OpenAI Agents Governance: cookbook/openai-agents-governance.md
       - Anthropic Claude Governance: cookbook/anthropic-governance.md
       - MCP Governance: cookbook/mcp-governance.md
+      - httpx REST API: cookbook/httpx-governance.md
+      - Playwright Browser: cookbook/playwright-governance.md
   - Cheatsheet: cheatsheet.md
   - Examples: https://github.com/Acacian/aegis/tree/main/examples
   - FAQ: faq.md
