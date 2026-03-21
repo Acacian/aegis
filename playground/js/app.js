@@ -1243,17 +1243,15 @@ function exportAuditJSON() {
 
 function exportAuditCSV() {
   if (!auditEntries.length) { showToast("No audit entries to export"); return; }
-  const headers = ["timestamp", "action_type", "target", "risk", "approval", "rule", "allowed", "description"];
-  const rows = auditEntries.map((e) =>
-    headers.map((h) => {
-      const v = e[h] ?? "";
-      const s = String(v);
-      return s.includes(",") || s.includes('"') || s.includes("\n") ? `"${s.replace(/"/g, '""')}"` : s;
-    }).join(",")
-  );
-  // BOM for Excel UTF-8 compatibility
+  const headers = ["time", "type", "risk", "decision", "rule", "allowed"];
+  const displayHeaders = ["timestamp", "action_type", "risk", "approval", "rule", "allowed"];
+  const csvEsc = (v) => {
+    const s = String(v ?? "");
+    return s.includes(",") || s.includes('"') || s.includes("\n") ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const rows = auditEntries.map((e) => headers.map((h) => csvEsc(e[h])).join(","));
   const bom = "\uFEFF";
-  downloadBlob(bom + [headers.join(","), ...rows].join("\n"), "text/csv;charset=utf-8", "csv");
+  downloadBlob(bom + [displayHeaders.join(","), ...rows].join("\n"), "text/csv;charset=utf-8", "csv");
   showToast(`Exported ${auditEntries.length} entries as CSV`);
 }
 
