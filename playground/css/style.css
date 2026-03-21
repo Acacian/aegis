@@ -872,18 +872,24 @@ kbd {
   font-weight: 600;
 }
 
-.copy-python-btn {
-  font-size: 0.7rem;
-  padding: 3px 8px;
+.result-copy-group {
+  display: flex;
+  gap: 4px;
+}
+
+.copy-code-btn {
+  font-size: 0.68rem;
+  padding: 2px 8px;
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: 4px;
   background: transparent;
   color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.15s;
+  white-space: nowrap;
 }
 
-.copy-python-btn:hover {
+.copy-code-btn:hover {
   border-color: var(--accent);
   color: var(--accent);
 }

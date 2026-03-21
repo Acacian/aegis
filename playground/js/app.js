@@ -949,21 +949,21 @@ function renderResult(r) {
         ${isAllowed ? "&#x2705; ALLOWED" : "&#x1F6AB; BLOCKED"}
         ${!isAllowed && r.approval === "block" ? " — Policy explicitly blocks this action" : ""}
       </div>
-      <button class="copy-python-btn" title="Copy as Python code">Copy as Python</button>
+      <div class="result-copy-group">
+        <button class="copy-code-btn" data-fmt="python" title="Copy as Python snippet">Python</button>
+        <button class="copy-code-btn" data-fmt="pytest" title="Copy as pytest test case">pytest</button>
+        <button class="copy-code-btn" data-fmt="curl" title="Copy as cURL command">cURL</button>
+      </div>
     </div>
   `;
 
-  // Copy as Python handler
-  card.querySelector(".copy-python-btn").addEventListener("click", (e) => {
-    const params = r.description
-      ? `params=${JSON.stringify({})}, description="${r.description}"`
-      : `params=${JSON.stringify({})}`;
-    const code = `from aegis import Action, Policy, Runtime
-
-runtime = Runtime(executor=your_executor, policy=Policy.from_yaml("policy.yaml"))
-result = await runtime.run_one(Action("${r.action_type}", "${r.target}", ${params}))
-# Result: ${r.is_allowed ? "ALLOWED" : "BLOCKED"} (${r.risk_level}, ${r.approval})`;
-    copyToClipboard(code, e.target);
+  // Copy code handlers
+  card.querySelectorAll(".copy-code-btn").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      const fmt = btn.dataset.fmt;
+      const code = generateCode(fmt, r);
+      copyToClipboard(code, e.target);
+    });
   });
 
   // Prepend (latest first)
@@ -1128,6 +1128,52 @@ function escHtml(s) {
   const div = document.createElement("div");
   div.textContent = s;
   return div.innerHTML;
+}
+
+/* ---- Code Generation for Copy Buttons ---- */
+function generateCode(fmt, r) {
+  const params = JSON.stringify(r.params || {});
+  if (fmt === "python") {
+    return `from aegis import Action, Policy, Runtime
+
+policy = Policy.from_yaml("policy.yaml")
+async with Runtime(executor=your_executor, policy=policy) as rt:
+    result = await rt.run_one(
+        Action("${r.action_type}", "${r.target}", params=${params})
+    )
+    # Expected: ${r.is_allowed ? "ALLOWED" : "BLOCKED"} (${r.risk_level}, ${r.approval})`;
+  }
+
+  if (fmt === "pytest") {
+    return `import pytest
+from aegis import Action, Policy
+
+@pytest.fixture
+def policy():
+    return Policy.from_yaml("policy.yaml")
+
+def test_${r.action_type}_${r.approval}(policy):
+    \"\"\"${r.action_type} on ${r.target} should be ${r.approval}.\"\"\"
+    action = Action("${r.action_type}", "${r.target}", params=${params})
+    decision = policy.evaluate(action)
+    assert decision.approval.value == "${r.approval}"
+    assert decision.risk_level.value == "${r.risk_level.toLowerCase()}"
+    assert decision.is_allowed is ${r.is_allowed ? "True" : "False"}`;
+  }
+
+  if (fmt === "curl") {
+    const body = JSON.stringify({
+      action_type: r.action_type,
+      target: r.target,
+      params: r.params || {},
+    });
+    return `curl -X POST http://localhost:8000/api/v1/evaluate \\
+  -H "Content-Type: application/json" \\
+  -d '${body}'
+# Expected: ${r.approval} (${r.risk_level})`;
+  }
+
+  return "";
 }
 
 /* ---- Python evaluation code ---- */
