@@ -528,7 +528,7 @@ result = await runtime.run_one(Action("delete", "crm", params={"id": "all"}))
 
     <!-- Architecture flow diagram -->
     <div class="arch-flow">
-      <div class="arch-node arch-agent">
+      <div class="arch-node arch-agent" data-tip="Your AI agent sends actions through Aegis before executing them. Works with any Python agent framework.">
         <span class="arch-icon">&#x1F916;</span>
         <span class="arch-label">AI Agent</span>
         <span class="arch-sub">LangChain / CrewAI / OpenAI</span>
@@ -537,7 +537,7 @@ result = await runtime.run_one(Action("delete", "crm", params={"id": "all"}))
         <span class="arch-arrow-line"></span>
         <span class="arch-arrow-text">action request</span>
       </div>
-      <div class="arch-node arch-engine">
+      <div class="arch-node arch-engine" data-tip="Aegis evaluates each action against your YAML policy in under 1ms. No network calls, no latency.">
         <span class="arch-icon">&#x1F6E1;&#xFE0F;</span>
         <span class="arch-label">Aegis Engine</span>
         <span class="arch-sub">YAML policy + risk eval</span>

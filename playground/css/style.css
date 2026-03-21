@@ -1407,6 +1407,26 @@ kbd {
 .arch-node .arch-icon { font-size: 1.8rem; }
 .arch-node .arch-label { font-weight: 700; font-size: 0.95rem; color: var(--text-primary); margin-top: 4px; }
 .arch-node .arch-sub { font-size: 0.7rem; color: var(--text-muted); margin-top: 2px; }
+.arch-node[data-tip] { cursor: help; position: relative; }
+.arch-node[data-tip]:hover::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  max-width: 220px;
+  white-space: normal;
+  z-index: 10;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
 
 .arch-engine { border-color: var(--accent); background: rgba(88, 166, 255, 0.06); }
 
