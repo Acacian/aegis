@@ -912,6 +912,11 @@ function bindEvents() {
     copyToClipboard(editor.getValue(), e.target);
   });
 
+  document.getElementById("download-policy").addEventListener("click", () => {
+    downloadBlob(editor.getValue(), "text/yaml", "yaml");
+    showToast("Downloaded policy.yaml");
+  });
+
   document.getElementById("copy-pip").addEventListener("click", (e) => {
     copyToClipboard("pip install agent-aegis", e.target);
   });
