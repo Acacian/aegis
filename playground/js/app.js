@@ -1719,33 +1719,59 @@ function lintPolicyWarnings(yaml) {
   // Version should be a string "1", not integer
   if (/^version:\s*\d+\s*$/m.test(yaml)) warnings.push("Version should be quoted: version: \"1\"");
 
-  // Check for rules without match patterns
+  // Single-pass per-line analysis
   const lines = yaml.split("\n");
-  let inRule = false;
-  let hasMatch = false;
-  let ruleLine = -1;
+  const indents = new Set();
+  const validApprovals = ["auto", "approve", "block"];
+  const validRisks = ["low", "medium", "high", "critical"];
+  let inRule = false, hasMatch = false, ruleLine = -1;
+  let inRuleBlock = false, hasRisk = false, hasApproval = false, ruleStart = -1;
+
   for (let i = 0; i < lines.length; i++) {
-    if (/^\s*- name:/.test(lines[i])) {
+    const l = lines[i];
+
+    // Indentation tracking
+    const indentMatch = l.match(/^( +)\S/);
+    if (indentMatch) indents.add(indentMatch[1].length);
+
+    // Rule boundary: "- name:"
+    if (/^\s*- name:/.test(l)) {
+      // Close previous rule checks
       if (inRule && !hasMatch && ruleLine >= 0) {
         warnings.push(`Rule at line ${ruleLine + 1} has no match pattern`);
       }
-      inRule = true;
-      hasMatch = false;
-      ruleLine = i;
-    } else if (inRule && /^\s+match:/.test(lines[i])) {
-      hasMatch = true;
+      if (inRuleBlock && hasApproval && !hasRisk && ruleStart >= 0) {
+        warnings.push(`Rule at line ${ruleStart + 1} has no risk_level — consider adding one`);
+      }
+      inRule = true; hasMatch = false; ruleLine = i;
+      inRuleBlock = true; hasRisk = false; hasApproval = false; ruleStart = i;
+    } else if (inRule) {
+      if (/^\s+match:/.test(l)) hasMatch = true;
+      if (/^\s+risk_level:/.test(l)) hasRisk = true;
+      if (/^\s+approval:/.test(l)) hasApproval = true;
+    }
+
+    // Invalid approval values
+    const am = l.match(/approval:\s*["']?(\w+)["']?/);
+    if (am && !validApprovals.includes(am[1].toLowerCase())) {
+      warnings.push(`Invalid approval "${am[1]}" at line ${i + 1} — use auto, approve, or block`);
+    }
+
+    // Invalid risk_level values
+    const rm = l.match(/risk_level:\s*["']?(\w+)["']?/);
+    if (rm && !validRisks.includes(rm[1].toLowerCase())) {
+      warnings.push(`Invalid risk_level "${rm[1]}" at line ${i + 1} — use low, medium, high, or critical`);
     }
   }
+  // Close final rule
   if (inRule && !hasMatch && ruleLine >= 0) {
     warnings.push(`Rule at line ${ruleLine + 1} has no match pattern`);
   }
-
-  // Mixed indentation (2-space and 4-space within same file)
-  const indents = new Set();
-  for (const l of lines) {
-    const m = l.match(/^( +)\S/);
-    if (m) indents.add(m[1].length);
+  if (inRuleBlock && hasApproval && !hasRisk && ruleStart >= 0) {
+    warnings.push(`Rule at line ${ruleStart + 1} has no risk_level — consider adding one`);
   }
+
+  // Mixed indentation
   if (indents.has(2) && indents.has(4)) {
     warnings.push("Mixed indentation detected (2 and 4 spaces) — use consistent 2-space indent");
   }
@@ -1762,47 +1788,6 @@ function lintPolicyWarnings(yaml) {
   const approvals = yaml.match(/approval:\s*(\w+)/g) || [];
   if (approvals.length > 1 && approvals.every((a) => /auto/.test(a))) {
     warnings.push("All rules auto-approve — consider adding review or block rules");
-  }
-
-  // Invalid approval values
-  const validApprovals = ["auto", "approve", "block"];
-  for (let i = 0; i < lines.length; i++) {
-    const am = lines[i].match(/approval:\s*["']?(\w+)["']?/);
-    if (am && !validApprovals.includes(am[1].toLowerCase())) {
-      warnings.push(`Invalid approval "${am[1]}" at line ${i + 1} — use auto, approve, or block`);
-    }
-  }
-
-  // Invalid risk_level values
-  const validRisks = ["low", "medium", "high", "critical"];
-  for (let i = 0; i < lines.length; i++) {
-    const rm = lines[i].match(/risk_level:\s*["']?(\w+)["']?/);
-    if (rm && !validRisks.includes(rm[1].toLowerCase())) {
-      warnings.push(`Invalid risk_level "${rm[1]}" at line ${i + 1} — use low, medium, high, or critical`);
-    }
-  }
-
-  // Rules with approval but no risk_level — suggest adding one
-  let inRuleBlock = false;
-  let hasRisk = false;
-  let hasApproval = false;
-  let ruleStart = -1;
-  for (let i = 0; i < lines.length; i++) {
-    if (/^\s*- name:/.test(lines[i])) {
-      if (inRuleBlock && hasApproval && !hasRisk && ruleStart >= 0) {
-        warnings.push(`Rule at line ${ruleStart + 1} has no risk_level — consider adding one`);
-      }
-      inRuleBlock = true;
-      hasRisk = false;
-      hasApproval = false;
-      ruleStart = i;
-    } else if (inRuleBlock) {
-      if (/^\s+risk_level:/.test(lines[i])) hasRisk = true;
-      if (/^\s+approval:/.test(lines[i])) hasApproval = true;
-    }
-  }
-  if (inRuleBlock && hasApproval && !hasRisk && ruleStart >= 0) {
-    warnings.push(`Rule at line ${ruleStart + 1} has no risk_level — consider adding one`);
   }
 
   return warnings;
