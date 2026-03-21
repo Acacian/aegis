@@ -1575,6 +1575,10 @@ function findWarningLine(yaml, warning) {
   if (lower.includes("version should be quoted")) {
     return lines.findIndex((l) => /^version:\s*\d+\s*$/.test(l));
   }
+  if (lower.includes("invalid approval") || lower.includes("invalid risk_level")) {
+    const lineMatch = warning.match(/line (\d+)/);
+    if (lineMatch) return parseInt(lineMatch[1]) - 1;
+  }
   return -1;
 }
 
@@ -1638,6 +1642,24 @@ function lintPolicyWarnings(yaml) {
   const approvals = yaml.match(/approval:\s*(\w+)/g) || [];
   if (approvals.length > 1 && approvals.every((a) => /auto/.test(a))) {
     warnings.push("All rules auto-approve — consider adding review or block rules");
+  }
+
+  // Invalid approval values
+  const validApprovals = ["auto", "approve", "block"];
+  for (let i = 0; i < lines.length; i++) {
+    const am = lines[i].match(/approval:\s*["']?(\w+)["']?/);
+    if (am && !validApprovals.includes(am[1].toLowerCase())) {
+      warnings.push(`Invalid approval "${am[1]}" at line ${i + 1} — use auto, approve, or block`);
+    }
+  }
+
+  // Invalid risk_level values
+  const validRisks = ["low", "medium", "high", "critical"];
+  for (let i = 0; i < lines.length; i++) {
+    const rm = lines[i].match(/risk_level:\s*["']?(\w+)["']?/);
+    if (rm && !validRisks.includes(rm[1].toLowerCase())) {
+      warnings.push(`Invalid risk_level "${rm[1]}" at line ${i + 1} — use low, medium, high, or critical`);
+    }
   }
 
   return warnings;
