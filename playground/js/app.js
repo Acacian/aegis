@@ -594,6 +594,8 @@ function buildShortcutOverlay() {
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>D</kbd><span>Toggle theme</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>B</kbd><span>Toggle audit panel</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd><span>Editor focus mode</span></div>
+        <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd><span>Print audit log</span></div>
+        <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>,</kbd><span>Jump to How It Works</span></div>
         <div class="shortcut-row"><kbd>?</kbd><span>Show this help</span></div>
         <div class="shortcut-row"><kbd>Esc</kbd><span>Close dialogs / clear results</span></div>
       </div>
@@ -1059,6 +1061,23 @@ function bindEvents() {
       document.body.classList.toggle("editor-focus-mode");
       showToast(document.body.classList.contains("editor-focus-mode") ? "Focus mode ON" : "Focus mode OFF");
       editor.refresh();
+      return;
+    }
+    // Ctrl/Cmd + Shift + P → print audit log
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === "P" || e.key === "p")) {
+      e.preventDefault();
+      if (typeof printAuditLog === "function") printAuditLog();
+      return;
+    }
+    // Ctrl/Cmd + , → scroll to and flash the how-it-works section (settings-like discoverability)
+    if ((e.ctrlKey || e.metaKey) && e.key === ",") {
+      e.preventDefault();
+      const hiw = document.querySelector(".how-it-works");
+      if (hiw) {
+        hiw.scrollIntoView({ behavior: "smooth", block: "start" });
+        hiw.style.outline = "2px solid var(--accent)";
+        setTimeout(() => { hiw.style.outline = ""; }, 1500);
+      }
       return;
     }
     // r → re-run last evaluated action (when not in input)
