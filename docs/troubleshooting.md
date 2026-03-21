@@ -124,6 +124,51 @@ executor = HttpxExecutor(base_url="https://api.example.com")
 # Make sure the URL doesn't have a trailing path
 ```
 
+## Server Issues
+
+### `aegis serve` fails to start
+
+Make sure you have the server extra installed:
+
+```bash
+pip install 'agent-aegis[server]'
+aegis serve policy.yaml --port 8000
+```
+
+### CORS errors from browser
+
+The Aegis REST API server includes CORS headers by default. If you're still getting errors, check that you're hitting the right port and the server is running.
+
+### Request body too large
+
+The server limits request bodies to 1MB by default. For bulk operations, consider splitting into smaller batches.
+
+## Performance Issues
+
+### Policy evaluation is slow
+
+If you have many rules (100+), ensure you're using the latest version which includes compiled glob caching. Policy evaluation should be < 1ms for typical policies.
+
+### Audit log database grows too large
+
+Use JSONL export and rotate:
+
+```bash
+aegis audit --format jsonl -o audit-$(date +%Y%m%d).jsonl
+```
+
+The in-memory audit logger caps at 10,000 entries by default. The SQLite logger is append-only and should be rotated externally.
+
+## Migration
+
+### Upgrading from 0.1.x to 0.1.3+
+
+No breaking changes. New features are additive. If you're using the REST API server, check the [server docs](guides/rest-api.md) for new endpoints.
+
+### Upgrading from 0.1.3 to 0.1.4+
+
+No breaking changes. Unknown conditions now fail-closed (return `False`) instead of fail-open. If you have custom conditions that relied on unknown operators passing, update your policies.
+
 ## Getting Help
 
 - [GitHub Discussions](https://github.com/Acacian/aegis/discussions) — questions, ideas, show & tell
