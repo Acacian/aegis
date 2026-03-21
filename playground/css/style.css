@@ -721,7 +721,22 @@ main {
   margin: 2px 0 2px 20px;
   border-radius: 0 4px 4px 0;
   font-family: monospace;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
+.warn-text { flex: 1; }
+.warn-fix-btn {
+  font-size: 0.68rem;
+  background: rgba(210, 153, 34, 0.18);
+  color: #d29922;
+  border: 1px solid rgba(210, 153, 34, 0.3);
+  border-radius: 3px;
+  padding: 1px 6px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.warn-fix-btn:hover { background: rgba(210, 153, 34, 0.3); }
 
 .rule-count {
   font-size: 0.68rem;

@@ -1490,7 +1490,16 @@ async function validatePolicy() {
         warns.forEach((w) => {
           const warnEl = document.createElement("div");
           warnEl.className = "cm-warn-widget";
-          warnEl.textContent = w;
+          const fix = suggestFix(w, null, yaml);
+          if (fix) {
+            warnEl.innerHTML = `<span class="warn-text">\u26A0 ${_escDiv.textContent = w, _escDiv.innerHTML}</span><button class="warn-fix-btn">${_escDiv.textContent = fix.label, _escDiv.innerHTML}</button>`;
+            warnEl.querySelector(".warn-fix-btn").addEventListener("click", () => {
+              editor.setValue(fix.result);
+              clearEditorErrors();
+            });
+          } else {
+            warnEl.textContent = "\u26A0 " + w;
+          }
           const wLine = findWarningLine(yaml, w);
           if (wLine >= 0) {
             const widget = editor.addLineWidget(wLine, warnEl, { coverGutter: false, noHScroll: true });
