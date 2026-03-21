@@ -550,7 +550,7 @@ function buildShortcutOverlay() {
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>K</kbd><span>Focus custom action input</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>S</kbd><span>Copy policy to clipboard</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>/</kbd><span>Toggle YAML comment</span></div>
-        <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>G</kbd><span>Go to line</span></div>
+        <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>G</kbd> / <kbd>Ctrl</kbd>+<kbd>L</kbd><span>Go to line</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>E</kbd><span>Export audit log (JSON)</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>F</kbd><span>Focus audit search</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>B</kbd><span>Toggle audit panel</span></div>
@@ -879,6 +879,19 @@ function bindEvents() {
         const isHidden = auditPanel.style.display === "none";
         auditPanel.style.display = isHidden ? "" : "none";
         showToast(isHidden ? "Audit panel shown" : "Audit panel hidden");
+      }
+      return;
+    }
+    // Ctrl/Cmd + L → go to line in editor (alternate binding)
+    if ((e.ctrlKey || e.metaKey) && e.key === "l" && !e.shiftKey) {
+      e.preventDefault();
+      const lineCount = editor.lineCount();
+      const line = prompt(`Go to line (1-${lineCount}):`);
+      if (line) {
+        const n = Math.max(0, Math.min(parseInt(line) - 1, lineCount - 1));
+        editor.setCursor(n, 0);
+        editor.focus();
+        editor.scrollIntoView({ line: n, ch: 0 }, 100);
       }
       return;
     }
