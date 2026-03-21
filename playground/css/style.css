@@ -3465,6 +3465,12 @@ footer code {
 .ba-before {
   background: rgba(248, 81, 73, 0.08);
   border: 1px solid rgba(248, 81, 73, 0.25);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.ba-before:hover {
+  transform: scale(1.02);
+  box-shadow: 0 2px 8px rgba(248, 81, 73, 0.15);
 }
 
 .ba-before .ba-label { color: #f85149; }
@@ -3472,6 +3478,12 @@ footer code {
 .ba-after {
   background: rgba(63, 185, 80, 0.08);
   border: 1px solid rgba(63, 185, 80, 0.25);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.ba-after:hover {
+  transform: scale(1.02);
+  box-shadow: 0 2px 8px rgba(63, 185, 80, 0.15);
 }
 
 .ba-after .ba-label { color: #3fb950; }
