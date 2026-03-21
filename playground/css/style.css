@@ -1195,6 +1195,11 @@ kbd {
   color: var(--accent);
 }
 
+.copy-success {
+  border-color: var(--approval-auto) !important;
+  color: var(--approval-auto) !important;
+}
+
 .result-allowed.yes { color: var(--risk-low); }
 .result-allowed.no { color: var(--risk-high); }
 
