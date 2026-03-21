@@ -1212,6 +1212,30 @@ function setValidationStatus(state, text) {
   else badge.innerHTML = "\u2705 Valid";
 }
 
+function findWarningLine(yaml, warning) {
+  const lines = yaml.split("\n");
+  const lower = warning.toLowerCase();
+  if (lower.includes("wildcard")) {
+    return lines.findIndex((l) => /approval:\s*\*/.test(l));
+  }
+  if (lower.includes("over 20 rules")) {
+    return lines.filter((l) => /- name:/.test(l)).length > 20 ? lines.length - 1 : -1;
+  }
+  if (lower.includes("critical risk")) {
+    return lines.findIndex((l) => /risk_level:\s*critical/.test(l));
+  }
+  if (lower.includes("duplicate rule name")) {
+    const match = warning.match(/: (\S+)$/);
+    if (match) {
+      const name = match[1];
+      let found = -1;
+      lines.forEach((l, i) => { if (l.includes("- name: " + name)) found = i; });
+      return found;
+    }
+  }
+  return -1;
+}
+
 function lintPolicyWarnings(yaml) {
   const warnings = [];
   if (/approval:\s*\*/m.test(yaml)) warnings.push("Wildcard approval pattern detected");
@@ -1258,10 +1282,20 @@ async function validatePolicy() {
       setValidationStatus("error", result.error.slice(0, 40));
     } else {
       clearEditorErrors();
-      // Check for warnings
+      // Check for warnings — show inline
       const warns = lintPolicyWarnings(yaml);
       if (warns.length) {
         setValidationStatus("warn", warns[0]);
+        warns.forEach((w) => {
+          const warnEl = document.createElement("div");
+          warnEl.className = "cm-warn-widget";
+          warnEl.textContent = w;
+          const wLine = findWarningLine(yaml, w);
+          if (wLine >= 0) {
+            const widget = editor.addLineWidget(wLine, warnEl, { coverGutter: false, noHScroll: true });
+            activeLineWidgets.push(widget);
+          }
+        });
       } else {
         setValidationStatus("ok");
       }

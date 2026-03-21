@@ -631,6 +631,17 @@ main {
   font-family: monospace;
 }
 
+.cm-warn-widget {
+  font-size: 0.75rem;
+  color: #d29922;
+  background: rgba(210, 153, 34, 0.08);
+  border-left: 3px solid #d29922;
+  padding: 3px 8px;
+  margin: 2px 0 2px 20px;
+  border-radius: 0 4px 4px 0;
+  font-family: monospace;
+}
+
 .rule-count {
   font-size: 0.68rem;
   color: var(--text-muted);
