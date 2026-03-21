@@ -381,6 +381,16 @@ a.integration-badge:active {
 .stat-approve .stat-value { color: var(--risk-medium); }
 .stat-block .stat-value { color: var(--risk-high); }
 
+.stat-pop {
+  animation: statPop 0.3s ease-out;
+}
+
+@keyframes statPop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
 /* ---- How It Works ---- */
 .how-it-works {
   padding: 20px 24px 4px;

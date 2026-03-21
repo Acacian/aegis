@@ -1496,10 +1496,17 @@ function updateStats(result) {
   const $ap = document.getElementById("stat-approve");
   const $b = document.getElementById("stat-block");
   const $l = document.getElementById("stat-latency");
-  if ($t) $t.textContent = stats.total;
-  if ($a) $a.textContent = stats.auto;
-  if ($ap) $ap.textContent = stats.approve;
-  if ($b) $b.textContent = stats.block;
+  const animate = (el, val) => {
+    if (!el) return;
+    el.textContent = val;
+    el.classList.remove("stat-pop");
+    void el.offsetWidth; // force reflow
+    el.classList.add("stat-pop");
+  };
+  animate($t, stats.total);
+  if (approval === "auto") animate($a, stats.auto);
+  else if (approval === "approve") animate($ap, stats.approve);
+  else if (approval === "block") animate($b, stats.block);
   if ($l && stats.total > 0) {
     $l.textContent = (stats.totalMs / stats.total).toFixed(1) + "ms";
   }
