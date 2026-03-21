@@ -2636,13 +2636,15 @@ async function copyToClipboard(text, btn) {
       document.execCommand("copy");
       ta.remove();
     }
-    const orig = btn.textContent;
-    btn.textContent = "\u2713 Copied!";
-    btn.classList.add("copy-success");
-    setTimeout(() => {
-      btn.textContent = orig;
-      btn.classList.remove("copy-success");
-    }, 1500);
+    if (btn) {
+      const orig = btn.textContent;
+      btn.textContent = "\u2713 Copied!";
+      btn.classList.add("copy-success");
+      setTimeout(() => {
+        btn.textContent = orig;
+        btn.classList.remove("copy-success");
+      }, 1500);
+    }
   } catch {
     showToast("Failed to copy — try manually");
   }
