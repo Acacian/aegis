@@ -700,7 +700,10 @@ function toggleTheme() {
 /* ---- Event Binding ---- */
 function bindEvents() {
   // Theme toggle
-  document.getElementById("theme-toggle").addEventListener("click", toggleTheme);
+  document.getElementById("theme-toggle").addEventListener("click", (ev) => {
+    if (ev.isTrusted) showShortcutHint("theme", "Ctrl+D to toggle theme");
+    toggleTheme();
+  });
 
   // Comparison tabs
   document.querySelectorAll(".comp-tab").forEach((tab) => {
@@ -748,7 +751,8 @@ function bindEvents() {
   });
 
   // Custom action
-  document.getElementById("run-custom").addEventListener("click", () => {
+  document.getElementById("run-custom").addEventListener("click", (ev) => {
+    if (ev.isTrusted) showShortcutHint("run-custom", "Ctrl+Enter to evaluate");
     const type = document.getElementById("custom-type").value.trim();
     const target = document.getElementById("custom-target").value.trim();
     const paramsStr = document.getElementById("custom-params").value.trim();
@@ -777,7 +781,10 @@ function bindEvents() {
   });
 
   // Run all
-  document.getElementById("run-all").addEventListener("click", runAllActions);
+  document.getElementById("run-all").addEventListener("click", (ev) => {
+    if (ev.isTrusted) showShortcutHint("run-all", "Ctrl+Shift+Enter to run all");
+    runAllActions();
+  });
 
   // Delegated copy handler for result cards (single listener instead of 11 per card)
   $result.addEventListener("click", (e) => {
@@ -1104,7 +1111,8 @@ function bindEvents() {
     showToast(`Copied ${auditEntries.length} results with summary`);
   });
 
-  document.getElementById("clear-result").addEventListener("click", () => {
+  document.getElementById("clear-result").addEventListener("click", (ev) => {
+    if (ev.isTrusted) showShortcutHint("clear-result", "Esc to clear results");
     $result.innerHTML =
       '<div class="empty-state">Click an action above to see the policy evaluation result</div>';
   });
@@ -1164,6 +1172,7 @@ function bindEvents() {
 
   // Copy buttons
   document.getElementById("copy-policy").addEventListener("click", (e) => {
+    if (e.isTrusted) showShortcutHint("copy-policy", "Ctrl+S to copy policy");
     copyToClipboard(editor.getValue(), e.target);
   });
 
@@ -2204,6 +2213,18 @@ function updateAuditChart() {
 /* ---- Toast ---- */
 let _toastEl = null;
 let _toastTimer = null;
+/* ---- Shortcut Discovery Hints ---- */
+const _shortcutHintSeen = {};
+const isMac = navigator.platform?.includes("Mac");
+const _mod = isMac ? "Cmd" : "Ctrl";
+function showShortcutHint(id, shortcut) {
+  if (!shortcut) return;
+  const count = _shortcutHintSeen[id] || 0;
+  if (count >= 3) return; // only show 3 times per action
+  _shortcutHintSeen[id] = count + 1;
+  showToast(`Tip: ${shortcut.replace("Ctrl", _mod)}`);
+}
+
 function showToast(msg) {
   if (!_toastEl) {
     _toastEl = document.createElement("div");
