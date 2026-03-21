@@ -2074,6 +2074,7 @@ function _getCardTemplate() {
         <button class="copy-code-btn" data-fmt="env" title="Copy as .env config">ENV</button>
         <button class="copy-code-btn" data-fmt="oneliner" title="Copy one-line summary">TL;DR</button>
         <button class="copy-code-btn" data-fmt="make" title="Copy as Makefile target">Make</button>
+        <button class="copy-code-btn" data-fmt="json-schema" title="Copy as JSON Schema">Schema</button>
       </div>
     </div>
   </div>`;
@@ -2582,6 +2583,22 @@ AEGIS_ACTION_TARGET=${r.target}
 AEGIS_EXPECTED_APPROVAL=${r.approval}
 AEGIS_EXPECTED_RISK=${r.risk_level.toLowerCase()}
 AEGIS_LOG_LEVEL=INFO`;
+  }
+
+  if (fmt === "json-schema") {
+    return JSON.stringify({
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "title": `Aegis evaluation: ${r.action_type}`,
+      "type": "object",
+      "properties": {
+        "action_type": { "const": r.action_type },
+        "target": { "const": r.target },
+        "approval": { "enum": ["auto", "approve", "block"], "default": r.approval },
+        "risk_level": { "enum": ["low", "medium", "high", "critical"], "default": r.risk_level.toLowerCase() },
+        "is_allowed": { "type": "boolean", "default": r.is_allowed },
+      },
+      "required": ["action_type", "approval", "risk_level", "is_allowed"],
+    }, null, 2);
   }
 
   return "";
