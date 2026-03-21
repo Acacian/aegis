@@ -1117,6 +1117,18 @@ kbd {
 .result-copy-group {
   display: flex;
   gap: 4px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+  .result-copy-group {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+  }
+  .result-copy-group::-webkit-scrollbar { display: none; }
 }
 
 .copy-code-btn {
