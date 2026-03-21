@@ -1702,7 +1702,7 @@ function showPulseRing(card) {
   ring.addEventListener("animationend", () => ring.remove());
 }
 
-/* ---- Blocked Effect (CSS-only particle burst) ---- */
+/* ---- Blocked Effect (CSS-only particle burst + screen shake) ---- */
 function showBlockedEffect(card) {
   card.classList.add("blocked-effect");
   card.addEventListener(
@@ -1710,6 +1710,12 @@ function showBlockedEffect(card) {
     () => card.classList.remove("blocked-effect"),
     { once: true }
   );
+  // Brief screen shake on the result panel
+  const resultPanel = document.getElementById("result");
+  if (resultPanel) {
+    resultPanel.classList.add("shake");
+    resultPanel.addEventListener("animationend", () => resultPanel.classList.remove("shake"), { once: true });
+  }
 }
 
 /* ---- Audit Log ---- */
