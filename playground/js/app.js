@@ -2062,11 +2062,12 @@ function updateAuditChart() {
     chart.className = "audit-chart";
     $auditCount.parentNode.insertBefore(chart, $auditCount.nextSibling);
   }
-  const total = auditEntries.length;
+  const total = stats.total;
   if (total === 0) { chart.innerHTML = ""; return; }
-  const auto = auditEntries.filter((e) => e.approval === "auto").length;
-  const approve = auditEntries.filter((e) => e.approval === "approve").length;
-  const block = total - auto - approve;
+  // Use tracked stats instead of re-filtering the entire array
+  const auto = stats.auto;
+  const approve = stats.approve;
+  const block = stats.block;
   chart.innerHTML = `
     <div class="chart-bar">
       <div class="chart-seg chart-auto" style="width:${(auto / total) * 100}%"></div>
