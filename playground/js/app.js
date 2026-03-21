@@ -571,6 +571,17 @@ function bindEvents() {
     $audit.innerHTML =
       '<div class="empty-state">Audit entries will appear here as you evaluate actions</div>';
     $auditCount.textContent = "0 entries";
+    const chart = document.getElementById("audit-chart");
+    if (chart) chart.innerHTML = "";
+  });
+
+  // Audit filters
+  document.querySelectorAll(".audit-filter").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelector(".audit-filter.active")?.classList.remove("active");
+      btn.classList.add("active");
+      filterAuditLog(btn.dataset.filter);
+    });
   });
 
   // Copy buttons
@@ -1076,7 +1087,8 @@ function addAuditEntry(r) {
   const decisionClass = entry.decision.toLowerCase();
 
   const row = document.createElement("div");
-  row.className = "audit-entry";
+  row.className = "audit-entry audit-row";
+  row.dataset.approval = decisionClass;
   row.innerHTML = `
     <span class="audit-time">${entry.time}</span>
     <span class="audit-type">${escHtml(entry.type)}</span>
@@ -1085,11 +1097,28 @@ function addAuditEntry(r) {
     <span class="audit-rule">${escHtml(entry.rule)}</span>
   `;
 
+  // Respect active filter
+  const activeFilter = document.querySelector(".audit-filter.active")?.dataset.filter || "all";
+  if (activeFilter !== "all" && activeFilter !== decisionClass) {
+    row.style.display = "none";
+  }
+
   const empty = $audit.querySelector(".empty-state");
   if (empty) empty.remove();
   $audit.prepend(row);
   $auditCount.textContent = `${auditEntries.length} entries`;
   updateAuditChart();
+}
+
+function filterAuditLog(filter) {
+  const rows = $audit.querySelectorAll(".audit-row");
+  rows.forEach((row) => {
+    if (filter === "all" || row.dataset.approval === filter) {
+      row.style.display = "";
+    } else {
+      row.style.display = "none";
+    }
+  });
 }
 
 function updateAuditChart() {

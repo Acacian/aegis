@@ -928,6 +928,49 @@ kbd {
   font-size: 0.75rem;
 }
 
+.audit-filters {
+  display: flex;
+  gap: 4px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.audit-filter {
+  font-size: 0.7rem;
+  padding: 2px 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.audit-filter:hover {
+  border-color: var(--text-muted);
+}
+
+.audit-filter.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #000;
+}
+
+.audit-filter.filter-auto.active {
+  background: var(--approval-auto);
+  border-color: var(--approval-auto);
+}
+
+.audit-filter.filter-approve.active {
+  background: var(--approval-approve);
+  border-color: var(--approval-approve);
+}
+
+.audit-filter.filter-block.active {
+  background: var(--approval-block);
+  border-color: var(--approval-block);
+}
+
 .audit-entry {
   display: flex;
   align-items: center;
