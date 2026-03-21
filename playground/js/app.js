@@ -926,7 +926,16 @@ function downloadBlob(content, type, ext) {
 }
 
 function exportAuditJSON() {
-  downloadBlob(JSON.stringify(auditEntries, null, 2), "application/json", "json");
+  const report = {
+    meta: {
+      exported_at: new Date().toISOString(),
+      policy_yaml: editor.getValue(),
+      version: "0.1.4",
+    },
+    summary: { ...stats, avg_latency_ms: stats.total > 0 ? +(stats.totalMs / stats.total).toFixed(2) : 0 },
+    entries: auditEntries,
+  };
+  downloadBlob(JSON.stringify(report, null, 2), "application/json", "json");
 }
 
 function exportAuditCSV() {
