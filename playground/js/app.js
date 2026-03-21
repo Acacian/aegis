@@ -37,10 +37,36 @@ function initEditor() {
     viewportMargin: Infinity,
   });
   editor.setValue(POLICY_PRESETS.default);
+  initTheme();
+}
+
+/* ---- Theme Toggle ---- */
+function initTheme() {
+  const saved = localStorage.getItem("aegis-theme");
+  if (saved === "light") {
+    document.documentElement.setAttribute("data-theme", "light");
+    editor.setOption("theme", "default");
+  }
+}
+
+function toggleTheme() {
+  const isLight = document.documentElement.getAttribute("data-theme") === "light";
+  if (isLight) {
+    document.documentElement.removeAttribute("data-theme");
+    editor.setOption("theme", "dracula");
+    localStorage.setItem("aegis-theme", "dark");
+  } else {
+    document.documentElement.setAttribute("data-theme", "light");
+    editor.setOption("theme", "default");
+    localStorage.setItem("aegis-theme", "light");
+  }
 }
 
 /* ---- Event Binding ---- */
 function bindEvents() {
+  // Theme toggle
+  document.getElementById("theme-toggle").addEventListener("click", toggleTheme);
+
   // Preset buttons
   document.querySelectorAll(".preset-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
