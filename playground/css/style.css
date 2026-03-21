@@ -2701,6 +2701,14 @@ footer code {
     padding: 24px 16px;
   }
 
+  .arch-flow {
+    flex-direction: column;
+    gap: 6px;
+  }
+  .arch-node { min-width: unset; width: 100%; padding: 12px 16px; }
+  .arch-arrow { transform: rotate(90deg); margin: 4px 0; }
+  .arch-node[data-tip]:hover::after { display: none; }
+
   .step-icon {
     font-size: 1.6rem;
   }
