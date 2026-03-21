@@ -1162,7 +1162,16 @@ function printAuditLog() {
 }
 
 /* ---- Pyodide Init ---- */
+let pyodideInitPromise = null;
+
 async function initPyodide() {
+  // Prevent double init
+  if (pyodideInitPromise) return pyodideInitPromise;
+  pyodideInitPromise = _initPyodideInner();
+  return pyodideInitPromise;
+}
+
+async function _initPyodideInner() {
   const t0 = performance.now();
   try {
     setProgress(10, "Loading Python runtime...");
