@@ -2261,6 +2261,19 @@ footer code {
   }
 }
 
+@media (max-width: 820px) {
+  /* Tablet: reduce panel min-heights when stacked */
+  .panel { min-height: 260px; }
+  .CodeMirror { min-height: 200px; }
+  .integration-bar { gap: 8px; }
+  .integration-badge { font-size: 0.7rem; padding: 4px 8px; }
+  .quickstart-code { margin-top: 20px; }
+  .arch-flow { gap: 10px; }
+  .arch-node { padding: 12px 14px; }
+  .arch-label { font-size: 0.85rem; }
+  .arch-sub { font-size: 0.65rem; }
+}
+
 @media (max-width: 640px) {
   header {
     flex-direction: column;
