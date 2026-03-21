@@ -175,6 +175,41 @@ header {
   margin-top: 2px;
 }
 
+.social-proof {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.proof-item {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.proof-sep {
+  font-size: 0.5rem;
+  color: var(--text-muted);
+}
+
+.pip-btn {
+  font-family: monospace;
+  font-size: 0.75rem;
+  padding: 4px 12px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.pip-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 .header-right {
   display: flex;
   gap: 12px;
