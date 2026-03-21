@@ -497,6 +497,7 @@ function buildShortcutOverlay() {
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>K</kbd><span>Focus custom action input</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>S</kbd><span>Copy policy to clipboard</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>/</kbd><span>Toggle YAML comment</span></div>
+        <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>G</kbd><span>Go to line</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>E</kbd><span>Export audit log (JSON)</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>D</kbd><span>Toggle theme</span></div>
         <div class="shortcut-row"><kbd>0</kbd>-<kbd>9</kbd><span>Switch preset (by position)</span></div>
@@ -696,6 +697,19 @@ function bindEvents() {
       document.getElementById("clear-result")?.click();
       document.getElementById("clear-audit")?.click();
       showToast("Cleared results and audit log");
+      return;
+    }
+    // Ctrl/Cmd + G → go to line in editor
+    if ((e.ctrlKey || e.metaKey) && (e.key === "g" || e.key === "G") && !e.shiftKey) {
+      e.preventDefault();
+      const lineCount = editor.lineCount();
+      const line = prompt(`Go to line (1-${lineCount}):`);
+      if (line) {
+        const n = Math.max(0, Math.min(parseInt(line) - 1, lineCount - 1));
+        editor.setCursor(n, 0);
+        editor.focus();
+        editor.scrollIntoView({ line: n, ch: 0 }, 100);
+      }
       return;
     }
     // Ctrl/Cmd + Shift + Enter → run all (check first, before plain Enter)
