@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Aegis Playground - Interactive AI Agent Governance</title>
   <meta name="description" content="Try Aegis governance in your browser. Write YAML policies, simulate AI agent actions, see real-time risk evaluation.">
+  <meta name="keywords" content="AI agent governance, AI safety, policy engine, YAML policy, LangChain governance, CrewAI governance, MCP governance, Python AI tools">
+  <link rel="canonical" href="https://acacian.github.io/aegis/playground/">
 
   <!-- Open Graph / Social -->
   <meta property="og:type" content="website">
@@ -50,6 +52,21 @@
 
   <link rel="stylesheet" href="css/style.css">
 </head>
+<noscript>
+  <style>
+    #loading-overlay { display: none; }
+    body::before {
+      content: "The Aegis Playground requires JavaScript. Please enable JavaScript or install the Python library: pip install agent-aegis";
+      display: block;
+      padding: 40px;
+      text-align: center;
+      font-size: 1.2rem;
+      color: #e6edf3;
+      background: #0d1117;
+    }
+    body > *:not(noscript) { display: none; }
+  </style>
+</noscript>
 <body>
   <!-- Loading overlay -->
   <div id="loading-overlay">
