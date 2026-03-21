@@ -2966,6 +2966,11 @@ footer code {
   .header-right {
     flex-wrap: wrap;
     justify-content: center;
+    gap: 6px;
+  }
+  .header-right .pip-btn {
+    font-size: 0.68rem;
+    padding: 4px 8px;
   }
 
   .social-proof {
