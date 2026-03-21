@@ -1347,7 +1347,9 @@ function toggleExportMenu() {
     <button class="export-option" data-format="html">Export as HTML report</button>
     <button class="export-option" data-format="markdown">Copy as Markdown</button>
     <button class="export-option" data-format="clipboard">Copy to clipboard</button>
-    <button class="export-option" data-format="print">Print audit log</button>`;
+    <button class="export-option" data-format="print">Print audit log</button>
+    <div class="export-header" style="margin-top:4px;border-top:1px solid var(--border);padding-top:6px">Quick</div>
+    <button class="export-option" data-format="summary">Copy summary one-liner</button>`;
   document.body.appendChild(menu);
 
   menu.addEventListener("click", (e) => {
@@ -1359,6 +1361,12 @@ function toggleExportMenu() {
     else if (format === "html") exportAuditHTML();
     else if (format === "clipboard") copyAuditToClipboard();
     else if (format === "print") printAuditLog();
+    else if (format === "summary") {
+      const avgMs = stats.total > 0 ? (stats.totalMs / stats.total).toFixed(1) : "0";
+      const line = `Aegis: ${stats.total} evals (${stats.auto} auto, ${stats.approve} approve, ${stats.block} block) avg ${avgMs}ms`;
+      copyToClipboard(line, e.target);
+      showToast("Summary copied");
+    }
     menu.remove();
   });
 }
