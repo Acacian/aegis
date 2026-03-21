@@ -78,7 +78,9 @@ pip install 'agent-aegis[all]'            # Everything
 | **0.1** | **Released** | Policy engine, 7 adapters (incl. MCP), CLI, audit, conditions, JSON Schema |
 | **0.1.3** | **Released** | REST API server, retry/rollback, dry-run, hot-reload, policy merge, Slack/Discord/Telegram/email approval, runtime hooks |
 | **0.2** | Planned | Dashboard UI, rate limiting, queue-based async execution |
-| **0.3** | Planned | Multi-tenant policies, team approvals, cloud audit storage |
+| **0.3** | Planned | Agent identity, policy hierarchy (org → team → agent), conflict detection |
+| **0.4** | Planned | Multi-agent governance (delegation, chain tracing), centralized policy server |
+| **1.0** | Planned | Distributed governance, policy versioning & rollback, multi-tenant REST API |
 
 ## Links
 

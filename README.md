@@ -536,7 +536,9 @@ aegis serve policy.yaml --port 8000     # Start REST API server
 | **0.1** | **Released** | Policy engine, 7 adapters (incl. MCP), CLI, audit (SQLite + JSONL + webhook), conditions, JSON Schema |
 | **0.1.3** | **Released** | REST API server, retry/rollback, dry-run, hot-reload, policy merge, webhook approval/audit, Slack/Discord/Telegram/email approval, simulate CLI, runtime hooks, color-coded CLI, stats, live tail |
 | **0.2** | Q2 2026 | Dashboard UI, rate limiting, queue-based async execution |
-| **0.3** | Q3 2026 | Multi-tenant policies, team approvals, cloud audit storage |
+| **0.3** | Q3 2026 | Agent identity (`agent_id` in actions), policy hierarchy (org → team → agent), conflict detection |
+| **0.4** | Q4 2026 | Multi-agent governance (delegation, chain tracing), centralized policy server, cross-agent audit correlation |
+| **1.0** | 2027 | Distributed governance, policy versioning & rollback, multi-tenant REST API |
 
 ## Contributing
 
