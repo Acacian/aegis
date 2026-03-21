@@ -2657,7 +2657,19 @@ footer code {
   }
 
   .quick-actions {
-    grid-template-columns: 1fr 1fr;
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    gap: 6px;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+  .quick-actions::-webkit-scrollbar { display: none; }
+  .quick-actions .action-btn {
+    scroll-snap-align: start;
+    flex-shrink: 0;
+    min-width: 120px;
   }
 
   .preset-buttons {
