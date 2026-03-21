@@ -130,3 +130,46 @@ result = await govern_tool_call(
 ```
 
 Requires: `pip install 'agent-aegis[anthropic]'`
+
+## govern_mcp_tool_call (MCP)
+
+```python
+from aegis.adapters.mcp import govern_mcp_tool_call
+
+result = await govern_mcp_tool_call(
+    runtime=runtime,
+    tool_name="read_file",
+    arguments={"path": "/data.csv"},
+    server_name="filesystem",
+)
+```
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `runtime` | `Runtime` | Aegis runtime instance |
+| `tool_name` | `str` | MCP tool name (becomes `Action.type`) |
+| `arguments` | `dict` | Tool arguments (becomes `Action.params`) |
+| `server_name` | `str` | MCP server name (becomes `Action.target`) |
+| `description` | `str` | Optional description |
+
+## AegisMCPToolFilter
+
+```python
+from aegis.adapters.mcp import AegisMCPToolFilter
+
+tool_filter = AegisMCPToolFilter(runtime=runtime)
+
+# Dry-run check
+result = await tool_filter.check(server="filesystem", tool="delete_file")
+
+# Full governance pipeline
+result = await tool_filter.call_tool(
+    server="filesystem", tool="read_file",
+    arguments={"path": "/data.csv"},
+)
+```
+
+| Method | Description |
+|--------|-------------|
+| `check(server, tool, arguments)` | Dry-run policy check |
+| `call_tool(server, tool, arguments)` | Full governance pipeline |

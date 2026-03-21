@@ -92,6 +92,7 @@ An adapter (executor) is the bridge between Aegis and the actual system. Aegis s
 - **AegisCrewAITool** — CrewAI integration
 - **@governed_tool** — OpenAI Agents SDK decorator
 - **AnthropicAdapter** — Anthropic Claude tool use
+- **MCP adapter** — Model Context Protocol tool governance
 
 You can create your own by subclassing `BaseExecutor`.
 

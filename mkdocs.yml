@@ -70,6 +70,7 @@ nav:
       - Integrations: guides/integrations.md
       - Custom Adapters: guides/custom-adapters.md
       - Approval Handlers: guides/approval-handlers.md
+      - REST API Server: guides/rest-api.md
       - Testing: guides/testing.md
   - API Reference:
       - Runtime: api/runtime.md

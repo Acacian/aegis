@@ -25,7 +25,7 @@ delete *  --> block (critical) ------------> X --------> logged
 | **4-tier risk model** | `low` / `medium` / `high` / `critical` with per-rule overrides |
 | **Approval gates** | CLI prompt, callbacks, or build your own (Slack, Discord, etc.) |
 | **Audit trail** | SQLite (default), JSONL export, or Python `logging` backend |
-| **6 framework adapters** | LangChain, CrewAI, OpenAI Agents SDK, Anthropic Claude, Playwright, httpx |
+| **7 framework adapters** | LangChain, CrewAI, OpenAI Agents SDK, Anthropic Claude, Playwright, httpx, MCP |
 | **CLI tools** | `aegis init`, `aegis validate`, `aegis audit`, `aegis schema` |
 | **Type-safe** | Full `mypy --strict`, `py.typed` marker |
 
@@ -64,8 +64,10 @@ With integrations:
 pip install 'agent-aegis[langchain]'      # LangChain
 pip install 'agent-aegis[crewai]'         # CrewAI
 pip install 'agent-aegis[openai-agents]'  # OpenAI Agents SDK
+pip install 'agent-aegis[anthropic]'      # Anthropic Claude
 pip install 'agent-aegis[httpx]'          # REST APIs
 pip install 'agent-aegis[playwright]'     # Browser automation
+pip install 'agent-aegis[server]'         # REST API server
 pip install 'agent-aegis[all]'            # Everything
 ```
 
@@ -73,10 +75,10 @@ pip install 'agent-aegis[all]'            # Everything
 
 | Version | Status | Features |
 |---------|--------|----------|
-| **0.1** | **Released** | Policy engine, 6 adapters, CLI, audit, conditions, JSON Schema |
-| **0.2** | Planned | Dashboard UI, Slack/Discord approval, policy inheritance |
-| **0.3** | Planned | MCP server adapter, rollback support, webhooks |
-| **0.4** | Planned | Multi-tenant policies, team approvals, cloud audit |
+| **0.1** | **Released** | Policy engine, 7 adapters (incl. MCP), CLI, audit, conditions, JSON Schema |
+| **0.1.3** | **Released** | REST API server, retry/rollback, dry-run, hot-reload, policy merge, Slack/Discord/Telegram/email approval, runtime hooks |
+| **0.2** | Planned | Dashboard UI, rate limiting, queue-based async execution |
+| **0.3** | Planned | Multi-tenant policies, team approvals, cloud audit storage |
 
 ## Links
 

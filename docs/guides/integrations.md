@@ -160,3 +160,70 @@ results = await runtime.execute(plan)
 ```
 
 Supported actions: `navigate`, `click`, `fill`, `read`, `screenshot`.
+
+## Anthropic Claude
+
+```bash
+pip install 'agent-aegis[anthropic]'
+```
+
+Govern Claude's `tool_use` responses:
+
+```python
+from anthropic import Anthropic
+from aegis.adapters.anthropic import govern_tool_call
+
+client = Anthropic()
+response = client.messages.create(
+    model="claude-sonnet-4-20250514",
+    tools=[...],
+    messages=[...],
+)
+
+for block in response.content:
+    if block.type == "tool_use":
+        result = await govern_tool_call(
+            runtime=runtime,
+            tool_name=block.name,
+            tool_input=block.input,
+            target="my_system",
+        )
+        if result.ok:
+            # Process the governed tool result
+            pass
+```
+
+## MCP (Model Context Protocol)
+
+Govern MCP tool calls without any framework dependency:
+
+```python
+from aegis.adapters.mcp import govern_mcp_tool_call, AegisMCPToolFilter
+```
+
+### Option A: Govern individual tool calls
+
+```python
+result = await govern_mcp_tool_call(
+    runtime=runtime,
+    tool_name="read_file",
+    arguments={"path": "/data.csv"},
+    server_name="filesystem",
+)
+```
+
+`tool_name` becomes the action type, `server_name` becomes the target.
+
+### Option B: Filter-based governance
+
+```python
+tool_filter = AegisMCPToolFilter(runtime=runtime)
+
+# Check before calling the actual MCP server
+result = await tool_filter.check(server="filesystem", tool="delete_file")
+if result.ok:
+    # Proceed with actual MCP call
+    mcp_result = await mcp_client.call_tool("delete_file", {"path": "/tmp/old"})
+```
+
+Use `AegisMCPToolFilter` when you want to pre-check actions before forwarding to the MCP server.
