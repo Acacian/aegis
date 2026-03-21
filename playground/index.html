@@ -24,7 +24,11 @@
   <meta name="twitter:description" content="Write YAML policies, simulate AI agent actions, see real-time risk evaluation. No install needed.">
   <meta name="twitter:image" content="https://acacian.github.io/aegis/playground/og-image.svg">
 
-  <!-- Structured Data for SEO -->
+  <meta property="og:locale" content="en_US">
+  <meta name="robots" content="index, follow">
+  <meta name="author" content="Aegis Project">
+
+  <!-- Structured Data: WebApplication -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -41,7 +45,30 @@
       "url": "https://github.com/Acacian/aegis"
     },
     "softwareVersion": "0.1.4",
-    "programmingLanguage": "Python"
+    "programmingLanguage": "Python",
+    "screenshot": "https://acacian.github.io/aegis/playground/og-image.svg",
+    "featureList": [
+      "YAML policy authoring",
+      "Real-time risk evaluation",
+      "14 preset policies",
+      "Audit log with filtering",
+      "Dark/light/high-contrast themes",
+      "Export as JSON/CSV",
+      "Code generation (Python/pytest/cURL)",
+      "Keyboard shortcuts"
+    ]
+  }
+  </script>
+
+  <!-- Structured Data: BreadcrumbList -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Aegis", "item": "https://acacian.github.io/aegis/" },
+      { "@type": "ListItem", "position": 2, "name": "Playground", "item": "https://acacian.github.io/aegis/playground/" }
+    ]
   }
   </script>
 
@@ -54,6 +81,8 @@
   <link rel="preload" href="https://cdn.jsdelivr.net/pyodide/v0.27.5/full/pyodide.js" as="script">
   <link rel="preload" href="js/presets.js" as="script">
   <link rel="preload" href="js/app.js" as="script">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
   <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
   <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
 
