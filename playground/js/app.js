@@ -2518,31 +2518,53 @@ function filterAuditLog(filter) {
   }
 }
 
-function updateAuditChart() {
+let _chartEls = null;
+function _ensureChart() {
+  if (_chartEls) return _chartEls;
   let chart = document.getElementById("audit-chart");
   if (!chart) {
     chart = document.createElement("div");
     chart.id = "audit-chart";
     chart.className = "audit-chart";
+    chart.innerHTML = `
+      <div class="chart-bar">
+        <div class="chart-seg chart-auto"></div>
+        <div class="chart-seg chart-approve"></div>
+        <div class="chart-seg chart-block"></div>
+      </div>
+      <div class="chart-legend">
+        <span class="legend-auto"></span>
+        <span class="legend-approve"></span>
+        <span class="legend-block"></span>
+      </div>`;
     $auditCount.parentNode.insertBefore(chart, $auditCount.nextSibling);
   }
+  _chartEls = {
+    root: chart,
+    segAuto: chart.querySelector(".chart-auto"),
+    segApprove: chart.querySelector(".chart-approve"),
+    segBlock: chart.querySelector(".chart-block"),
+    legAuto: chart.querySelector(".legend-auto"),
+    legApprove: chart.querySelector(".legend-approve"),
+    legBlock: chart.querySelector(".legend-block"),
+  };
+  return _chartEls;
+}
+
+function updateAuditChart() {
+  const c = _ensureChart();
   const total = stats.total;
-  if (total === 0) { chart.innerHTML = ""; return; }
-  // Use tracked stats instead of re-filtering the entire array
-  const auto = stats.auto;
-  const approve = stats.approve;
-  const block = stats.block;
-  chart.innerHTML = `
-    <div class="chart-bar">
-      <div class="chart-seg chart-auto" style="width:${(auto / total) * 100}%"></div>
-      <div class="chart-seg chart-approve" style="width:${(approve / total) * 100}%"></div>
-      <div class="chart-seg chart-block" style="width:${(block / total) * 100}%"></div>
-    </div>
-    <div class="chart-legend">
-      <span class="legend-auto">${auto} auto</span>
-      <span class="legend-approve">${approve} approve</span>
-      <span class="legend-block">${block} block</span>
-    </div>`;
+  if (total === 0) {
+    c.segAuto.style.width = c.segApprove.style.width = c.segBlock.style.width = "0%";
+    c.legAuto.textContent = c.legApprove.textContent = c.legBlock.textContent = "";
+    return;
+  }
+  c.segAuto.style.width = (stats.auto / total) * 100 + "%";
+  c.segApprove.style.width = (stats.approve / total) * 100 + "%";
+  c.segBlock.style.width = (stats.block / total) * 100 + "%";
+  c.legAuto.textContent = stats.auto + " auto";
+  c.legApprove.textContent = stats.approve + " approve";
+  c.legBlock.textContent = stats.block + " block";
 }
 
 /* ---- Toast ---- */
