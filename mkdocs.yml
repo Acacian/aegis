@@ -87,6 +87,7 @@ nav:
       - LangChain Governance: cookbook/langchain-governance.md
       - CrewAI Governance: cookbook/crewai-governance.md
       - OpenAI Agents Governance: cookbook/openai-agents-governance.md
+      - Anthropic Claude Governance: cookbook/anthropic-governance.md
   - Cheatsheet: cheatsheet.md
   - Examples: https://github.com/Acacian/aegis/tree/main/examples
   - FAQ: faq.md
