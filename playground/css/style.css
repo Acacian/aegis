@@ -1301,6 +1301,39 @@ kbd {
   display: none;
 }
 
+/* ---- Try It CTA ---- */
+.try-it-cta {
+  margin-top: 32px;
+  text-align: center;
+}
+
+.try-it-cta p {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin-bottom: 8px;
+}
+
+.try-it-btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 12px 28px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.try-it-btn:hover {
+  background: #1f6feb;
+  transform: translateY(-1px);
+}
+
+.try-it-btn:active {
+  transform: scale(0.97);
+}
+
 /* ---- Use Cases Section ---- */
 .usecases-section {
   text-align: center;

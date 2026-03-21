@@ -598,6 +598,20 @@ function bindEvents() {
     });
   }
 
+  // "Try it" button — scrolls to editor and runs a demo action
+  const tryItBtn = document.getElementById("try-it-btn");
+  if (tryItBtn) {
+    tryItBtn.addEventListener("click", () => {
+      document.querySelector("main")?.scrollIntoView({ behavior: "smooth" });
+      // Load default preset and auto-run after scroll
+      setTimeout(() => {
+        const firstPreset = document.querySelector(".preset-btn");
+        if (firstPreset) firstPreset.click();
+        setTimeout(() => document.getElementById("run-all")?.click(), 400);
+      }, 600);
+    });
+  }
+
   // Build shortcut help overlay
   buildShortcutOverlay();
 
