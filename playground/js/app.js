@@ -1389,6 +1389,7 @@ function toggleExportMenu() {
     <button class="export-option" data-format="markdown">Copy as Markdown</button>
     <button class="export-option" data-format="clipboard">Copy to clipboard</button>
     <button class="export-option" data-format="print">Print audit log</button>
+    <button class="export-option" data-format="ndjson">Export as NDJSON (streaming)</button>
     <div class="export-header" style="margin-top:4px;border-top:1px solid var(--border);padding-top:6px">Quick</div>
     <button class="export-option" data-format="summary">Copy summary one-liner</button>`;
   document.body.appendChild(menu);
@@ -1402,6 +1403,7 @@ function toggleExportMenu() {
     else if (format === "html") exportAuditHTML();
     else if (format === "clipboard") copyAuditToClipboard();
     else if (format === "print") printAuditLog();
+    else if (format === "ndjson") exportAuditNDJSON();
     else if (format === "summary") {
       const avgMs = stats.total > 0 ? (stats.totalMs / stats.total).toFixed(1) : "0";
       const line = `Aegis: ${stats.total} evals (${stats.auto} auto, ${stats.approve} approve, ${stats.block} block) avg ${avgMs}ms`;
@@ -1509,6 +1511,15 @@ th{background:#161b22}h1{color:#58a6ff}.low{color:#3fb950}.medium{color:#d29922}
   downloadBlob(html, "text/html", "html");
   const filterNote = getActiveFilter() !== "all" ? ` (${getActiveFilter()})` : "";
   showToast(`Exported ${entries.length} entries as HTML${filterNote}`);
+}
+
+function exportAuditNDJSON() {
+  const entries = getFilteredEntries();
+  if (!entries.length) { showToast("No audit entries to export"); return; }
+  const lines = entries.map((e) => JSON.stringify(e));
+  downloadBlob(lines.join("\n") + "\n", "application/x-ndjson", "ndjson");
+  const filterNote = getActiveFilter() !== "all" ? ` (${getActiveFilter()})` : "";
+  showToast(`Exported ${entries.length} entries as NDJSON${filterNote}`);
 }
 
 function copyAuditToClipboard() {
