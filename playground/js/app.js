@@ -2788,16 +2788,16 @@ ${editor.getValue()}
 
 \`\`\`yaml
 # Policy used:
-${editor.getValue().split("\n").slice(0, 10).join("\n")}${editor.getValue().split("\n").length > 10 ? "\n# ..." : ""}
+${(() => { const ls = editor.getValue().split("\n"); return ls.slice(0, 10).join("\n") + (ls.length > 10 ? "\n# ..." : ""); })()}
 \`\`\``;
   }
 
   if (fmt === "yaml") {
-    return `# Aegis test case — ${r.action_type}
+    return `# Aegis test case — ${_safeStr(r.action_type)}
 test_case:
   action:
-    type: "${r.action_type}"
-    target: "${r.target}"
+    type: "${_safeStr(r.action_type)}"
+    target: "${_safeStr(r.target)}"
     params: ${params === "{}" ? "{}" : params}
   expected:
     approval: ${r.approval}
