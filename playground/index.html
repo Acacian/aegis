@@ -115,6 +115,16 @@
         "@type": "Question",
         "name": "Is the playground free?",
         "acceptedAnswer": { "@type": "Answer", "text": "Yes, completely free. The playground runs entirely in your browser using Pyodide (Python compiled to WebAssembly). No server, no signup, no data leaves your machine." }
+      },
+      {
+        "@type": "Question",
+        "name": "How do I install Aegis?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Run 'pip install agent-aegis' in your terminal. Aegis requires Python 3.10+ and has minimal dependencies. See the Getting Started guide for detailed setup instructions." }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I use Aegis with MCP (Model Context Protocol)?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes. Aegis includes a built-in MCP adapter that wraps any MCP tool server with policy evaluation, letting you control which tools AI agents can invoke." }
       }
     ]
   }
