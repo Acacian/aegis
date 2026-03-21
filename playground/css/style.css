@@ -164,6 +164,85 @@ header {
   border-color: var(--text-secondary);
 }
 
+/* ---- How It Works ---- */
+.how-it-works {
+  padding: 20px 24px 4px;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+}
+
+.step {
+  flex: 1;
+  max-width: 280px;
+  text-align: center;
+  padding: 20px 16px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  position: relative;
+}
+
+.step-number {
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  width: 24px;
+  height: 24px;
+  background: var(--accent);
+  color: #000;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.step-icon {
+  font-size: 2rem;
+  margin-bottom: 8px;
+}
+
+.step h3 {
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.step p {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.step-arrow {
+  font-size: 1.5rem;
+  color: var(--text-muted);
+  padding: 0 12px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .steps {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .step-arrow {
+    transform: rotate(90deg);
+    padding: 4px 0;
+  }
+  .step {
+    max-width: 100%;
+  }
+}
+
 /* ---- Main Layout ---- */
 main {
   padding: 16px 24px;
