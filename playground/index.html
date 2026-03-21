@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aegis Playground - Interactive AI Agent Governance</title>
+  <meta name="description" content="Try Aegis governance in your browser. Write YAML policies, simulate AI agent actions, see real-time risk evaluation.">
+
+  <!-- CodeMirror 5 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/codemirror.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/theme/dracula.min.css">
+
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Loading overlay -->
+  <div id="loading-overlay">
+    <div class="loader-content">
+      <div class="spinner"></div>
+      <h2>Loading Aegis Playground</h2>
+      <p id="loading-status">Initializing Python runtime...</p>
+      <div class="progress-bar"><div id="progress-fill"></div></div>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header>
+    <div class="header-left">
+      <h1>Aegis <span class="badge">Playground</span></h1>
+      <p class="tagline">AI agent governance in your browser. No install needed.</p>
+    </div>
+    <div class="header-right">
+      <a href="https://github.com/Acacian/aegis" class="gh-link" target="_blank" rel="noopener">
+        <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        GitHub
+      </a>
+      <a href="https://pypi.org/project/agent-aegis/" class="pypi-link" target="_blank" rel="noopener">PyPI</a>
+    </div>
+  </header>
+
+  <main>
+    <!-- Top section: Policy Editor + Action Panel -->
+    <div class="top-section">
+      <!-- Policy Editor -->
+      <div class="panel policy-panel">
+        <div class="panel-header">
+          <h2>Policy (YAML)</h2>
+          <div class="preset-buttons">
+            <button class="preset-btn active" data-preset="default">Default</button>
+            <button class="preset-btn" data-preset="strict">Strict</button>
+            <button class="preset-btn" data-preset="permissive">Permissive</button>
+            <button class="preset-btn" data-preset="time-based">Time-Based</button>
+          </div>
+        </div>
+        <div class="editor-wrapper">
+          <textarea id="policy-editor"></textarea>
+        </div>
+      </div>
+
+      <!-- Action Panel -->
+      <div class="panel action-panel">
+        <div class="panel-header">
+          <h2>Simulate Actions</h2>
+        </div>
+        <div class="action-content">
+          <!-- Quick action buttons -->
+          <div class="quick-actions">
+            <button class="action-btn risk-low" data-action='{"action_type":"navigate","target":"crm","params":{"url":"https://crm.example.com"},"description":"Open CRM page"}'>
+              <span class="action-icon">&#x1F310;</span>
+              <span class="action-label">Navigate</span>
+              <span class="action-risk">LOW</span>
+            </button>
+            <button class="action-btn risk-low" data-action='{"action_type":"read","target":"crm","params":{"selector":".contacts"},"description":"Read contact list"}'>
+              <span class="action-icon">&#x1F4D6;</span>
+              <span class="action-label">Read</span>
+              <span class="action-risk">LOW</span>
+            </button>
+            <button class="action-btn risk-medium" data-action='{"action_type":"write","target":"crm","params":{"field":"name","value":"Alice"},"description":"Update contact name"}'>
+              <span class="action-icon">&#x270F;&#xFE0F;</span>
+              <span class="action-label">Write</span>
+              <span class="action-risk">MEDIUM</span>
+            </button>
+            <button class="action-btn risk-medium" data-action='{"action_type":"click","target":"crm","params":{"selector":"#save"},"description":"Click save button"}'>
+              <span class="action-icon">&#x1F5B1;&#xFE0F;</span>
+              <span class="action-label">Click</span>
+              <span class="action-risk">MEDIUM</span>
+            </button>
+            <button class="action-btn risk-high" data-action='{"action_type":"bulk_update","target":"crm","params":{"count":150,"field":"status","value":"active"},"description":"Bulk update 150 records"}'>
+              <span class="action-icon">&#x26A1;</span>
+              <span class="action-label">Bulk Update</span>
+              <span class="action-risk">HIGH</span>
+            </button>
+            <button class="action-btn risk-critical" data-action='{"action_type":"delete","target":"crm","params":{"id":"all"},"description":"Delete all records"}'>
+              <span class="action-icon">&#x1F6A8;</span>
+              <span class="action-label">Delete</span>
+              <span class="action-risk">CRITICAL</span>
+            </button>
+          </div>
+
+          <!-- Custom action form -->
+          <div class="custom-action">
+            <h3>Custom Action</h3>
+            <div class="form-row">
+              <label>Type</label>
+              <input type="text" id="custom-type" placeholder="e.g. write, deploy, bulk_*">
+            </div>
+            <div class="form-row">
+              <label>Target</label>
+              <input type="text" id="custom-target" placeholder="e.g. crm, database">
+            </div>
+            <div class="form-row">
+              <label>Params (JSON)</label>
+              <input type="text" id="custom-params" placeholder='e.g. {"count": 50}'>
+            </div>
+            <button id="run-custom" class="run-btn">Evaluate</button>
+          </div>
+
+          <!-- Run all button -->
+          <button id="run-all" class="run-all-btn">Run All Actions</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom section: Results + Audit Log -->
+    <div class="bottom-section">
+      <!-- Result Panel -->
+      <div class="panel result-panel">
+        <div class="panel-header">
+          <h2>Evaluation Result</h2>
+          <button id="clear-result" class="clear-btn">Clear</button>
+        </div>
+        <div id="result-content" class="result-content">
+          <div class="empty-state">Click an action above to see the policy evaluation result</div>
+        </div>
+      </div>
+
+      <!-- Audit Log -->
+      <div class="panel audit-panel">
+        <div class="panel-header">
+          <h2>Audit Log</h2>
+          <span id="audit-count" class="audit-count">0 entries</span>
+          <button id="clear-audit" class="clear-btn">Clear</button>
+        </div>
+        <div id="audit-content" class="audit-content">
+          <div class="empty-state">Audit entries will appear here as you evaluate actions</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>
+      Powered by <a href="https://pyodide.org" target="_blank" rel="noopener">Pyodide</a> &mdash;
+      Aegis runs entirely in your browser. No data leaves your machine.
+      <br>
+      <code>pip install agent-aegis</code> to use in your own projects.
+    </p>
+  </footer>
+
+  <!-- CodeMirror -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/mode/yaml/yaml.min.js"></script>
+
+  <!-- Pyodide -->
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.27.5/full/pyodide.js"></script>
+
+  <!-- App -->
+  <script src="js/presets.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
