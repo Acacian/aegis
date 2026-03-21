@@ -1211,6 +1211,7 @@ function toggleExportMenu() {
     <button class="export-option" data-format="csv">Export as CSV</button>
     <button class="export-option" data-format="yaml">Export as YAML report</button>
     <button class="export-option" data-format="html">Export as HTML report</button>
+    <button class="export-option" data-format="markdown">Copy as Markdown</button>
     <button class="export-option" data-format="clipboard">Copy to clipboard</button>
     <button class="export-option" data-format="print">Print audit log</button>`;
   document.body.appendChild(menu);
@@ -1220,6 +1221,7 @@ function toggleExportMenu() {
     if (format === "json") exportAuditJSON();
     else if (format === "csv") exportAuditCSV();
     else if (format === "yaml") exportAuditYAML();
+    else if (format === "markdown") copyAuditAsMarkdown();
     else if (format === "html") exportAuditHTML();
     else if (format === "clipboard") copyAuditToClipboard();
     else if (format === "print") printAuditLog();
@@ -1320,6 +1322,15 @@ function copyAuditToClipboard() {
   const header = `Aegis Audit Log — ${auditEntries.length} entries, ${new Date().toISOString()}`;
   const text = header + "\n" + "=".repeat(header.length) + "\n" + lines.join("\n");
   navigator.clipboard.writeText(text).then(() => showToast("Audit log copied to clipboard"));
+}
+
+function copyAuditAsMarkdown() {
+  if (!auditEntries.length) { showToast("No audit entries to copy"); return; }
+  const rows = auditEntries.map((e) =>
+    `| ${e.time || ""} | ${e.type || ""} | ${e.risk || ""} | **${e.decision || ""}** | ${e.rule || ""} |`
+  );
+  const md = `### Aegis Audit Log\n\n| Time | Action | Risk | Decision | Rule |\n|------|--------|------|----------|------|\n${rows.join("\n")}\n\n_${auditEntries.length} entries — ${new Date().toISOString()}_`;
+  navigator.clipboard.writeText(md).then(() => showToast(`Copied ${auditEntries.length} entries as Markdown`));
 }
 
 function printAuditLog() {
