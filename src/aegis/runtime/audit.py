@@ -68,9 +68,7 @@ class AuditLogger:
         existing = {row[1] for row in cursor.fetchall()}
         for col_name, col_type in _MIGRATE_AGENT_COLUMNS:
             if col_name not in existing:
-                self._conn.execute(
-                    f"ALTER TABLE audit_log ADD COLUMN {col_name} {col_type}"
-                )
+                self._conn.execute(f"ALTER TABLE audit_log ADD COLUMN {col_name} {col_type}")
         self._conn.commit()
 
     def log(

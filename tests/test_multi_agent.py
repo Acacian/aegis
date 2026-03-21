@@ -236,17 +236,13 @@ class TestPolicyFromDictAgentMatching:
         policy = Policy.from_dict(data)
 
         # bot-1 writing -> blocked
-        decision = policy.evaluate(
-            Action("write", "salesforce", agent_id="bot-1")
-        )
+        decision = policy.evaluate(Action("write", "salesforce", agent_id="bot-1"))
         assert decision.approval == Approval.BLOCK
         assert decision.risk_level == RiskLevel.CRITICAL
         assert decision.matched_rule == "bot_write_block"
 
         # worker-1 writing -> falls through to default (auto)
-        decision = policy.evaluate(
-            Action("write", "salesforce", agent_id="worker-1")
-        )
+        decision = policy.evaluate(Action("write", "salesforce", agent_id="worker-1"))
         assert decision.approval == Approval.AUTO
         assert decision.risk_level == RiskLevel.LOW
 

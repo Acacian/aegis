@@ -83,9 +83,7 @@ class PolicyHierarchy:
             result = result.merge(p)
         return result
 
-    def _most_restrictive(
-        self, action: Action, decisions: list[PolicyDecision]
-    ) -> PolicyDecision:
+    def _most_restrictive(self, action: Action, decisions: list[PolicyDecision]) -> PolicyDecision:
         """Pick the most restrictive decision across layers."""
         _approval_severity = {Approval.AUTO: 0, Approval.APPROVE: 1, Approval.BLOCK: 2}
         _risk_severity = {

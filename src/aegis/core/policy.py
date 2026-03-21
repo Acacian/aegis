@@ -7,6 +7,7 @@ risk levels and approval requirements.
 from __future__ import annotations
 
 import fnmatch
+import re as _re
 from dataclasses import dataclass, field
 from enum import StrEnum
 from pathlib import Path
@@ -52,6 +53,9 @@ class PolicyRule:
 
     Matches actions by type and target using glob patterns,
     with optional conditions for time-based and param-based logic.
+
+    Glob patterns are compiled to regex at construction time for
+    faster repeated matching.
     """
 
     match_type: str = "*"
@@ -62,6 +66,14 @@ class PolicyRule:
     conditions: dict[str, Any] = field(default_factory=dict)
     match_agent: str = "*"
 
+    def __post_init__(self) -> None:
+        """Pre-compile glob patterns to regex for fast matching."""
+        self._re_type: _re.Pattern[str] = _re.compile(fnmatch.translate(self.match_type))
+        self._re_target: _re.Pattern[str] = _re.compile(fnmatch.translate(self.match_target))
+        self._re_agent: _re.Pattern[str] | None = (
+            _re.compile(fnmatch.translate(self.match_agent)) if self.match_agent != "*" else None
+        )
+
     def matches(self, action: Action) -> bool:
         """Check if this rule matches the given action.
 
@@ -69,14 +81,9 @@ class PolicyRule:
         When ``match_agent`` is set to a non-wildcard value, the
         action's ``agent_id`` must also match.
         """
-        glob_match = fnmatch.fnmatch(action.type, self.match_type) and fnmatch.fnmatch(
-            action.target, self.match_target
-        )
-        if not glob_match:
+        if not self._re_type.match(action.type) or not self._re_target.match(action.target):
             return False
-        if self.match_agent != "*" and not fnmatch.fnmatch(
-            action.agent_id or "*", self.match_agent
-        ):
+        if self._re_agent is not None and not self._re_agent.match(action.agent_id or "*"):
             return False
         if self.conditions:
             return evaluate_conditions(self.conditions, action.params)
@@ -111,12 +118,59 @@ class Policy:
     scope_id: str = ""
     version: int = 1
 
+    def __post_init__(self) -> None:
+        """Initialize evaluation cache (disabled by default)."""
+        self._cache: dict[tuple[str, ...], PolicyDecision] = {}
+        self._cache_maxsize: int = 0
+
+    def with_cache(self, maxsize: int = 256) -> Policy:
+        """Enable evaluation caching. Returns self for chaining.
+
+        When enabled, ``evaluate()`` results are cached by action key
+        ``(type, target, agent_id)``. Only results from rules without
+        conditions are cached, since conditions (time-based, param-based)
+        can produce different results for the same key.
+
+        Args:
+            maxsize: Maximum number of cached entries. Default 256.
+        """
+        self._cache_maxsize = maxsize
+        self._cache = {}
+        return self
+
+    def clear_cache(self) -> None:
+        """Clear the evaluation cache."""
+        self._cache.clear()
+
     def evaluate(self, action: Action) -> PolicyDecision:
         """Evaluate an action against the policy rules.
 
         Rules are checked in order; the first match wins.
         Falls back to defaults if no rule matches.
         """
+        if self._cache_maxsize > 0:
+            key = (action.type, action.target, action.agent_id)
+            cached = self._cache.get(key)
+            if cached is not None:
+                return PolicyDecision(
+                    action=action,
+                    risk_level=cached.risk_level,
+                    approval=cached.approval,
+                    matched_rule=cached.matched_rule,
+                )
+            decision = self._evaluate_uncached(action)
+            if self._should_cache(decision):
+                if len(self._cache) >= self._cache_maxsize:
+                    # Evict oldest entry (FIFO)
+                    oldest = next(iter(self._cache))
+                    del self._cache[oldest]
+                self._cache[key] = decision
+            return decision
+
+        return self._evaluate_uncached(action)
+
+    def _evaluate_uncached(self, action: Action) -> PolicyDecision:
+        """Evaluate without cache lookup."""
         for rule in self.rules:
             if rule.matches(action):
                 return PolicyDecision(
@@ -132,6 +186,20 @@ class Policy:
             approval=self.default_approval,
             matched_rule="<default>",
         )
+
+    def _should_cache(self, decision: PolicyDecision) -> bool:
+        """Determine whether a decision is safe to cache.
+
+        Only caches results from rules without conditions, since
+        time-based or param-based conditions make results
+        non-deterministic for the same cache key.
+        """
+        for rule in self.rules:
+            rule_name = rule.name or f"{rule.match_type}@{rule.match_target}"
+            if rule_name == decision.matched_rule:
+                return not rule.conditions
+        # Default rule has no conditions
+        return decision.matched_rule == "<default>"
 
     def merge(self, other: Policy) -> Policy:
         """Merge another policy into this one.

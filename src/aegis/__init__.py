@@ -7,12 +7,14 @@ from aegis.core.policy import Approval, Policy, PolicyDecision
 from aegis.core.result import Result, ResultStatus
 from aegis.core.retry import RetryPolicy
 from aegis.core.risk import RiskLevel
+from aegis.runtime.batch_audit import BatchAuditLogger
 from aegis.runtime.engine import Runtime, RuntimeHooks
 from aegis.runtime.watcher import PolicyWatcher
 
 __all__ = [
     "Action",
     "Approval",
+    "BatchAuditLogger",
     "ExecutionPlan",
     "Policy",
     "PolicyConflict",
