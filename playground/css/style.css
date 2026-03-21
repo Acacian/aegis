@@ -2669,6 +2669,13 @@ footer code {
     justify-content: center;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
     cursor: pointer;
+    animation: fabEntrance 0.5s 1s ease both;
+  }
+
+  @keyframes fabEntrance {
+    0% { opacity: 0; transform: scale(0) rotate(-90deg); }
+    60% { transform: scale(1.15) rotate(10deg); }
+    100% { opacity: 1; transform: scale(1) rotate(0deg); }
   }
 
   .mobile-fab-menu {
