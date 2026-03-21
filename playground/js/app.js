@@ -1119,6 +1119,11 @@ function bindEvents() {
     copyToClipboard("pip install agent-aegis", e.target);
   });
 
+  const copyPipFooter = document.getElementById("copy-pip-footer");
+  if (copyPipFooter) copyPipFooter.addEventListener("click", (e) => {
+    copyToClipboard("pip install agent-aegis", e.target.closest("button"));
+  });
+
   document.getElementById("share-policy").addEventListener("click", () => {
     openShareModal();
   });
