@@ -53,6 +53,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   bindEvents();
   rotateTips();
   initLazyReveal();
+  initMobileFab();
   await initPyodide();
 });
 
@@ -154,6 +155,32 @@ function startTour() {
 
   // Delay tour start so user sees the interface first
   setTimeout(showStep, 800);
+}
+
+/* ---- Mobile FAB ---- */
+function initMobileFab() {
+  const fab = document.getElementById("mobile-fab");
+  const menu = document.getElementById("mobile-fab-menu");
+  if (!fab || !menu) return;
+
+  fab.addEventListener("click", () => menu.classList.toggle("hidden"));
+
+  menu.addEventListener("click", (e) => {
+    const action = e.target.dataset.fab;
+    if (!action) return;
+    menu.classList.add("hidden");
+    if (action === "evaluate") document.getElementById("run-all")?.click();
+    else if (action === "theme" && typeof toggleTheme === "function") toggleTheme();
+    else if (action === "shortcuts" && typeof toggleShortcutHelp === "function") toggleShortcutHelp();
+    else if (action === "top") window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+
+  // Auto-hide FAB menu on scroll
+  let scrollTimer;
+  window.addEventListener("scroll", () => {
+    clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(() => menu.classList.add("hidden"), 200);
+  }, { passive: true });
 }
 
 /* ---- Lazy Reveal (fade-in below-fold sections) ---- */
