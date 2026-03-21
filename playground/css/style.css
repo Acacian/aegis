@@ -859,6 +859,18 @@ main {
   white-space: nowrap;
 }
 .warn-fix-btn:hover { background: rgba(210, 153, 34, 0.3); }
+.warn-dismiss-btn {
+  font-size: 0.85rem;
+  background: none;
+  color: #d29922;
+  border: none;
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
+  opacity: 0.5;
+  transition: opacity 0.15s;
+}
+.warn-dismiss-btn:hover { opacity: 1; }
 
 /* Info-level widget (softer suggestions) */
 .cm-info-widget {

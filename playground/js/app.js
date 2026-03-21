@@ -1653,6 +1653,10 @@ function findWarningLine(yaml, warning) {
     const lineMatch = warning.match(/line (\d+)/);
     if (lineMatch) return parseInt(lineMatch[1]) - 1;
   }
+  if (lower.includes("has no risk_level")) {
+    const lineMatch = warning.match(/line (\d+)/);
+    if (lineMatch) return parseInt(lineMatch[1]) - 1;
+  }
   return -1;
 }
 
@@ -1736,6 +1740,29 @@ function lintPolicyWarnings(yaml) {
     }
   }
 
+  // Rules with approval but no risk_level — suggest adding one
+  let inRuleBlock = false;
+  let hasRisk = false;
+  let hasApproval = false;
+  let ruleStart = -1;
+  for (let i = 0; i < lines.length; i++) {
+    if (/^\s*- name:/.test(lines[i])) {
+      if (inRuleBlock && hasApproval && !hasRisk && ruleStart >= 0) {
+        warnings.push(`Rule at line ${ruleStart + 1} has no risk_level — consider adding one`);
+      }
+      inRuleBlock = true;
+      hasRisk = false;
+      hasApproval = false;
+      ruleStart = i;
+    } else if (inRuleBlock) {
+      if (/^\s+risk_level:/.test(lines[i])) hasRisk = true;
+      if (/^\s+approval:/.test(lines[i])) hasApproval = true;
+    }
+  }
+  if (inRuleBlock && hasApproval && !hasRisk && ruleStart >= 0) {
+    warnings.push(`Rule at line ${ruleStart + 1} has no risk_level — consider adding one`);
+  }
+
   return warnings;
 }
 
@@ -1787,18 +1814,23 @@ async function validatePolicy() {
           const fix = suggestFix(w, null, yaml);
           if (fix) {
             fixableCount++;
-            warnEl.innerHTML = `<span class="warn-text">\u26A0 ${_escDiv.textContent = w, _escDiv.innerHTML}</span><button class="warn-fix-btn">${_escDiv.textContent = fix.label, _escDiv.innerHTML}</button>`;
+            warnEl.innerHTML = `<span class="warn-text">\u26A0 ${_escDiv.textContent = w, _escDiv.innerHTML}</span><button class="warn-fix-btn">${_escDiv.textContent = fix.label, _escDiv.innerHTML}</button><button class="warn-dismiss-btn" title="Dismiss">\u00D7</button>`;
             warnEl.querySelector(".warn-fix-btn").addEventListener("click", () => {
               editor.setValue(fix.result);
               clearEditorErrors();
             });
           } else {
-            warnEl.textContent = "\u26A0 " + w;
+            warnEl.innerHTML = `<span class="warn-text">\u26A0 ${_escDiv.textContent = w, _escDiv.innerHTML}</span><button class="warn-dismiss-btn" title="Dismiss">\u00D7</button>`;
           }
           const wLine = findWarningLine(yaml, w);
           if (wLine >= 0) {
             const widget = editor.addLineWidget(wLine, warnEl, { coverGutter: false, noHScroll: true });
             activeLineWidgets.push(widget);
+            warnEl.querySelector(".warn-dismiss-btn").addEventListener("click", () => {
+              const idx = activeLineWidgets.indexOf(widget);
+              if (idx >= 0) activeLineWidgets.splice(idx, 1);
+              editor.removeLineWidget(widget);
+            });
           }
         });
         // Show "Fix All" when 2+ warnings are fixable
