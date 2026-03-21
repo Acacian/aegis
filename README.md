@@ -20,6 +20,7 @@
 
 <p align="center">
   <a href="#quick-start">Quick Start</a> &bull;
+  <a href="#how-it-works">How It Works</a> &bull;
   <a href="https://acacian.github.io/aegis/">Documentation</a> &bull;
   <a href="#integrations">Integrations</a> &bull;
   <a href="https://github.com/Acacian/aegis/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22">Contributing</a>
@@ -45,15 +46,33 @@ AI agents are getting real-world access. Without governance, a hallucinating age
 
 ## The Solution
 
+Aegis is a **Python middleware** that sits between your AI agent and the actions it takes. It's not a separate server you have to run -- you import it directly into your agent code and it wraps every action with policy checks, approval gates, and audit logging.
+
 ```
-Action      Policy        Approval       Execute     Audit
-  |            |              |              |           |
-read CRM  --> auto (low)  --> skip -------> run ------> logged
-bulk edit --> approve (high) --> human y/n -> run ------> logged
-delete *  --> block (critical) ------------> X --------> logged
+Your Agent                    Aegis                         Real World
+    |                           |                               |
+    |-- "delete all users" ---> |                               |
+    |                      [Policy check]                       |
+    |                      risk=CRITICAL                        |
+    |                      approval=BLOCK                       |
+    |                           |--- X (blocked, logged) -----> |
+    |                           |                               |
+    |-- "read contacts" ------> |                               |
+    |                      [Policy check]                       |
+    |                      risk=LOW                             |
+    |                      approval=AUTO                        |
+    |                           |--- execute (logged) --------> |
+    |                           |                               |
+    |-- "bulk update 500" ----> |                               |
+    |                      [Policy check]                       |
+    |                      risk=HIGH                            |
+    |                      approval=APPROVE                     |
+    |                           |--- ask human (Slack/CLI) ---> |
+    |                           |<-- "approved" --------------- |
+    |                           |--- execute (logged) --------> |
 ```
 
-Aegis sits between your agent and the real world. **3 lines to add governance:**
+**3 lines to add governance:**
 
 ```python
 from aegis import Action, Policy, Runtime
@@ -61,6 +80,94 @@ from aegis import Action, Policy, Runtime
 runtime = Runtime(executor=your_executor, policy=Policy.from_yaml("policy.yaml"))
 results = await runtime.run_one(Action("write", "salesforce", params={...}))
 ```
+
+## How It Works
+
+### Core Concepts
+
+Aegis has 3 key components. You need to understand these to use it:
+
+| Concept | What it is | Your responsibility |
+|---------|-----------|-------------------|
+| **Policy** | YAML rules that define what's allowed, what needs approval, and what's blocked. | Write the rules. |
+| **Executor** | The adapter that actually does things (calls APIs, clicks buttons, runs queries). | Provide one, or use a built-in adapter. |
+| **Runtime** | The engine that connects Policy + Executor. Evaluates rules, gates approval, executes, logs. | Create it. Call `run_one()` or `plan()` + `execute()`. |
+
+### The Pipeline
+
+Every action goes through 5 stages. This happens automatically -- you just call `runtime.run_one(action)`:
+
+```
+1. EVALUATE    Your action is matched against policy rules (glob patterns).
+               → PolicyDecision: risk level + approval requirement + matched rule
+
+2. APPROVE     Based on the decision:
+               - auto:    proceed immediately (low-risk actions)
+               - approve: ask a human via CLI, Slack, Discord, Telegram, webhook, or email
+               - block:   reject immediately (dangerous actions)
+
+3. EXECUTE     The Executor carries out the action.
+               Built-in: Playwright (browser), httpx (HTTP), LangChain, CrewAI, OpenAI, Anthropic, MCP
+               Custom: extend BaseExecutor (10 lines)
+
+4. VERIFY      Optional post-execution check (override executor.verify()).
+
+5. AUDIT       Every decision and result is logged to SQLite automatically.
+               Export: JSONL, webhook, or query via CLI/API.
+```
+
+### Two Ways to Use
+
+**Option A: Python library (most common)** -- no server needed.
+
+Import Aegis into your agent code. Everything runs in the same process.
+
+```python
+runtime = Runtime(executor=MyExecutor(), policy=Policy.from_yaml("policy.yaml"))
+result = await runtime.run_one(Action("read", "crm"))
+```
+
+**Option B: REST API server** -- for non-Python agents (Go, TypeScript, etc.).
+
+```bash
+pip install 'agent-aegis[server]'
+aegis serve policy.yaml --port 8000
+```
+
+```bash
+curl -X POST localhost:8000/api/v1/evaluate \
+  -d '{"action_type": "delete", "target": "db"}'
+# => {"risk_level": "CRITICAL", "approval": "block", "is_allowed": false}
+```
+
+### Approval Handlers
+
+When a policy rule requires `approval: approve`, Aegis asks a human. You choose how:
+
+| Handler | How it works |
+|---------|-------------|
+| **CLI** (default) | Terminal Y/N prompt |
+| **Slack** | Posts Block Kit message, polls thread replies |
+| **Discord** | Sends rich embed, polls callback |
+| **Telegram** | Inline keyboard buttons, polls getUpdates |
+| **Email** | Sends approval request, waits for reply |
+| **Webhook** | POSTs to any URL, reads response |
+| **Auto** | Approves everything (for testing / server mode) |
+| **Custom** | Extend `ApprovalHandler` with your own logic |
+
+### Audit Trail
+
+Every action is automatically logged to a local SQLite database. No setup required.
+
+```bash
+aegis audit                              # View all entries
+aegis audit --risk-level HIGH            # Filter by risk
+aegis audit --tail                       # Live monitoring (1s poll)
+aegis stats                              # Statistics per rule
+aegis audit --format jsonl -o export.jsonl  # Export
+```
+
+---
 
 ## Quick Start
 
@@ -148,14 +255,14 @@ aegis audit
 | **YAML policies** | Glob matching, first-match-wins, JSON Schema for validation |
 | **Smart conditions** | `time_after`, `time_before`, `weekdays`, `param_gt/lt/eq/contains/matches` |
 | **4-tier risk model** | `low` / `medium` / `high` / `critical` with per-rule overrides |
-| **Approval gates** | CLI, callback, webhook (Slack/Discord/PagerDuty), or custom |
+| **Approval gates** | CLI, Slack, Discord, Telegram, email, webhook, or custom |
 | **Audit trail** | SQLite, JSONL export, Python `logging`, or webhook to external SIEM |
-| **REST API server** | `aegis serve policy.yaml` — govern from any language via HTTP |
+| **REST API server** | `aegis serve policy.yaml` -- govern from any language via HTTP |
 | **MCP adapter** | Govern Model Context Protocol tool calls |
 | **Retry & rollback** | Exponential backoff, error filters, automatic rollback on failure |
 | **Dry-run & simulate** | Test policies without executing: `aegis simulate policy.yaml read:crm` |
-| **Hot-reload** | `runtime.update_policy(...)` — swap policies without restart |
-| **Policy merge** | `Policy.from_yaml_files("base.yaml", "prod.yaml")` — layer configs |
+| **Hot-reload** | `runtime.update_policy(...)` -- swap policies without restart |
+| **Policy merge** | `Policy.from_yaml_files("base.yaml", "prod.yaml")` -- layer configs |
 | **Runtime hooks** | Async callbacks for `on_decision`, `on_approval`, `on_execute` |
 | **Type-safe** | Full `mypy --strict` compliance, `py.typed` marker |
 
@@ -167,6 +274,7 @@ Works with the agent frameworks you already use:
 pip install 'agent-aegis[langchain]'      # LangChain
 pip install 'agent-aegis[crewai]'         # CrewAI
 pip install 'agent-aegis[openai-agents]'  # OpenAI Agents SDK
+pip install 'agent-aegis[anthropic]'      # Anthropic Claude
 pip install 'agent-aegis[httpx]'          # Webhook approval/audit
 pip install 'agent-aegis[playwright]'     # Browser automation
 pip install 'agent-aegis[server]'         # REST API server
@@ -174,7 +282,7 @@ pip install 'agent-aegis[all]'            # Everything
 ```
 
 <details>
-<summary><b>LangChain</b> — wrap tools or expose governed actions</summary>
+<summary><b>LangChain</b> -- wrap tools or expose governed actions</summary>
 
 ```python
 from aegis.adapters.langchain import LangChainExecutor, AegisTool
@@ -190,20 +298,20 @@ tool = AegisTool.from_runtime(runtime, name="governed_search",
 </details>
 
 <details>
-<summary><b>OpenAI Agents SDK</b> — decorator-based governance</summary>
+<summary><b>OpenAI Agents SDK</b> -- decorator-based governance</summary>
 
 ```python
 from aegis.adapters.openai_agents import governed_tool
 
 @governed_tool(runtime=runtime, action_type="write", action_target="crm")
 async def update_contact(name: str, email: str) -> str:
-    """Update a CRM contact — governed by Aegis policy."""
+    """Update a CRM contact -- governed by Aegis policy."""
     return await crm.update(name=name, email=email)
 ```
 </details>
 
 <details>
-<summary><b>CrewAI</b> — governed tools for crews</summary>
+<summary><b>CrewAI</b> -- governed tools for crews</summary>
 
 ```python
 from aegis.adapters.crewai import AegisCrewAITool
@@ -215,7 +323,7 @@ tool = AegisCrewAITool(runtime=runtime, name="governed_search",
 </details>
 
 <details>
-<summary><b>Anthropic Claude</b> — govern tool_use calls</summary>
+<summary><b>Anthropic Claude</b> -- govern tool_use calls</summary>
 
 ```python
 from aegis.adapters.anthropic import govern_tool_call
@@ -229,7 +337,7 @@ for block in response.content:
 </details>
 
 <details>
-<summary><b>httpx</b> — governed REST API calls</summary>
+<summary><b>httpx</b> -- governed REST API calls</summary>
 
 ```python
 from aegis.adapters.httpx_adapter import HttpxExecutor
@@ -244,7 +352,7 @@ plan = runtime.plan([Action("get", "/users"), Action("delete", "/users/1")])
 </details>
 
 <details>
-<summary><b>MCP (Model Context Protocol)</b> — govern any MCP tool call</summary>
+<summary><b>MCP (Model Context Protocol)</b> -- govern any MCP tool call</summary>
 
 ```python
 from aegis.adapters.mcp import govern_mcp_tool_call, AegisMCPToolFilter
@@ -264,7 +372,7 @@ if result.ok:
 </details>
 
 <details>
-<summary><b>REST API</b> — govern from any language</summary>
+<summary><b>REST API</b> -- govern from any language</summary>
 
 ```bash
 pip install 'agent-aegis[server]'
@@ -294,7 +402,7 @@ curl -X PUT http://localhost:8000/api/v1/policy \
 </details>
 
 <details>
-<summary><b>Custom adapters</b> — 10 lines to integrate anything</summary>
+<summary><b>Custom adapters</b> -- 10 lines to integrate anything</summary>
 
 ```python
 from aegis.adapters.base import BaseExecutor
@@ -351,42 +459,8 @@ aegis/
   core/        Action, Policy engine, Conditions, Risk levels, Retry, JSON Schema
   adapters/    BaseExecutor, Playwright, httpx, LangChain, CrewAI, OpenAI, Anthropic, MCP
   runtime/     Runtime engine, ApprovalHandler, AuditLogger (SQLite/JSONL/webhook/logging)
-  server/      REST API (Starlette ASGI) — evaluate, execute, audit, policy endpoints
-  cli/         aegis validate | audit | schema | init | simulate | serve
-```
-
-```
-                    +----------------+
-                    |   Your Agent   |
-                    +-------+--------+
-                            |
-                     Action(type, target, params)
-                            |
-                    +-------v--------+
-                    |  Policy Engine |  <-- policy.yaml (YAML rules + conditions)
-                    +-------+--------+
-                            |
-                   PolicyDecision(risk, approval, rule)
-                            |
-              +-------------+-------------+
-              |             |             |
-         auto: LOW    approve: HIGH   block: CRITICAL
-              |             |             |
-              v      +------v------+      v
-           execute   | Approval    |   blocked
-              |      | Handler     |      |
-              |      +------+------+      |
-              |             |             |
-              v             v             |
-         +---------+   +---------+        |
-         | Adapter |   | Adapter |        |
-         +---------+   +---------+        |
-              |             |             |
-              v             v             v
-         +------------------------------------+
-         |          Audit Logger              |
-         |   (SQLite / JSONL / logging)       |
-         +------------------------------------+
+  server/      REST API (Starlette ASGI) -- evaluate, execute, audit, policy endpoints
+  cli/         aegis validate | audit | schema | init | simulate | serve | stats
 ```
 
 ## Why Not Build Your Own?
@@ -395,10 +469,11 @@ aegis/
 |---|---|---|
 | **Policy engine** | Custom if/else per action | YAML rules + glob + conditions |
 | **Risk model** | Hardcoded | 4-tier with per-rule overrides |
-| **Human approval** | Build your own | Pluggable (CLI, Slack, custom) |
+| **Human approval** | Build your own | Pluggable (CLI, Slack, Discord, Telegram, email, webhook) |
 | **Audit trail** | printf debugging | SQLite + JSONL + session tracking |
-| **Framework support** | Rewrite per framework | 6 adapters out of the box |
+| **Framework support** | Rewrite per framework | 7 adapters out of the box |
 | **Verification** | Hope it worked | Post-execution verification hooks |
+| **Retry & rollback** | DIY error handling | Exponential backoff + automatic rollback |
 | **Type safety** | Maybe | mypy strict, py.typed |
 | **Time to integrate** | Days | Minutes |
 
@@ -411,7 +486,9 @@ aegis schema                            # Print JSON Schema (for editor autocomp
 aegis simulate policy.yaml read:crm delete:db  # Test policies without executing
 aegis audit                             # View audit log
 aegis audit --session abc --format json # Filter + format
+aegis audit --tail                      # Live monitoring
 aegis audit --format jsonl -o export.jsonl  # Export
+aegis stats                             # Policy rule statistics
 aegis serve policy.yaml --port 8000     # Start REST API server
 ```
 
@@ -420,7 +497,7 @@ aegis serve policy.yaml --port 8000     # Start REST API server
 | Version | Status | Features |
 |---------|--------|----------|
 | **0.1** | **Released** | Policy engine, 7 adapters (incl. MCP), CLI, audit (SQLite + JSONL + webhook), conditions, JSON Schema |
-| **0.1.3** | **Released** | REST API server, retry/rollback, dry-run, hot-reload, policy merge, webhook approval/audit, simulate CLI, runtime hooks |
+| **0.1.3** | **Released** | REST API server, retry/rollback, dry-run, hot-reload, policy merge, webhook approval/audit, Slack/Discord/Telegram/email approval, simulate CLI, runtime hooks, color-coded CLI, stats, live tail |
 | **0.2** | Planned | Dashboard UI, rate limiting, queue-based async execution |
 | **0.3** | Planned | Multi-tenant policies, team approvals, cloud audit storage |
 
@@ -428,9 +505,9 @@ aegis serve policy.yaml --port 8000     # Start REST API server
 
 We welcome contributions! Check out:
 
-- [**Good First Issues**](https://github.com/Acacian/aegis/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) — great starting points
-- [**Contributing Guide**](CONTRIBUTING.md) — setup, code style, PR process
-- [**Architecture**](ARCHITECTURE.md) — how the codebase is structured
+- [**Good First Issues**](https://github.com/Acacian/aegis/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) -- great starting points
+- [**Contributing Guide**](CONTRIBUTING.md) -- setup, code style, PR process
+- [**Architecture**](ARCHITECTURE.md) -- how the codebase is structured
 
 ```bash
 git clone https://github.com/Acacian/aegis.git && cd aegis
