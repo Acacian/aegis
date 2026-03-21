@@ -2626,11 +2626,6 @@ async function copyToClipboard(text, btn) {
 }
 
 const _escDiv = document.createElement("div");
-function escHtml(s) {
-  _escDiv.textContent = s;
-  return _escDiv.innerHTML;
-}
-
 /* ---- Code Generation for Copy Buttons ---- */
 function generateCode(fmt, r) {
   const params = JSON.stringify(r.params || {});
