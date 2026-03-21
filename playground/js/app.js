@@ -144,6 +144,7 @@ async function initPyodide() {
     await pyodide.runPythonAsync(AEGIS_SETUP_CODE);
 
     setProgress(100, "Ready!");
+    setupPolicyValidation();
     setTimeout(() => $overlay.classList.add("hidden"), 400);
   } catch (err) {
     setProgress(0, `Error: ${err.message}`);
@@ -154,6 +155,62 @@ async function initPyodide() {
 function setProgress(pct, msg) {
   $progress.style.width = pct + "%";
   $status.textContent = msg;
+}
+
+/* ---- Policy Validation ---- */
+let validationTimer = null;
+
+function setupPolicyValidation() {
+  editor.on("change", () => {
+    clearTimeout(validationTimer);
+    validationTimer = setTimeout(validatePolicy, 600);
+  });
+}
+
+async function validatePolicy() {
+  if (!pyodide) return;
+
+  // Clear previous marks
+  editor.getAllMarks().forEach((m) => m.clear());
+  const errorWidget = document.getElementById("editor-error");
+  if (errorWidget) errorWidget.remove();
+
+  const yaml = editor.getValue();
+  try {
+    const resultJson = await pyodide.runPythonAsync(
+      `validate_policy(${JSON.stringify(yaml)})`
+    );
+    const result = JSON.parse(resultJson);
+
+    if (result.error) {
+      showEditorError(result.error, result.line);
+    }
+  } catch (err) {
+    // Silently ignore validation errors during typing
+  }
+}
+
+function showEditorError(msg, line) {
+  // Highlight error line
+  if (line !== undefined && line !== null && line >= 0) {
+    const lineIdx = Math.max(0, line - 1);
+    editor.markText(
+      { line: lineIdx, ch: 0 },
+      { line: lineIdx, ch: editor.getLine(lineIdx)?.length || 0 },
+      { className: "cm-error-line" }
+    );
+  }
+
+  // Show error banner below editor
+  const wrapper = document.querySelector(".editor-wrapper");
+  let errorEl = document.getElementById("editor-error");
+  if (!errorEl) {
+    errorEl = document.createElement("div");
+    errorEl.id = "editor-error";
+    errorEl.className = "editor-error";
+    wrapper.parentNode.insertBefore(errorEl, wrapper.nextSibling);
+  }
+  errorEl.textContent = msg;
 }
 
 /* ---- Evaluate Action ---- */
@@ -325,4 +382,20 @@ def evaluate_action(yaml_str, action_dict):
         })
     except Exception as e:
         return json.dumps({"error": str(e)})
+
+def validate_policy(yaml_str):
+    """Validate YAML policy syntax. Returns JSON with error info or ok."""
+    try:
+        data = yaml.safe_load(yaml_str)
+        if data is None:
+            return json.dumps({"ok": True})
+        Policy.from_dict(data)
+        return json.dumps({"ok": True})
+    except yaml.YAMLError as e:
+        line = None
+        if hasattr(e, 'problem_mark') and e.problem_mark:
+            line = e.problem_mark.line + 1
+        return json.dumps({"error": f"YAML syntax error: {e}", "line": line})
+    except Exception as e:
+        return json.dumps({"error": f"Policy error: {e}", "line": None})
 `;
