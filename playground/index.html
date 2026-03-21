@@ -396,6 +396,33 @@ result = await runtime.run_one(Action("delete", "crm", params={"id": "all"}))
       </div>
     </div>
 
+    <!-- Architecture flow diagram -->
+    <div class="arch-flow">
+      <div class="arch-node arch-agent">
+        <span class="arch-icon">&#x1F916;</span>
+        <span class="arch-label">AI Agent</span>
+        <span class="arch-sub">LangChain / CrewAI / OpenAI</span>
+      </div>
+      <div class="arch-arrow">
+        <span class="arch-arrow-line"></span>
+        <span class="arch-arrow-text">action request</span>
+      </div>
+      <div class="arch-node arch-engine">
+        <span class="arch-icon">&#x1F6E1;&#xFE0F;</span>
+        <span class="arch-label">Aegis Engine</span>
+        <span class="arch-sub">YAML policy + risk eval</span>
+      </div>
+      <div class="arch-arrow">
+        <span class="arch-arrow-line"></span>
+        <span class="arch-arrow-text">decision</span>
+      </div>
+      <div class="arch-decisions">
+        <span class="arch-decision arch-auto">&#x2705; auto</span>
+        <span class="arch-decision arch-approve">&#x1F7E1; review</span>
+        <span class="arch-decision arch-block">&#x1F534; block</span>
+      </div>
+    </div>
+
     <!-- Quick-start code snippet -->
     <div class="quickstart-code">
       <div class="code-tabs">
