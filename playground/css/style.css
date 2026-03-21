@@ -1356,6 +1356,12 @@ kbd {
   animation: slideIn 0.15s ease;
 }
 
+/* CSS-only audit filtering via container data-filter attribute */
+[data-filter="auto"] .audit-row:not([data-approval="auto"]),
+[data-filter="approve"] .audit-row:not([data-approval="approve"]),
+[data-filter="block"] .audit-row:not([data-approval="block"]) { display: none; }
+.audit-row.search-hidden { display: none; }
+
 .audit-time {
   color: var(--text-muted);
   flex-shrink: 0;

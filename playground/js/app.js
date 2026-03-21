@@ -2039,11 +2039,7 @@ function addAuditEntry(r) {
     <span class="audit-rule">${escHtml(entry.rule)}</span>
   `;
 
-  // Respect active filter
-  const activeFilter = document.querySelector(".audit-filter.active")?.dataset.filter || "all";
-  if (activeFilter !== "all" && activeFilter !== decisionClass) {
-    row.style.display = "none";
-  }
+  // CSS-based filter respects data-filter attribute on container — no inline style needed
 
   const MAX_AUDIT_ROWS = 200;
   const empty = $audit.querySelector(".empty-state");
@@ -2068,12 +2064,18 @@ function addAuditEntry(r) {
 
 function filterAuditLog(filter) {
   const search = (document.getElementById("audit-search")?.value || "").toLowerCase();
-  const rows = $audit.querySelectorAll(".audit-row");
-  rows.forEach((row) => {
-    const matchFilter = filter === "all" || row.dataset.approval === filter;
-    const matchSearch = !search || row.textContent.toLowerCase().includes(search);
-    row.style.display = matchFilter && matchSearch ? "" : "none";
-  });
+  // Use CSS class on container for type filtering (avoids iterating all rows)
+  $audit.dataset.filter = filter;
+  if (search) {
+    // Text search still requires row iteration, but only for text matching
+    const rows = $audit.querySelectorAll(".audit-row");
+    rows.forEach((row) => {
+      row.classList.toggle("search-hidden", !row.textContent.toLowerCase().includes(search));
+    });
+  } else {
+    // Clear any search-hidden classes
+    $audit.querySelectorAll(".search-hidden").forEach((r) => r.classList.remove("search-hidden"));
+  }
 }
 
 function updateAuditChart() {
