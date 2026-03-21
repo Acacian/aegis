@@ -1606,7 +1606,16 @@ async function _initPyodideInner() {
       setTimeout(startTour, 2000);
     }, 400);
   } catch (err) {
-    setProgress(0, `Error: ${err.message}`);
+    const isOffline = !navigator.onLine;
+    const hint = isOffline
+      ? "You appear to be offline. Pyodide requires an internet connection on first load."
+      : "Try refreshing the page. If the issue persists, check your network or ad-blocker settings.";
+    setProgress(0, `Load failed: ${err.message}`);
+    $status.title = err.stack || err.message;
+    const helpEl = document.createElement("p");
+    helpEl.style.cssText = "font-size:0.8rem;color:var(--text-muted);margin-top:8px";
+    helpEl.textContent = hint;
+    $status.parentNode.appendChild(helpEl);
     console.error("Pyodide init failed:", err);
   }
 }
