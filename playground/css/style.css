@@ -213,6 +213,34 @@ header {
 [data-theme="light"] .theme-icon-light { display: inline; }
 [data-theme="light"] .theme-icon-dark { display: none; }
 
+/* ---- Integrations Bar ---- */
+.integrations-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 24px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.integrations-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-right: 4px;
+}
+
+.integration-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-secondary);
+  background: var(--bg-primary);
+}
+
 /* ---- How It Works ---- */
 .how-it-works {
   padding: 20px 24px 4px;
