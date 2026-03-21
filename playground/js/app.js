@@ -1616,6 +1616,7 @@ function renderResult(r) {
         <button class="copy-code-btn" data-fmt="markdown" title="Copy as Markdown table">MD</button>
         <button class="copy-code-btn" data-fmt="ci" title="Copy as GitHub Actions step">CI</button>
         <button class="copy-code-btn" data-fmt="github" title="Copy as GitHub issue template">Issue</button>
+        <button class="copy-code-btn" data-fmt="yaml" title="Copy as YAML test case">YAML</button>
       </div>
     </div>
   `;
@@ -1973,6 +1974,20 @@ ${editor.getValue()}
 # Policy used:
 ${editor.getValue().split("\n").slice(0, 10).join("\n")}${editor.getValue().split("\n").length > 10 ? "\n# ..." : ""}
 \`\`\``;
+  }
+
+  if (fmt === "yaml") {
+    return `# Aegis test case — ${r.action_type}
+test_case:
+  action:
+    type: "${r.action_type}"
+    target: "${r.target}"
+    params: ${params === "{}" ? "{}" : params}
+  expected:
+    approval: ${r.approval}
+    risk_level: ${r.risk_level.toLowerCase()}
+    is_allowed: ${r.is_allowed}
+    matched_rule: "${r.matched_rule || ""}"`;
   }
 
   return "";
