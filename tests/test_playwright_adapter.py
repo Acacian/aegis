@@ -164,7 +164,7 @@ class TestPlaywrightExecutor:
 
     @pytest.mark.asyncio
     async def test_execute_screenshot(self):
-        """screenshot action should call page.screenshot."""
+        """screenshot action should call page.screenshot with resolved path."""
         executor, mock_page, _ = self._setup_executor_with_mock_browser()
 
         mock_page.screenshot = AsyncMock()
@@ -173,8 +173,8 @@ class TestPlaywrightExecutor:
         result = await executor.execute(action)
 
         assert result.status == ResultStatus.SUCCESS
-        assert result.data["path"] == "/tmp/screen.png"
-        mock_page.screenshot.assert_called_once_with(path="/tmp/screen.png")
+        assert result.data["path"].endswith("/tmp/screen.png")
+        mock_page.screenshot.assert_called_once_with(path=result.data["path"])
 
     @pytest.mark.asyncio
     async def test_execute_screenshot_default_path(self):
@@ -187,7 +187,36 @@ class TestPlaywrightExecutor:
         result = await executor.execute(action)
 
         assert result.status == ResultStatus.SUCCESS
-        assert result.data["path"] == "screenshot.png"
+        # Default resolves to absolute path
+        assert result.data["path"].endswith("screenshot.png")
+
+    @pytest.mark.asyncio
+    async def test_execute_screenshot_path_traversal_blocked(self):
+        """screenshot with path traversal should be rejected."""
+        executor, mock_page, _ = self._setup_executor_with_mock_browser()
+
+        mock_page.screenshot = AsyncMock()
+
+        action = Action("screenshot", "test", params={"path": "../../etc/passwd.png"})
+        result = await executor.execute(action)
+
+        assert result.status == ResultStatus.FAILED
+        assert "traversal" in result.error.lower()
+        mock_page.screenshot.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_execute_screenshot_dotdot_in_middle_blocked(self):
+        """screenshot with .. in middle of path should be rejected."""
+        executor, mock_page, _ = self._setup_executor_with_mock_browser()
+
+        mock_page.screenshot = AsyncMock()
+
+        action = Action("screenshot", "test", params={"path": "/tmp/safe/../../../etc/out.png"})
+        result = await executor.execute(action)
+
+        assert result.status == ResultStatus.FAILED
+        assert "traversal" in result.error.lower()
+        mock_page.screenshot.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_execute_unsupported_action(self):

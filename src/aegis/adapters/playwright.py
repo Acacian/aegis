@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from aegis.adapters.base import BaseExecutor
@@ -146,6 +147,9 @@ class PlaywrightExecutor(BaseExecutor):
 
     async def _do_screenshot(self, action: Action) -> dict[str, Any]:
         page = await self._ensure_page()
-        path = action.params.get("path", "screenshot.png")
-        await page.screenshot(path=path)
-        return {"path": path}
+        raw_path = action.params.get("path", "screenshot.png")
+        resolved = Path(raw_path).resolve()
+        if ".." in Path(raw_path).parts:
+            raise ValueError(f"Path traversal not allowed: {raw_path}")
+        await page.screenshot(path=str(resolved))
+        return {"path": str(resolved)}
