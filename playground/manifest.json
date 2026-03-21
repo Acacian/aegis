@@ -4,13 +4,27 @@
   "description": "Interactive AI agent governance simulator. Write YAML policies, simulate agent actions, see real-time risk evaluation.",
   "start_url": ".",
   "display": "standalone",
+  "orientation": "any",
   "background_color": "#0d1117",
   "theme_color": "#0d1117",
+  "categories": ["developer", "utilities"],
+  "lang": "en",
+  "dir": "ltr",
+  "scope": ".",
   "icons": [
     {
-      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>",
+      "src": "favicon.svg",
       "sizes": "any",
-      "type": "image/svg+xml"
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "New Policy",
+      "short_name": "New",
+      "url": "./#new",
+      "description": "Start with a blank policy"
     }
   ]
 }
