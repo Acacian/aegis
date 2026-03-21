@@ -236,7 +236,13 @@ async function initPyodide() {
 
     setProgress(100, "Ready!");
     setupPolicyValidation();
-    setTimeout(() => $overlay.classList.add("hidden"), 400);
+    setTimeout(() => {
+      $overlay.classList.add("hidden");
+      // Auto-run demo if no policy in URL
+      if (!window.location.hash.startsWith("#policy=")) {
+        autoDemo();
+      }
+    }, 400);
   } catch (err) {
     setProgress(0, `Error: ${err.message}`);
     console.error("Pyodide init failed:", err);
@@ -246,6 +252,21 @@ async function initPyodide() {
 function setProgress(pct, msg) {
   $progress.style.width = pct + "%";
   $status.textContent = msg;
+}
+
+/* ---- Auto Demo ---- */
+async function autoDemo() {
+  // Run through 3 representative actions to show the playground in action
+  const demoActions = [
+    { action_type: "read", target: "crm", params: { selector: ".contacts" }, description: "Read contact list" },
+    { action_type: "write", target: "crm", params: { field: "name", value: "Alice" }, description: "Update contact name" },
+    { action_type: "delete", target: "crm", params: { id: "all" }, description: "Delete all records" },
+  ];
+
+  for (const action of demoActions) {
+    await evaluateAction(action);
+    await new Promise((r) => setTimeout(r, 500));
+  }
 }
 
 /* ---- Policy Validation ---- */
