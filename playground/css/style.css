@@ -588,6 +588,12 @@ a.integration-badge:active {
   color: var(--accent);
 }
 
+.step-time {
+  background: rgba(63, 185, 80, 0.1);
+  color: #3fb950;
+  border: 1px dashed rgba(63, 185, 80, 0.3);
+}
+
 .step-arrow {
   font-size: 1.5rem;
   color: var(--text-muted);
