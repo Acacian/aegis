@@ -2728,6 +2728,19 @@ footer code {
     display: none;
   }
 
+  /* Audit filter touch targets */
+  .audit-filter {
+    min-height: 32px;
+    padding: 4px 12px;
+    font-size: 0.72rem;
+  }
+  .audit-filters {
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .audit-filters::-webkit-scrollbar { display: none; }
+
   /* Fade hint on right edge for scrollable presets */
   .panel-header {
     position: relative;
