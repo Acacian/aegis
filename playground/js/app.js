@@ -210,6 +210,42 @@ function loadPolicyFromURL() {
   }
 }
 
+/* ---- YAML Comment Toggle ---- */
+function toggleYamlComment() {
+  const from = editor.getCursor("from");
+  const to = editor.getCursor("to");
+  const startLine = from.line;
+  const endLine = to.line;
+
+  // Check if all selected lines are commented
+  let allCommented = true;
+  for (let i = startLine; i <= endLine; i++) {
+    const text = editor.getLine(i);
+    if (text.trim() && !text.match(/^\s*#/)) {
+      allCommented = false;
+      break;
+    }
+  }
+
+  editor.operation(() => {
+    for (let i = startLine; i <= endLine; i++) {
+      const text = editor.getLine(i);
+      if (allCommented) {
+        // Uncomment: remove first # (and optional space after)
+        const newText = text.replace(/^(\s*)# ?/, "$1");
+        editor.replaceRange(newText, { line: i, ch: 0 }, { line: i, ch: text.length });
+      } else {
+        // Comment: add # after leading whitespace
+        if (text.trim()) {
+          const indent = text.match(/^(\s*)/)[1];
+          const rest = text.slice(indent.length);
+          editor.replaceRange(indent + "# " + rest, { line: i, ch: 0 }, { line: i, ch: text.length });
+        }
+      }
+    }
+  });
+}
+
 function sharePolicyURL() {
   const yaml = editor.getValue();
   const encoded = btoa(encodeURIComponent(yaml));
@@ -289,7 +325,9 @@ function buildShortcutOverlay() {
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd><span>Run all actions</span></div>
         <div class="shortcut-row"><kbd>1</kbd>-<kbd>9</kbd><span>Switch preset (by position)</span></div>
         <div class="shortcut-row"><kbd>?</kbd><span>Show this help</span></div>
-        <div class="shortcut-row"><kbd>Esc</kbd><span>Close dialogs</span></div>
+        <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>S</kbd><span>Copy policy to clipboard</span></div>
+        <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>/</kbd><span>Toggle YAML comment</span></div>
+        <div class="shortcut-row"><kbd>Esc</kbd><span>Close dialogs / clear results</span></div>
       </div>
       <p class="shortcut-hint">On macOS, use <kbd>Cmd</kbd> instead of <kbd>Ctrl</kbd></p>
     </div>`;
@@ -459,11 +497,36 @@ function bindEvents() {
       toggleShortcutHelp();
       return;
     }
-    // Escape → close shortcut help
+    // Ctrl/Cmd + S → copy policy to clipboard (prevent browser save dialog)
+    if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+      e.preventDefault();
+      copyToClipboard(editor.getValue(), document.getElementById("copy-policy"));
+      showToast("Policy copied to clipboard");
+      return;
+    }
+    // Ctrl/Cmd + / → toggle YAML comment on selected lines
+    if ((e.ctrlKey || e.metaKey) && e.key === "/") {
+      e.preventDefault();
+      toggleYamlComment();
+      return;
+    }
+    // Escape → close overlays, then clear results
     if (e.key === "Escape") {
-      const overlay = document.getElementById("shortcut-overlay");
-      if (overlay && !overlay.classList.contains("hidden")) {
-        overlay.classList.add("hidden");
+      const shortcutOv = document.getElementById("shortcut-overlay");
+      if (shortcutOv && !shortcutOv.classList.contains("hidden")) {
+        shortcutOv.classList.add("hidden");
+        return;
+      }
+      const shareOv = document.getElementById("share-modal");
+      if (shareOv && !shareOv.classList.contains("hidden")) {
+        shareOv.classList.add("hidden");
+        return;
+      }
+      const exportMenu = document.getElementById("export-menu");
+      if (exportMenu) { exportMenu.remove(); return; }
+      // If nothing open, clear results
+      if (!isInput) {
+        document.getElementById("clear-result").click();
         return;
       }
     }
