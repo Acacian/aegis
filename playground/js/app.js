@@ -1046,6 +1046,7 @@ function toggleExportMenu() {
     <button class="export-option" data-format="csv">Export as CSV</button>
     <button class="export-option" data-format="yaml">Export as YAML report</button>
     <button class="export-option" data-format="html">Export as HTML report</button>
+    <button class="export-option" data-format="clipboard">Copy to clipboard</button>
     <button class="export-option" data-format="print">Print audit log</button>`;
   document.body.appendChild(menu);
 
@@ -1055,6 +1056,7 @@ function toggleExportMenu() {
     else if (format === "csv") exportAuditCSV();
     else if (format === "yaml") exportAuditYAML();
     else if (format === "html") exportAuditHTML();
+    else if (format === "clipboard") copyAuditToClipboard();
     else if (format === "print") printAuditLog();
     menu.remove();
   });
@@ -1123,6 +1125,16 @@ th{background:#161b22}h1{color:#58a6ff}</style></head><body>
 <p>Total: ${stats.total} | Auto: ${stats.auto} | Approve: ${stats.approve} | Block: ${stats.block}</p>
 <table><tr><th>Time</th><th>Action</th><th>Target</th><th>Risk</th><th>Decision</th></tr>${rows}</table></body></html>`;
   downloadBlob(html, "text/html", "html");
+}
+
+function copyAuditToClipboard() {
+  if (!auditEntries.length) { showToast("No audit entries to copy"); return; }
+  const lines = auditEntries.map((e) =>
+    `[${e.timestamp}] ${e.action_type} → ${e.target} | ${e.approval} (${e.risk_level}) ${e.matched_rule ? "rule:" + e.matched_rule : ""}`
+  );
+  const header = `Aegis Audit Log — ${auditEntries.length} entries, ${new Date().toISOString()}`;
+  const text = header + "\n" + "=".repeat(header.length) + "\n" + lines.join("\n");
+  navigator.clipboard.writeText(text).then(() => showToast("Audit log copied to clipboard"));
 }
 
 function printAuditLog() {
