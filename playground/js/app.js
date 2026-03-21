@@ -1845,15 +1845,25 @@ async function validatePolicy() {
           const warnEl = document.createElement("div");
           warnEl.className = "cm-warn-widget";
           const fix = suggestFix(w, null, yaml);
+          const warnText = document.createElement("span");
+          warnText.className = "warn-text";
+          warnText.textContent = "\u26A0 " + w;
+          const dismissBtn = document.createElement("button");
+          dismissBtn.className = "warn-dismiss-btn";
+          dismissBtn.title = "Dismiss";
+          dismissBtn.textContent = "\u00D7";
           if (fix) {
             fixableCount++;
-            warnEl.innerHTML = `<span class="warn-text">\u26A0 ${_escDiv.textContent = w, _escDiv.innerHTML}</span><button class="warn-fix-btn">${_escDiv.textContent = fix.label, _escDiv.innerHTML}</button><button class="warn-dismiss-btn" title="Dismiss">\u00D7</button>`;
-            warnEl.querySelector(".warn-fix-btn").addEventListener("click", () => {
+            const fixBtn = document.createElement("button");
+            fixBtn.className = "warn-fix-btn";
+            fixBtn.textContent = fix.label;
+            fixBtn.addEventListener("click", () => {
               editor.setValue(fix.result);
               clearEditorErrors();
             });
+            warnEl.append(warnText, fixBtn, dismissBtn);
           } else {
-            warnEl.innerHTML = `<span class="warn-text">\u26A0 ${_escDiv.textContent = w, _escDiv.innerHTML}</span><button class="warn-dismiss-btn" title="Dismiss">\u00D7</button>`;
+            warnEl.append(warnText, dismissBtn);
           }
           const wLine = findWarningLine(yaml, w);
           if (wLine >= 0) {
@@ -1940,7 +1950,7 @@ function showEditorError(msg, line) {
     wrapper.parentNode.insertBefore(errorEl, wrapper.nextSibling);
   }
 
-  errorEl.innerHTML = "";
+  errorEl.replaceChildren();
   const msgSpan = document.createElement("span");
   msgSpan.textContent = msg;
   errorEl.appendChild(msgSpan);
@@ -2056,17 +2066,17 @@ function suggestFix(msg, line, yaml) {
 /* ---- Dynamic Action Buttons for Industry Presets ---- */
 const RISK_CLASSES = { low: "risk-low", medium: "risk-medium", high: "risk-high", critical: "risk-critical" };
 const RISK_ICONS = {
-  low: "&#x1F4D6;", medium: "&#x270F;&#xFE0F;", high: "&#x26A1;", critical: "&#x1F6A8;",
-  navigate: "&#x1F310;", read: "&#x1F4D6;", read_file: "&#x1F4C4;", search: "&#x1F50D;",
-  create: "&#x2795;", update: "&#x270F;&#xFE0F;", write: "&#x270F;&#xFE0F;", write_file: "&#x1F4DD;",
-  export: "&#x1F4E4;", delete: "&#x1F6A8;", merge: "&#x1F500;", shell: "&#x1F4BB;",
-  git_push: "&#x1F680;", deploy: "&#x1F6AB;", install: "&#x1F4E6;",
-  view: "&#x1F441;&#xFE0F;", report: "&#x1F4CA;", create_invoice: "&#x1F9FE;",
-  payment: "&#x1F4B3;", refund: "&#x1F4B8;", transfer: "&#x1F3E6;",
-  screenshot: "&#x1F4F7;", scroll: "&#x2195;&#xFE0F;", click: "&#x1F5B1;&#xFE0F;",
-  fill: "&#x1F4DD;", submit: "&#x1F4E8;", upload: "&#x1F4E4;", eval: "&#x26D4;", execute_js: "&#x26D4;",
-  select: "&#x1F50E;", insert: "&#x2795;", alter_table: "&#x1F527;", drop: "&#x1F4A3;", truncate: "&#x1F4A3;",
-  bulk_update: "&#x26A1;", bulk_delete: "&#x1F6A8;",
+  low: "\u{1F4D6}", medium: "\u270F\uFE0F", high: "\u26A1", critical: "\u{1F6A8}",
+  navigate: "\u{1F310}", read: "\u{1F4D6}", read_file: "\u{1F4C4}", search: "\u{1F50D}",
+  create: "\u2795", update: "\u270F\uFE0F", write: "\u270F\uFE0F", write_file: "\u{1F4DD}",
+  export: "\u{1F4E4}", delete: "\u{1F6A8}", merge: "\u{1F500}", shell: "\u{1F4BB}",
+  git_push: "\u{1F680}", deploy: "\u{1F6AB}", install: "\u{1F4E6}",
+  view: "\u{1F441}\uFE0F", report: "\u{1F4CA}", create_invoice: "\u{1F9FE}",
+  payment: "\u{1F4B3}", refund: "\u{1F4B8}", transfer: "\u{1F3E6}",
+  screenshot: "\u{1F4F7}", scroll: "\u2195\uFE0F", click: "\u{1F5B1}\uFE0F",
+  fill: "\u{1F4DD}", submit: "\u{1F4E8}", upload: "\u{1F4E4}", eval: "\u26D4", execute_js: "\u26D4",
+  select: "\u{1F50E}", insert: "\u2795", alter_table: "\u{1F527}", drop: "\u{1F4A3}", truncate: "\u{1F4A3}",
+  bulk_update: "\u26A1", bulk_delete: "\u{1F6A8}",
 };
 
 function guessRisk(actionType) {
@@ -2081,7 +2091,7 @@ function updateActionButtons(preset) {
   if (!actions) return; // keep default buttons for non-industry presets
 
   const container = document.querySelector(".quick-actions");
-  container.innerHTML = "";
+  container.replaceChildren();
   actions.forEach((a) => {
     const risk = guessRisk(a.action_type);
     const icon = RISK_ICONS[a.action_type] || RISK_ICONS[risk];
@@ -2647,7 +2657,6 @@ async function copyToClipboard(text, btn) {
   }
 }
 
-const _escDiv = document.createElement("div");
 /* ---- Code Generation for Copy Buttons ---- */
 function _safeStr(s) {
   // Escape backslashes and quotes for safe embedding in string literals
