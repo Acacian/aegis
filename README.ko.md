@@ -12,12 +12,9 @@
 <p align="center">
   <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://github.com/Acacian/aegis/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://pypi.org/project/agent-aegis/"><img src="https://img.shields.io/pypi/v/agent-aegis?color=blue" alt="PyPI"></a>
-  <a href="https://pypi.org/project/agent-aegis/"><img src="https://img.shields.io/pypi/dm/agent-aegis?color=green" alt="Downloads"></a>
   <a href="https://pypi.org/project/agent-aegis/"><img src="https://img.shields.io/pypi/pyversions/agent-aegis" alt="Python"></a>
-  <a href="https://codecov.io/gh/Acacian/aegis"><img src="https://codecov.io/gh/Acacian/aegis/graph/badge.svg" alt="Coverage"></a>
   <a href="https://github.com/Acacian/aegis/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License"></a>
   <a href="https://acacian.github.io/aegis/"><img src="https://img.shields.io/badge/docs-acacian.github.io%2Faegis-blue" alt="Docs"></a>
-  <a href="https://scorecard.dev/viewer/?uri=github.com/Acacian/aegis"><img src="https://api.scorecard.dev/projects/github.com/Acacian/aegis/badge" alt="OpenSSF Scorecard"></a>
   <a href="https://github.com/Acacian/aegis"><img src="https://img.shields.io/github/stars/Acacian/aegis?style=social" alt="GitHub stars"></a>
 </p>
 
