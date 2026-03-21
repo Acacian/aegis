@@ -1222,7 +1222,9 @@ th{background:#161b22}h1{color:#58a6ff}</style></head><body>
 <h1>Aegis Audit Report</h1><p>Generated: ${new Date().toISOString()}</p>
 <p>Total: ${stats.total} | Auto: ${stats.auto} | Approve: ${stats.approve} | Block: ${stats.block}</p>
 <table><tr><th>Time</th><th>Action</th><th>Target</th><th>Risk</th><th>Decision</th></tr>${rows}</table></body></html>`;
+  if (!auditEntries.length) { showToast("No audit entries to export"); return; }
   downloadBlob(html, "text/html", "html");
+  showToast(`Exported ${auditEntries.length} entries as HTML`);
 }
 
 function copyAuditToClipboard() {
