@@ -1278,6 +1278,50 @@ footer code {
 
   .preset-buttons {
     justify-content: center;
+    flex-wrap: wrap;
+    max-height: 120px;
+    overflow-y: auto;
+  }
+
+  .preset-divider {
+    display: none;
+  }
+
+  .comparison-table th:first-child,
+  .comparison-table td.feature {
+    font-size: 0.75rem;
+    padding: 8px 10px;
+  }
+
+  .comparison-table th,
+  .comparison-table td {
+    padding: 8px 10px;
+    font-size: 0.8rem;
+  }
+
+  .how-it-works {
+    padding: 40px 16px;
+  }
+
+  .how-it-works h2 {
+    font-size: 1.4rem;
+    margin-bottom: 24px;
+  }
+
+  .step-card {
+    padding: 24px 16px;
+  }
+
+  .step-icon {
+    font-size: 1.6rem;
+  }
+
+  .comparison-section {
+    padding: 40px 16px;
+  }
+
+  .comparison-section h2 {
+    font-size: 1.4rem;
   }
 
   .stats-bar {
@@ -1334,6 +1378,23 @@ footer code {
   .preset-btn {
     font-size: 0.65rem;
     padding: 2px 6px;
+  }
+
+  .preset-buttons {
+    max-height: 80px;
+  }
+
+  .step-card p {
+    font-size: 0.75rem;
+  }
+
+  .comparison-table {
+    font-size: 0.7rem;
+  }
+
+  .comparison-table th,
+  .comparison-table td {
+    padding: 6px 8px;
   }
 }
 
