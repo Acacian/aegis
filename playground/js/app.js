@@ -2717,8 +2717,8 @@ def test_${_safeStr(r.action_type)}_${_safeStr(r.approval)}(policy):
 
   if (fmt === "httpie") {
     return `http POST http://localhost:8000/api/v1/evaluate \\
-  action_type="${r.action_type}" \\
-  target="${r.target}" \\
+  action_type="${_safeStr(r.action_type)}" \\
+  target="${_safeStr(r.target)}" \\
   params:='${params}'
 # Expected: ${r.approval} (${r.risk_level})`;
   }
@@ -2742,15 +2742,15 @@ curl -s http://localhost:8000/api/v1/evaluate \\
 
   if (fmt === "ci") {
     return `# GitHub Actions step — Aegis policy check
-- name: Check ${r.action_type} policy
+- name: Check ${_safeStr(r.action_type)} policy
   run: |
     pip install agent-aegis
     python -c "
     from aegis import Action, Policy
     p = Policy.from_yaml('policy.yaml')
-    r = p.evaluate(Action('${r.action_type}', '${r.target}'))
-    assert r.approval.value == '${r.approval}', f'Expected ${r.approval}, got {r.approval.value}'
-    print('Policy check passed: ${r.action_type} → ${r.approval}')
+    r = p.evaluate(Action('${_safeStr(r.action_type)}', '${_safeStr(r.target)}'))
+    assert r.approval.value == '${_safeStr(r.approval)}', f'Expected ${r.approval}, got {r.approval.value}'
+    print('Policy check passed: ${_safeStr(r.action_type)} → ${r.approval}')
     "`;
   }
 
@@ -2807,13 +2807,13 @@ test_case:
   }
 
   if (fmt === "make") {
-    return `.PHONY: test-${r.action_type}
-test-${r.action_type}: ## Test ${r.action_type} policy evaluation
+    return `.PHONY: test-${_safeStr(r.action_type)}
+test-${_safeStr(r.action_type)}: ## Test ${_safeStr(r.action_type)} policy evaluation
 \t@python -c "from aegis import Action, Policy; \\
 \t  p = Policy.from_yaml('policy.yaml'); \\
-\t  r = p.evaluate(Action('${r.action_type}', '${r.target}')); \\
-\t  assert r.approval.value == '${r.approval}', f'Expected ${r.approval}, got {r.approval.value}'; \\
-\t  print('PASS: ${r.action_type} → ${r.approval}')"`;
+\t  r = p.evaluate(Action('${_safeStr(r.action_type)}', '${_safeStr(r.target)}')); \\
+\t  assert r.approval.value == '${_safeStr(r.approval)}', f'Expected ${r.approval}, got {r.approval.value}'; \\
+\t  print('PASS: ${_safeStr(r.action_type)} → ${r.approval}')"`;
   }
 
   if (fmt === "oneliner") {
