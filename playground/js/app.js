@@ -1104,7 +1104,9 @@ function toggleExportMenu() {
   menu.className = "export-menu";
   menu.style.top = rect.bottom + 4 + "px";
   menu.style.right = window.innerWidth - rect.right + "px";
+  const count = auditEntries.length;
   menu.innerHTML = `
+    <div class="export-header">${count} entries</div>
     <button class="export-option" data-format="json">Export as JSON</button>
     <button class="export-option" data-format="csv">Export as CSV</button>
     <button class="export-option" data-format="yaml">Export as YAML report</button>

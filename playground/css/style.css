@@ -1942,6 +1942,14 @@ footer code {
   overflow: hidden;
 }
 
+.export-header {
+  padding: 6px 20px;
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  font-weight: 600;
+}
+
 .export-option {
   display: block;
   width: 100%;
