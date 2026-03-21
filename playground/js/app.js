@@ -1802,6 +1802,7 @@ function renderResult(r) {
         <button class="copy-code-btn" data-fmt="yaml" title="Copy as YAML test case">YAML</button>
         <button class="copy-code-btn" data-fmt="env" title="Copy as .env config">ENV</button>
         <button class="copy-code-btn" data-fmt="oneliner" title="Copy one-line summary">TL;DR</button>
+        <button class="copy-code-btn" data-fmt="make" title="Copy as Makefile target">Make</button>
       </div>
     </div>
   `;
@@ -2189,6 +2190,16 @@ test_case:
     risk_level: ${r.risk_level.toLowerCase()}
     is_allowed: ${r.is_allowed}
     matched_rule: "${r.matched_rule || ""}"`;
+  }
+
+  if (fmt === "make") {
+    return `.PHONY: test-${r.action_type}
+test-${r.action_type}: ## Test ${r.action_type} policy evaluation
+\t@python -c "from aegis import Action, Policy; \\
+\t  p = Policy.from_yaml('policy.yaml'); \\
+\t  r = p.evaluate(Action('${r.action_type}', '${r.target}')); \\
+\t  assert r.approval.value == '${r.approval}', f'Expected ${r.approval}, got {r.approval.value}'; \\
+\t  print('PASS: ${r.action_type} → ${r.approval}')"`;
   }
 
   if (fmt === "oneliner") {
