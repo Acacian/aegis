@@ -323,10 +323,13 @@ function buildShortcutOverlay() {
       <div class="shortcut-list">
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Enter</kbd><span>Evaluate custom action</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd><span>Run all actions</span></div>
-        <div class="shortcut-row"><kbd>1</kbd>-<kbd>9</kbd><span>Switch preset (by position)</span></div>
-        <div class="shortcut-row"><kbd>?</kbd><span>Show this help</span></div>
+        <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>K</kbd><span>Focus custom action input</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>S</kbd><span>Copy policy to clipboard</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>/</kbd><span>Toggle YAML comment</span></div>
+        <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>E</kbd><span>Export audit log (JSON)</span></div>
+        <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>D</kbd><span>Toggle theme</span></div>
+        <div class="shortcut-row"><kbd>0</kbd>-<kbd>9</kbd><span>Switch preset (by position)</span></div>
+        <div class="shortcut-row"><kbd>?</kbd><span>Show this help</span></div>
         <div class="shortcut-row"><kbd>Esc</kbd><span>Close dialogs / clear results</span></div>
       </div>
       <p class="shortcut-hint">On macOS, use <kbd>Cmd</kbd> instead of <kbd>Ctrl</kbd></p>
@@ -532,10 +535,29 @@ function bindEvents() {
         return;
       }
     }
-    // 1-9 → switch preset (when not in input)
-    if (!isInput && e.key >= "1" && e.key <= "9" && !e.ctrlKey && !e.metaKey) {
+    // Ctrl/Cmd + E → export audit log as JSON
+    if ((e.ctrlKey || e.metaKey) && e.key === "e") {
+      e.preventDefault();
+      if (typeof exportAuditJSON === "function") exportAuditJSON();
+      return;
+    }
+    // Ctrl/Cmd + D → toggle theme
+    if ((e.ctrlKey || e.metaKey) && e.key === "d") {
+      e.preventDefault();
+      if (typeof toggleTheme === "function") toggleTheme();
+      return;
+    }
+    // Ctrl/Cmd + K → focus custom action input (command palette style)
+    if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+      e.preventDefault();
+      const customInput = document.getElementById("custom-type");
+      if (customInput) { customInput.focus(); customInput.select(); }
+      return;
+    }
+    // 1-9, 0 → switch preset (when not in input)
+    if (!isInput && e.key >= "0" && e.key <= "9" && !e.ctrlKey && !e.metaKey) {
       const presetBtns = document.querySelectorAll(".preset-btn:not(.preset-divider)");
-      const idx = parseInt(e.key) - 1;
+      const idx = e.key === "0" ? 9 : parseInt(e.key) - 1;
       if (idx < presetBtns.length) {
         presetBtns[idx].click();
       }
