@@ -1226,6 +1226,71 @@ footer code {
   }
 }
 
+/* ---- Share Modal ---- */
+.share-modal-inner {
+  max-width: 480px;
+}
+
+.share-url-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.share-url-input {
+  flex: 1;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  padding: 8px 12px;
+  font-size: 0.8rem;
+  font-family: monospace;
+  outline: none;
+}
+
+.share-url-input:focus {
+  border-color: var(--accent);
+}
+
+.share-links {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.share-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  font-size: 0.85rem;
+  text-decoration: none;
+  font-weight: 500;
+  transition: opacity 0.15s;
+}
+
+.share-link:hover {
+  opacity: 0.85;
+}
+
+.share-twitter {
+  background: #1d9bf0;
+  color: #fff;
+}
+
+.share-linkedin {
+  background: #0a66c2;
+  color: #fff;
+}
+
+.share-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
 /* ---- Lazy Reveal Animations ---- */
 .reveal-hidden {
   opacity: 0;
