@@ -130,6 +130,15 @@ body {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
+/* Custom scrollbars */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* Firefox */
+* { scrollbar-width: thin; scrollbar-color: var(--border) var(--bg-primary); }
+
 /* ---- Loading Overlay ---- */
 #loading-overlay {
   position: fixed;
