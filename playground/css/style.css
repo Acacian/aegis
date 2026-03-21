@@ -726,6 +726,13 @@ main {
   margin: 2px 0 2px 20px;
   border-radius: 0 4px 4px 0;
   font-family: monospace;
+  animation: widgetFadeIn 0.2s ease;
+}
+.cm-error-widget::before { content: "\u274C "; }
+
+@keyframes widgetFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .cm-warn-widget {
@@ -740,6 +747,7 @@ main {
   display: flex;
   align-items: center;
   gap: 8px;
+  animation: widgetFadeIn 0.2s ease;
 }
 .warn-text { flex: 1; }
 .warn-fix-btn {
