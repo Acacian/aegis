@@ -180,6 +180,13 @@
 [data-theme="high-contrast"] .dm-high .dm-risk { color: #ff6b6b; }
 [data-theme="high-contrast"] .dm-critical .dm-risk { color: #ff4444; }
 
+[data-theme="high-contrast"] .cm-error-widget { border-left-width: 4px; }
+[data-theme="high-contrast"] .cm-warn-widget { border-left-width: 4px; }
+[data-theme="high-contrast"] .shortcut-row kbd {
+  border-width: 2px;
+  font-weight: 600;
+}
+
 * {
   margin: 0;
   padding: 0;
