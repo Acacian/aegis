@@ -562,6 +562,15 @@ main {
   line-height: 1.5;
 }
 
+.editor-hint {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  padding: 3px 10px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-secondary);
+  font-style: italic;
+}
+
 .cm-error-line {
   background: rgba(248, 81, 73, 0.15) !important;
   border-bottom: 2px wavy var(--risk-high);

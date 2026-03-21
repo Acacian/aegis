@@ -322,6 +322,19 @@ function initLazyReveal() {
 }
 
 /* ---- CodeMirror Setup ---- */
+const YAML_HINTS = {
+  version: "Policy version — use \"1\"",
+  rules: "List of governance rules, evaluated top to bottom",
+  name: "Unique rule name for audit trail",
+  match: "Conditions: type, target (glob patterns supported)",
+  risk_level: "Risk classification: low | medium | high | critical",
+  approval: "Decision: auto | approve | block",
+  conditions: "Extra match conditions (time_after, time_before, max_params)",
+  description: "Human-readable rule explanation",
+  type: "Action type pattern (supports * wildcard)",
+  target: "Action target pattern (supports * wildcard)",
+};
+
 function initEditor() {
   editor = CodeMirror.fromTextArea(document.getElementById("policy-editor"), {
     mode: "yaml",
@@ -334,6 +347,20 @@ function initEditor() {
   });
   editor.setValue(POLICY_PRESETS.default);
   initTheme();
+
+  // Show field hints on cursor activity
+  editor.on("cursorActivity", () => {
+    const line = editor.getLine(editor.getCursor().line) || "";
+    const keyMatch = line.match(/^\s*(\w[\w_]*):/);
+    const hint = keyMatch && YAML_HINTS[keyMatch[1]];
+    const hintEl = document.getElementById("editor-hint");
+    if (hint && hintEl) {
+      hintEl.textContent = hint;
+      hintEl.style.display = "";
+    } else if (hintEl) {
+      hintEl.style.display = "none";
+    }
+  });
 }
 
 /* ---- URL State (share policies via URL hash) ---- */
