@@ -123,6 +123,24 @@ class Policy:
             matched_rule="<default>",
         )
 
+    def merge(self, other: Policy) -> Policy:
+        """Merge another policy into this one.
+
+        Rules from ``other`` are appended after this policy's rules.
+        Defaults come from this policy (the base).
+
+        Useful for environment-specific overrides::
+
+            base = Policy.from_yaml("base.yaml")
+            prod = Policy.from_yaml("prod.yaml")
+            combined = base.merge(prod)
+        """
+        return Policy(
+            rules=self.rules + other.rules,
+            default_risk_level=self.default_risk_level,
+            default_approval=self.default_approval,
+        )
+
     @classmethod
     def from_yaml(cls, path: str | Path) -> Policy:
         """Load a policy from a YAML file."""
@@ -130,6 +148,25 @@ class Policy:
         with path.open() as f:
             data = yaml.safe_load(f)
         return cls.from_dict(data)
+
+    @classmethod
+    def from_yaml_files(cls, *paths: str | Path) -> Policy:
+        """Load and merge multiple policy files.
+
+        The first file's defaults are used as the base. Rules from
+        subsequent files are appended in order (first-match-wins still
+        applies, so put higher-priority rules in earlier files).
+
+        Example::
+
+            policy = Policy.from_yaml_files("base.yaml", "overrides.yaml")
+        """
+        if not paths:
+            return cls()
+        base = cls.from_yaml(paths[0])
+        for p in paths[1:]:
+            base = base.merge(cls.from_yaml(p))
+        return base
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Policy:

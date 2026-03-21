@@ -169,3 +169,94 @@ def test_policy_from_yaml_missing_defaults():
     policy = Policy.from_dict(data)
     assert policy.default_risk_level == RiskLevel.MEDIUM
     assert policy.default_approval == Approval.APPROVE
+
+
+# -- Policy merge ------------------------------------------------------------
+
+
+def test_policy_merge():
+    base = Policy(
+        rules=[
+            PolicyRule(match_type="read", approval=Approval.AUTO, name="base_read"),
+        ],
+        default_risk_level=RiskLevel.MEDIUM,
+    )
+    override = Policy(
+        rules=[
+            PolicyRule(
+                match_type="delete",
+                approval=Approval.BLOCK,
+                name="block_delete",
+            ),
+        ],
+        default_risk_level=RiskLevel.HIGH,
+    )
+    combined = base.merge(override)
+
+    # Base rules come first
+    assert len(combined.rules) == 2
+    assert combined.rules[0].name == "base_read"
+    assert combined.rules[1].name == "block_delete"
+    # Base defaults are preserved
+    assert combined.default_risk_level == RiskLevel.MEDIUM
+
+
+def test_policy_merge_first_match_wins():
+    """If base has a matching rule, override's rule never fires."""
+    base = Policy(
+        rules=[
+            PolicyRule(match_type="read", approval=Approval.AUTO, name="base"),
+        ],
+    )
+    override = Policy(
+        rules=[
+            PolicyRule(match_type="read", approval=Approval.BLOCK, name="override"),
+        ],
+    )
+    combined = base.merge(override)
+    decision = combined.evaluate(Action("read", "crm"))
+    # Base rule wins (first-match-wins)
+    assert decision.matched_rule == "base"
+    assert decision.approval == Approval.AUTO
+
+
+def test_policy_from_yaml_files(tmp_path: Path):
+    base_file = tmp_path / "base.yaml"
+    base_file.write_text(
+        textwrap.dedent("""\
+        version: "1"
+        defaults:
+          risk_level: medium
+          approval: approve
+        rules:
+          - name: read_auto
+            match: { type: read }
+            risk_level: low
+            approval: auto
+    """)
+    )
+    override_file = tmp_path / "overrides.yaml"
+    override_file.write_text(
+        textwrap.dedent("""\
+        version: "1"
+        rules:
+          - name: block_delete
+            match: { type: delete }
+            risk_level: critical
+            approval: block
+    """)
+    )
+    policy = Policy.from_yaml_files(base_file, override_file)
+    assert len(policy.rules) == 2
+
+    # read -> auto (from base)
+    d1 = policy.evaluate(Action("read", "crm"))
+    assert d1.approval == Approval.AUTO
+
+    # delete -> block (from override)
+    d2 = policy.evaluate(Action("delete", "crm"))
+    assert d2.approval == Approval.BLOCK
+
+    # unknown -> base defaults
+    d3 = policy.evaluate(Action("write", "crm"))
+    assert d3.approval == Approval.APPROVE
