@@ -52,6 +52,14 @@
   pointer-events: none;
   opacity: 1;
   transition: opacity 0.4s ease;
+  will-change: opacity;
+}
+
+/* Respect system dark/light when no explicit theme is set */
+@media (prefers-color-scheme: light) {
+  html:not([data-theme]) {
+    color-scheme: light;
+  }
 }
 
 /* Light theme overrides */
