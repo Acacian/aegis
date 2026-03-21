@@ -1,6 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
-  <!-- Background -->
+  <!-- Background + subtle grid -->
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#161b22" stroke-width="1"/>
+    </pattern>
+  </defs>
   <rect width="1200" height="630" fill="#0d1117"/>
+  <rect width="1200" height="630" fill="url(#grid)" opacity="0.6"/>
   <rect x="0" y="0" width="1200" height="4" fill="#58a6ff"/>
 
   <!-- Shield icon -->
@@ -42,9 +48,11 @@
     <text x="360" y="22" fill="#6e7681" font-size="13">adapters</text>
   </g>
 
-  <!-- URL -->
+  <!-- URL + version -->
   <text x="240" y="520" fill="#6e7681" font-size="16">pip install agent-aegis</text>
   <text x="240" y="548" fill="#484f58" font-size="14">github.com/Acacian/aegis</text>
+  <rect x="1070" y="580" width="80" height="26" rx="13" fill="rgba(88,166,255,0.12)" stroke="#58a6ff" stroke-width="1"/>
+  <text x="1110" y="598" fill="#58a6ff" font-size="12" text-anchor="middle" font-weight="600">v0.1.4</text>
 
   <!-- Code snippet preview -->
   <g transform="translate(700, 140)">
