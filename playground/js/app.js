@@ -1196,8 +1196,15 @@ function exportAuditYAML() {
     yamlLines.push(`    rule: ${e.rule || "N/A"}`);
     yamlLines.push(`    timestamp: "${e.timestamp}"`);
   });
-  yamlLines.push("", `summary:`, `  total: ${stats.total}`, `  auto: ${stats.auto}`, `  approve: ${stats.approve}`, `  block: ${stats.block}`);
+  const avgMs = stats.total > 0 ? (stats.totalMs / stats.total).toFixed(2) : "0";
+  yamlLines.push("", "summary:");
+  yamlLines.push(`  total: ${stats.total}`);
+  yamlLines.push(`  auto: ${stats.auto}`);
+  yamlLines.push(`  approve: ${stats.approve}`);
+  yamlLines.push(`  block: ${stats.block}`);
+  yamlLines.push(`  avg_latency_ms: ${avgMs}`);
   downloadBlob(yamlLines.join("\n"), "text/yaml", "yaml");
+  showToast(`Exported ${auditEntries.length} entries as YAML`);
 }
 
 function exportAuditHTML() {
