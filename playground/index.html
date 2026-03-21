@@ -523,5 +523,10 @@ result = await runtime.run_one(Action("delete", "crm", params={"id": "all"}))
   <!-- App -->
   <script src="js/presets.js"></script>
   <script src="js/app.js"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("sw.js").catch(() => {});
+    }
+  </script>
 </body>
 </html>
