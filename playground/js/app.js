@@ -1687,6 +1687,7 @@ function renderResult(r) {
         <button class="copy-code-btn" data-fmt="ci" title="Copy as GitHub Actions step">CI</button>
         <button class="copy-code-btn" data-fmt="github" title="Copy as GitHub issue template">Issue</button>
         <button class="copy-code-btn" data-fmt="yaml" title="Copy as YAML test case">YAML</button>
+        <button class="copy-code-btn" data-fmt="env" title="Copy as .env config">ENV</button>
       </div>
     </div>
   `;
@@ -2064,6 +2065,16 @@ test_case:
     risk_level: ${r.risk_level.toLowerCase()}
     is_allowed: ${r.is_allowed}
     matched_rule: "${r.matched_rule || ""}"`;
+  }
+
+  if (fmt === "env") {
+    return `# Aegis environment config for ${r.action_type}
+AEGIS_POLICY_PATH=./policy.yaml
+AEGIS_ACTION_TYPE=${r.action_type}
+AEGIS_ACTION_TARGET=${r.target}
+AEGIS_EXPECTED_APPROVAL=${r.approval}
+AEGIS_EXPECTED_RISK=${r.risk_level.toLowerCase()}
+AEGIS_LOG_LEVEL=INFO`;
   }
 
   return "";
