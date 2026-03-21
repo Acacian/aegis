@@ -2826,6 +2826,22 @@ footer code {
   flex: 1;
   max-width: 280px;
   position: relative;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.step-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Staggered entrance for step cards */
+.reveal-visible .step-card:nth-child(1) { animation: stepReveal 0.4s 0.1s ease both; }
+.reveal-visible .step-card:nth-child(3) { animation: stepReveal 0.4s 0.2s ease both; }
+.reveal-visible .step-card:nth-child(5) { animation: stepReveal 0.4s 0.3s ease both; }
+
+@keyframes stepReveal {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .step-number {
