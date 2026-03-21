@@ -588,6 +588,7 @@ function buildShortcutOverlay() {
         <div class="shortcut-group">Export &amp; Data</div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>E</kbd><span>Export audit log (JSON)</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd><span>Save snapshot (JSON)</span></div>
+        <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>I</kbd><span>Import policy from clipboard</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>C</kbd><span>Copy latest result</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>X</kbd><span>Full reset</span></div>
         <div class="shortcut-group">View</div>
@@ -837,6 +838,25 @@ function bindEvents() {
     const tag = document.activeElement?.tagName;
     const isInput = tag === "INPUT" || tag === "TEXTAREA";
 
+    // Ctrl/Cmd + Shift + I → import snapshot from clipboard
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === "I" || e.key === "i")) {
+      e.preventDefault();
+      (async () => {
+        try {
+          const text = await navigator.clipboard.readText();
+          const snap = JSON.parse(text);
+          if (snap.policy) {
+            editor.setValue(snap.policy);
+            showToast("Imported policy from clipboard");
+          } else {
+            showToast("Clipboard JSON has no 'policy' field");
+          }
+        } catch {
+          showToast("Could not import — paste valid JSON");
+        }
+      })();
+      return;
+    }
     // Ctrl/Cmd + Shift + S → save snapshot (policy + audit as JSON)
     if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === "S" || e.key === "s")) {
       e.preventDefault();
