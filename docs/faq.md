@@ -14,6 +14,9 @@ Aegis has 7 built-in adapters: **LangChain**, **CrewAI**, **OpenAI Agents SDK**,
 ### Does Aegis work with non-Python agents?
 Yes. Run `aegis serve policy.yaml` to start the REST API server, then call it from Go, TypeScript, Java, or any language via HTTP. See the [REST API Server guide](guides/rest-api.md).
 
+### Can an agent bypass Aegis if it runs with admin privileges?
+Aegis is an **application-level middleware**, not an OS-level sandbox. It only governs actions that go through `runtime.run_one()` or `runtime.execute()`. If agent code calls `os.system()` or accesses APIs directly without going through Aegis, those actions are not governed. It's the developer's responsibility to route all agent actions through Aegis. Think of it as a team rule ("always go through sudo") rather than a kernel-enforced permission.
+
 ### Is Aegis production-ready?
 Aegis is in alpha (v0.1.x). The core API is stable, but breaking changes may occur before v1.0. We follow semantic versioning.
 
