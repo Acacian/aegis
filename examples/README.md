@@ -18,6 +18,17 @@ These examples run with just `pip install agent-aegis`:
 | [`compliance_demo.py`](compliance_demo.py) | SOC2/GDPR/HIPAA audit trail evidence | Full audit export for compliance review |
 | [`saas_ops_demo.py`](saas_ops_demo.py) | AI support agent handling customer tickets | Tiered access: view=auto, refund=approve, delete=block |
 | [`terminal_demo.py`](terminal_demo.py) | Colorized terminal demo for GIF recording | Terminal-friendly visual flow |
+| [`security_hardening_demo.py`](security_hardening_demo.py) | Fail-closed security pattern | Defense-in-depth policy design |
+| [`hot_reload_demo.py`](hot_reload_demo.py) | Policy hot-reload at runtime | Change policies without restart |
+| [`webhook_audit_demo.py`](webhook_audit_demo.py) | Stream audit events to webhooks | External audit integration |
+| [`retry_rollback_demo.py`](retry_rollback_demo.py) | Retry with exponential backoff | Fail-safe execution patterns |
+| [`multi_executor_demo.py`](multi_executor_demo.py) | Multi-domain executor governance | CRM + Code + Browser under one policy |
+| [`batch_eval_demo.py`](batch_eval_demo.py) | Batch evaluation with perf metrics | High-throughput policy evaluation |
+| [`fastapi_middleware_demo.py`](fastapi_middleware_demo.py) | FastAPI middleware governance | HTTP method → risk level mapping |
+| [`rate_limit_demo.py`](rate_limit_demo.py) | Rate-limiting with rolling window | Three-tier soft/hard limits |
+| [`slack_approval_demo.py`](slack_approval_demo.py) | Slack approval handler pattern | Human-in-the-loop via Slack |
+| [`enterprise_sso_demo.py`](enterprise_sso_demo.py) | Enterprise RBAC governance | Admin/developer/viewer roles |
+| [`observability_demo.py`](observability_demo.py) | DataDog, OTel, Prometheus integration | Monitoring platform bridges |
 
 ## Framework Integrations
 
