@@ -1287,17 +1287,17 @@ function exportAuditCSV() {
 }
 
 function exportAuditYAML() {
-  const yamlLines = ["# Aegis Audit Report", `# Generated: ${new Date().toISOString()}`, `# Policy:`, ""];
+  if (!auditEntries.length) { showToast("No audit entries to export"); return; }
+  const yamlLines = ["# Aegis Audit Report", `# Generated: ${new Date().toISOString()}`, ""];
   yamlLines.push("policy: |");
   editor.getValue().split("\n").forEach((l) => yamlLines.push("  " + l));
   yamlLines.push("", "evaluations:");
   auditEntries.forEach((e) => {
-    yamlLines.push(`  - action: ${e.action_type}`);
-    yamlLines.push(`    target: ${e.target}`);
-    yamlLines.push(`    risk: ${e.risk}`);
-    yamlLines.push(`    approval: ${e.approval}`);
-    yamlLines.push(`    rule: ${e.rule || "N/A"}`);
-    yamlLines.push(`    timestamp: "${e.timestamp}"`);
+    yamlLines.push(`  - action: ${e.type || e.action_type || ""}`);
+    yamlLines.push(`    risk: ${e.risk || ""}`);
+    yamlLines.push(`    decision: ${e.decision || e.approval || ""}`);
+    yamlLines.push(`    rule: ${e.rule || "(default)"}`);
+    yamlLines.push(`    time: "${e.time || e.timestamp || ""}"`);
   });
   const avgMs = stats.total > 0 ? (stats.totalMs / stats.total).toFixed(2) : "0";
   yamlLines.push("", "summary:");
