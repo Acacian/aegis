@@ -22,6 +22,7 @@ const $auditCount = document.getElementById("audit-count");
 /* ---- Init ---- */
 document.addEventListener("DOMContentLoaded", async () => {
   initEditor();
+  loadPolicyFromURL();
   bindEvents();
   await initPyodide();
 });
@@ -39,6 +40,29 @@ function initEditor() {
   });
   editor.setValue(POLICY_PRESETS.default);
   initTheme();
+}
+
+/* ---- URL State (share policies via URL hash) ---- */
+function loadPolicyFromURL() {
+  const hash = window.location.hash;
+  if (hash && hash.startsWith("#policy=")) {
+    try {
+      const encoded = hash.slice("#policy=".length);
+      const yaml = decodeURIComponent(atob(encoded));
+      editor.setValue(yaml);
+      // Deactivate all preset buttons
+      document.querySelectorAll(".preset-btn").forEach((b) => b.classList.remove("active"));
+    } catch {
+      // Ignore invalid hash
+    }
+  }
+}
+
+function sharePolicyURL() {
+  const yaml = editor.getValue();
+  const encoded = btoa(encodeURIComponent(yaml));
+  const url = `${window.location.origin}${window.location.pathname}#policy=${encoded}`;
+  return url;
 }
 
 /* ---- Theme Toggle ---- */
@@ -157,6 +181,11 @@ function bindEvents() {
 
   document.getElementById("copy-pip").addEventListener("click", (e) => {
     copyToClipboard("pip install agent-aegis", e.target);
+  });
+
+  document.getElementById("share-policy").addEventListener("click", (e) => {
+    const url = sharePolicyURL();
+    copyToClipboard(url, e.target);
   });
 
   // Export audit log
