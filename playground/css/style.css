@@ -694,6 +694,29 @@ footer code {
   font-size: 0.78rem;
 }
 
+.copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 4px 12px;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-top: 6px;
+}
+
+.copy-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.copy-icon {
+  font-size: 0.85rem;
+}
+
 /* ---- Error toast ---- */
 .toast {
   position: fixed;

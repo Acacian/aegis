@@ -122,6 +122,15 @@ function bindEvents() {
       '<div class="empty-state">Audit entries will appear here as you evaluate actions</div>';
     $auditCount.textContent = "0 entries";
   });
+
+  // Copy buttons
+  document.getElementById("copy-policy").addEventListener("click", (e) => {
+    copyToClipboard(editor.getValue(), e.target);
+  });
+
+  document.getElementById("copy-pip").addEventListener("click", (e) => {
+    copyToClipboard("pip install agent-aegis", e.target);
+  });
 }
 
 /* ---- Pyodide Init ---- */
@@ -343,6 +352,19 @@ function showToast(msg) {
 }
 
 /* ---- Utils ---- */
+async function copyToClipboard(text, btn) {
+  try {
+    await navigator.clipboard.writeText(text);
+    const orig = btn.textContent;
+    btn.textContent = "Copied!";
+    setTimeout(() => {
+      btn.textContent = orig;
+    }, 1500);
+  } catch {
+    showToast("Failed to copy — try manually");
+  }
+}
+
 function escHtml(s) {
   const div = document.createElement("div");
   div.textContent = s;

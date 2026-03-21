@@ -94,6 +94,7 @@
             <button class="preset-btn" data-preset="permissive">Permissive</button>
             <button class="preset-btn" data-preset="time-based">Time-Based</button>
           </div>
+          <button id="copy-policy" class="clear-btn" title="Copy policy YAML">Copy</button>
         </div>
         <div class="editor-wrapper">
           <textarea id="policy-editor"></textarea>
@@ -196,7 +197,10 @@
       Powered by <a href="https://pyodide.org" target="_blank" rel="noopener">Pyodide</a> &mdash;
       Aegis runs entirely in your browser. No data leaves your machine.
       <br>
-      <code>pip install agent-aegis</code> to use in your own projects.
+      <button class="copy-btn" id="copy-pip" title="Copy install command">
+        <code>pip install agent-aegis</code>
+        <span class="copy-icon">&#x1F4CB;</span>
+      </button>
     </p>
   </footer>
 
