@@ -1049,6 +1049,8 @@ function renderResult(r) {
         <button class="copy-code-btn" data-fmt="python" title="Copy as Python snippet">Python</button>
         <button class="copy-code-btn" data-fmt="pytest" title="Copy as pytest test case">pytest</button>
         <button class="copy-code-btn" data-fmt="curl" title="Copy as cURL command">cURL</button>
+        <button class="copy-code-btn" data-fmt="docker" title="Copy as Docker + curl command">Docker</button>
+        <button class="copy-code-btn" data-fmt="markdown" title="Copy as Markdown table">MD</button>
       </div>
     </div>
   `;
@@ -1285,6 +1287,40 @@ def test_${r.action_type}_${r.approval}(policy):
   -H "Content-Type: application/json" \\
   -d '${body}'
 # Expected: ${r.approval} (${r.risk_level})`;
+  }
+
+  if (fmt === "docker") {
+    const body = JSON.stringify({
+      action_type: r.action_type,
+      target: r.target,
+      params: r.params || {},
+    });
+    return `# Run Aegis REST API in Docker
+docker run -d -p 8000:8000 -v $(pwd)/policy.yaml:/app/policy.yaml \\
+  ghcr.io/acacian/aegis:latest
+
+# Test this action
+curl -s http://localhost:8000/api/v1/evaluate \\
+  -H "Content-Type: application/json" \\
+  -d '${body}' | python3 -m json.tool
+# Expected: ${r.approval} (${r.risk_level})`;
+  }
+
+  if (fmt === "markdown") {
+    return `### Aegis Policy Evaluation
+
+| Field | Value |
+|-------|-------|
+| Action | \`${r.action_type}\` |
+| Target | \`${r.target}\` |
+| Risk | **${r.risk_level}** |
+| Decision | **${r.approval}** |
+| Allowed | ${r.is_allowed ? "Yes" : "No"} |
+
+\`\`\`yaml
+# Policy used:
+${editor.getValue().split("\n").slice(0, 10).join("\n")}${editor.getValue().split("\n").length > 10 ? "\n# ..." : ""}
+\`\`\``;
   }
 
   return "";
