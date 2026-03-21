@@ -776,8 +776,8 @@ policy = Policy.from_yaml(<span class="s">"policy.yaml"</span>)
   <script src="https://cdn.jsdelivr.net/pyodide/v0.27.5/full/pyodide.js"></script>
 
   <!-- App -->
-  <script src="js/presets.js"></script>
-  <script src="js/app.js"></script>
+  <script src="js/presets.js" defer></script>
+  <script src="js/app.js" defer></script>
   <script>
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("sw.js").catch(() => {});
