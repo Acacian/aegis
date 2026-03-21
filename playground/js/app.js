@@ -8,6 +8,7 @@
 /* ---- State ---- */
 let pyodide = null;
 let editor = null;
+let actionCount = 0;
 let auditEntries = [];
 
 /* ---- DOM refs ---- */
@@ -289,6 +290,9 @@ evaluate_action(
 
     renderResult(result);
     addAuditEntry(result);
+    actionCount++;
+    const counter = document.getElementById("action-counter");
+    if (counter) counter.textContent = actionCount;
   } catch (err) {
     showToast(`Evaluation error: ${err.message}`);
     console.error(err);

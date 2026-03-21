@@ -722,6 +722,76 @@ kbd {
   white-space: nowrap;
 }
 
+/* ---- CTA Section ---- */
+.cta-section {
+  text-align: center;
+  padding: 40px 24px;
+  margin: 16px auto;
+  max-width: 600px;
+}
+
+.cta-stats {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.cta-stats #action-counter {
+  font-weight: 700;
+  color: var(--accent);
+  font-size: 1.1rem;
+}
+
+.cta-section h2 {
+  font-size: 1.3rem;
+  margin-bottom: 6px;
+}
+
+.cta-section p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-bottom: 16px;
+}
+
+.cta-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.15s;
+}
+
+.cta-primary {
+  background: var(--accent);
+  color: #000;
+  border: 1px solid var(--accent);
+}
+
+.cta-primary:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+.cta-secondary {
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+
+.cta-secondary:hover {
+  border-color: var(--text-secondary);
+}
+
 /* ---- Footer ---- */
 footer {
   text-align: center;
