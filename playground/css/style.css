@@ -1068,6 +1068,24 @@ kbd {
   border-color: var(--approval-block);
 }
 
+.audit-search {
+  margin-left: auto;
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 0.7rem;
+  width: 120px;
+  outline: none;
+  transition: border-color 0.2s, width 0.2s;
+}
+
+.audit-search:focus {
+  border-color: var(--accent);
+  width: 160px;
+}
+
 .audit-entry {
   display: flex;
   align-items: center;

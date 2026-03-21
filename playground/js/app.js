@@ -750,6 +750,15 @@ function bindEvents() {
     });
   });
 
+  // Audit search
+  const auditSearch = document.getElementById("audit-search");
+  if (auditSearch) {
+    auditSearch.addEventListener("input", () => {
+      const activeFilter = document.querySelector(".audit-filter.active")?.dataset.filter || "all";
+      filterAuditLog(activeFilter);
+    });
+  }
+
   // Copy buttons
   document.getElementById("copy-policy").addEventListener("click", (e) => {
     copyToClipboard(editor.getValue(), e.target);
@@ -1446,13 +1455,12 @@ function addAuditEntry(r) {
 }
 
 function filterAuditLog(filter) {
+  const search = (document.getElementById("audit-search")?.value || "").toLowerCase();
   const rows = $audit.querySelectorAll(".audit-row");
   rows.forEach((row) => {
-    if (filter === "all" || row.dataset.approval === filter) {
-      row.style.display = "";
-    } else {
-      row.style.display = "none";
-    }
+    const matchFilter = filter === "all" || row.dataset.approval === filter;
+    const matchSearch = !search || row.textContent.toLowerCase().includes(search);
+    row.style.display = matchFilter && matchSearch ? "" : "none";
   });
 }
 

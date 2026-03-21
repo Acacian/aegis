@@ -393,6 +393,7 @@ result = await runtime.run_one(Action("delete", "crm", params={"id": "all"}))
           <button class="audit-filter filter-auto" data-filter="auto">Auto</button>
           <button class="audit-filter filter-approve" data-filter="approve">Approve</button>
           <button class="audit-filter filter-block" data-filter="block">Block</button>
+          <input type="text" class="audit-search" id="audit-search" placeholder="Search actions..." aria-label="Search audit log">
         </div>
         <div id="audit-content" class="audit-content" role="log" aria-live="polite">
           <div class="empty-state">Audit entries will appear here as you evaluate actions</div>
