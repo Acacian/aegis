@@ -451,6 +451,18 @@ result = await runtime.run_one(Action("delete", "crm", params={"id": "all"}))
         Aegis adds a policy layer in <strong>2 lines of code</strong> — no behavior changes, just safety.
       </div>
     </div>
+    <div class="before-after">
+      <div class="ba-col ba-before">
+        <div class="ba-label">Without Aegis</div>
+        <code>agent.run(action)  # &#x1F4A5; anything goes</code>
+      </div>
+      <div class="ba-vs">vs</div>
+      <div class="ba-col ba-after">
+        <div class="ba-label">With Aegis</div>
+        <code>rt.run_one(action)  # &#x1F6E1;&#xFE0F; policy-checked</code>
+      </div>
+    </div>
+
     <div class="steps-grid">
       <div class="step-card">
         <div class="step-number">1</div>

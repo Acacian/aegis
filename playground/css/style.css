@@ -2571,6 +2571,58 @@ footer code {
 
 .why-content strong { color: var(--text-primary); }
 
+/* Before / After comparison */
+.before-after {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  max-width: 680px;
+  margin: 0 auto 28px;
+}
+
+.ba-col {
+  flex: 1;
+  padding: 14px 16px;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.ba-col code {
+  display: block;
+  font-size: 0.8rem;
+  margin-top: 8px;
+  word-break: break-word;
+}
+
+.ba-before {
+  background: rgba(248, 81, 73, 0.08);
+  border: 1px solid rgba(248, 81, 73, 0.25);
+}
+
+.ba-before .ba-label { color: #f85149; }
+
+.ba-after {
+  background: rgba(63, 185, 80, 0.08);
+  border: 1px solid rgba(63, 185, 80, 0.25);
+}
+
+.ba-after .ba-label { color: #3fb950; }
+
+.ba-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ba-vs {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
 .steps-grid {
   display: flex;
   align-items: center;
@@ -2638,6 +2690,11 @@ footer code {
   .step-card {
     max-width: 100%;
   }
+  .before-after {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .ba-vs { display: none; }
 }
 
 /* ---- Comparison Section ---- */
