@@ -232,9 +232,16 @@ body {
 
 #progress-fill {
   height: 100%;
-  background: var(--accent);
+  background: linear-gradient(90deg, var(--accent), #79c0ff, var(--accent));
+  background-size: 200% 100%;
   width: 0%;
-  transition: width 0.3s ease;
+  transition: width 0.5s ease;
+  animation: progressShimmer 1.5s linear infinite;
+}
+
+@keyframes progressShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 /* ---- Header ---- */
