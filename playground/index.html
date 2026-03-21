@@ -408,6 +408,9 @@ result = await runtime.run_one(Action("delete", "crm", params={"id": "all"}))
           <h2>Audit Log</h2>
           <span id="audit-count" class="audit-count">0 entries</span>
           <button id="export-audit" class="clear-btn">Export</button>
+          <label class="clear-btn import-btn" title="Load a saved JSON snapshot">
+            Import <input type="file" id="import-snapshot" accept=".json" hidden>
+          </label>
           <button id="clear-audit" class="clear-btn">Clear</button>
         </div>
         <div class="audit-filters" id="audit-filters">

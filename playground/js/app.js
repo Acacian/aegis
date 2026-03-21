@@ -923,6 +923,28 @@ function bindEvents() {
       '<div class="empty-state">Click an action above to see the policy evaluation result</div>';
   });
 
+  // Import snapshot
+  document.getElementById("import-snapshot").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const snap = JSON.parse(reader.result);
+        if (snap.policy) editor.setValue(snap.policy);
+        if (snap.audit_entries) {
+          auditEntries = snap.audit_entries;
+          $auditCount.textContent = `${auditEntries.length} entries`;
+        }
+        showToast(`Loaded snapshot (${auditEntries.length} entries)`);
+      } catch {
+        showToast("Invalid snapshot file");
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = ""; // reset for re-import
+  });
+
   document.getElementById("clear-audit").addEventListener("click", () => {
     auditEntries = [];
     $audit.innerHTML =
