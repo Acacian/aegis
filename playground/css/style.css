@@ -524,6 +524,7 @@ a.integration-badge:active {
   font-weight: 700;
   color: var(--text-primary);
   font-variant-numeric: tabular-nums;
+  will-change: contents;
 }
 
 .stat-label {
@@ -1137,6 +1138,7 @@ kbd {
   padding: 14px;
   margin-bottom: 8px;
   animation: slideIn 0.2s ease;
+  contain: layout style;
 }
 
 @keyframes slideIn {
@@ -1469,6 +1471,7 @@ kbd {
   padding: 6px 0;
   border-bottom: 1px solid rgba(48, 54, 61, 0.5);
   animation: slideIn 0.15s ease;
+  contain: layout style;
 }
 
 /* CSS-only audit filtering via container data-filter attribute */
