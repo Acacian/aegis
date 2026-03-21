@@ -21,7 +21,6 @@ from aegis import Action, Policy, Runtime
 from aegis.adapters.base import BaseExecutor
 from aegis.core.result import Result, ResultStatus
 
-
 POLICY = """\
 version: "1"
 defaults:

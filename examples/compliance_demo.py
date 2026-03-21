@@ -22,7 +22,6 @@ from aegis import Action, Policy, Runtime
 from aegis.adapters.base import BaseExecutor
 from aegis.core.result import Result, ResultStatus
 
-
 POLICY_YAML = """\
 version: "1"
 defaults:

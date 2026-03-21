@@ -15,17 +15,15 @@ To deploy to Hugging Face Spaces:
 
 from __future__ import annotations
 
-import asyncio
 import json
 
 try:
     import gradio as gr
-except ImportError:
-    raise ImportError("pip install gradio  # required for this demo")
+except ImportError as err:
+    raise ImportError("pip install gradio  # required for this demo") from err
 
 from aegis import Action, Policy
 from aegis.core.policy import Approval, RiskLevel
-
 
 DEFAULT_POLICY = """\
 version: "1"

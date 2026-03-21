@@ -22,7 +22,6 @@ from aegis import Action, Policy, Runtime
 from aegis.adapters.base import BaseExecutor
 from aegis.core.result import Result, ResultStatus
 
-
 HARDENED_POLICY = """\
 version: "1"
 # SECURITY: Default to block. Every allowed action must be explicitly listed.

@@ -100,10 +100,11 @@ def show_code() -> None:
         f'{C.CYAN}from{C.RESET} aegis {C.CYAN}import{C.RESET} Action, Policy, Runtime',
         "",
         f'policy = Policy.from_yaml({C.GREEN}"policy.yaml"{C.RESET})',
-        f"runtime = Runtime(executor=my_executor, policy=policy)",
+        "runtime = Runtime(executor=my_executor, policy=policy)",
         "",
         f'{C.DIM}# Every action is now governed{C.RESET}',
-        f'result = {C.CYAN}await{C.RESET} runtime.run_one(Action({C.GREEN}"read"{C.RESET}, {C.GREEN}"crm"{C.RESET}))',
+        f"result = {C.CYAN}await{C.RESET} runtime.run_one("
+        f'Action({C.GREEN}"read"{C.RESET}, {C.GREEN}"crm"{C.RESET}))',
     ]
     for line in code_lines:
         time.sleep(0.15)
@@ -122,7 +123,6 @@ async def show_actions() -> None:
     ]
 
     for action_type, target, risk, approval, color, desc in actions:
-        color_code = getattr(C, color)
         bg_code = getattr(C, f"BG_{color}")
 
         typed(f">>> runtime.run_one(Action(\"{action_type}\", \"{target}\"))", delay=0.04)
@@ -161,13 +161,15 @@ def show_audit() -> None:
     section("Audit Trail")
     typed("$ aegis audit", delay=0.05)
     time.sleep(0.3)
-    header = f"  {C.BOLD}{'ID':<4} {'Action':<12} {'Target':<8} {'Risk':<10} {'Decision':<12} {'Result':<10}{C.RESET}"
-    print(header)
+    cols = f"{'ID':<4} {'Action':<12} {'Target':<8} "
+    cols += f"{'Risk':<10} {'Decision':<12} {'Result':<10}"
+    print(f"  {C.BOLD}{cols}{C.RESET}")
     print(f"  {'─' * 56}")
+    G, Y, R, X = C.GREEN, C.YELLOW, C.RED, C.RESET
     rows = [
-        ("1", "read", "crm", f"{C.GREEN}LOW{C.RESET}", f"{C.GREEN}auto{C.RESET}", f"{C.GREEN}success{C.RESET}"),
-        ("2", "write", "crm", f"{C.YELLOW}MEDIUM{C.RESET}", f"{C.YELLOW}approved{C.RESET}", f"{C.GREEN}success{C.RESET}"),
-        ("3", "delete", "crm", f"{C.RED}CRITICAL{C.RESET}", f"{C.RED}block{C.RESET}", f"{C.RED}blocked{C.RESET}"),
+        ("1", "read", "crm", f"{G}LOW{X}", f"{G}auto{X}", f"{G}success{X}"),
+        ("2", "write", "crm", f"{Y}MEDIUM{X}", f"{Y}approved{X}", f"{G}success{X}"),
+        ("3", "delete", "crm", f"{R}CRITICAL{X}", f"{R}block{X}", f"{R}blocked{X}"),
     ]
     for row in rows:
         time.sleep(0.2)
