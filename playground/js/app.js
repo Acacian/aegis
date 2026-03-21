@@ -983,8 +983,19 @@ function bindEvents() {
       showToast("No results to copy");
       return;
     }
-    copyToClipboard(JSON.stringify(auditEntries, null, 2), e.target);
-    showToast(`Copied ${auditEntries.length} results as JSON`);
+    // Rich summary with stats + entries
+    const summary = {
+      summary: {
+        total: stats.total,
+        auto: stats.auto,
+        approve: stats.approve,
+        block: stats.block,
+        avg_latency: stats.total > 0 ? +(stats.totalMs / stats.total).toFixed(2) : 0,
+      },
+      entries: auditEntries,
+    };
+    copyToClipboard(JSON.stringify(summary, null, 2), e.target);
+    showToast(`Copied ${auditEntries.length} results with summary`);
   });
 
   document.getElementById("clear-result").addEventListener("click", () => {
