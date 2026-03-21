@@ -17,7 +17,7 @@
   <a href="https://acacian.github.io/aegis/"><img src="https://img.shields.io/badge/docs-acacian.github.io%2Faegis-blue" alt="Docs"></a>
   <a href="https://github.com/Acacian/aegis"><img src="https://img.shields.io/github/stars/Acacian/aegis?style=social" alt="GitHub stars"></a>
   <br/>
-  <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-420_passed-brightgreen" alt="Tests"></a>
+  <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-485_passed-brightgreen" alt="Tests"></a>
   <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/coverage-92%25-brightgreen" alt="Coverage"></a>
 </p>
 
@@ -285,7 +285,7 @@ aegis audit
 
 | 항목 | 상세 |
 |------|------|
-| **420개 테스트, 92% 커버리지** | 모든 어댑터, 핸들러, 엣지 케이스 테스트 |
+| **485개 테스트, 92% 커버리지** | 모든 어댑터, 핸들러, 엣지 케이스 테스트 |
 | **타입 안전** | `mypy --strict` 에러 제로, `py.typed` 마커 |
 | **성능** | 정책 평가 < 1ms, 자동 승인 액션 오버헤드 < 5ms |
 | **페일 세이프** | 차단된 액션은 절대 실행 안 됨, 정책 변경 없이 우회 불가 |

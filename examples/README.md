@@ -11,6 +11,7 @@ These examples run with just `pip install agent-aegis`:
 | [`quickstart.py`](quickstart.py) | Basic policy engine demo with dry-run executor |
 | [`conditions_demo.py`](conditions_demo.py) | Time-based, weekday, and param conditions |
 | [`salesforce_demo.py`](salesforce_demo.py) | Real-world CRM governance scenario |
+| [`mcp_demo.py`](mcp_demo.py) | MCP tool call governance with per-server policies |
 
 ## Framework Integrations
 

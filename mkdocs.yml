@@ -69,6 +69,7 @@ nav:
       - Writing Policies: guides/policies.md
       - Integrations: guides/integrations.md
       - MCP Governance: guides/mcp-governance.md
+      - Aegis vs Alternatives: guides/alternatives.md
       - Custom Adapters: guides/custom-adapters.md
       - Approval Handlers: guides/approval-handlers.md
       - REST API Server: guides/rest-api.md
@@ -82,6 +83,8 @@ nav:
       - Audit: api/audit.md
   - Cookbook:
       - LangChain Governance: cookbook/langchain-governance.md
+      - CrewAI Governance: cookbook/crewai-governance.md
+      - OpenAI Agents Governance: cookbook/openai-agents-governance.md
   - Cheatsheet: cheatsheet.md
   - Examples: https://github.com/Acacian/aegis/tree/main/examples
   - FAQ: faq.md
