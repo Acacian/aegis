@@ -655,15 +655,37 @@ kbd {
   font-size: 0.75rem;
 }
 
+.result-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
 .result-allowed {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid var(--border);
   font-size: 0.85rem;
   font-weight: 600;
+}
+
+.copy-python-btn {
+  font-size: 0.7rem;
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.copy-python-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .result-allowed.yes { color: var(--risk-low); }

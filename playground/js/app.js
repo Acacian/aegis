@@ -376,11 +376,27 @@ function renderResult(r) {
         <span class="value">${escHtml(r.description || "-")}</span>
       </div>
     </div>
-    <div class="result-allowed ${isAllowed ? "yes" : "no"}">
-      ${isAllowed ? "&#x2705; ALLOWED" : "&#x1F6AB; BLOCKED"}
-      ${!isAllowed && r.approval === "block" ? " — Policy explicitly blocks this action" : ""}
+    <div class="result-footer">
+      <div class="result-allowed ${isAllowed ? "yes" : "no"}">
+        ${isAllowed ? "&#x2705; ALLOWED" : "&#x1F6AB; BLOCKED"}
+        ${!isAllowed && r.approval === "block" ? " — Policy explicitly blocks this action" : ""}
+      </div>
+      <button class="copy-python-btn" title="Copy as Python code">Copy as Python</button>
     </div>
   `;
+
+  // Copy as Python handler
+  card.querySelector(".copy-python-btn").addEventListener("click", (e) => {
+    const params = r.description
+      ? `params=${JSON.stringify({})}, description="${r.description}"`
+      : `params=${JSON.stringify({})}`;
+    const code = `from aegis import Action, Policy, Runtime
+
+runtime = Runtime(executor=your_executor, policy=Policy.from_yaml("policy.yaml"))
+result = await runtime.run_one(Action("${r.action_type}", "${r.target}", ${params}))
+# Result: ${r.is_allowed ? "ALLOWED" : "BLOCKED"} (${r.risk_level}, ${r.approval})`;
+    copyToClipboard(code, e.target);
+  });
 
   // Add risk-specific border color
   if (!isAllowed) {
