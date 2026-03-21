@@ -578,9 +578,11 @@ function buildShortcutOverlay() {
         <div class="shortcut-group">Evaluation</div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Enter</kbd><span>Evaluate custom action</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd><span>Run all actions</span></div>
+        <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd><span>Fresh re-evaluate all</span></div>
         <div class="shortcut-row"><kbd>r</kbd><span>Re-run last action</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>K</kbd><span>Focus custom action input</span></div>
         <div class="shortcut-group">Editor</div>
+        <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>N</kbd><span>New blank policy</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>H</kbd><span>Toggle YAML hints</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>S</kbd><span>Copy policy to clipboard</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>/</kbd><span>Toggle YAML comment</span></div>
@@ -1105,6 +1107,26 @@ function bindEvents() {
         hiw.style.outline = "2px solid var(--accent)";
         setTimeout(() => { hiw.style.outline = ""; }, 1500);
       }
+      return;
+    }
+    // Ctrl/Cmd + N → new blank policy
+    if ((e.ctrlKey || e.metaKey) && e.key === "n" && !e.shiftKey) {
+      e.preventDefault();
+      editor.setValue("policies:\n  - name: my_policy\n    rules:\n      - action_type: \"*\"\n        approval: auto\n        risk_level: low\n");
+      editor.setCursor(0, 0);
+      editor.focus();
+      showToast("New blank policy created");
+      return;
+    }
+    // Ctrl/Cmd + Shift + R → re-evaluate all with stats reset
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === "R" || e.key === "r")) {
+      e.preventDefault();
+      stats.total = 0; stats.auto = 0; stats.approve = 0; stats.block = 0; stats.totalMs = 0;
+      auditEntries.length = 0;
+      document.getElementById("clear-result")?.click();
+      document.getElementById("clear-audit")?.click();
+      setTimeout(() => document.getElementById("run-all")?.click(), 100);
+      showToast("Fresh evaluation started");
       return;
     }
     // r → re-run last evaluated action (when not in input)
