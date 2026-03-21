@@ -93,6 +93,41 @@ function sharePolicyURL() {
   return url;
 }
 
+/* ---- Keyboard Shortcut Help ---- */
+function buildShortcutOverlay() {
+  const overlay = document.createElement("div");
+  overlay.id = "shortcut-overlay";
+  overlay.className = "shortcut-overlay hidden";
+  overlay.innerHTML = `
+    <div class="shortcut-modal">
+      <div class="shortcut-header">
+        <h3>Keyboard Shortcuts</h3>
+        <button class="shortcut-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="shortcut-list">
+        <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Enter</kbd><span>Evaluate custom action</span></div>
+        <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd><span>Run all actions</span></div>
+        <div class="shortcut-row"><kbd>1</kbd>-<kbd>9</kbd><span>Switch preset (by position)</span></div>
+        <div class="shortcut-row"><kbd>?</kbd><span>Show this help</span></div>
+        <div class="shortcut-row"><kbd>Esc</kbd><span>Close dialogs</span></div>
+      </div>
+      <p class="shortcut-hint">On macOS, use <kbd>Cmd</kbd> instead of <kbd>Ctrl</kbd></p>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) overlay.classList.add("hidden");
+  });
+  overlay.querySelector(".shortcut-close").addEventListener("click", () => {
+    overlay.classList.add("hidden");
+  });
+}
+
+function toggleShortcutHelp() {
+  const overlay = document.getElementById("shortcut-overlay");
+  if (overlay) overlay.classList.toggle("hidden");
+}
+
 /* ---- Theme Toggle ---- */
 function initTheme() {
   const saved = localStorage.getItem("aegis-theme");
@@ -199,23 +234,53 @@ function bindEvents() {
 
   // Keyboard shortcuts
   document.addEventListener("keydown", (e) => {
-    // Ctrl/Cmd + Enter → run custom action (or last clicked preset)
+    // Ignore when typing in inputs
+    const tag = document.activeElement?.tagName;
+    const isInput = tag === "INPUT" || tag === "TEXTAREA";
+
+    // Ctrl/Cmd + Shift + Enter → run all (check first, before plain Enter)
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "Enter") {
+      e.preventDefault();
+      document.getElementById("run-all").click();
+      return;
+    }
+    // Ctrl/Cmd + Enter → run custom action (or run all as fallback)
     if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
       e.preventDefault();
       const type = document.getElementById("custom-type").value.trim();
       if (type) {
         document.getElementById("run-custom").click();
       } else {
-        // Run all actions as fallback
         document.getElementById("run-all").click();
       }
+      return;
     }
-    // Ctrl/Cmd + Shift + Enter → run all
-    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "Enter") {
+    // ? → toggle keyboard shortcut help overlay
+    if (e.key === "?" && !isInput) {
       e.preventDefault();
-      document.getElementById("run-all").click();
+      toggleShortcutHelp();
+      return;
+    }
+    // Escape → close shortcut help
+    if (e.key === "Escape") {
+      const overlay = document.getElementById("shortcut-overlay");
+      if (overlay && !overlay.classList.contains("hidden")) {
+        overlay.classList.add("hidden");
+        return;
+      }
+    }
+    // 1-9 → switch preset (when not in input)
+    if (!isInput && e.key >= "1" && e.key <= "9" && !e.ctrlKey && !e.metaKey) {
+      const presetBtns = document.querySelectorAll(".preset-btn:not(.preset-divider)");
+      const idx = parseInt(e.key) - 1;
+      if (idx < presetBtns.length) {
+        presetBtns[idx].click();
+      }
     }
   });
+
+  // Build shortcut help overlay
+  buildShortcutOverlay();
 
   // Clear buttons
   document.getElementById("clear-result").addEventListener("click", () => {
