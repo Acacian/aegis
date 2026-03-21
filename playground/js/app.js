@@ -535,6 +535,7 @@ function buildShortcutOverlay() {
       <div class="shortcut-list">
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Enter</kbd><span>Evaluate custom action</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd><span>Run all actions</span></div>
+        <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd><span>Save snapshot (JSON)</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>X</kbd><span>Clear results + audit</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>P</kbd><span>Command palette</span></div>
         <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>K</kbd><span>Focus custom action input</span></div>
@@ -734,6 +735,19 @@ function bindEvents() {
     const tag = document.activeElement?.tagName;
     const isInput = tag === "INPUT" || tag === "TEXTAREA";
 
+    // Ctrl/Cmd + Shift + S → save snapshot (policy + audit as JSON)
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === "S" || e.key === "s")) {
+      e.preventDefault();
+      const snapshot = {
+        saved_at: new Date().toISOString(),
+        policy: editor.getValue(),
+        stats: { ...stats },
+        audit_entries: auditEntries,
+      };
+      downloadBlob(JSON.stringify(snapshot, null, 2), "application/json", "json");
+      showToast("Snapshot saved");
+      return;
+    }
     // Ctrl/Cmd + Shift + X → clear all results + audit
     if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === "X" || e.key === "x")) {
       e.preventDefault();
