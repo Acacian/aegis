@@ -1146,6 +1146,13 @@ kbd {
 .result-card.blocked-effect {
   position: relative;
   overflow: visible;
+  animation: blockedPulse 0.6s ease-out;
+}
+
+@keyframes blockedPulse {
+  0% { box-shadow: 0 0 0 0 rgba(248, 81, 73, 0.5); }
+  40% { box-shadow: 0 0 12px 4px rgba(248, 81, 73, 0.3); }
+  100% { box-shadow: none; }
 }
 
 .result-card.blocked-effect::before,
@@ -2240,11 +2247,14 @@ footer code {
 @keyframes particleFly {
   0% {
     opacity: 1;
-    transform: translate(0, 0) scale(1);
+    transform: translate(0, 0) scale(1) rotate(0deg);
+  }
+  60% {
+    opacity: 0.8;
   }
   100% {
     opacity: 0;
-    transform: translate(var(--dx), var(--dy)) scale(0.4);
+    transform: translate(var(--dx), var(--dy)) scale(0.3) rotate(var(--rot, 180deg));
   }
 }
 

@@ -2070,16 +2070,21 @@ function showPulseRing(card) {
 
 /* ---- Celebration (milestone at 50 & 100 evals) ---- */
 function spawnCelebration() {
-  const symbols = ["\u2B50", "\u{1F389}", "\u{1F38A}", "\u2728", "\u{1F3C6}"];
-  for (let i = 0; i < 12; i++) {
+  const symbols = ["\u2B50", "\u{1F389}", "\u{1F38A}", "\u2728", "\u{1F3C6}", "\u{1F680}", "\u{1F31F}"];
+  const count = 16;
+  for (let i = 0; i < count; i++) {
     const p = document.createElement("div");
     p.className = "block-particle";
     p.textContent = symbols[i % symbols.length];
-    p.style.left = Math.random() * window.innerWidth + "px";
+    // Spread particles across the viewport width
+    p.style.left = (10 + Math.random() * 80) + "vw";
     p.style.top = window.innerHeight + "px";
-    p.style.setProperty("--dx", (Math.random() - 0.5) * 200 + "px");
-    p.style.setProperty("--dy", -(200 + Math.random() * 300) + "px");
-    p.style.fontSize = "1.5rem";
+    p.style.setProperty("--dx", (Math.random() - 0.5) * 250 + "px");
+    p.style.setProperty("--dy", -(250 + Math.random() * 350) + "px");
+    p.style.setProperty("--rot", (Math.random() * 360 - 180) + "deg");
+    p.style.fontSize = (1.2 + Math.random() * 0.8) + "rem";
+    p.style.animationDuration = (0.7 + Math.random() * 0.4) + "s";
+    p.style.animationDelay = (i * 0.03) + "s";
     document.body.appendChild(p);
     p.addEventListener("animationend", () => p.remove());
   }
