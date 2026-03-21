@@ -2,13 +2,21 @@
   "name": "Aegis Dev",
   "image": "mcr.microsoft.com/devcontainers/python:3.12",
   "postCreateCommand": "pip install -e '.[dev]' && pre-commit install",
+  "forwardPorts": [8000],
+  "portsAttributes": {
+    "8000": {
+      "label": "Docs (mkdocs)",
+      "onAutoForward": "notify"
+    }
+  },
   "customizations": {
     "vscode": {
       "extensions": [
         "ms-python.python",
         "ms-python.vscode-pylance",
         "charliermarsh.ruff",
-        "redhat.vscode-yaml"
+        "redhat.vscode-yaml",
+        "tamasfe.even-better-toml"
       ],
       "settings": {
         "python.defaultInterpreterPath": "/usr/local/bin/python",

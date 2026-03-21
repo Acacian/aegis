@@ -2,11 +2,20 @@ image: gitpod/workspace-python-3.12
 
 tasks:
   - name: Setup
-    init: pip install -e ".[dev]"
+    init: pip install -e ".[dev]" && pre-commit install
     command: pytest tests/ -v
+
+  - name: Docs
+    command: mkdocs serve -a 0.0.0.0:8000
+
+ports:
+  - port: 8000
+    onOpen: notify
+    name: Docs
 
 vscode:
   extensions:
     - ms-python.python
     - charliermarsh.ruff
     - redhat.vscode-yaml
+    - tamasfe.even-better-toml

@@ -35,6 +35,17 @@ theme:
   icon:
     repo: fontawesome/brands/github
 
+plugins:
+  - search
+  - social
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/Acacian/aegis
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/agent-aegis/
+
 markdown_extensions:
   - pymdownx.highlight:
       anchor_linenums: true

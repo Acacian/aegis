@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := help
 
-.PHONY: help install dev test lint format typecheck coverage docs docs-serve clean
+.PHONY: help install dev test lint format typecheck coverage check docs docs-serve clean
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}'
@@ -17,6 +17,7 @@ test: ## Run tests
 
 lint: ## Run linter
 	ruff check src/ tests/
+	ruff format --check src/ tests/
 
 format: ## Format code
 	ruff format src/ tests/
@@ -28,8 +29,18 @@ coverage: ## Run tests with coverage
 	pytest tests/ --cov=aegis --cov-report=term-missing --cov-report=html
 	@echo "Open htmlcov/index.html for the full report"
 
+check: ## Run all checks (lint + typecheck + test)
+	@echo "==> Lint"
+	ruff check src/ tests/
+	ruff format --check src/ tests/
+	@echo "==> Type check"
+	mypy src/aegis/
+	@echo "==> Tests"
+	pytest tests/ -q
+	@echo "==> All checks passed!"
+
 docs: ## Build documentation
-	mkdocs build
+	mkdocs build --strict
 
 docs-serve: ## Serve documentation locally
 	mkdocs serve
