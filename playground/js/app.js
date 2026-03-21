@@ -361,6 +361,10 @@ function initEditor() {
     indentWithTabs: false,
     lineWrapping: true,
     viewportMargin: Infinity,
+    extraKeys: {
+      Tab: (cm) => cm.execCommand("indentMore"),
+      "Shift-Tab": (cm) => cm.execCommand("indentLess"),
+    },
   });
   editor.setValue(POLICY_PRESETS.default);
   initTheme();
