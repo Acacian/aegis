@@ -693,6 +693,20 @@ kbd {
   to { opacity: 1; transform: translateY(0); }
 }
 
+.result-card.result-allowed {
+  border-left: 3px solid var(--risk-low);
+}
+
+.result-card.result-blocked {
+  border-left: 3px solid var(--risk-high);
+  animation: slideIn 0.2s ease, pulseRed 0.5s ease;
+}
+
+@keyframes pulseRed {
+  0%, 100% { box-shadow: none; }
+  50% { box-shadow: 0 0 12px rgba(248, 81, 73, 0.3); }
+}
+
 .result-header {
   display: flex;
   align-items: center;

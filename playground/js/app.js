@@ -469,7 +469,7 @@ function renderResult(r) {
   const isAllowed = r.is_allowed;
 
   const card = document.createElement("div");
-  card.className = "result-card";
+  card.className = `result-card ${isAllowed ? "result-allowed" : "result-blocked"}`;
   card.innerHTML = `
     <div class="result-header">
       <span class="result-action-type">${escHtml(r.action_type)}</span>
