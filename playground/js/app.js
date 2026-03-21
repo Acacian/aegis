@@ -1076,9 +1076,11 @@ function renderResult(r) {
   } else if (r.approval === "auto") {
     card.classList.add("flash-auto");
     card.addEventListener("animationend", () => card.classList.remove("flash-auto"), { once: true });
+    spawnAutoCheckmarks(card);
   } else if (r.approval === "approve") {
     card.classList.add("flash-approve");
     card.addEventListener("animationend", () => card.classList.remove("flash-approve"), { once: true });
+    showPulseRing(card);
   }
 }
 
@@ -1098,6 +1100,31 @@ function spawnBlockParticles(card) {
     document.body.appendChild(p);
     p.addEventListener("animationend", () => p.remove());
   }
+}
+
+/* ---- Auto-Approve Checkmark Burst ---- */
+function spawnAutoCheckmarks(card) {
+  const rect = card.getBoundingClientRect();
+  for (let i = 0; i < 5; i++) {
+    const p = document.createElement("div");
+    p.className = "auto-checkmark";
+    p.textContent = "\u2713";
+    p.style.left = rect.left + Math.random() * rect.width + "px";
+    p.style.top = rect.top + rect.height / 2 + "px";
+    p.style.setProperty("--dx", (Math.random() - 0.5) * 80 + "px");
+    p.style.setProperty("--dy", -(20 + Math.random() * 60) + "px");
+    document.body.appendChild(p);
+    p.addEventListener("animationend", () => p.remove());
+  }
+}
+
+/* ---- Approve Pulse Ring ---- */
+function showPulseRing(card) {
+  const ring = document.createElement("div");
+  ring.className = "approve-pulse-ring";
+  card.style.position = "relative";
+  card.appendChild(ring);
+  ring.addEventListener("animationend", () => ring.remove());
 }
 
 /* ---- Blocked Effect (CSS-only particle burst) ---- */

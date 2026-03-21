@@ -1562,6 +1562,37 @@ footer code {
   }
 }
 
+/* ---- Auto-Approve Checkmarks ---- */
+.auto-checkmark {
+  position: fixed;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #3fb950;
+  pointer-events: none;
+  z-index: 1000;
+  animation: checkmarkBurst 0.7s ease-out forwards;
+}
+
+@keyframes checkmarkBurst {
+  0%   { opacity: 1; transform: translate(0, 0) scale(1); }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.4); }
+}
+
+/* ---- Approve Pulse Ring ---- */
+.approve-pulse-ring {
+  position: absolute;
+  inset: 0;
+  border: 2px solid rgba(210, 153, 34, 0.5);
+  border-radius: inherit;
+  pointer-events: none;
+  animation: pulseRingExpand 0.6s ease-out forwards;
+}
+
+@keyframes pulseRingExpand {
+  0%   { transform: scale(0.98); opacity: 0.8; }
+  100% { transform: scale(1.04); opacity: 0; }
+}
+
 /* ---- Block Particles ---- */
 .block-particle {
   position: fixed;
