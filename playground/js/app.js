@@ -1046,11 +1046,11 @@ function bindEvents() {
     }
     // Ctrl/Cmd + F → focus audit search filter
     if ((e.ctrlKey || e.metaKey) && e.key === "f" && !e.shiftKey) {
-      const auditSearch = document.getElementById("audit-search");
-      if (auditSearch) {
+      const searchEl = _$auditSearch || (_$auditSearch = document.getElementById("audit-search"));
+      if (searchEl) {
         e.preventDefault();
-        auditSearch.focus();
-        auditSearch.select();
+        searchEl.focus();
+        searchEl.select();
         return;
       }
     }
