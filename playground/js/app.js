@@ -1021,12 +1021,16 @@ function bindEvents() {
     });
   });
 
-  // Audit search
+  // Audit search (debounced for performance)
   const auditSearch = document.getElementById("audit-search");
+  let auditSearchTimer = null;
   if (auditSearch) {
     auditSearch.addEventListener("input", () => {
-      const activeFilter = document.querySelector(".audit-filter.active")?.dataset.filter || "all";
-      filterAuditLog(activeFilter);
+      clearTimeout(auditSearchTimer);
+      auditSearchTimer = setTimeout(() => {
+        const activeFilter = document.querySelector(".audit-filter.active")?.dataset.filter || "all";
+        filterAuditLog(activeFilter);
+      }, 150);
     });
   }
 
