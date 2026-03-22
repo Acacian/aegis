@@ -658,6 +658,7 @@ function getSystemTheme() {
 }
 
 const THEMES = ["dark", "light", "high-contrast"];
+let _$themeToggle = null;
 
 const THEME_META = {
   dark: { color: "#0d1117", icon: "\u{1F319}", label: "Dark" },
@@ -687,7 +688,7 @@ function applyTheme(theme) {
   }
 
   // Update toggle button label and show correct icon
-  const btn = document.getElementById("theme-toggle");
+  const btn = _$themeToggle || (_$themeToggle = document.getElementById("theme-toggle"));
   if (btn && THEME_META[theme]) {
     btn.setAttribute("aria-label", `Current: ${THEME_META[theme].label}. Click to switch.`);
     btn.title = `Theme: ${THEME_META[theme].label}`;
@@ -730,7 +731,7 @@ function initTheme() {
 }
 
 function _updateNextThemeHint(current) {
-  const btn = document.getElementById("theme-toggle");
+  const btn = _$themeToggle || (_$themeToggle = document.getElementById("theme-toggle"));
   if (!btn) return;
   const idx = THEMES.indexOf(current);
   const next = THEMES[(idx + 1) % THEMES.length];
@@ -768,7 +769,7 @@ function resetThemeToAuto() {
 
 // Long-press on theme toggle → reset to auto
 function setupThemeLongPress() {
-  const btn = document.getElementById("theme-toggle");
+  const btn = _$themeToggle || (_$themeToggle = document.getElementById("theme-toggle"));
   if (!btn) return;
   let pressTimer = null;
   btn.addEventListener("pointerdown", () => {
@@ -784,7 +785,7 @@ function setupThemeLongPress() {
 /* ---- Event Binding ---- */
 function bindEvents() {
   // Theme toggle
-  document.getElementById("theme-toggle").addEventListener("click", (ev) => {
+  (_$themeToggle || (_$themeToggle = document.getElementById("theme-toggle"))).addEventListener("click", (ev) => {
     if (ev.isTrusted) showShortcutHint("theme", "Ctrl+D to toggle theme");
     toggleTheme();
   });
