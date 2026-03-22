@@ -2165,11 +2165,12 @@ function guessRisk(actionType) {
   return "medium";
 }
 
+let _$quickActions = null;
 function updateActionButtons(preset) {
   const actions = typeof PRESET_ACTIONS !== "undefined" && PRESET_ACTIONS[preset];
   if (!actions) return; // keep default buttons for non-industry presets
 
-  const container = document.querySelector(".quick-actions");
+  const container = _$quickActions || (_$quickActions = document.querySelector(".quick-actions"));
   container.replaceChildren();
   actions.forEach((a) => {
     const risk = guessRisk(a.action_type);
