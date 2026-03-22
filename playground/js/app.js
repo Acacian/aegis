@@ -2277,7 +2277,17 @@ evaluate_action(
     result.latency_ms = t1 - t0;
 
     if (result.error) {
-      showToast(result.error);
+      showToast(result.error.length > 60 ? result.error.slice(0, 57) + "..." : result.error);
+      // Show error in result panel for full visibility
+      const errCard = document.createElement("div");
+      errCard.className = "result-card result-blocked result-block";
+      errCard.style.borderLeft = "3px solid var(--risk-high)";
+      errCard.innerHTML = `<div class="result-header"><span class="result-action-type">Error</span></div>
+        <div class="result-details"><div class="result-detail"><span class="label">Details: </span><span class="value"></span></div></div>`;
+      errCard.querySelector(".value").textContent = result.error;
+      const empty = $result.querySelector(".empty-state");
+      if (empty) empty.remove();
+      $result.prepend(errCard);
       return;
     }
 
