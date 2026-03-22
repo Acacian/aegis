@@ -2865,19 +2865,23 @@ curl -s http://localhost:8000/api/v1/evaluate \\
   }
 
   if (fmt === "github") {
+    const safeType = r.action_type.replace(/`/g, "'");
+    const safeTarget = r.target.replace(/`/g, "'");
+    const safeRule = (r.matched_rule || "(default)").replace(/`/g, "'");
+    const safeYaml = editor.getValue().replace(/<\/details>/gi, "&lt;/details&gt;");
     return `### Bug Report / Discussion
 
 **Policy evaluation result:**
-- Action: \`${r.action_type}\` on \`${r.target}\`
+- Action: \`${safeType}\` on \`${safeTarget}\`
 - Expected: \`${r.approval}\` (${r.risk_level})
 - Allowed: ${r.is_allowed ? "Yes" : "No"}
-- Matched Rule: \`${r.matched_rule || "(default)"}\`
+- Matched Rule: \`${safeRule}\`
 
 <details>
 <summary>Policy YAML</summary>
 
 \`\`\`yaml
-${editor.getValue()}
+${safeYaml}
 \`\`\`
 </details>
 
