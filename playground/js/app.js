@@ -1896,7 +1896,7 @@ async function validatePolicy() {
           if (wLine >= 0) {
             const widget = editor.addLineWidget(wLine, warnEl, { coverGutter: false, noHScroll: true });
             activeLineWidgets.push(widget);
-            warnEl.querySelector(".warn-dismiss-btn").addEventListener("click", () => {
+            dismissBtn.addEventListener("click", () => {
               const idx = activeLineWidgets.indexOf(widget);
               if (idx >= 0) activeLineWidgets.splice(idx, 1);
               editor.removeLineWidget(widget);
