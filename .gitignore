@@ -4,6 +4,7 @@ CLAUDE.md
 .github/DEVTO_ARTICLE.md
 .idea/
 .mypy_cache/
+.mcpregistry_*
 .ruff_cache/
 
 # Python

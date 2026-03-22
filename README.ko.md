@@ -312,7 +312,8 @@ JSONL로 내보내기, CLI/API로 조회, 또는 웹훅으로 외부 SIEM에 스
 사용 중인 에이전트 프레임워크와 바로 연동:
 
 ```bash
-pip install 'agent-aegis[langchain]'      # LangChain
+pip install langchain-aegis               # LangChain (독립 통합 패키지)
+pip install 'agent-aegis[langchain]'      # LangChain (어댑터)
 pip install 'agent-aegis[crewai]'         # CrewAI
 pip install 'agent-aegis[openai-agents]'  # OpenAI Agents SDK
 pip install 'agent-aegis[anthropic]'      # Anthropic Claude
@@ -323,7 +324,23 @@ pip install 'agent-aegis[all]'            # 전부
 ```
 
 <details>
-<summary><b>LangChain</b> -- 도구 래핑 또는 거버넌스 액션 노출</summary>
+<summary><b>LangChain</b> -- 함수 하나로 모든 LangChain 도구에 거버넌스 적용</summary>
+
+**방법 A: `langchain-aegis` (권장)** — 독립 통합 패키지
+
+```bash
+pip install langchain-aegis
+```
+
+```python
+from langchain_aegis import govern_tools
+
+# 기존 도구에 거버넌스 추가 — 다른 코드 변경 없음
+governed = govern_tools(tools, policy="policy.yaml")
+agent = create_react_agent(model, governed)
+```
+
+**방법 B: `agent-aegis[langchain]`** — 어댑터 기반
 
 ```python
 from aegis.adapters.langchain import LangChainExecutor, AegisTool

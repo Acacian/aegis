@@ -1,0 +1,15 @@
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    properties:
+      policyPath:
+        type: string
+        description: "Path to YAML policy file"
+    required: []
+  commandFunction: |
+    (config) => ({
+      command: "aegis-mcp-server",
+      args: config.policyPath ? ["--policy", config.policyPath] : [],
+      env: config.policyPath ? { AEGIS_POLICY_PATH: config.policyPath } : {}
+    })

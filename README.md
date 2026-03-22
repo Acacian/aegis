@@ -13,6 +13,7 @@
 <p align="center">
   <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://github.com/Acacian/aegis/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://pypi.org/project/agent-aegis/"><img src="https://img.shields.io/pypi/v/agent-aegis?color=blue&cacheSeconds=3600" alt="PyPI"></a>
+  <a href="https://pypi.org/project/langchain-aegis/"><img src="https://img.shields.io/pypi/v/langchain-aegis?label=langchain-aegis&color=blue&cacheSeconds=3600" alt="langchain-aegis"></a>
   <a href="https://pypi.org/project/agent-aegis/"><img src="https://img.shields.io/pypi/pyversions/agent-aegis?cacheSeconds=3600" alt="Python"></a>
   <a href="https://github.com/Acacian/aegis/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License"></a>
   <a href="https://acacian.github.io/aegis/"><img src="https://img.shields.io/badge/docs-acacian.github.io%2Faegis-blue" alt="Docs"></a>
@@ -336,7 +337,8 @@ Export as JSONL, query via CLI/API, or stream to external SIEM via webhook. For 
 Works with the agent frameworks you already use:
 
 ```bash
-pip install 'agent-aegis[langchain]'      # LangChain
+pip install langchain-aegis               # LangChain (standalone integration)
+pip install 'agent-aegis[langchain]'      # LangChain (adapter)
 pip install 'agent-aegis[crewai]'         # CrewAI
 pip install 'agent-aegis[openai-agents]'  # OpenAI Agents SDK
 pip install 'agent-aegis[anthropic]'      # Anthropic Claude
@@ -347,7 +349,23 @@ pip install 'agent-aegis[all]'            # Everything
 ```
 
 <details>
-<summary><b>LangChain</b> -- wrap tools or expose governed actions</summary>
+<summary><b>LangChain</b> -- govern any LangChain tool with one function call</summary>
+
+**Option A: `langchain-aegis` (recommended)** — standalone integration package
+
+```bash
+pip install langchain-aegis
+```
+
+```python
+from langchain_aegis import govern_tools
+
+# Add governance to existing tools — no other code changes
+governed = govern_tools(tools, policy="policy.yaml")
+agent = create_react_agent(model, governed)
+```
+
+**Option B: `agent-aegis[langchain]`** — adapter-based
 
 ```python
 from aegis.adapters.langchain import LangChainExecutor, AegisTool
