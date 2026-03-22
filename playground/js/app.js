@@ -418,7 +418,7 @@ function loadPolicyFromURL() {
       const yaml = decodeURIComponent(atob(encoded));
       editor.setValue(yaml);
       // Deactivate all preset buttons
-      document.querySelectorAll(".preset-btn").forEach((b) => b.classList.remove("active"));
+      _getPresetBtns().forEach((b) => b.classList.remove("active"));
       return;
     } catch {
       // Ignore invalid hash
@@ -429,7 +429,7 @@ function loadPolicyFromURL() {
   const saved = localStorage.getItem("aegis-last-policy");
   if (saved && saved !== POLICY_PRESETS.default) {
     editor.setValue(saved);
-    document.querySelectorAll(".preset-btn").forEach((b) => b.classList.remove("active"));
+    _getPresetBtns().forEach((b) => b.classList.remove("active"));
   }
 }
 
