@@ -216,7 +216,9 @@ function toggleCommandPalette() {
   renderCommands(input, "");
 }
 
+let _commandItems = null;
 function getCommandItems() {
+  if (_commandItems) return _commandItems;
   const items = [
     { label: "Run All Actions", icon: "\u25B6", action: () => document.getElementById("run-all")?.click() },
     { label: "Toggle Theme", icon: "\uD83C\uDFA8", action: () => toggleTheme() },
@@ -227,10 +229,10 @@ function getCommandItems() {
     { label: "Clear Results", icon: "\uD83D\uDDD1\uFE0F", action: () => document.getElementById("clear-result")?.click() },
     { label: "Share Policy", icon: "\uD83D\uDD17", action: () => openShareModal() },
   ];
-  // Add presets
   _getPresetBtns().forEach((btn) => {
     items.push({ label: `Preset: ${btn.textContent.trim()}`, icon: "\uD83D\uDCD1", action: () => btn.click() });
   });
+  _commandItems = items;
   return items;
 }
 
