@@ -2740,8 +2740,15 @@ async function copyToClipboard(text, btn) {
 
 /* ---- Code Generation for Copy Buttons ---- */
 function _safeStr(s) {
-  // Escape backslashes and quotes for safe embedding in string literals
-  return String(s || "").replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/'/g, "\\'");
+  // Escape for safe embedding in Python/shell string literals
+  return String(s || "")
+    .replace(/\\/g, "\\\\")
+    .replace(/"/g, '\\"')
+    .replace(/'/g, "\\'")
+    .replace(/\n/g, "\\n")
+    .replace(/\r/g, "\\r")
+    .replace(/`/g, "\\`")
+    .replace(/\$/g, "\\$");
 }
 
 function generateCode(fmt, r) {
