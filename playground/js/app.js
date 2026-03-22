@@ -2377,18 +2377,20 @@ function renderResult(r) {
   const decisionClass = `result-${approvalClass}`;
   card.className = `result-card ${isAllowed ? "result-allowed" : "result-blocked"} ${decisionClass}`;
 
-  // Populate using textContent (faster than innerHTML, auto-escaped)
-  card.querySelector(".result-action-type").textContent = r.action_type;
-  card.querySelector(".result-target").textContent = r.target;
-  const riskBadge = card.querySelector(".risk-badge");
+  // Populate via children indexing (faster than 7x querySelector on cloned node)
+  const header = card.children[0]; // .result-header
+  header.children[0].textContent = r.action_type;
+  header.children[1].textContent = r.target;
+  const riskBadge = header.children[2].children[0]; // .risk-badge
   riskBadge.textContent = r.risk_level;
   riskBadge.classList.add(riskClass);
-  const approvalBadge = card.querySelector(".approval-badge");
+  const approvalBadge = header.children[2].children[1]; // .approval-badge
   approvalBadge.textContent = r.approval;
   approvalBadge.classList.add(approvalClass);
-  card.querySelector("._rule").textContent = r.matched_rule || "(default)";
-  card.querySelector("._desc").textContent = r.description || "-";
-  const allowedDiv = card.querySelector(".result-allowed");
+  const details = card.children[1]; // .result-details
+  details.children[0].children[1].textContent = r.matched_rule || "(default)";
+  details.children[1].children[1].textContent = r.description || "-";
+  const allowedDiv = card.children[2].children[0]; // .result-allowed
   allowedDiv.className = `result-allowed ${isAllowed ? "yes" : "no"}`;
   allowedDiv.textContent = isAllowed ? "\u2705 ALLOWED" : "\uD83D\uDEAB BLOCKED" +
     (r.approval === "block" ? " \u2014 Policy explicitly blocks this action" : "");
