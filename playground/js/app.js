@@ -1683,7 +1683,7 @@ function printAuditLog() {
     `<tr><td>${_esc(e.timestamp || e.time)}</td><td>${_esc(e.action_type || e.type)}</td><td>${_esc(e.target)}</td><td>${_esc(e.risk)}</td><td>${_esc(e.approval || e.decision)}</td></tr>`
   ).join("");
   const filterNote = getActiveFilter() !== "all" ? ` (filter: ${_esc(getActiveFilter())})` : "";
-  w.document.write(`<html><head><title>Aegis Audit</title><style>body{font-family:system-ui;max-width:900px;margin:2rem auto}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ccc;padding:6px 10px;text-align:left}th{background:#f0f0f0}@media print{button{display:none}}</style></head><body>
+  w.document.write(`<html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'"><title>Aegis Audit</title><style>body{font-family:system-ui;max-width:900px;margin:2rem auto}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ccc;padding:6px 10px;text-align:left}th{background:#f0f0f0}@media print{button{display:none}}</style></head><body>
 <h1>Aegis Audit Log</h1><p>${_esc(new Date().toLocaleString())} &mdash; ${entries.length} entries${filterNote}</p>
 <table><tr><th>Time</th><th>Action</th><th>Target</th><th>Risk</th><th>Decision</th></tr>${rows}</table></body></html>`);
   w.document.close();
