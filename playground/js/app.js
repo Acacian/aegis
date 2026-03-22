@@ -1611,7 +1611,7 @@ function exportAuditNDJSON() {
   showToast(`Exported ${entries.length} entries as NDJSON${filterNote}`);
 }
 
-function copyAuditToClipboard() {
+async function copyAuditToClipboard() {
   const entries = getFilteredEntries();
   if (!entries.length) { showToast("No audit entries to copy"); return; }
   const lines = entries.map((e) =>
@@ -1620,10 +1620,11 @@ function copyAuditToClipboard() {
   const filterNote = getActiveFilter() !== "all" ? ` (${getActiveFilter()})` : "";
   const header = `Aegis Audit Log — ${entries.length} entries${filterNote}, ${new Date().toISOString()}`;
   const text = header + "\n" + "=".repeat(header.length) + "\n" + lines.join("\n");
-  navigator.clipboard.writeText(text).then(() => showToast(`Copied ${entries.length} entries to clipboard`));
+  await copyToClipboard(text);
+  showToast(`Copied ${entries.length} entries to clipboard`);
 }
 
-function copyAuditAsMarkdown() {
+async function copyAuditAsMarkdown() {
   const entries = getFilteredEntries();
   if (!entries.length) { showToast("No audit entries to copy"); return; }
   const rows = entries.map((e) =>
@@ -1631,7 +1632,8 @@ function copyAuditAsMarkdown() {
   );
   const filterNote = getActiveFilter() !== "all" ? ` (${getActiveFilter()})` : "";
   const md = `### Aegis Audit Log\n\n| Time | Action | Risk | Decision | Rule |\n|------|--------|------|----------|------|\n${rows.join("\n")}\n\n_${entries.length} entries${filterNote} — ${new Date().toISOString()}_`;
-  navigator.clipboard.writeText(md).then(() => showToast(`Copied ${entries.length} entries as Markdown`));
+  await copyToClipboard(md);
+  showToast(`Copied ${entries.length} entries as Markdown`);
 }
 
 const _ESC_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;" };
