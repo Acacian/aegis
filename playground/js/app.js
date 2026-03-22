@@ -452,6 +452,7 @@ function updateRuleCount() {
   rc.title = `Complexity score: ${complexity}/99 (${count} rules, ${matchCount} match patterns, ${hasRiskLevels} risk levels)`;
 }
 
+let _ruleCountTimer = null;
 function setupPolicySave() {
   editor.on("change", () => {
     clearTimeout(saveTimer);
@@ -459,7 +460,9 @@ function setupPolicySave() {
       try { localStorage.setItem("aegis-last-policy", editor.getValue()); }
       catch { /* QuotaExceededError — silently skip save */ }
     }, 1000);
-    updateRuleCount();
+    // Debounce rule count to avoid 4 regex scans on every keystroke
+    clearTimeout(_ruleCountTimer);
+    _ruleCountTimer = setTimeout(updateRuleCount, 300);
   });
   updateRuleCount(); // initial count
 }
