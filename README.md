@@ -1,3 +1,4 @@
+<!-- mcp-name: io.github.acacian/aegis -->
 <p align="center">
   <h1 align="center">Aegis</h1>
   <p align="center">
