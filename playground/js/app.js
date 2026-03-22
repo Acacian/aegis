@@ -1371,7 +1371,7 @@ function bindEvents() {
     _chartEls = null; // reset cached chart refs so they're rebuilt on next use
   });
 
-  // Audit filters
+  // Audit filters — clear search when switching filter to avoid confusing interaction
   const auditFilterBtns = document.querySelectorAll(".audit-filter");
   auditFilterBtns.forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -1379,6 +1379,11 @@ function bindEvents() {
       document.querySelector(".audit-filter.active")?.classList.remove("active");
       btn.classList.add("active");
       btn.setAttribute("aria-pressed", "true");
+      const searchEl = _$auditSearch || (_$auditSearch = document.getElementById("audit-search"));
+      if (searchEl && searchEl.value) {
+        searchEl.value = "";
+        searchEl.classList.remove("search-active");
+      }
       filterAuditLog(btn.dataset.filter);
     });
   });
