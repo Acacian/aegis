@@ -2899,7 +2899,7 @@ curl -s http://localhost:8000/api/v1/evaluate \\
     const safeType = r.action_type.replace(/`/g, "'");
     const safeTarget = r.target.replace(/`/g, "'");
     const safeRule = (r.matched_rule || "(default)").replace(/`/g, "'");
-    const safeYaml = editor.getValue().replace(/<\/details>/gi, "&lt;/details&gt;");
+    const safeYaml = editor.getValue().replace(/```/g, "` ` `").replace(/<\/details>/gi, "&lt;/details&gt;");
     return `### Bug Report / Discussion
 
 **Policy evaluation result:**
@@ -2933,7 +2933,7 @@ ${safeYaml}
 
 \`\`\`yaml
 # Policy used:
-${(() => { const ls = editor.getValue().split("\n"); return ls.slice(0, 10).join("\n") + (ls.length > 10 ? "\n# ..." : ""); })()}
+${(() => { const ls = editor.getValue().replace(/```/g, "` ` `").split("\n"); return ls.slice(0, 10).join("\n") + (ls.length > 10 ? "\n# ..." : ""); })()}
 \`\`\``;
   }
 
