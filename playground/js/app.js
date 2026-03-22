@@ -1257,15 +1257,16 @@ function bindEvents() {
         '<div class="empty-state">Click an action above to see the policy evaluation result</div>';
       return;
     }
-    cards.forEach((card, i) => {
-      card.style.transition = `opacity 0.2s ${i * 40}ms, transform 0.2s ${i * 40}ms`;
-      card.style.opacity = "0";
-      card.style.transform = "translateY(-8px) scale(0.97)";
-    });
+    const animCount = Math.min(cards.length, 8);
+    for (let i = 0; i < animCount; i++) {
+      cards[i].style.transition = `opacity 0.2s ${i * 40}ms, transform 0.2s ${i * 40}ms`;
+      cards[i].style.opacity = "0";
+      cards[i].style.transform = "translateY(-8px) scale(0.97)";
+    }
     setTimeout(() => {
       $result.innerHTML =
         '<div class="empty-state">Click an action above to see the policy evaluation result</div>';
-    }, cards.length * 40 + 220);
+    }, animCount * 40 + 220);
   });
 
   // Import snapshot
