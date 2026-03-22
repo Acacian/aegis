@@ -8,7 +8,6 @@ import pytest
 
 from aegis.cli.main import main
 
-
 # ---------------------------------------------------------------------------
 # Table output
 # ---------------------------------------------------------------------------
@@ -59,7 +58,8 @@ def test_regulatory_json_output(capsys: pytest.CaptureFixture[str]) -> None:
     assert len(data) == 4  # four frameworks
     for entry in data:
         assert "framework" in entry
-        assert "coverage_score" in entry
+        assert "summary" in entry
+        assert "coverage_score" in entry["summary"]
 
 
 def test_regulatory_json_single_framework(capsys: pytest.CaptureFixture[str]) -> None:
@@ -69,7 +69,8 @@ def test_regulatory_json_single_framework(capsys: pytest.CaptureFixture[str]) ->
 
     data = json.loads(out)
     assert isinstance(data, dict)
-    assert "coverage_score" in data
+    assert "summary" in data
+    assert "coverage_score" in data["summary"]
 
 
 # ---------------------------------------------------------------------------
@@ -107,34 +108,38 @@ def test_regulatory_features_filter(capsys: pytest.CaptureFixture[str]) -> None:
     main(["regulatory", "--framework", "eu-ai-act", "--format", "json"])
     full_out = capsys.readouterr().out
     full_data = json.loads(full_out)
-    full_score = full_data["coverage_score"]
+    full_score = full_data["summary"]["coverage_score"]
 
     # Limited features
-    main([
-        "regulatory",
-        "--framework",
-        "eu-ai-act",
-        "--format",
-        "json",
-        "--features",
-        "policy_engine,audit_logging",
-    ])
+    main(
+        [
+            "regulatory",
+            "--framework",
+            "eu-ai-act",
+            "--format",
+            "json",
+            "--features",
+            "policy_engine,audit_logging",
+        ]
+    )
     limited_out = capsys.readouterr().out
     limited_data = json.loads(limited_out)
-    limited_score = limited_data["coverage_score"]
+    limited_score = limited_data["summary"]["coverage_score"]
 
     assert limited_score <= full_score
 
 
 def test_regulatory_features_in_table(capsys: pytest.CaptureFixture[str]) -> None:
     """Features flag works with table output."""
-    main([
-        "regulatory",
-        "--framework",
-        "eu-ai-act",
-        "--features",
-        "policy_engine,audit_logging",
-    ])
+    main(
+        [
+            "regulatory",
+            "--framework",
+            "eu-ai-act",
+            "--features",
+            "policy_engine,audit_logging",
+        ]
+    )
     out = capsys.readouterr().out
 
     assert "EU AI Act" in out
