@@ -7,9 +7,13 @@ import json
 import sys
 import time
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from aegis.cli import colors
 from aegis.runtime.audit import AuditLogger
+
+if TYPE_CHECKING:
+    from aegis.core.regulatory import ComplianceGapAnalysis
 
 
 def _get_version() -> str:
@@ -246,6 +250,27 @@ def main(argv: list[str] | None = None) -> None:
         help="Optional policy YAML file for context",
     )
 
+    # aegis regulatory
+    reg_parser = subparsers.add_parser(
+        "regulatory",
+        help="Run regulatory compliance gap analysis",
+    )
+    reg_parser.add_argument(
+        "--framework",
+        choices=["eu-ai-act", "nist", "soc2", "iso-42001", "all"],
+        default="all",
+    )
+    reg_parser.add_argument(
+        "--format",
+        choices=["table", "json", "markdown"],
+        default="table",
+        dest="fmt",
+    )
+    reg_parser.add_argument(
+        "--features",
+        help="Comma-separated list of enabled features (default: all)",
+    )
+
     # aegis stats
     stats_parser = subparsers.add_parser(
         "stats",
@@ -292,6 +317,8 @@ def main(argv: list[str] | None = None) -> None:
         _cmd_compliance(args)
     elif args.command == "stats":
         _cmd_stats(args)
+    elif args.command == "regulatory":
+        _cmd_regulatory(args)
     else:
         parser.print_help()
 
@@ -780,6 +807,97 @@ def _cmd_stats(args: argparse.Namespace) -> None:
     print(colors.bold("\n--- Top 5 Matched Rules ---"))
     for rule, count in rule_rows:
         print(f"  {rule:<20} {count}")
+
+
+def _cmd_regulatory(args: argparse.Namespace) -> None:
+    """Run regulatory compliance gap analysis."""
+    from aegis.core.regulatory import ComplianceMapper, RegulatoryFramework
+
+    _fw_map: dict[str, RegulatoryFramework] = {
+        "eu-ai-act": RegulatoryFramework.EU_AI_ACT,
+        "nist": RegulatoryFramework.NIST_AI_RMF,
+        "soc2": RegulatoryFramework.SOC2,
+        "iso-42001": RegulatoryFramework.ISO_42001,
+    }
+
+    # Parse features
+    features: dict[str, bool] | None = None
+    if args.features:
+        features = {f.strip(): True for f in args.features.split(",") if f.strip()}
+
+    # Determine frameworks to analyze
+    if args.framework == "all":
+        frameworks = list(RegulatoryFramework)
+    else:
+        fw = _fw_map.get(args.framework)
+        if fw is None:
+            print(f"Unknown framework: {args.framework}", file=sys.stderr)
+            sys.exit(1)
+        frameworks = [fw]
+
+    mapper = ComplianceMapper()
+    analyses = [mapper.analyze(fw, features=features) for fw in frameworks]
+
+    if args.fmt == "json":
+        data = []
+        for analysis in analyses:
+            data.append(mapper.generate_evidence_map(analysis))
+        print(json.dumps(data if len(data) > 1 else data[0], indent=2))
+        return
+
+    if args.fmt == "markdown":
+        for analysis in analyses:
+            print(mapper.generate_report(analysis))
+        return
+
+    # Table format
+    for analysis in analyses:
+        _print_regulatory_table(analysis)
+        print()
+
+
+def _print_regulatory_table(analysis: ComplianceGapAnalysis) -> None:
+    """Print a colored summary table for a single framework analysis."""
+    fw_names: dict[str, str] = {
+        "eu_ai_act": "EU AI Act",
+        "nist_ai_rmf": "NIST AI RMF",
+        "soc2": "SOC2",
+        "iso_42001": "ISO 42001",
+    }
+    name = fw_names.get(analysis.framework.value, analysis.framework.value)
+
+    print(colors.bold(f"=== {name} Compliance Gap Analysis ==="))
+    print()
+
+    score = analysis.coverage_score
+    if score >= 80:
+        score_str = colors.green(f"{score:.1f}%")
+    elif score >= 50:
+        score_str = colors.yellow(f"{score:.1f}%")
+    else:
+        score_str = colors.red(f"{score:.1f}%")
+
+    print(f"  Coverage Score: {score_str}")
+    print(
+        f"  Requirements:   {analysis.total_requirements} total, "
+        f"{colors.green(str(analysis.fully_covered))} full, "
+        f"{colors.yellow(str(analysis.partially_covered))} partial, "
+        f"{colors.red(str(analysis.not_covered))} gaps"
+    )
+    print()
+
+    if analysis.gaps:
+        print(colors.bold("  Gaps:"))
+        for gap in analysis.gaps:
+            mandatory = colors.red(" [MANDATORY]") if gap.mandatory else ""
+            print(f"    - {gap.requirement_id}: {gap.title}{mandatory}")
+        print()
+
+    if analysis.recommendations:
+        print(colors.bold("  Recommendations:"))
+        for i, rec in enumerate(analysis.recommendations, 1):
+            print(f"    {i}. {rec}")
+        print()
 
 
 def _export_crypto_chain(
