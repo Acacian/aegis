@@ -567,7 +567,7 @@ function openShareModal() {
       copyToClipboard(urlInput.value, copyBtn);
     });
     embedBtn.addEventListener("click", () => {
-      const iframe = `<iframe src="${urlInput.value}" width="100%" height="600" frameborder="0" title="Aegis Playground"></iframe>`;
+      const iframe = `<iframe src="${_esc(urlInput.value)}" width="100%" height="600" frameborder="0" title="Aegis Playground"></iframe>`;
       copyToClipboard(iframe, embedBtn);
       showToast("Embed code copied!");
     });
