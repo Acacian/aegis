@@ -1957,7 +1957,7 @@ async function validatePolicy() {
         warns.forEach((w) => {
           const warnEl = document.createElement("div");
           warnEl.className = "cm-warn-widget";
-          const fix = suggestFix(w, null, yaml);
+          const fix = suggestFix(w, null, yaml, yamlLines);
           const warnText = document.createElement("span");
           warnText.className = "warn-text";
           warnText.textContent = "\u26A0 " + w;
@@ -2081,8 +2081,8 @@ function showEditorError(msg, line) {
   }
 }
 
-function suggestFix(msg, line, yaml) {
-  const lines = yaml.split("\n");
+function suggestFix(msg, line, yaml, _lines) {
+  const lines = _lines || yaml.split("\n");
   const lower = msg.toLowerCase();
 
   // Missing version field
