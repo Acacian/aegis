@@ -195,20 +195,20 @@ function toggleCommandPalette() {
     palette.addEventListener("click", (e) => {
       if (e.target === palette) palette.classList.add("hidden");
     });
+    const input = palette.querySelector(".command-input");
+    input.addEventListener("input", () => renderCommands(input, input.value));
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        const first = palette.querySelector(".command-item");
+        if (first) first.click();
+      }
+    });
   }
   palette.classList.remove("hidden");
   const input = palette.querySelector(".command-input");
   input.value = "";
   input.focus();
   renderCommands(input, "");
-
-  input.addEventListener("input", () => renderCommands(input, input.value));
-  input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      const first = palette.querySelector(".command-item");
-      if (first) first.click();
-    }
-  });
 }
 
 function getCommandItems() {
