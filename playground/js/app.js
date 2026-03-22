@@ -2575,14 +2575,11 @@ function updateStats(result) {
   }
 }
 
+function _pad2(n) { return n < 10 ? "0" + n : String(n); }
+
 function addAuditEntry(r) {
   const now = new Date();
-  const time = now.toLocaleTimeString("en-US", {
-    hour12: false,
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  });
+  const time = _pad2(now.getHours()) + ":" + _pad2(now.getMinutes()) + ":" + _pad2(now.getSeconds());
 
   const entry = {
     time,
