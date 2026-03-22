@@ -2414,6 +2414,7 @@ function spawnBlockParticles(card) {
   if (_prefersReducedMotion.matches) return;
   const symbols = ["\u{1F6E1}", "\u{1F6AB}", "\u{26D4}", "\u{2716}"];
   const rect = card.getBoundingClientRect();
+  const frag = document.createDocumentFragment();
 
   for (let i = 0; i < 8; i++) {
     const p = document.createElement("div");
@@ -2423,15 +2424,17 @@ function spawnBlockParticles(card) {
     p.style.top = rect.top + "px";
     p.style.setProperty("--dx", (Math.random() - 0.5) * 120 + "px");
     p.style.setProperty("--dy", -(40 + Math.random() * 80) + "px");
-    document.body.appendChild(p);
     p.addEventListener("animationend", () => p.remove());
+    frag.appendChild(p);
   }
+  document.body.appendChild(frag);
 }
 
 /* ---- Auto-Approve Checkmark Burst ---- */
 function spawnAutoCheckmarks(card) {
   if (_prefersReducedMotion.matches) return;
   const rect = card.getBoundingClientRect();
+  const frag = document.createDocumentFragment();
   for (let i = 0; i < 5; i++) {
     const p = document.createElement("div");
     p.className = "auto-checkmark";
@@ -2440,9 +2443,10 @@ function spawnAutoCheckmarks(card) {
     p.style.top = rect.top + rect.height / 2 + "px";
     p.style.setProperty("--dx", (Math.random() - 0.5) * 80 + "px");
     p.style.setProperty("--dy", -(20 + Math.random() * 60) + "px");
-    document.body.appendChild(p);
     p.addEventListener("animationend", () => p.remove());
+    frag.appendChild(p);
   }
+  document.body.appendChild(frag);
 }
 
 /* ---- Approve Pulse Ring ---- */
@@ -2459,11 +2463,11 @@ function spawnCelebration() {
   if (_prefersReducedMotion.matches) return;
   const symbols = ["\u2B50", "\u{1F389}", "\u{1F38A}", "\u2728", "\u{1F3C6}", "\u{1F680}", "\u{1F31F}"];
   const count = 16;
+  const frag = document.createDocumentFragment();
   for (let i = 0; i < count; i++) {
     const p = document.createElement("div");
     p.className = "block-particle";
     p.textContent = symbols[i % symbols.length];
-    // Spread particles across the viewport width
     p.style.left = (10 + Math.random() * 80) + "vw";
     p.style.top = window.innerHeight + "px";
     p.style.setProperty("--dx", (Math.random() - 0.5) * 250 + "px");
@@ -2472,9 +2476,10 @@ function spawnCelebration() {
     p.style.fontSize = (1.2 + Math.random() * 0.8) + "rem";
     p.style.animationDuration = (0.7 + Math.random() * 0.4) + "s";
     p.style.animationDelay = (i * 0.03) + "s";
-    document.body.appendChild(p);
     p.addEventListener("animationend", () => p.remove());
+    frag.appendChild(p);
   }
+  document.body.appendChild(frag);
 }
 
 /* ---- Blocked Effect (CSS-only particle burst + screen shake) ---- */
