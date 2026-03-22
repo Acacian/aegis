@@ -1807,8 +1807,11 @@ function lintPolicyWarnings(yaml) {
     warnings.push("Critical risk without any block rule");
   }
   const names = (yaml.match(/- name:\s*(\S+)/g) || []).map((m) => m.replace("- name:", "").trim());
-  const dupes = names.filter((n, i) => names.indexOf(n) !== i);
-  if (dupes.length) warnings.push(`Duplicate rule name: ${dupes[0]}`);
+  const nameSet = new Set();
+  for (const n of names) {
+    if (nameSet.has(n)) { warnings.push(`Duplicate rule name: ${n}`); break; }
+    nameSet.add(n);
+  }
 
   // Empty or whitespace-only rule names
   if (/- name:\s*$/m.test(yaml)) warnings.push("Empty rule name detected");
