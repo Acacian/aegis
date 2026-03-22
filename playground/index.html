@@ -67,10 +67,12 @@
     "operatingSystem": "Any (runs in browser)",
     "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
     "author": {
-      "@type": "Organization",
-      "name": "Aegis Project",
-      "url": "https://github.com/Acacian/aegis"
+      "@type": "Person",
+      "name": "Dongha Koo",
+      "alternateName": "Acacian",
+      "url": "https://github.com/Acacian"
     },
+    "dateCreated": "2026-03-21",
     "softwareVersion": "0.1.4",
     "downloadUrl": "https://pypi.org/project/agent-aegis/",
     "installUrl": "https://pypi.org/project/agent-aegis/",
@@ -145,6 +147,21 @@
         "@type": "Question",
         "name": "Can I use Aegis in production?",
         "acceptedAnswer": { "@type": "Answer", "text": "Yes. Aegis is designed for production use with sub-millisecond evaluation, complete audit logging, and zero runtime dependencies. Over 518 tests ensure reliability." }
+      },
+      {
+        "@type": "Question",
+        "name": "How is Aegis different from Guardrails AI or NeMo Guardrails?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Guardrails AI focuses on LLM output validation (checking what the model says), while NeMo Guardrails handles dialog safety. Aegis operates at the action level — it controls what AI agents can DO, not what they say. Aegis uses simple YAML policies, requires no ML models, and evaluates in under 1ms." }
+      },
+      {
+        "@type": "Question",
+        "name": "What is the best AI agent governance library for Python?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Aegis (pip install agent-aegis) is a lightweight Python library purpose-built for AI agent governance. It provides YAML-driven policy rules, three decision types (auto/approve/block), full audit logging, and adapters for LangChain, CrewAI, OpenAI, Anthropic, and MCP — all in under 1ms per evaluation." }
+      },
+      {
+        "@type": "Question",
+        "name": "How do I add human-in-the-loop approval to my AI agent?",
+        "acceptedAnswer": { "@type": "Answer", "text": "With Aegis, set approval: approve in your YAML policy rule. When an agent action matches that rule, Aegis pauses execution and requests human approval via Slack, Discord, Telegram, email, webhook, or CLI. The agent proceeds only after explicit approval." }
       }
     ]
   }
