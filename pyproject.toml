@@ -33,6 +33,7 @@ dependencies = ["pyyaml>=6.0"]
 [project.urls]
 Homepage = "https://github.com/Acacian/aegis"
 Documentation = "https://acacian.github.io/aegis/"
+Playground = "https://acacian.github.io/aegis/playground/"
 Repository = "https://github.com/Acacian/aegis"
 Issues = "https://github.com/Acacian/aegis/issues"
 Discussions = "https://github.com/Acacian/aegis/discussions"
