@@ -1480,23 +1480,15 @@ function toggleExportMenu() {
     <button class="export-option" data-format="summary">Copy summary one-liner</button>`;
   document.body.appendChild(menu);
 
-  // Scoped outside-click listener — auto-removes when menu closes
+  // Scoped outside-click listener — cleaned up when menu closes
+  const dismiss = (e) => {
+    if (!menu.contains(e.target) && e.target.id !== "export-audit") {
+      menu.remove();
+      document.removeEventListener("click", dismiss, true);
+    }
+  };
   requestAnimationFrame(() => {
-    const dismiss = (e) => {
-      if (!menu.contains(e.target) && e.target.id !== "export-audit") {
-        menu.remove();
-        document.removeEventListener("click", dismiss, true);
-      }
-    };
     document.addEventListener("click", dismiss, true);
-    // Also clean up if menu is removed by its own click handler
-    const obs = new MutationObserver(() => {
-      if (!menu.parentNode) {
-        document.removeEventListener("click", dismiss, true);
-        obs.disconnect();
-      }
-    });
-    obs.observe(document.body, { childList: true });
   });
 
   menu.addEventListener("click", (e) => {
@@ -1516,6 +1508,7 @@ function toggleExportMenu() {
       showToast("Summary copied");
     }
     menu.remove();
+    document.removeEventListener("click", dismiss, true);
   });
 }
 
