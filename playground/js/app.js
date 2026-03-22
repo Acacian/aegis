@@ -2979,10 +2979,19 @@ def evaluate_action(yaml_str, action_dict):
 def validate_policy(yaml_str):
     """Validate YAML policy syntax. Returns JSON with error info or ok."""
     try:
+        # Use cache — if this YAML was already parsed successfully, skip re-parse
+        key = hashlib.md5(yaml_str.encode()).hexdigest()
+        if key in _policy_cache:
+            return json.dumps({"ok": True})
         data = yaml.safe_load(yaml_str)
         if data is None:
             return json.dumps({"ok": True})
-        Policy.from_dict(data)
+        policy = Policy.from_dict(data)
+        # Warm the cache for evaluate_action
+        _policy_cache[key] = policy
+        if len(_policy_cache) > 20:
+            oldest = next(iter(_policy_cache))
+            del _policy_cache[oldest]
         return json.dumps({"ok": True})
     except yaml.YAMLError as e:
         line = None
