@@ -1223,11 +1223,10 @@ function bindEvents() {
   const codeCopyBtn = document.querySelector(".code-copy-btn");
   if (codeCopyBtn) {
     codeCopyBtn.addEventListener("click", (e) => {
-      const active = document.querySelector(".code-panel.active code");
-      const activeTab = document.querySelector(".code-tab.active");
-      if (active) {
-        copyToClipboard(active.textContent, e.target);
-        const tabName = activeTab?.textContent || "code";
+      const codeEl = _activeCodePanel?.querySelector("code");
+      if (codeEl) {
+        copyToClipboard(codeEl.textContent, e.target);
+        const tabName = _activeCodeTab?.textContent || "code";
         showToast(`Copied ${tabName} snippet`);
       }
     });
