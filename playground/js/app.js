@@ -2223,7 +2223,7 @@ async function evaluateAction(action) {
     const resultJson = await pyodide.runPythonAsync(`
 evaluate_action(
   ${JSON.stringify(yaml)},
-  ${JSON.stringify(action)}
+  json.loads(${JSON.stringify(JSON.stringify(action))})
 )
 `);
     const t1 = performance.now();
