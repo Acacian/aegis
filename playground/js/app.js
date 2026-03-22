@@ -831,12 +831,10 @@ function bindEvents() {
     });
   });
 
-  // Action buttons
+  // Action buttons — parse JSON once, cache on element
   document.querySelectorAll(".action-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const action = JSON.parse(btn.dataset.action);
-      evaluateAction(action);
-    });
+    btn._action = JSON.parse(btn.dataset.action);
+    btn.addEventListener("click", () => evaluateAction(btn._action));
   });
 
   // Custom action
@@ -2209,6 +2207,7 @@ function updateActionButtons(preset) {
     const icon = RISK_ICONS[a.action_type] || RISK_ICONS[risk];
     const btn = document.createElement("button");
     btn.className = `action-btn ${RISK_CLASSES[risk]}`;
+    btn._action = a;
     btn.dataset.action = JSON.stringify(a);
     const iconSpan = document.createElement("span");
     iconSpan.className = "action-icon";
@@ -2293,8 +2292,7 @@ async function runAllActions() {
 
   let i = 0;
   for (const btn of buttons) {
-    const action = JSON.parse(btn.dataset.action);
-    // Highlight current button
+    const action = btn._action || JSON.parse(btn.dataset.action);
     btn.classList.add("action-running");
     await evaluateAction(action);
     btn.classList.remove("action-running");
