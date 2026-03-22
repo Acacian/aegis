@@ -382,7 +382,7 @@ function initEditor() {
     lineWrapping: true,
     matchBrackets: true,
     styleActiveLine: true,
-    viewportMargin: Infinity,
+    viewportMargin: 50,
     extraKeys: {
       Tab: (cm) => cm.execCommand("indentMore"),
       "Shift-Tab": (cm) => cm.execCommand("indentLess"),
