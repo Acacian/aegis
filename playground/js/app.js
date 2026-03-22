@@ -38,18 +38,18 @@ function typewriterEffect($el, text, speed = 25) {
   return timer;
 }
 
+let _tipTypeTimer = null;
 function rotateTips() {
   const $tip = document.getElementById("loading-tip");
   if (!$tip) return;
   let idx = 0;
-  let typeTimer = null;
   tipInterval = setInterval(() => {
     idx = (idx + 1) % LOADING_TIPS.length;
     $tip.style.opacity = 0;
-    clearInterval(typeTimer);
+    if (_tipTypeTimer) clearInterval(_tipTypeTimer);
     setTimeout(() => {
       $tip.style.opacity = 1;
-      typeTimer = typewriterEffect($tip, LOADING_TIPS[idx]);
+      _tipTypeTimer = typewriterEffect($tip, LOADING_TIPS[idx]);
     }, 300);
   }, 4000);
 }
@@ -1724,6 +1724,7 @@ async function _initPyodideInner() {
     console.log(`[Aegis] Pyodide loaded in ${loadTime}s`);
     setupPolicyValidation();
     if (tipInterval) clearInterval(tipInterval);
+    if (_tipTypeTimer) { clearInterval(_tipTypeTimer); _tipTypeTimer = null; }
     setTimeout(() => {
       $overlay.classList.add("hidden");
       // Auto-run demo if no policy in URL
