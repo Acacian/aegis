@@ -417,6 +417,7 @@ function loadPolicyFromURL() {
       const encoded = hash.slice("#policy=".length);
       if (encoded.length > 100000) throw new Error("Policy too large");
       const yaml = decodeURIComponent(atob(encoded));
+      if (yaml.length > 200000) throw new Error("Decoded policy too large");
       editor.setValue(yaml);
       // Deactivate all preset buttons
       _getPresetBtns().forEach((b) => b.classList.remove("active"));
