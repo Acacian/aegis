@@ -1428,11 +1428,8 @@ function bindEvents() {
     toggleExportMenu();
   });
 
-  // Close dropdown on outside click
-  document.addEventListener("click", () => {
-    const menu = document.getElementById("export-menu");
-    if (menu) menu.remove();
-  });
+  // Close dropdown on outside click — listener added/removed with menu lifecycle
+  // (moved to toggleExportMenu to avoid permanent global click handler)
 }
 
 /* ---- Export Menu ---- */
@@ -1480,6 +1477,25 @@ function toggleExportMenu() {
     <div class="export-header" style="margin-top:4px;border-top:1px solid var(--border);padding-top:6px">Quick</div>
     <button class="export-option" data-format="summary">Copy summary one-liner</button>`;
   document.body.appendChild(menu);
+
+  // Scoped outside-click listener — auto-removes when menu closes
+  requestAnimationFrame(() => {
+    const dismiss = (e) => {
+      if (!menu.contains(e.target) && e.target.id !== "export-audit") {
+        menu.remove();
+        document.removeEventListener("click", dismiss, true);
+      }
+    };
+    document.addEventListener("click", dismiss, true);
+    // Also clean up if menu is removed by its own click handler
+    const obs = new MutationObserver(() => {
+      if (!menu.parentNode) {
+        document.removeEventListener("click", dismiss, true);
+        obs.disconnect();
+      }
+    });
+    obs.observe(document.body, { childList: true });
+  });
 
   menu.addEventListener("click", (e) => {
     const format = e.target.dataset.format;
