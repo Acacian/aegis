@@ -115,11 +115,16 @@ function shouldShowTour() {
 function startTour() {
   if (!shouldShowTour()) return;
   let step = 0;
+  let _prevTip = null;
+  let _prevEl = null;
+
+  function _cleanup() {
+    if (_prevTip) { _prevTip.remove(); _prevTip = null; }
+    if (_prevEl) { _prevEl.classList.remove("tour-highlight"); _prevEl = null; }
+  }
 
   function showStep() {
-    // Remove previous
-    document.querySelectorAll(".tour-overlay, .tour-tooltip").forEach((el) => el.remove());
-    document.querySelectorAll(".tour-highlight").forEach((el) => el.classList.remove("tour-highlight"));
+    _cleanup();
 
     if (step >= TOUR_STEPS.length) {
       localStorage.setItem("aegis-tour-done", "1");
@@ -130,12 +135,14 @@ function startTour() {
     const el = document.querySelector(s.target);
     if (!el) { step++; showStep(); return; }
 
+    _prevEl = el;
     el.classList.add("tour-highlight");
     el.scrollIntoView({ behavior: "smooth", block: "center" });
 
     setTimeout(() => {
       const rect = el.getBoundingClientRect();
       const tip = document.createElement("div");
+      _prevTip = tip;
       tip.className = `tour-tooltip tour-${s.position}`;
       tip.innerHTML = `
         <div class="tour-title">${s.title}</div>
@@ -169,8 +176,7 @@ function startTour() {
         showStep();
       });
       tip.querySelector(".tour-skip").addEventListener("click", () => {
-        document.querySelectorAll(".tour-overlay, .tour-tooltip").forEach((e) => e.remove());
-        document.querySelectorAll(".tour-highlight").forEach((e) => e.classList.remove("tour-highlight"));
+        _cleanup();
         localStorage.setItem("aegis-tour-done", "1");
       });
     }, 350);
@@ -996,11 +1002,12 @@ function bindEvents() {
     }
     // Escape → close overlays, then clear results
     if (e.key === "Escape") {
-      // Dismiss guided tour if active
+      // Dismiss guided tour if active (at most one tooltip + one highlight)
       const tourTip = document.querySelector(".tour-tooltip");
       if (tourTip) {
-        document.querySelectorAll(".tour-overlay, .tour-tooltip").forEach((el) => el.remove());
-        document.querySelectorAll(".tour-highlight").forEach((el) => el.classList.remove("tour-highlight"));
+        tourTip.remove();
+        const hl = document.querySelector(".tour-highlight");
+        if (hl) hl.classList.remove("tour-highlight");
         localStorage.setItem("aegis-tour-done", "1");
         return;
       }
