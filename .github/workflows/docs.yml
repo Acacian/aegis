@@ -7,6 +7,7 @@ on:
       - "docs/**"
       - "mkdocs.yml"
       - "playground/**"
+  workflow_dispatch:
 
 permissions:
   contents: write
