@@ -2483,6 +2483,7 @@ function spawnCelebration() {
 }
 
 /* ---- Blocked Effect (CSS-only particle burst + screen shake) ---- */
+let _$resultPanel = null;
 function showBlockedEffect(card) {
   card.classList.add("blocked-effect");
   card.addEventListener(
@@ -2491,10 +2492,10 @@ function showBlockedEffect(card) {
     { once: true }
   );
   // Brief screen shake on the result panel
-  const resultPanel = document.getElementById("result");
-  if (resultPanel) {
-    resultPanel.classList.add("shake");
-    resultPanel.addEventListener("animationend", () => resultPanel.classList.remove("shake"), { once: true });
+  const rp = _$resultPanel || (_$resultPanel = document.getElementById("result"));
+  if (rp) {
+    rp.classList.add("shake");
+    rp.addEventListener("animationend", () => rp.classList.remove("shake"), { once: true });
   }
 }
 
