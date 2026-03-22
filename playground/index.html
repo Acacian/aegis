@@ -492,11 +492,11 @@ result = await runtime.run_one(Action("delete", "crm", params={"id": "all"}))
           </label>
           <button id="clear-audit" class="clear-btn" aria-label="Clear audit log">Clear</button>
         </div>
-        <div class="audit-filters" id="audit-filters">
-          <button class="audit-filter active" data-filter="all">All</button>
-          <button class="audit-filter filter-auto" data-filter="auto">Auto</button>
-          <button class="audit-filter filter-approve" data-filter="approve">Approve</button>
-          <button class="audit-filter filter-block" data-filter="block">Block</button>
+        <div class="audit-filters" id="audit-filters" role="group" aria-label="Filter audit entries by decision type">
+          <button class="audit-filter active" data-filter="all" aria-pressed="true">All</button>
+          <button class="audit-filter filter-auto" data-filter="auto" aria-pressed="false">Auto</button>
+          <button class="audit-filter filter-approve" data-filter="approve" aria-pressed="false">Approve</button>
+          <button class="audit-filter filter-block" data-filter="block" aria-pressed="false">Block</button>
           <input type="text" class="audit-search" id="audit-search" placeholder="Search actions..." aria-label="Search audit log">
         </div>
         <div id="audit-content" class="audit-content" role="log" aria-live="polite">

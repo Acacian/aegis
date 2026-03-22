@@ -1354,10 +1354,13 @@ function bindEvents() {
   });
 
   // Audit filters
-  document.querySelectorAll(".audit-filter").forEach((btn) => {
+  const auditFilterBtns = document.querySelectorAll(".audit-filter");
+  auditFilterBtns.forEach((btn) => {
     btn.addEventListener("click", () => {
+      auditFilterBtns.forEach((b) => b.setAttribute("aria-pressed", "false"));
       document.querySelector(".audit-filter.active")?.classList.remove("active");
       btn.classList.add("active");
+      btn.setAttribute("aria-pressed", "true");
       filterAuditLog(btn.dataset.filter);
     });
   });
