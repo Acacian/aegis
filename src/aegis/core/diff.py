@@ -11,8 +11,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from aegis.core.action import Action
-from aegis.core.policy import Approval, Policy, PolicyRule
-from aegis.core.risk import RiskLevel
+from aegis.core.policy import Policy, PolicyRule
 
 # Severity ordering for determining restriction direction.
 _APPROVAL_SEVERITY: dict[str, int] = {

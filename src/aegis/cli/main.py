@@ -178,6 +178,40 @@ def main(argv: list[str] | None = None) -> None:
     serve_parser.add_argument("--port", type=int, default=8000, help="Bind port")
     serve_parser.add_argument("--audit-db", help="Audit database path")
 
+    # aegis diff
+    from aegis.cli.diff import register as _register_diff
+
+    _register_diff(subparsers)
+
+    # aegis compliance
+    compliance_parser = subparsers.add_parser(
+        "compliance",
+        help="Generate compliance reports from audit logs",
+    )
+    compliance_parser.add_argument(
+        "audit_file",
+        help="Path to audit JSONL file (exported via `aegis audit -o`)",
+    )
+    compliance_parser.add_argument(
+        "--type",
+        choices=["soc2", "gdpr", "governance"],
+        default="governance",
+        dest="report_type",
+        help="Report type (default: governance)",
+    )
+    compliance_parser.add_argument(
+        "--format",
+        choices=["markdown", "json"],
+        default="markdown",
+        dest="fmt",
+        help="Output format (default: markdown)",
+    )
+    compliance_parser.add_argument(
+        "--policy",
+        default=None,
+        help="Optional policy YAML file for context",
+    )
+
     # aegis stats
     stats_parser = subparsers.add_parser(
         "stats",
@@ -214,6 +248,12 @@ def main(argv: list[str] | None = None) -> None:
         _cmd_scan(args)
     elif args.command == "serve":
         _cmd_serve(args)
+    elif args.command == "diff":
+        from aegis.cli.diff import run as _run_diff
+
+        _run_diff(args)
+    elif args.command == "compliance":
+        _cmd_compliance(args)
     elif args.command == "stats":
         _cmd_stats(args)
     else:
@@ -564,6 +604,54 @@ def _cmd_serve(args: argparse.Namespace) -> None:
     print(f"Policy: {args.policy_file}")
     print(f"Docs: http://{args.host}:{args.port}/health")
     uvicorn.run(app, host=args.host, port=args.port)
+
+
+def _cmd_compliance(args: argparse.Namespace) -> None:
+    """Generate a compliance report from a JSONL audit file."""
+    import json as _json
+
+    from aegis.core.compliance import ReportGenerator
+    from aegis.core.policy import Policy
+
+    audit_path = Path(args.audit_file)
+    if not audit_path.exists():
+        print(f"Audit file not found: {audit_path}", file=sys.stderr)
+        sys.exit(1)
+
+    # Load audit entries from JSONL
+    entries: list[dict[str, object]] = []
+    with audit_path.open() as f:
+        for line_no, line in enumerate(f, 1):
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                entries.append(_json.loads(line))
+            except _json.JSONDecodeError as e:
+                print(
+                    f"Invalid JSON on line {line_no}: {e}",
+                    file=sys.stderr,
+                )
+                sys.exit(1)
+
+    # Load policy if provided
+    policy_path = getattr(args, "policy", None)
+    if policy_path:
+        try:
+            policy = Policy.from_yaml(policy_path)
+        except Exception as e:
+            print(f"Failed to load policy: {e}", file=sys.stderr)
+            sys.exit(1)
+    else:
+        policy = Policy()
+
+    gen = ReportGenerator(policy)
+    report = gen.generate(entries, report_type=args.report_type)
+
+    if args.fmt == "json":
+        print(_json.dumps(gen.to_dict(report), indent=2))
+    else:
+        print(gen.to_markdown(report))
 
 
 def _cmd_stats(args: argparse.Namespace) -> None:

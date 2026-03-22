@@ -2,6 +2,7 @@
 
 from aegis.core.action import Action
 from aegis.core.agent_identity import AgentIdentity, AgentRegistry, DelegationEvent
+from aegis.core.anomaly import AnomalyDetector, AnomalyResult, BehaviorProfile
 from aegis.core.hierarchy import PolicyConflict, PolicyHierarchy
 from aegis.core.plan import ExecutionPlan
 from aegis.core.policy import Approval, Policy, PolicyDecision
@@ -16,8 +17,11 @@ __all__ = [
     "Action",
     "AgentIdentity",
     "AgentRegistry",
+    "AnomalyDetector",
+    "AnomalyResult",
     "Approval",
     "BatchAuditLogger",
+    "BehaviorProfile",
     "DelegationEvent",
     "ExecutionPlan",
     "Policy",
