@@ -1653,8 +1653,8 @@ async function copyAuditAsMarkdown() {
   showToast(`Copied ${entries.length} entries as Markdown`);
 }
 
-const _ESC_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;" };
-const _ESC_RE = /[&<>]/g;
+const _ESC_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+const _ESC_RE = /[&<>"']/g;
 function _esc(s) {
   const str = String(s || "");
   return _ESC_RE.test(str) ? str.replace(_ESC_RE, (c) => _ESC_MAP[c]) : str;
