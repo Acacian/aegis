@@ -2301,7 +2301,7 @@ evaluate_action(
       errCard.style.borderLeft = "3px solid var(--risk-high)";
       errCard.innerHTML = `<div class="result-header"><span class="result-action-type">Error</span></div>
         <div class="result-details"><div class="result-detail"><span class="label">Details: </span><span class="value"></span></div></div>`;
-      errCard.querySelector(".value").textContent = result.error;
+      errCard.children[1].children[0].children[1].textContent = result.error;
       const empty = $result.querySelector(".empty-state");
       if (empty) empty.remove();
       $result.prepend(errCard);
@@ -2324,9 +2324,11 @@ evaluate_action(
 }
 
 /* ---- Run All Actions ---- */
+let _$runAllBtn = null;
 async function runAllActions() {
-  const buttons = document.querySelectorAll(".action-btn");
-  const runAllBtn = document.getElementById("run-all");
+  const container = _$quickActions || (_$quickActions = document.querySelector(".quick-actions"));
+  const buttons = container ? container.querySelectorAll(".action-btn") : [];
+  const runAllBtn = _$runAllBtn || (_$runAllBtn = document.getElementById("run-all"));
   const origText = runAllBtn?.textContent || "Run All";
 
   // Show running state
