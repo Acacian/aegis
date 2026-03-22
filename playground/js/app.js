@@ -2629,18 +2629,22 @@ function addAuditEntry(r) {
 
 let _$auditSearch = null;
 function filterAuditLog(filter) {
-  const search = ((_$auditSearch || (_$auditSearch = document.getElementById("audit-search")))?.value || "").toLowerCase();
-  // Use CSS class on container for type filtering (avoids iterating all rows)
+  const searchEl = _$auditSearch || (_$auditSearch = document.getElementById("audit-search"));
+  const search = (searchEl?.value || "").toLowerCase();
   $audit.dataset.filter = filter;
   if (search) {
-    // Text search still requires row iteration, but only for text matching
     const rows = $audit.querySelectorAll(".audit-row");
+    let visible = 0;
     rows.forEach((row) => {
-      row.classList.toggle("search-hidden", !row.textContent.toLowerCase().includes(search));
+      const hidden = !row.textContent.toLowerCase().includes(search);
+      row.classList.toggle("search-hidden", hidden);
+      if (!hidden) visible++;
     });
+    if (searchEl) searchEl.classList.add("search-active");
+    $auditCount.textContent = `${visible} of ${auditEntries.length} entries (search: "${searchEl.value}")`;
   } else {
-    // Clear any search-hidden classes
     $audit.querySelectorAll(".search-hidden").forEach((r) => r.classList.remove("search-hidden"));
+    if (searchEl) searchEl.classList.remove("search-active");
   }
 }
 

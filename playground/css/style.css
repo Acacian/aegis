@@ -1537,6 +1537,11 @@ kbd {
   width: 160px;
 }
 
+.audit-search.search-active {
+  border-color: var(--accent);
+  background: rgba(88, 166, 255, 0.08);
+}
+
 .audit-entry {
   display: flex;
   align-items: center;
