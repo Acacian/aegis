@@ -61,6 +61,10 @@ const $progress = document.getElementById("progress-fill");
 const $result = document.getElementById("result-content");
 const $audit = document.getElementById("audit-content");
 const $auditCount = document.getElementById("audit-count");
+let _presetBtns = null; // cached after DOMContentLoaded
+function _getPresetBtns() {
+  return _presetBtns || (_presetBtns = [...document.querySelectorAll(".preset-btn:not(.preset-divider)")]);
+}
 
 /* ---- Init ---- */
 document.addEventListener("DOMContentLoaded", async () => {
@@ -223,8 +227,7 @@ function getCommandItems() {
     { label: "Share Policy", icon: "\uD83D\uDD17", action: () => openShareModal() },
   ];
   // Add presets
-  const presetBtns = document.querySelectorAll(".preset-btn:not(.preset-divider)");
-  presetBtns.forEach((btn) => {
+  _getPresetBtns().forEach((btn) => {
     items.push({ label: `Preset: ${btn.textContent.trim()}`, icon: "\uD83D\uDCD1", action: () => btn.click() });
   });
   return items;
@@ -307,13 +310,13 @@ function initSwipePresets() {
     const dy = e.changedTouches[0].clientY - startY;
     if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx)) return; // not a horizontal swipe
 
-    const presetBtns = [...document.querySelectorAll(".preset-btn:not(.preset-divider)")];
-    const activeIdx = presetBtns.findIndex((b) => b.classList.contains("active"));
+    const btns = _getPresetBtns();
+    const activeIdx = btns.findIndex((b) => b.classList.contains("active"));
 
-    if (dx < 0 && activeIdx < presetBtns.length - 1) {
-      presetBtns[activeIdx + 1].click(); // swipe left → next
+    if (dx < 0 && activeIdx < btns.length - 1) {
+      btns[activeIdx + 1].click(); // swipe left → next
     } else if (dx > 0 && activeIdx > 0) {
-      presetBtns[activeIdx - 1].click(); // swipe right → prev
+      btns[activeIdx - 1].click(); // swipe right → prev
     }
   }, { passive: true });
 }
@@ -1077,11 +1080,11 @@ function bindEvents() {
     // Ctrl/Cmd + [ / ] → navigate presets back/forward
     if ((e.ctrlKey || e.metaKey) && (e.key === "[" || e.key === "]")) {
       e.preventDefault();
-      const presetBtns = [...document.querySelectorAll(".preset-btn:not(.preset-divider)")];
-      const activeIdx = presetBtns.findIndex((b) => b.classList.contains("active"));
+      const btns = _getPresetBtns();
+      const activeIdx = btns.findIndex((b) => b.classList.contains("active"));
       const dir = e.key === "]" ? 1 : -1;
-      const nextIdx = (activeIdx + dir + presetBtns.length) % presetBtns.length;
-      presetBtns[nextIdx].click();
+      const nextIdx = (activeIdx + dir + btns.length) % btns.length;
+      btns[nextIdx].click();
       return;
     }
     // Ctrl/Cmd + Shift + C → copy latest result as one-liner
@@ -1144,8 +1147,7 @@ function bindEvents() {
     // Ctrl/Cmd + Shift + R → re-evaluate all with stats reset
     if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === "R" || e.key === "r")) {
       e.preventDefault();
-      stats.total = 0; stats.auto = 0; stats.approve = 0; stats.block = 0; stats.totalMs = 0;
-      auditEntries.length = 0;
+      // clear-audit handler resets stats, auditEntries, actionCount, and display
       document.getElementById("clear-result")?.click();
       document.getElementById("clear-audit")?.click();
       setTimeout(() => document.getElementById("run-all")?.click(), 100);
@@ -1167,10 +1169,10 @@ function bindEvents() {
     }
     // 1-9, 0 → switch preset (when not in input)
     if (!isInput && e.key >= "0" && e.key <= "9" && !e.ctrlKey && !e.metaKey) {
-      const presetBtns = document.querySelectorAll(".preset-btn:not(.preset-divider)");
+      const btns = _getPresetBtns();
       const idx = e.key === "0" ? 9 : parseInt(e.key) - 1;
-      if (idx < presetBtns.length) {
-        presetBtns[idx].click();
+      if (idx < btns.length) {
+        btns[idx].click();
       }
     }
   });
