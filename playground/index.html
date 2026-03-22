@@ -449,15 +449,15 @@ result = await runtime.run_one(Action("delete", "crm", params={"id": "all"}))
             <h3>Custom Action</h3>
             <div class="form-row">
               <label>Type</label>
-              <input type="text" id="custom-type" placeholder="e.g. write, deploy, bulk_*">
+              <input type="text" id="custom-type" placeholder="e.g. write, deploy, bulk_*" autocomplete="off" spellcheck="false">
             </div>
             <div class="form-row">
               <label>Target</label>
-              <input type="text" id="custom-target" placeholder="e.g. crm, database">
+              <input type="text" id="custom-target" placeholder="e.g. crm, database" autocomplete="off" spellcheck="false">
             </div>
             <div class="form-row">
               <label>Params (JSON)</label>
-              <input type="text" id="custom-params" placeholder='e.g. {"count": 50}'>
+              <input type="text" id="custom-params" placeholder='e.g. {"count": 50}' autocomplete="off" spellcheck="false">
             </div>
             <button id="run-custom" class="run-btn">Evaluate <kbd>Ctrl+Enter</kbd></button>
           </div>
