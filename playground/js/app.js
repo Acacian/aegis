@@ -1584,8 +1584,11 @@ function copyAuditAsMarkdown() {
   navigator.clipboard.writeText(md).then(() => showToast(`Copied ${auditEntries.length} entries as Markdown`));
 }
 
+const _ESC_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;" };
+const _ESC_RE = /[&<>]/g;
 function _esc(s) {
-  return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const str = String(s || "");
+  return _ESC_RE.test(str) ? str.replace(_ESC_RE, (c) => _ESC_MAP[c]) : str;
 }
 
 function printAuditLog() {
