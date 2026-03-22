@@ -2739,16 +2739,11 @@ async function copyToClipboard(text, btn) {
 }
 
 /* ---- Code Generation for Copy Buttons ---- */
+const _SAFE_MAP = { "\\": "\\\\", '"': '\\"', "'": "\\'", "\n": "\\n", "\r": "\\r", "`": "\\`", "$": "\\$" };
+const _SAFE_RE = /[\\"'\n\r`$]/g;
 function _safeStr(s) {
-  // Escape for safe embedding in Python/shell string literals
-  return String(s || "")
-    .replace(/\\/g, "\\\\")
-    .replace(/"/g, '\\"')
-    .replace(/'/g, "\\'")
-    .replace(/\n/g, "\\n")
-    .replace(/\r/g, "\\r")
-    .replace(/`/g, "\\`")
-    .replace(/\$/g, "\\$");
+  const str = String(s || "");
+  return _SAFE_RE.test(str) ? str.replace(_SAFE_RE, (c) => _SAFE_MAP[c]) : str;
 }
 
 function generateCode(fmt, r) {
