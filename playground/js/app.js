@@ -1905,7 +1905,7 @@ function lintPolicyWarnings(yaml) {
     warnings.push("All rules auto-approve — consider adding review or block rules");
   }
 
-  return warnings;
+  return { warnings, lines };
 }
 
 function setupPolicyValidation() {
@@ -1942,13 +1942,13 @@ async function validatePolicy() {
     } else {
       clearEditorErrors();
       // Check for warnings — show inline
-      const warns = lintPolicyWarnings(yaml);
+      const lint = lintPolicyWarnings(yaml);
+      const warns = lint.warnings;
+      const yamlLines = lint.lines;
       if (warns.length) {
         setValidationStatus("warn", warns[0]);
         // Set tooltip with all warnings
         if (_$validationBadge) _$validationBadge.title = warns.join("\n");
-        // Collect fixable warnings for "Fix All"
-        const yamlLines = yaml.split("\n");
         let fixableCount = 0;
         warns.forEach((w) => {
           const warnEl = document.createElement("div");
