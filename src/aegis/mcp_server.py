@@ -117,14 +117,16 @@ def _create_server() -> Any:
                 agent_id=a.get("agent_id", ""),
             )
             decision = _policy.evaluate(action)
-            results.append({
-                "action_type": decision.action.type,
-                "target": decision.action.target,
-                "risk_level": decision.risk_level.value,
-                "approval": decision.approval.value,
-                "matched_rule": decision.matched_rule,
-                "is_allowed": decision.is_allowed,
-            })
+            results.append(
+                {
+                    "action_type": decision.action.type,
+                    "target": decision.action.target,
+                    "risk_level": decision.risk_level.value,
+                    "approval": decision.approval.value,
+                    "matched_rule": decision.matched_rule,
+                    "is_allowed": decision.is_allowed,
+                }
+            )
         return results
 
     @mcp.tool()
@@ -136,14 +138,16 @@ def _create_server() -> Any:
         """
         rules = []
         for rule in _policy.rules:
-            rules.append({
-                "name": rule.name,
-                "match_type": rule.match_type,
-                "match_target": rule.match_target,
-                "risk_level": rule.risk_level.value,
-                "approval": rule.approval.value,
-                "conditions": rule.conditions,
-            })
+            rules.append(
+                {
+                    "name": rule.name,
+                    "match_type": rule.match_type,
+                    "match_target": rule.match_target,
+                    "risk_level": rule.risk_level.value,
+                    "approval": rule.approval.value,
+                    "conditions": rule.conditions,
+                }
+            )
         return {
             "rule_count": len(rules),
             "rules": rules,

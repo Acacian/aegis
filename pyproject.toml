@@ -109,3 +109,7 @@ warn_unused_configs = true
 [[tool.mypy.overrides]]
 module = ["playwright.*", "langchain_core.*", "crewai.*", "agents.*", "httpx.*", "mcp.*", "starlette.*", "uvicorn.*"]
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["aegis.mcp_server"]
+disallow_untyped_decorators = false
