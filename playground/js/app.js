@@ -153,23 +153,38 @@ function startTour() {
         </div>
         <div class="tour-progress">${step + 1} / ${TOUR_STEPS.length}</div>`;
 
-      // Position tooltip
+      // Position tooltip with viewport clamping
+      document.body.appendChild(tip);
       const gap = 12;
-      if (s.position === "right") {
-        tip.style.top = rect.top + rect.height / 2 + "px";
-        tip.style.left = rect.right + gap + "px";
-        tip.style.transform = "translateY(-50%)";
-      } else if (s.position === "bottom") {
-        tip.style.top = rect.bottom + gap + "px";
-        tip.style.left = rect.left + rect.width / 2 + "px";
-        tip.style.transform = "translateX(-50%)";
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const tw = tip.offsetWidth;
+      const th = tip.offsetHeight;
+
+      let top, left;
+      let pos = s.position;
+
+      // Auto-flip if preferred position overflows viewport
+      if (pos === "right" && rect.right + gap + tw > vw) pos = "bottom";
+      if (pos === "left" && rect.left - gap - tw < 0) pos = "bottom";
+
+      if (pos === "right") {
+        top = rect.top + rect.height / 2 - th / 2;
+        left = rect.right + gap;
+      } else if (pos === "bottom") {
+        top = rect.bottom + gap;
+        left = rect.left + rect.width / 2 - tw / 2;
       } else {
-        tip.style.top = rect.top + rect.height / 2 + "px";
-        tip.style.left = rect.left - gap + "px";
-        tip.style.transform = "translate(-100%, -50%)";
+        top = rect.top + rect.height / 2 - th / 2;
+        left = rect.left - gap - tw;
       }
 
-      document.body.appendChild(tip);
+      // Clamp to viewport edges
+      top = Math.max(8, Math.min(top, vh - th - 8));
+      left = Math.max(8, Math.min(left, vw - tw - 8));
+
+      tip.style.top = top + "px";
+      tip.style.left = left + "px";
 
       tip.querySelector(".tour-next").addEventListener("click", () => {
         step++;
