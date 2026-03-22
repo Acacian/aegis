@@ -2664,7 +2664,10 @@ function filterAuditLog(filter) {
     if (searchEl) searchEl.classList.add("search-active");
     $auditCount.textContent = `${visible} of ${auditEntries.length} entries (search: "${searchEl.value}")`;
   } else {
-    $audit.querySelectorAll(".search-hidden").forEach((r) => r.classList.remove("search-hidden"));
+    // Only clear search-hidden classes if any exist (avoid querySelectorAll on empty set)
+    if ($audit.querySelector(".search-hidden")) {
+      $audit.querySelectorAll(".search-hidden").forEach((r) => r.classList.remove("search-hidden"));
+    }
     if (searchEl) searchEl.classList.remove("search-active");
   }
 }
