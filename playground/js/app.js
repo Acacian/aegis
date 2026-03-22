@@ -996,6 +996,14 @@ function bindEvents() {
     }
     // Escape → close overlays, then clear results
     if (e.key === "Escape") {
+      // Dismiss guided tour if active
+      const tourTip = document.querySelector(".tour-tooltip");
+      if (tourTip) {
+        document.querySelectorAll(".tour-overlay, .tour-tooltip").forEach((el) => el.remove());
+        document.querySelectorAll(".tour-highlight").forEach((el) => el.classList.remove("tour-highlight"));
+        localStorage.setItem("aegis-tour-done", "1");
+        return;
+      }
       const cmdPalette = document.getElementById("command-palette");
       if (cmdPalette && !cmdPalette.classList.contains("hidden")) {
         cmdPalette.classList.add("hidden");
