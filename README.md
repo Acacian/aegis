@@ -613,6 +613,8 @@ Using Aegis? Add a badge to your project:
 
 MIT -- see [LICENSE](LICENSE) for details.
 
+Copyright (c) 2026 구동하 (Dongha Koo, [@Acacian](https://github.com/Acacian)). Created March 21, 2026.
+
 ---
 
 <p align="center">

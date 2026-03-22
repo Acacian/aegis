@@ -590,6 +590,8 @@ Aegis를 사용 중이신가요? 프로젝트에 배지를 추가하세요:
 
 MIT -- [LICENSE](LICENSE) 참조.
 
+Copyright (c) 2026 구동하 (Dongha Koo, [@Acacian](https://github.com/Acacian)). 최초 생성일: 2026년 3월 21일.
+
 ---
 
 <p align="center">
