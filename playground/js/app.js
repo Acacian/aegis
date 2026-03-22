@@ -1616,7 +1616,7 @@ function exportAuditHTML() {
     `<tr><td>${_esc(e.time || e.timestamp)}</td><td>${_esc(e.type || e.action_type)}</td><td class="${_esc((e.risk || "").toLowerCase())}">${_esc(e.risk)}</td><td><strong>${_esc(e.decision || e.approval)}</strong></td><td>${_esc(e.rule)}</td></tr>`
   ).join("");
   const avgMs = stats.total > 0 ? (stats.totalMs / stats.total).toFixed(1) : "0";
-  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Aegis Audit Report</title>
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'"><title>Aegis Audit Report</title>
 <style>body{font-family:system-ui;max-width:900px;margin:2rem auto;color:#e6edf3;background:#0d1117}
 table{border-collapse:collapse;width:100%}th,td{border:1px solid #30363d;padding:8px 12px;text-align:left}
 th{background:#161b22}h1{color:#58a6ff}.low{color:#3fb950}.medium{color:#d29922}.high{color:#f0883e}.critical{color:#f85149}
