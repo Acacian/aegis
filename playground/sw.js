@@ -2,7 +2,7 @@
  * Aegis Playground Service Worker — caches static assets for fast repeat loads.
  * Pyodide + WASM are cached on first use for near-instant subsequent visits.
  */
-const CACHE_NAME = "aegis-playground-v2";
+const CACHE_NAME = "aegis-playground-v3";
 const STATIC_ASSETS = [
   "./",
   "./index.html",
@@ -41,6 +41,12 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
+// Cache the open-cache promise to avoid reopening on every fetch
+let _cachePromise = null;
+function _getCache() {
+  return _cachePromise || (_cachePromise = caches.open(CACHE_NAME));
+}
+
 self.addEventListener("fetch", (event) => {
   const url = event.request.url;
 
@@ -51,7 +57,7 @@ self.addEventListener("fetch", (event) => {
         (cached) => cached || fetch(event.request).then((response) => {
           if (response.ok) {
             const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+            _getCache().then((cache) => cache.put(event.request, clone));
           }
           return response;
         })
@@ -67,7 +73,7 @@ self.addEventListener("fetch", (event) => {
         .then((response) => {
           if (response.ok) {
             const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+            _getCache().then((cache) => cache.put(event.request, clone));
           }
           return response;
         })
