@@ -396,7 +396,7 @@ result = await runtime.run_one(Action("delete", "crm", params={"id": "all"}))
           <button id="download-policy" class="clear-btn" title="Download as policy.yaml">&#x2B07; .yaml</button>
           <button id="share-policy" class="clear-btn" title="Copy shareable URL">Share</button>
           <span id="rule-count" class="rule-count" title="Number of rules in policy">0 rules</span>
-          <span id="validation-status" class="validation-status" title="Policy validation status">&#x2705; Valid</span>
+          <span id="validation-status" class="validation-status" role="status" aria-live="polite" title="Policy validation status">&#x2705; Valid</span>
         </div>
         <div class="editor-wrapper">
           <textarea id="policy-editor"></textarea>

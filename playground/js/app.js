@@ -2713,6 +2713,8 @@ function showToast(msg) {
   if (!_toastEl) {
     _toastEl = document.createElement("div");
     _toastEl.className = "toast";
+    _toastEl.setAttribute("role", "status");
+    _toastEl.setAttribute("aria-live", "polite");
     document.body.appendChild(_toastEl);
   }
   // If same message is already showing, just reset timer
