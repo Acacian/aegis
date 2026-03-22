@@ -15,9 +15,11 @@
   <a href="https://pypi.org/project/agent-aegis/"><img src="https://img.shields.io/pypi/pyversions/agent-aegis?cacheSeconds=3600" alt="Python"></a>
   <a href="https://github.com/Acacian/aegis/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License"></a>
   <a href="https://acacian.github.io/aegis/"><img src="https://img.shields.io/badge/docs-acacian.github.io%2Faegis-blue" alt="Docs"></a>
+  <a href="https://pypi.org/project/agent-aegis/"><img src="https://img.shields.io/pypi/dm/agent-aegis?label=downloads&color=brightgreen" alt="Downloads"></a>
   <a href="https://github.com/Acacian/aegis"><img src="https://img.shields.io/github/stars/Acacian/aegis?style=social" alt="GitHub stars"></a>
   <br/>
-  <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-518_passed-brightgreen" alt="Tests"></a>
+  <a href="https://pypi.org/project/langchain-aegis/"><img src="https://img.shields.io/pypi/v/langchain-aegis?label=langchain-aegis&color=blue&cacheSeconds=3600" alt="langchain-aegis"></a>
+  <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-531_passed-brightgreen" alt="Tests"></a>
   <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/coverage-92%25-brightgreen" alt="Coverage"></a>
   <a href="https://acacian.github.io/aegis/playground/"><img src="https://img.shields.io/badge/playground-브라우저에서_체험-ff6b6b" alt="Playground"></a>
 </p>
@@ -77,7 +79,26 @@ Aegis는 AI 에이전트와 실제 실행 사이에 위치하는 **Python 미들
     |                           |--- 실행 (기록됨) ------------> |
 ```
 
-**3줄이면 거버넌스 추가:**
+**복사 → 붙여넣기 → 실행 — 설정 파일 없이 바로 동작:**
+
+```python
+from aegis import Action, Policy
+
+policy = Policy.from_dict({
+    "version": "1",
+    "defaults": {"risk_level": "low", "approval": "auto"},
+    "rules": [{"name": "block_delete", "match": {"type": "delete_*"},
+               "risk_level": "critical", "approval": "block"}]
+})
+
+safe = policy.evaluate(Action(type="read_users", target="db"))
+print(safe.approval)   # Approval.AUTO  ✅
+
+danger = policy.evaluate(Action(type="delete_users", target="db"))
+print(danger.approval)  # Approval.BLOCK 🚫
+```
+
+YAML 파일 사용 시 — **3줄:**
 
 ```python
 from aegis import Action, Policy, Runtime

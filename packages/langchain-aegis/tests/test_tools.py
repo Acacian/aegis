@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any, Optional, Type
-from unittest.mock import AsyncMock, MagicMock
-
 import pytest
+from aegis import Policy
 from langchain_core.callbacks import (
     AsyncCallbackManagerForToolRun,
     CallbackManagerForToolRun,
@@ -13,10 +11,7 @@ from langchain_core.callbacks import (
 from langchain_core.tools import BaseTool
 from pydantic import BaseModel, Field
 
-from aegis import Action, Policy
-from aegis.core.policy import Approval
 from langchain_aegis import GovernedTool, govern_tool, govern_tools
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -51,19 +46,19 @@ class SearchInput(BaseModel):
 class FakeSearchTool(BaseTool):
     name: str = "web_search"
     description: str = "Search the web"
-    args_schema: Optional[Type[BaseModel]] = SearchInput
+    args_schema: type[BaseModel] | None = SearchInput
 
     def _run(
         self,
         query: str,
-        run_manager: Optional[CallbackManagerForToolRun] = None,
+        run_manager: CallbackManagerForToolRun | None = None,
     ) -> str:
         return f"Results for: {query}"
 
     async def _arun(
         self,
         query: str,
-        run_manager: Optional[AsyncCallbackManagerForToolRun] = None,
+        run_manager: AsyncCallbackManagerForToolRun | None = None,
     ) -> str:
         return f"Async results for: {query}"
 
@@ -75,14 +70,14 @@ class FakeDeleteTool(BaseTool):
     def _run(
         self,
         record_id: str = "",
-        run_manager: Optional[CallbackManagerForToolRun] = None,
+        run_manager: CallbackManagerForToolRun | None = None,
     ) -> str:
         return f"Deleted: {record_id}"
 
     async def _arun(
         self,
         record_id: str = "",
-        run_manager: Optional[AsyncCallbackManagerForToolRun] = None,
+        run_manager: AsyncCallbackManagerForToolRun | None = None,
     ) -> str:
         return f"Async deleted: {record_id}"
 

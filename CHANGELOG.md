@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.6] - 2026-03-23
+
+### Added
+
+- Standalone MCP server: `pip install 'agent-aegis[mcp]'` → `aegis-mcp-server`
+- `langchain-aegis` 0.1.0: standalone PyPI package for LangChain governance integration
+- MCP Registry publication (`io.github.Acacian/aegis`)
+- Smithery.ai configuration (`smithery.yaml`)
+- GEO (Generative Engine Optimization) for AI discoverability
+- CI gate: service worker cache version bump check
+- PyPI downloads badge in README
+
+### Fixed
+
+- MCP Registry name casing (`io.github.Acacian/aegis`)
+- MCP server format and mypy strict compliance
+
 ## [0.1.4] - 2026-03-22
 
 ### Added

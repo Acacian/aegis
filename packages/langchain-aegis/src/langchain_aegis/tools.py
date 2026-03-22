@@ -7,15 +7,15 @@ governance message instead of executing the underlying tool.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Optional, Sequence
-
-from langchain_core.runnables import RunnableConfig
-from langchain_core.tools import BaseTool
-from pydantic import ConfigDict, Field
+from typing import Any
 
 from aegis import Action, Policy
 from aegis.core.policy import Approval, PolicyDecision
+from langchain_core.runnables import RunnableConfig
+from langchain_core.tools import BaseTool
+from pydantic import ConfigDict, Field
 
 
 class GovernedTool(BaseTool):
@@ -49,7 +49,7 @@ class GovernedTool(BaseTool):
     def invoke(
         self,
         input: Any,  # noqa: A002
-        config: Optional[RunnableConfig] = None,
+        config: RunnableConfig | None = None,
         **kwargs: Any,
     ) -> Any:
         """Governed synchronous invocation."""
@@ -61,7 +61,7 @@ class GovernedTool(BaseTool):
     async def ainvoke(
         self,
         input: Any,  # noqa: A002
-        config: Optional[RunnableConfig] = None,
+        config: RunnableConfig | None = None,
         **kwargs: Any,
     ) -> Any:
         """Governed asynchronous invocation."""
@@ -80,7 +80,7 @@ class GovernedTool(BaseTool):
 
     # ---- internal --------------------------------------------------------
 
-    def _check_policy(self, tool_input: Any) -> Optional[str]:
+    def _check_policy(self, tool_input: Any) -> str | None:
         """Evaluate the action against the Aegis policy.
 
         Returns a block message string if the action is denied,
@@ -98,16 +98,14 @@ class GovernedTool(BaseTool):
 
         if decision.approval == Approval.BLOCK:
             reason = decision.matched_rule or "Denied by policy"
-            return (
-                f"[BLOCKED by Aegis] {reason} "
-                f"(risk: {decision.risk_level.name.lower()})"
-            )
+            return f"[BLOCKED by Aegis] {reason} (risk: {decision.risk_level.name.lower()})"
         return None
 
 
 # --------------------------------------------------------------------------
 # Public helpers
 # --------------------------------------------------------------------------
+
 
 def govern_tool(
     tool: BaseTool,
