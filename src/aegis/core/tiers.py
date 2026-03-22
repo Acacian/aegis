@@ -1,16 +1,22 @@
 """Enterprise feature tier system.
 
 Defines pricing tiers (Community / Pro / Enterprise) and which features
-are available in each.  Provides a :class:`FeatureGate` that can check
-availability and raise :class:`FeatureNotAvailableError` when a caller
-tries to use a feature above the current tier.
+are available in each.  Provides a :class:`FeatureGate` that tracks
+tier membership and can optionally nudge users toward upgrades.
+
+Philosophy: **all features work locally for free**.  The gate is an
+informational layer — not a paywall.  Hard blocking is opt-in via
+``strict=True`` for enterprises that need internal lockdown.
 """
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import ClassVar
+
+logger = logging.getLogger("aegis.tiers")
 
 # ---------------------------------------------------------------------------
 # Enums
@@ -207,10 +213,26 @@ class FeatureNotAvailableError(Exception):
 
 
 class FeatureGate:
-    """Runtime gate that checks feature availability against the active tier."""
+    """Runtime gate that tracks tier membership and nudges upgrades.
 
-    def __init__(self, tier: Tier = Tier.COMMUNITY) -> None:
+    By default (``strict=False``), **all features work regardless of
+    tier**.  Calling :meth:`require` on an above-tier feature logs a
+    one-time informational nudge but does **not** raise.
+
+    Set ``strict=True`` for enterprise lockdown — :meth:`require` will
+    raise :class:`FeatureNotAvailableError` for features above the
+    current tier.
+    """
+
+    def __init__(
+        self,
+        tier: Tier = Tier.COMMUNITY,
+        *,
+        strict: bool = False,
+    ) -> None:
         self._tier = tier
+        self._strict = strict
+        self._nudged: set[Feature] = set()
 
     # -- queries -----------------------------------------------------------
 
@@ -219,17 +241,42 @@ class FeatureGate:
         """Return the active tier."""
         return self._tier
 
+    @property
+    def strict(self) -> bool:
+        """Return whether the gate hard-blocks above-tier features."""
+        return self._strict
+
     def is_available(self, feature: Feature) -> bool:
         """Return *True* if *feature* is included in the current tier."""
         return feature in TIER_FEATURES[self._tier]
 
     def require(self, feature: Feature) -> None:
-        """Raise :class:`FeatureNotAvailableError` if *feature* is not available."""
-        if not self.is_available(feature):
+        """Check tier membership for *feature*.
+
+        * **strict=False** (default): logs a one-time nudge and
+          returns normally — the feature still works.
+        * **strict=True**: raises :class:`FeatureNotAvailableError`.
+        """
+        if self.is_available(feature):
+            return
+        required = self.tier_for_feature(feature)
+        if self._strict:
             raise FeatureNotAvailableError(
                 feature=feature,
                 current_tier=self._tier,
-                required_tier=self.tier_for_feature(feature),
+                required_tier=required,
+            )
+        # Soft nudge — log once per feature, never block.
+        if feature not in self._nudged:
+            self._nudged.add(feature)
+            logger.info(
+                "Feature '%s' is included in %s tier. "
+                "You're on %s — all features work locally. "
+                "Aegis Cloud adds dashboards, managed storage "
+                "& team management: https://aegis.dev/cloud",
+                feature.value,
+                required.value.title(),
+                self._tier.value.title(),
             )
 
     def available_features(self) -> frozenset[Feature]:

@@ -199,19 +199,41 @@ class TestFeatureGateRequire:
         gate = FeatureGate(Tier.PRO)
         gate.require(Feature.POLICY_ENGINE)  # no exception
 
-    def test_require_raises_for_unavailable(self) -> None:
+    def test_require_soft_nudge_does_not_raise(self) -> None:
+        """Default (strict=False): require() never raises."""
         gate = FeatureGate(Tier.COMMUNITY)
+        gate.require(Feature.ANOMALY_DETECTION)  # no exception
+
+    def test_require_soft_nudge_logs_once(self, caplog: pytest.LogCaptureFixture) -> None:
+        """Nudge message is logged once per feature, not on repeat calls."""
+        gate = FeatureGate(Tier.COMMUNITY)
+        with caplog.at_level("INFO", logger="aegis.tiers"):
+            gate.require(Feature.CRYPTO_AUDIT)
+            gate.require(Feature.CRYPTO_AUDIT)
+        nudge_msgs = [r for r in caplog.records if "crypto_audit" in r.message]
+        assert len(nudge_msgs) == 1
+
+    def test_require_strict_raises_for_unavailable(self) -> None:
+        gate = FeatureGate(Tier.COMMUNITY, strict=True)
         with pytest.raises(FeatureNotAvailableError):
             gate.require(Feature.ANOMALY_DETECTION)
 
-    def test_require_raises_with_correct_fields(self) -> None:
-        gate = FeatureGate(Tier.COMMUNITY)
+    def test_require_strict_raises_with_correct_fields(self) -> None:
+        gate = FeatureGate(Tier.COMMUNITY, strict=True)
         with pytest.raises(FeatureNotAvailableError) as exc_info:
             gate.require(Feature.CRYPTO_AUDIT)
         err = exc_info.value
         assert err.feature is Feature.CRYPTO_AUDIT
         assert err.current_tier is Tier.COMMUNITY
         assert err.required_tier is Tier.ENTERPRISE
+
+    def test_require_strict_passes_for_available(self) -> None:
+        gate = FeatureGate(Tier.ENTERPRISE, strict=True)
+        gate.require(Feature.CRYPTO_AUDIT)  # no exception
+
+    def test_strict_property(self) -> None:
+        assert FeatureGate(strict=False).strict is False
+        assert FeatureGate(strict=True).strict is True
 
 
 # ---------------------------------------------------------------------------
