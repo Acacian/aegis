@@ -803,13 +803,17 @@ function bindEvents() {
     toggleTheme();
   });
 
-  // Comparison tabs
-  document.querySelectorAll(".comp-tab").forEach((tab) => {
+  // Comparison tabs — cached references, no re-query on click
+  const _compTabs = [...document.querySelectorAll(".comp-tab")];
+  const _compWithout = document.getElementById("comp-without");
+  const _compWith = document.getElementById("comp-with");
+  _compTabs.forEach((tab) => {
     tab.addEventListener("click", () => {
-      document.querySelectorAll(".comp-tab").forEach((t) => t.classList.remove("active"));
+      _compTabs.forEach((t) => t.classList.remove("active"));
       tab.classList.add("active");
-      document.getElementById("comp-without").classList.toggle("hidden", tab.dataset.tab !== "without");
-      document.getElementById("comp-with").classList.toggle("hidden", tab.dataset.tab !== "with");
+      const isWithout = tab.dataset.tab === "without";
+      if (_compWithout) _compWithout.classList.toggle("hidden", !isWithout);
+      if (_compWith) _compWith.classList.toggle("hidden", isWithout);
     });
   });
 
@@ -1200,13 +1204,20 @@ function bindEvents() {
     }
   });
 
-  // Quickstart code tabs
-  document.querySelectorAll(".code-tab").forEach((tab) => {
+  // Quickstart code tabs — cached references + tracked active state
+  const _codeTabs = [...document.querySelectorAll(".code-tab")];
+  let _activeCodeTab = _codeTabs.find((t) => t.classList.contains("active")) || null;
+  let _activeCodePanel = document.querySelector(".code-panel.active");
+  const _codePanelMap = {};
+  _codeTabs.forEach((t) => { _codePanelMap[t.dataset.tab] = document.querySelector(`.code-panel[data-panel="${t.dataset.tab}"]`); });
+  _codeTabs.forEach((tab) => {
     tab.addEventListener("click", () => {
-      document.querySelector(".code-tab.active")?.classList.remove("active");
-      document.querySelector(".code-panel.active")?.classList.remove("active");
+      if (_activeCodeTab) _activeCodeTab.classList.remove("active");
+      if (_activeCodePanel) _activeCodePanel.classList.remove("active");
       tab.classList.add("active");
-      document.querySelector(`.code-panel[data-panel="${tab.dataset.tab}"]`)?.classList.add("active");
+      _activeCodeTab = tab;
+      const panel = _codePanelMap[tab.dataset.tab];
+      if (panel) { panel.classList.add("active"); _activeCodePanel = panel; }
     });
   });
   const codeCopyBtn = document.querySelector(".code-copy-btn");
