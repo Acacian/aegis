@@ -659,9 +659,12 @@ function applyTheme(theme) {
   }
   setTimeout(() => document.documentElement.classList.remove("theme-transition"), 400);
 
-  // Update meta theme-color
-  const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta && THEME_META[theme]) meta.content = THEME_META[theme].color;
+  // Update all meta theme-color tags (dark + light variants)
+  if (THEME_META[theme]) {
+    document.querySelectorAll('meta[name="theme-color"]').forEach((m) => {
+      m.content = THEME_META[theme].color;
+    });
+  }
 
   // Update toggle button label and show correct icon
   const btn = document.getElementById("theme-toggle");
