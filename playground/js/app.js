@@ -230,21 +230,28 @@ function getCommandItems() {
   return items;
 }
 
+let _commandListDelegated = false;
+let _lastFilteredItems = [];
 function renderCommands(input, query) {
   const list = document.querySelector(".command-list");
   const items = getCommandItems().filter((i) =>
     !query || i.label.toLowerCase().includes(query.toLowerCase())
   );
+  _lastFilteredItems = items;
   list.innerHTML = items.slice(0, 12).map((i, idx) =>
     `<button class="command-item" data-idx="${idx}">${i.icon} ${i.label}</button>`
   ).join("");
-  list.querySelectorAll(".command-item").forEach((el) => {
-    el.addEventListener("click", () => {
-      const idx = parseInt(el.dataset.idx);
-      items[idx]?.action();
+  // Delegate once instead of per-item listeners on every render
+  if (!_commandListDelegated) {
+    _commandListDelegated = true;
+    list.addEventListener("click", (e) => {
+      const btn = e.target.closest(".command-item");
+      if (!btn) return;
+      const idx = parseInt(btn.dataset.idx);
+      _lastFilteredItems[idx]?.action();
       document.getElementById("command-palette")?.classList.add("hidden");
     });
-  });
+  }
 }
 
 /* ---- Mobile FAB ---- */
