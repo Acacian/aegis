@@ -29,8 +29,8 @@ function typewriterEffect($el, text, speed = 25) {
   let i = 0;
   const timer = setInterval(() => {
     if (i < text.length) {
-      $el.textContent += text[i];
       i++;
+      $el.textContent = text.slice(0, i);
     } else {
       clearInterval(timer);
     }
