@@ -52,6 +52,7 @@ _KNOWN_KEYS = frozenset(
         "param_lte",
         "param_contains",
         "param_matches",
+        "semantic",
     }
 )
 

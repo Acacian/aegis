@@ -18,6 +18,7 @@ import yaml
 from aegis.core.action import Action
 from aegis.core.conditions import evaluate_conditions
 from aegis.core.risk import RiskLevel
+from aegis.core.semantic import SemanticEvaluator, evaluate_semantic_condition
 
 
 class Approval(StrEnum):
@@ -74,19 +75,39 @@ class PolicyRule:
             _re.compile(fnmatch.translate(self.match_agent)) if self.match_agent != "*" else None
         )
 
-    def matches(self, action: Action) -> bool:
+    def matches(
+        self,
+        action: Action,
+        semantic_evaluator: SemanticEvaluator | None = None,
+    ) -> bool:
         """Check if this rule matches the given action.
 
         Both glob patterns and conditions (if any) must match.
         When ``match_agent`` is set to a non-wildcard value, the
         action's ``agent_id`` must also match.
+
+        The ``semantic`` condition key is evaluated separately via
+        :func:`evaluate_semantic_condition` because it needs the full
+        :class:`Action`, not just ``params``.
         """
         if not self._re_type.match(action.type) or not self._re_target.match(action.target):
             return False
         if self._re_agent is not None and not self._re_agent.match(action.agent_id or "*"):
             return False
         if self.conditions:
-            return evaluate_conditions(self.conditions, action.params)
+            # Handle "semantic" condition separately (needs full Action).
+            semantic_cond = self.conditions.get("semantic")
+            other_conditions = (
+                {k: v for k, v in self.conditions.items() if k != "semantic"}
+                if semantic_cond is not None
+                else self.conditions
+            )
+            if other_conditions and not evaluate_conditions(other_conditions, action.params):
+                return False
+            if semantic_cond is not None and not evaluate_semantic_condition(
+                semantic_cond, action, evaluator=semantic_evaluator
+            ):
+                return False
         return True
 
 
@@ -117,6 +138,7 @@ class Policy:
     scope: str = "global"
     scope_id: str = ""
     version: int = 1
+    semantic_evaluator: SemanticEvaluator | None = field(default=None, repr=False)
 
     def __post_init__(self) -> None:
         """Initialize evaluation cache (disabled by default)."""
@@ -172,7 +194,7 @@ class Policy:
     def _evaluate_uncached(self, action: Action) -> PolicyDecision:
         """Evaluate without cache lookup."""
         for rule in self.rules:
-            if rule.matches(action):
+            if rule.matches(action, semantic_evaluator=self.semantic_evaluator):
                 return PolicyDecision(
                     action=action,
                     risk_level=rule.risk_level,
@@ -220,11 +242,22 @@ class Policy:
             scope=self.scope,
             scope_id=self.scope_id,
             version=self.version,
+            semantic_evaluator=self.semantic_evaluator or other.semantic_evaluator,
         )
 
     @classmethod
-    def from_yaml(cls, path: str | Path) -> Policy:
+    def from_yaml(
+        cls,
+        path: str | Path,
+        semantic_evaluator: SemanticEvaluator | None = None,
+    ) -> Policy:
         """Load a policy from a YAML file.
+
+        Args:
+            path: Path to the YAML policy file.
+            semantic_evaluator: Optional custom semantic evaluator.
+                When provided, it replaces the built-in keyword matcher
+                for ``semantic`` conditions.
 
         Raises:
             FileNotFoundError: If the file does not exist.
@@ -235,10 +268,14 @@ class Policy:
             raise FileNotFoundError(f"Policy file not found: {path}")
         with path.open() as f:
             data = yaml.safe_load(f)
-        return cls.from_dict(data)
+        return cls.from_dict(data, semantic_evaluator=semantic_evaluator)
 
     @classmethod
-    def from_yaml_files(cls, *paths: str | Path) -> Policy:
+    def from_yaml_files(
+        cls,
+        *paths: str | Path,
+        semantic_evaluator: SemanticEvaluator | None = None,
+    ) -> Policy:
         """Load and merge multiple policy files.
 
         The first file's defaults are used as the base. Rules from
@@ -251,13 +288,17 @@ class Policy:
         """
         if not paths:
             return cls()
-        base = cls.from_yaml(paths[0])
+        base = cls.from_yaml(paths[0], semantic_evaluator=semantic_evaluator)
         for p in paths[1:]:
             base = base.merge(cls.from_yaml(p))
         return base
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any] | None) -> Policy:
+    def from_dict(
+        cls,
+        data: dict[str, Any] | None,
+        semantic_evaluator: SemanticEvaluator | None = None,
+    ) -> Policy:
         """Load a policy from a dictionary.
 
         Returns a default policy when *data* is ``None`` (e.g. an empty
@@ -296,4 +337,5 @@ class Policy:
             scope=data.get("scope", "global"),
             scope_id=data.get("scope_id", ""),
             version=int(data.get("version", 1)),
+            semantic_evaluator=semantic_evaluator,
         )
