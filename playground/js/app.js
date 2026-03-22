@@ -1289,22 +1289,23 @@ function bindEvents() {
         if (typeof snap.policy === "string") editor.setValue(snap.policy);
         if (Array.isArray(snap.audit_entries)) {
           auditEntries = snap.audit_entries;
-          // Rebuild audit DOM rows from imported entries
+          // Rebuild audit DOM rows from imported entries (batched)
           $audit.innerHTML = "";
           const limit = Math.min(auditEntries.length, 200);
-          for (let i = auditEntries.length - 1; i >= auditEntries.length - limit; i--) {
+          if (!addAuditEntry._tpl) {
+            const t = document.createElement("template");
+            t.innerHTML = `<div class="audit-entry audit-row">
+              <span class="audit-time"></span>
+              <span class="audit-type"></span>
+              <span class="audit-risk"></span>
+              <span class="audit-decision"></span>
+              <span class="audit-rule"></span>
+            </div>`;
+            addAuditEntry._tpl = t;
+          }
+          const frag = document.createDocumentFragment();
+          for (let i = auditEntries.length - limit; i < auditEntries.length; i++) {
             const entry = auditEntries[i];
-            if (!addAuditEntry._tpl) {
-              const t = document.createElement("template");
-              t.innerHTML = `<div class="audit-entry audit-row">
-                <span class="audit-time"></span>
-                <span class="audit-type"></span>
-                <span class="audit-risk"></span>
-                <span class="audit-decision"></span>
-                <span class="audit-rule"></span>
-              </div>`;
-              addAuditEntry._tpl = t;
-            }
             const row = addAuditEntry._tpl.content.firstElementChild.cloneNode(true);
             const riskClass = (entry.risk || "").toLowerCase();
             const decisionClass = (entry.decision || "").toLowerCase();
@@ -1317,8 +1318,9 @@ function bindEvents() {
             spans[3].textContent = entry.decision || "";
             spans[3].className = `audit-decision ${decisionClass}`;
             spans[4].textContent = entry.rule || "";
-            $audit.prepend(row);
+            frag.appendChild(row);
           }
+          $audit.appendChild(frag);
           $auditCount.textContent = `${auditEntries.length} entries`;
         }
         // Restore stats if present
