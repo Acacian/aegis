@@ -1323,9 +1323,12 @@ function bindEvents() {
           $audit.appendChild(frag);
           $auditCount.textContent = `${auditEntries.length} entries`;
         }
-        // Restore stats if present
+        // Restore stats if present (allowlist keys to prevent prototype pollution)
         if (snap.stats && typeof snap.stats === "object") {
-          Object.assign(stats, snap.stats);
+          const _validStatKeys = ["total", "auto", "approve", "block", "totalMs"];
+          for (const k of _validStatKeys) {
+            if (typeof snap.stats[k] === "number") stats[k] = snap.stats[k];
+          }
           if (_$statTotal) _$statTotal.textContent = String(stats.total);
           if (_$statAuto) _$statAuto.textContent = String(stats.auto);
           if (_$statApprove) _$statApprove.textContent = String(stats.approve);
