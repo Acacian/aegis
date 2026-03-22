@@ -2319,10 +2319,14 @@ async function runAllActions() {
     await new Promise((r) => setTimeout(r, Math.max(80, 200 - i * 15)));
   }
 
-  // Restore button
+  // Restore button and show summary
   if (runAllBtn) {
     runAllBtn.disabled = false;
     runAllBtn.textContent = origText;
+  }
+  if (buttons.length > 0) {
+    const avgMs = stats.total > 0 ? (stats.totalMs / stats.total).toFixed(1) : "0";
+    showToast(`Done: ${buttons.length} actions (${stats.auto} auto, ${stats.approve} approve, ${stats.block} block) avg ${avgMs}ms`);
   }
 }
 
