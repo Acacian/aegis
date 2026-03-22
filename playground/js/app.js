@@ -1723,8 +1723,8 @@ async function _initPyodideInner() {
     setProgress(10, "Loading Python runtime...");
     pyodide = await loadPyodide();
 
-    setProgress(40, "Installing dependencies...");
-    await pyodide.loadPackage("micropip");
+    setProgress(30, "Installing dependencies...");
+    await pyodide.loadPackage(["micropip", "sqlite3"]);
     const micropip = pyodide.pyimport("micropip");
 
     setProgress(60, "Installing packages (parallel)...");
