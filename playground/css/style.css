@@ -573,7 +573,6 @@ a.integration-badge:active {
   font-weight: 700;
   color: var(--text-primary);
   font-variant-numeric: tabular-nums;
-  will-change: contents;
 }
 
 .stat-label {
