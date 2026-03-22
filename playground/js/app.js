@@ -70,6 +70,7 @@ function _getPresetBtns() {
 document.addEventListener("DOMContentLoaded", async () => {
   initEditor();
   loadPolicyFromURL();
+  window.addEventListener("hashchange", loadPolicyFromURL);
   setupPolicySave();
   bindEvents();
   rotateTips();
