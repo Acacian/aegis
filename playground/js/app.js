@@ -2931,12 +2931,14 @@ ${safeYaml}
   }
 
   if (fmt === "markdown") {
+    const mdType = r.action_type.replace(/`/g, "'");
+    const mdTarget = r.target.replace(/`/g, "'");
     return `### Aegis Policy Evaluation
 
 | Field | Value |
 |-------|-------|
-| Action | \`${r.action_type}\` |
-| Target | \`${r.target}\` |
+| Action | \`${mdType}\` |
+| Target | \`${mdTarget}\` |
 | Risk | **${r.risk_level}** |
 | Decision | **${r.approval}** |
 | Allowed | ${r.is_allowed ? "Yes" : "No"} |
@@ -2972,14 +2974,14 @@ test-${_safeStr(r.action_type)}: ## Test ${_safeStr(r.action_type)} policy evalu
   }
 
   if (fmt === "oneliner") {
-    return `${r.action_type} → ${r.target} | ${r.approval.toUpperCase()} (${r.risk_level}) ${r.is_allowed ? "ALLOWED" : "BLOCKED"} ${r.matched_rule ? "via " + r.matched_rule : ""}`.trim();
+    return `${_safeStr(r.action_type)} → ${_safeStr(r.target)} | ${r.approval.toUpperCase()} (${r.risk_level}) ${r.is_allowed ? "ALLOWED" : "BLOCKED"} ${r.matched_rule ? "via " + _safeStr(r.matched_rule) : ""}`.trim();
   }
 
   if (fmt === "env") {
-    return `# Aegis environment config for ${r.action_type}
+    return `# Aegis environment config for ${_safeStr(r.action_type)}
 AEGIS_POLICY_PATH=./policy.yaml
-AEGIS_ACTION_TYPE=${r.action_type}
-AEGIS_ACTION_TARGET=${r.target}
+AEGIS_ACTION_TYPE=${_safeStr(r.action_type)}
+AEGIS_ACTION_TARGET=${_safeStr(r.target)}
 AEGIS_EXPECTED_APPROVAL=${r.approval}
 AEGIS_EXPECTED_RISK=${r.risk_level.toLowerCase()}
 AEGIS_LOG_LEVEL=INFO`;
