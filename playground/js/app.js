@@ -535,35 +535,45 @@ function openShareModal() {
       </div>`;
     document.body.appendChild(modal);
 
+    const urlInput = modal.querySelector("#share-url-input");
+    const copyBtn = modal.querySelector("#share-copy-btn");
+    const embedBtn = modal.querySelector("#share-embed-btn");
+    const dockerBtn = modal.querySelector("#share-docker-btn");
+    const twitterLink = modal.querySelector("#share-twitter");
+    const linkedinLink = modal.querySelector("#share-linkedin");
+
     modal.addEventListener("click", (e) => {
       if (e.target === modal) modal.classList.add("hidden");
     });
     modal.querySelector(".shortcut-close").addEventListener("click", () => {
       modal.classList.add("hidden");
     });
-    document.getElementById("share-copy-btn").addEventListener("click", () => {
-      const input = document.getElementById("share-url-input");
-      copyToClipboard(input.value, document.getElementById("share-copy-btn"));
+    copyBtn.addEventListener("click", () => {
+      copyToClipboard(urlInput.value, copyBtn);
     });
-    document.getElementById("share-embed-btn").addEventListener("click", () => {
-      const embedUrl = document.getElementById("share-url-input").value;
-      const iframe = `<iframe src="${embedUrl}" width="100%" height="600" frameborder="0" title="Aegis Playground"></iframe>`;
-      copyToClipboard(iframe, document.getElementById("share-embed-btn"));
+    embedBtn.addEventListener("click", () => {
+      const iframe = `<iframe src="${urlInput.value}" width="100%" height="600" frameborder="0" title="Aegis Playground"></iframe>`;
+      copyToClipboard(iframe, embedBtn);
       showToast("Embed code copied!");
     });
-    document.getElementById("share-docker-btn").addEventListener("click", () => {
+    dockerBtn.addEventListener("click", () => {
       const cmd = `echo '${editor.getValue().replace(/'/g, "'\\''")}' > policy.yaml && docker run -d -p 8000:8000 -v $(pwd)/policy.yaml:/app/policy.yaml ghcr.io/acacian/aegis:latest`;
-      copyToClipboard(cmd, document.getElementById("share-docker-btn"));
+      copyToClipboard(cmd, dockerBtn);
       showToast("Docker command copied!");
     });
+
+    // Store refs on modal for reuse
+    modal._urlInput = urlInput;
+    modal._twitterLink = twitterLink;
+    modal._linkedinLink = linkedinLink;
   }
 
   // Update dynamic content
-  document.getElementById("share-url-input").value = url;
   const enc = encodeURIComponent;
-  document.getElementById("share-twitter").href =
+  modal._urlInput.value = url;
+  modal._twitterLink.href =
     `https://x.com/intent/tweet?text=${enc(text)}&url=${enc(url)}`;
-  document.getElementById("share-linkedin").href =
+  modal._linkedinLink.href =
     `https://www.linkedin.com/sharing/share-offsite/?url=${enc(url)}`;
   modal.classList.remove("hidden");
 }
@@ -912,19 +922,9 @@ function bindEvents() {
     // Ctrl/Cmd + Shift + X → full reset: clear results, audit, and stats
     if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === "X" || e.key === "x")) {
       e.preventDefault();
+      // clear-audit handler already resets stats, auditEntries, actionCount, and display
       document.getElementById("clear-result")?.click();
       document.getElementById("clear-audit")?.click();
-      // Reset stats
-      stats.total = 0; stats.auto = 0; stats.approve = 0; stats.block = 0; stats.totalMs = 0;
-      ["stat-total", "stat-auto", "stat-approve", "stat-block"].forEach((id) => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = "0";
-      });
-      const $l = document.getElementById("stat-latency");
-      if ($l) $l.textContent = "-";
-      auditEntries.length = 0;
-      const $ac = document.getElementById("audit-count");
-      if ($ac) $ac.textContent = "0 entries";
       showToast("Full reset: results, audit, and stats cleared");
       return;
     }
