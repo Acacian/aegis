@@ -1612,22 +1612,26 @@ function exportAuditNDJSON() {
 }
 
 function copyAuditToClipboard() {
-  if (!auditEntries.length) { showToast("No audit entries to copy"); return; }
-  const lines = auditEntries.map((e) =>
-    `[${e.timestamp}] ${e.action_type} → ${e.target} | ${e.approval} (${e.risk_level}) ${e.matched_rule ? "rule:" + e.matched_rule : ""}`
+  const entries = getFilteredEntries();
+  if (!entries.length) { showToast("No audit entries to copy"); return; }
+  const lines = entries.map((e) =>
+    `[${e.time || e.timestamp || ""}] ${e.type || e.action_type || ""} → ${e.target || ""} | ${e.decision || e.approval || ""} (${e.risk || e.risk_level || ""}) ${e.rule || e.matched_rule ? "rule:" + (e.rule || e.matched_rule) : ""}`
   );
-  const header = `Aegis Audit Log — ${auditEntries.length} entries, ${new Date().toISOString()}`;
+  const filterNote = getActiveFilter() !== "all" ? ` (${getActiveFilter()})` : "";
+  const header = `Aegis Audit Log — ${entries.length} entries${filterNote}, ${new Date().toISOString()}`;
   const text = header + "\n" + "=".repeat(header.length) + "\n" + lines.join("\n");
-  navigator.clipboard.writeText(text).then(() => showToast("Audit log copied to clipboard"));
+  navigator.clipboard.writeText(text).then(() => showToast(`Copied ${entries.length} entries to clipboard`));
 }
 
 function copyAuditAsMarkdown() {
-  if (!auditEntries.length) { showToast("No audit entries to copy"); return; }
-  const rows = auditEntries.map((e) =>
+  const entries = getFilteredEntries();
+  if (!entries.length) { showToast("No audit entries to copy"); return; }
+  const rows = entries.map((e) =>
     `| ${e.time || ""} | ${e.type || ""} | ${e.risk || ""} | **${e.decision || ""}** | ${e.rule || ""} |`
   );
-  const md = `### Aegis Audit Log\n\n| Time | Action | Risk | Decision | Rule |\n|------|--------|------|----------|------|\n${rows.join("\n")}\n\n_${auditEntries.length} entries — ${new Date().toISOString()}_`;
-  navigator.clipboard.writeText(md).then(() => showToast(`Copied ${auditEntries.length} entries as Markdown`));
+  const filterNote = getActiveFilter() !== "all" ? ` (${getActiveFilter()})` : "";
+  const md = `### Aegis Audit Log\n\n| Time | Action | Risk | Decision | Rule |\n|------|--------|------|----------|------|\n${rows.join("\n")}\n\n_${entries.length} entries${filterNote} — ${new Date().toISOString()}_`;
+  navigator.clipboard.writeText(md).then(() => showToast(`Copied ${entries.length} entries as Markdown`));
 }
 
 const _ESC_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;" };
