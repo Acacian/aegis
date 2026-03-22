@@ -909,8 +909,10 @@ function bindEvents() {
       (async () => {
         try {
           const text = await navigator.clipboard.readText();
+          if (text.length > 500000) { showToast("Clipboard content too large (max 500KB)"); return; }
           const snap = JSON.parse(text);
           if (snap.policy) {
+            if (snap.policy.length > 200000) { showToast("Policy too large (max 200KB)"); return; }
             editor.setValue(snap.policy);
             showToast("Imported policy from clipboard");
           } else {
