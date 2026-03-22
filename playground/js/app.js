@@ -1280,7 +1280,46 @@ function bindEvents() {
         if (typeof snap.policy === "string") editor.setValue(snap.policy);
         if (Array.isArray(snap.audit_entries)) {
           auditEntries = snap.audit_entries;
+          // Rebuild audit DOM rows from imported entries
+          $audit.innerHTML = "";
+          const limit = Math.min(auditEntries.length, 200);
+          for (let i = auditEntries.length - 1; i >= auditEntries.length - limit; i--) {
+            const entry = auditEntries[i];
+            if (!addAuditEntry._tpl) {
+              const t = document.createElement("template");
+              t.innerHTML = `<div class="audit-entry audit-row">
+                <span class="audit-time"></span>
+                <span class="audit-type"></span>
+                <span class="audit-risk"></span>
+                <span class="audit-decision"></span>
+                <span class="audit-rule"></span>
+              </div>`;
+              addAuditEntry._tpl = t;
+            }
+            const row = addAuditEntry._tpl.content.firstElementChild.cloneNode(true);
+            const riskClass = (entry.risk || "").toLowerCase();
+            const decisionClass = (entry.decision || "").toLowerCase();
+            row.dataset.approval = decisionClass;
+            const spans = row.children;
+            spans[0].textContent = entry.time || "";
+            spans[1].textContent = entry.type || "";
+            spans[2].textContent = entry.risk || "";
+            spans[2].className = `audit-risk ${riskClass}`;
+            spans[3].textContent = entry.decision || "";
+            spans[3].className = `audit-decision ${decisionClass}`;
+            spans[4].textContent = entry.rule || "";
+            $audit.prepend(row);
+          }
           $auditCount.textContent = `${auditEntries.length} entries`;
+        }
+        // Restore stats if present
+        if (snap.stats && typeof snap.stats === "object") {
+          Object.assign(stats, snap.stats);
+          if (_$statTotal) _$statTotal.textContent = String(stats.total);
+          if (_$statAuto) _$statAuto.textContent = String(stats.auto);
+          if (_$statApprove) _$statApprove.textContent = String(stats.approve);
+          if (_$statBlock) _$statBlock.textContent = String(stats.block);
+          if (_$statLatency) _$statLatency.textContent = stats.total > 0 ? (stats.totalMs / stats.total).toFixed(1) + " ms" : "\u2014";
         }
         showToast(`Loaded snapshot (${auditEntries.length} entries)`);
       } catch {
