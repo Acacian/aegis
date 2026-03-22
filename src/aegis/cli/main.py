@@ -142,6 +142,32 @@ def main(argv: list[str] | None = None) -> None:
         help="Output format (default: table)",
     )
 
+    # aegis score
+    score_parser = subparsers.add_parser(
+        "score",
+        help="Calculate governance score for a policy file",
+    )
+    score_parser.add_argument("policy_file", help="Path to policy YAML file")
+    score_parser.add_argument(
+        "--format",
+        choices=["table", "json"],
+        default="table",
+        dest="fmt",
+        help="Output format (default: table)",
+    )
+
+    # aegis scan
+    scan_parser = subparsers.add_parser(
+        "scan",
+        help="Scan Python files for ungoverned AI agent tool calls",
+    )
+    scan_parser.add_argument(
+        "directory",
+        nargs="?",
+        default=".",
+        help="Directory to scan (default: current directory)",
+    )
+
     # aegis serve
     serve_parser = subparsers.add_parser(
         "serve",
@@ -182,6 +208,10 @@ def main(argv: list[str] | None = None) -> None:
         _cmd_init(args)
     elif args.command == "simulate":
         _cmd_simulate(args)
+    elif args.command == "score":
+        _cmd_score(args)
+    elif args.command == "scan":
+        _cmd_scan(args)
     elif args.command == "serve":
         _cmd_serve(args)
     elif args.command == "stats":
@@ -448,6 +478,69 @@ def _cmd_simulate(args: argparse.Namespace) -> None:
         f"{colors.yellow(str(approval_needed))} need approval, "
         f"{colors.red(str(blocked))} blocked"
     )
+
+
+def _cmd_score(args: argparse.Namespace) -> None:
+    """Calculate and display a governance score for a policy file."""
+    from aegis.cli.score import calculate_score
+
+    policy_path = Path(args.policy_file)
+    if not policy_path.exists():
+        print(
+            colors.red(f"File not found: {policy_path}"),
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    try:
+        result = calculate_score(policy_path)
+    except Exception as e:
+        print(colors.red(f"Failed to score policy: {e}"), file=sys.stderr)
+        sys.exit(1)
+
+    if args.fmt == "json":
+        data = {
+            "score": result.total,
+            "grade": result.grade,
+            "rule_count": result.rule_count,
+            "breakdown": [
+                {
+                    "label": b.label,
+                    "points": b.points,
+                    "max_points": b.max_points,
+                    "passed": b.passed,
+                }
+                for b in result.breakdown
+            ],
+            "badge_url": result.badge_url,
+            "badge_markdown": result.badge_markdown,
+        }
+        print(json.dumps(data, indent=2))
+        return
+
+    # Table format
+    print(f"Aegis Governance Score: {result.grade} ({result.total}/100)")
+    print("=" * 48)
+
+    for b in result.breakdown:
+        icon = colors.green("V") if b.passed else colors.red("X")
+        points_str = f"+{b.points}"
+        print(f"  {icon} {b.label:<36} {points_str:>4}")
+
+    print("=" * 48)
+    print()
+    print(f"Badge: ![Aegis Score]({result.badge_url})")
+    print()
+    print("Markdown:")
+    print(result.badge_markdown)
+
+
+def _cmd_scan(args: argparse.Namespace) -> None:
+    """Scan for ungoverned AI tool calls."""
+    from aegis.cli.scan import run_scan
+
+    exit_code = run_scan(args.directory)
+    sys.exit(exit_code)
 
 
 def _cmd_serve(args: argparse.Namespace) -> None:

@@ -505,6 +505,35 @@ curl -X PUT http://localhost:8000/api/v1/policy \
 </details>
 
 <details>
+<summary><b>MCP Server</b> -- one-click governance for Claude, Cursor, VS Code, Windsurf</summary>
+
+```bash
+pip install 'agent-aegis[mcp]'
+aegis-mcp-server --policy policy.yaml
+```
+
+**Claude Desktop** — add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
+```json
+{ "mcpServers": { "aegis": { "command": "uvx", "args": ["--from", "agent-aegis[mcp]", "aegis-mcp-server"] }}}
+```
+
+**Cursor** — add to `.cursor/mcp.json`:
+```json
+{ "mcpServers": { "aegis": { "command": "uvx", "args": ["--from", "agent-aegis[mcp]", "aegis-mcp-server"] }}}
+```
+
+**VS Code Copilot** — add to `.vscode/mcp.json`:
+```json
+{ "servers": { "aegis": { "command": "uvx", "args": ["--from", "agent-aegis[mcp]", "aegis-mcp-server"] }}}
+```
+
+**Windsurf** — add to `~/.codeium/windsurf/mcp_config.json`:
+```json
+{ "mcpServers": { "aegis": { "command": "uvx", "args": ["--from", "agent-aegis[mcp]", "aegis-mcp-server"] }}}
+```
+</details>
+
+<details>
 <summary><b>Custom adapters</b> -- 10 lines to integrate anything</summary>
 
 ```python

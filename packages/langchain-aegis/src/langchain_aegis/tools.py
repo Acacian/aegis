@@ -109,7 +109,7 @@ class GovernedTool(BaseTool):
 
 def govern_tool(
     tool: BaseTool,
-    policy: Policy | str | Path,
+    policy: Policy | str | Path | dict,
     *,
     action_target: str = "langchain",
 ) -> GovernedTool:
@@ -145,7 +145,7 @@ def govern_tool(
 
 def govern_tools(
     tools: Sequence[BaseTool],
-    policy: Policy | str | Path,
+    policy: Policy | str | Path | dict,
     *,
     action_target: str = "langchain",
 ) -> list[GovernedTool]:
@@ -182,8 +182,10 @@ def govern_tools(
     ]
 
 
-def _resolve_policy(policy: Policy | str | Path) -> Policy:
-    """Convert a string/Path to a Policy object if needed."""
+def _resolve_policy(policy: Policy | str | Path | dict) -> Policy:
+    """Convert a string/Path/dict to a Policy object if needed."""
+    if isinstance(policy, dict):
+        return Policy.from_dict(policy)
     if isinstance(policy, (str, Path)):
         return Policy.from_yaml(str(policy))
     return policy

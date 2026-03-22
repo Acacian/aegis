@@ -31,7 +31,26 @@ bulk edit --> approve (high) --> human y/n -> run ------> logged
 delete *  --> block (critical) ------------> X --------> logged
 ```
 
-**3 lines to add governance** to any Python AI agent:
+**Copy, paste, run — zero config needed:**
+
+```python
+from aegis import Action, Policy
+
+policy = Policy.from_dict({
+    "version": "1",
+    "defaults": {"risk_level": "low", "approval": "auto"},
+    "rules": [{"name": "block_delete", "match": {"type": "delete_*"},
+               "risk_level": "critical", "approval": "block"}]
+})
+
+safe = policy.evaluate(Action(type="read_users", target="db"))
+print(safe.approval)   # Approval.AUTO  ✅
+
+danger = policy.evaluate(Action(type="delete_users", target="db"))
+print(danger.approval)  # Approval.BLOCK 🚫
+```
+
+Or with a YAML file — **3 lines:**
 
 ```python
 from aegis import Action, Policy, Runtime

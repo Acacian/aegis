@@ -481,6 +481,35 @@ curl -X PUT http://localhost:8000/api/v1/policy \
 </details>
 
 <details>
+<summary><b>MCP 서버</b> -- Claude, Cursor, VS Code, Windsurf 원클릭 거버넌스</summary>
+
+```bash
+pip install 'agent-aegis[mcp]'
+aegis-mcp-server --policy policy.yaml
+```
+
+**Claude Desktop** — `~/Library/Application Support/Claude/claude_desktop_config.json`에 추가:
+```json
+{ "mcpServers": { "aegis": { "command": "uvx", "args": ["--from", "agent-aegis[mcp]", "aegis-mcp-server"] }}}
+```
+
+**Cursor** — `.cursor/mcp.json`에 추가:
+```json
+{ "mcpServers": { "aegis": { "command": "uvx", "args": ["--from", "agent-aegis[mcp]", "aegis-mcp-server"] }}}
+```
+
+**VS Code Copilot** — `.vscode/mcp.json`에 추가:
+```json
+{ "servers": { "aegis": { "command": "uvx", "args": ["--from", "agent-aegis[mcp]", "aegis-mcp-server"] }}}
+```
+
+**Windsurf** — `~/.codeium/windsurf/mcp_config.json`에 추가:
+```json
+{ "mcpServers": { "aegis": { "command": "uvx", "args": ["--from", "agent-aegis[mcp]", "aegis-mcp-server"] }}}
+```
+</details>
+
+<details>
 <summary><b>커스텀 어댑터</b> -- 10줄이면 무엇이든 연동</summary>
 
 ```python
