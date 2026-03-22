@@ -2203,7 +2203,7 @@ function updateActionButtons(preset) {
   if (!actions) return; // keep default buttons for non-industry presets
 
   const container = _$quickActions || (_$quickActions = document.querySelector(".quick-actions"));
-  container.replaceChildren();
+  const frag = document.createDocumentFragment();
   actions.forEach((a) => {
     const risk = guessRisk(a.action_type);
     const icon = RISK_ICONS[a.action_type] || RISK_ICONS[risk];
@@ -2221,7 +2221,6 @@ function updateActionButtons(preset) {
     riskSpan.textContent = risk.toUpperCase();
     btn.append(iconSpan, labelSpan, riskSpan);
     btn.addEventListener("click", (ev) => {
-      // Ripple effect
       const rect = btn.getBoundingClientRect();
       const ripple = document.createElement("span");
       ripple.className = "btn-ripple";
@@ -2231,8 +2230,9 @@ function updateActionButtons(preset) {
       ripple.addEventListener("animationend", () => ripple.remove());
       evaluateAction(a);
     });
-    container.appendChild(btn);
+    frag.appendChild(btn);
   });
+  container.replaceChildren(frag);
 }
 
 /* ---- Evaluate Action ---- */
