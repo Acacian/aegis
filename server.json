@@ -1,18 +1,18 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "io.github.acacian/aegis",
+  "name": "io.github.Acacian/aegis",
   "title": "Aegis — AI Agent Governance",
-  "description": "Policy-based governance for AI agent tool calls. YAML-driven policy evaluation, approval gates (auto/approve/block), and audit logging. Works with LangChain, CrewAI, OpenAI, Anthropic, and MCP.",
+  "description": "Policy-based governance for AI agent tool calls. YAML policy, approval gates, audit logging.",
   "repository": {
     "url": "https://github.com/Acacian/aegis",
     "source": "github"
   },
-  "version": "0.1.5",
+  "version": "0.1.6",
   "packages": [
     {
       "registryType": "pypi",
       "identifier": "agent-aegis",
-      "version": "0.1.5",
+      "version": "0.1.6",
       "transport": {
         "type": "stdio"
       },
