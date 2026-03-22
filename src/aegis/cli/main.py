@@ -178,6 +178,19 @@ def main(argv: list[str] | None = None) -> None:
     serve_parser.add_argument("--port", type=int, default=8000, help="Bind port")
     serve_parser.add_argument("--audit-db", help="Audit database path")
 
+    # aegis monitor
+    monitor_parser = subparsers.add_parser(
+        "monitor",
+        help="Live agent monitoring dashboard (poll audit DB)",
+    )
+    monitor_parser.add_argument("--db", default="aegis_audit.db", help="Audit database path")
+    monitor_parser.add_argument(
+        "--interval",
+        type=float,
+        default=2.0,
+        help="Refresh interval in seconds (default: 2)",
+    )
+
     # aegis diff
     from aegis.cli.diff import register as _register_diff
 
@@ -248,6 +261,8 @@ def main(argv: list[str] | None = None) -> None:
         _cmd_scan(args)
     elif args.command == "serve":
         _cmd_serve(args)
+    elif args.command == "monitor":
+        _cmd_monitor(args)
     elif args.command == "diff":
         from aegis.cli.diff import run as _run_diff
 
@@ -726,6 +741,19 @@ def _cmd_stats(args: argparse.Namespace) -> None:
     print(colors.bold("\n--- Top 5 Matched Rules ---"))
     for rule, count in rule_rows:
         print(f"  {rule:<20} {count}")
+
+
+def _cmd_monitor(args: argparse.Namespace) -> None:
+    """Start the live agent monitoring dashboard."""
+    db_path = Path(args.db)
+    if not db_path.exists():
+        print(f"Database not found: {db_path}", file=sys.stderr)
+        print("Run your agent with Aegis first to generate audit data.", file=sys.stderr)
+        sys.exit(1)
+
+    from aegis.cli.monitor import run_monitor
+
+    run_monitor(str(db_path), interval=args.interval)
 
 
 if __name__ == "__main__":

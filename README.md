@@ -20,7 +20,7 @@
   <a href="https://pypi.org/project/agent-aegis/"><img src="https://img.shields.io/pypi/dm/agent-aegis?label=downloads&color=brightgreen" alt="Downloads"></a>
   <a href="https://github.com/Acacian/aegis"><img src="https://img.shields.io/github/stars/Acacian/aegis?style=social" alt="GitHub stars"></a>
   <br/>
-  <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-531_passed-brightgreen" alt="Tests"></a>
+  <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-878_passed-brightgreen" alt="Tests"></a>
   <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/coverage-92%25-brightgreen" alt="Coverage"></a>
   <a href="https://acacian.github.io/aegis/playground/"><img src="https://img.shields.io/badge/playground-Try_it_Live-ff6b6b" alt="Playground"></a>
 </p>
@@ -283,9 +283,16 @@ aegis audit
 |---------|-------------|
 | **YAML policies** | Glob matching, first-match-wins, JSON Schema for validation |
 | **Smart conditions** | `time_after`, `time_before`, `weekdays`, `param_gt/lt/eq/contains/matches` |
+| **Semantic conditions** | Two-tier architecture: built-in keyword matching + pluggable LLM evaluator protocol |
 | **4-tier risk model** | `low` / `medium` / `high` / `critical` with per-rule overrides |
 | **Approval gates** | CLI, Slack, Discord, Telegram, email, webhook, or custom |
 | **Audit trail** | SQLite, JSONL export, Python `logging`, or webhook to external SIEM |
+| **Behavioral anomaly detection** | Learns per-agent behavior profiles; detects rate spikes, bursts, new actions, unusual targets |
+| **Compliance reports** | Generate SOC2/GDPR/governance reports from audit logs with scoring |
+| **Policy diff & impact** | Compare policies, replay actions, analyze impact of rule changes |
+| **Agent trust chain** | Hierarchical identity, delegation with intersection semantics, cascade revocation |
+| **`aegis scan`** | AST-based static analysis detecting ungoverned AI tool calls in your codebase |
+| **`aegis score`** | Governance scoring (0-100) with shields.io badge generation |
 | **REST API server** | `aegis serve policy.yaml` -- govern from any language via HTTP |
 | **MCP adapter** | Govern Model Context Protocol tool calls |
 | **Retry & rollback** | Exponential backoff, error filters, automatic rollback on failure |
@@ -332,7 +339,7 @@ policy = Policy.from_yaml("policies/crm-agent.yaml")
 
 | Aspect | Detail |
 |--------|--------|
-| **518 tests, 92% coverage** | Every adapter, handler, and edge case tested |
+| **878+ tests, 92% coverage** | Every adapter, handler, and edge case tested |
 | **Type-safe** | `mypy --strict` with zero errors, `py.typed` marker |
 | **Performance** | Policy evaluation < 1ms; auto-approved actions add < 5ms overhead |
 | **Fail-safe** | Blocked actions never execute; can't be bypassed without policy change |
@@ -584,15 +591,183 @@ rules:
 
 Available: `time_after`, `time_before`, `weekdays`, `param_eq`, `param_gt`, `param_lt`, `param_gte`, `param_lte`, `param_contains`, `param_matches` (regex).
 
+### Semantic Conditions
+
+Go beyond keyword matching with the two-tier semantic conditions engine:
+
+```yaml
+rules:
+  - name: block_harmful_content
+    match: { type: "generate*" }
+    conditions:
+      semantic: "contains harmful, violent, or illegal content"
+    risk_level: critical
+    approval: block
+```
+
+Tier 1 uses fast built-in keyword matching. Tier 2 plugs in any LLM evaluator via the `SemanticEvaluator` protocol -- bring your own model for nuanced content analysis.
+
+## Deep Features
+
+Advanced capabilities for production-grade agent governance.
+
+### Behavioral Anomaly Detection
+
+Aegis learns per-agent behavior profiles and automatically detects anomalies -- no manual threshold tuning required.
+
+```python
+from aegis.core.anomaly import AnomalyDetector
+
+detector = AnomalyDetector()
+
+# Feed observed actions to build per-agent behavior profiles
+detector.observe(agent_id="agent-1", action_type="read", target="crm")
+detector.observe(agent_id="agent-1", action_type="read", target="crm")
+detector.observe(agent_id="agent-1", action_type="read", target="crm")
+
+# Detect anomalies: rate spikes, bursts, new actions, unusual targets, high block rates
+alerts = detector.check(agent_id="agent-1", action_type="delete", target="prod_db")
+# => [Anomaly(type=NEW_ACTION, detail="action 'delete' never seen for agent-1")]
+
+# Auto-generate a policy from observed behavior
+learned_policy = detector.generate_policy(agent_id="agent-1")
+```
+
+Detects: **rate spikes** | **burst patterns** | **never-seen actions** | **unusual targets** | **high block rates**
+
+### Compliance Report Generator
+
+Generate audit-ready compliance reports from your existing audit logs. No additional tooling needed.
+
+```bash
+aegis compliance --type soc2 --output report.json
+aegis compliance --type gdpr --output gdpr-report.json
+aegis compliance --type governance --days 30
+```
+
+```python
+from aegis.core.compliance import ComplianceReporter
+
+reporter = ComplianceReporter(audit_store=runtime.audit_store)
+report = await reporter.generate(report_type="soc2", days=90)
+
+print(report.score)        # 87.5
+print(report.findings)     # List of findings with severity
+print(report.evidence)     # Linked audit log entries
+```
+
+Supported report types: **SOC2** | **GDPR** | **Governance** -- each with scoring, findings, and evidence links.
+
+### Policy Diff & Impact Analysis
+
+Compare two policy files and understand exactly what changed and what impact it will have.
+
+```bash
+# Show added/removed/modified rules between two policies
+aegis diff policy-v1.yaml policy-v2.yaml
+
+# Replay historical actions against the new policy to see impact
+aegis diff policy-v1.yaml policy-v2.yaml --replay audit.db
+```
+
+```
+ Rules: 2 added, 1 removed, 3 modified
+
+ + bulk_write_block     CRITICAL/block   (new)
+ + pii_access_approve   HIGH/approve     (new)
+ - legacy_allow_all     LOW/auto         (removed)
+ ~ read_safe            LOW/auto → LOW/auto  conditions changed
+ ~ deploy_prod          HIGH/approve → CRITICAL/block  risk escalated
+ ~ bulk_ops             MEDIUM/approve   param_gt.count: 100 → 50
+
+ Impact (replayed 1,247 actions):
+   23 actions would change from AUTO → BLOCK
+    7 actions would change from APPROVE → BLOCK
+```
+
+### Agent Trust Chain
+
+Hierarchical agent identity with delegation and capability-scoped trust.
+
+```python
+from aegis.core.trust import TrustChain, AgentIdentity, Capability
+
+# Create a root agent with full capabilities
+root = AgentIdentity(
+    agent_id="orchestrator",
+    capabilities=[Capability("*")],  # glob matching
+)
+
+# Delegate a subset of capabilities (intersection semantics)
+worker = root.delegate(
+    agent_id="data-worker",
+    capabilities=[Capability("read:*"), Capability("write:staging_*")],
+)
+
+# Worker can only do what both root AND delegation allow
+chain = TrustChain()
+chain.register(root)
+chain.register(worker, parent=root)
+
+# Verify capability at runtime
+chain.can(worker, "read:crm")           # True
+chain.can(worker, "delete:prod_db")     # False -- not in delegation
+
+# Cascade revocation: revoking parent revokes all children
+chain.revoke(root)
+chain.can(worker, "read:crm")           # False
+```
+
+### `aegis scan` -- Static Analysis
+
+AST-based scanner that detects ungoverned AI tool calls in your Python codebase.
+
+```bash
+aegis scan ./src/
+
+# Output:
+# src/agents/mailer.py:42  openai.ChatCompletion.create()  -- ungoverned
+# src/agents/writer.py:18  anthropic.messages.create()     -- ungoverned
+# src/tools/search.py:7    langchain tool "web_search"     -- ungoverned
+#
+# 3 ungoverned calls found. Run `aegis score` for governance coverage.
+```
+
+### `aegis score` -- Governance Score
+
+Quantify your governance coverage with a 0-100 score and generate a shields.io badge.
+
+```bash
+aegis score ./src/ --policy policy.yaml
+
+# Governance Score: 84/100
+#   Governed calls:   21/25 (84%)
+#   Policy coverage:  18 rules covering 6 action types
+#   Anomaly detection: enabled
+#   Audit trail:       enabled
+#
+# Badge: https://img.shields.io/badge/aegis_score-84-brightgreen
+```
+
+Add the badge to your repo:
+```markdown
+![Aegis Score](https://img.shields.io/badge/aegis_score-84-brightgreen)
+```
+
 ## Architecture
 
 ```
 aegis/
   core/        Action, Policy engine, Conditions, Risk levels, Retry, JSON Schema
+  core/anomaly     Behavioral anomaly detection -- per-agent profiling, auto-policy generation
+  core/compliance  Compliance report generator -- SOC2, GDPR, governance scoring
+  core/trust       Agent trust chain -- hierarchical identity, delegation, revocation
+  core/semantic    Semantic conditions engine -- keyword matching + LLM evaluator protocol
+  core/diff        Policy diff & impact analysis -- rule comparison, action replay
   adapters/    BaseExecutor, Playwright, httpx, LangChain, CrewAI, OpenAI, Anthropic, MCP
   runtime/     Runtime engine, ApprovalHandler, AuditLogger (SQLite/JSONL/webhook/logging)
   server/      REST API (Starlette ASGI) -- evaluate, execute, audit, policy endpoints
-  cli/         aegis validate | audit | schema | init | simulate | serve | stats
+  cli/         aegis validate | audit | schema | init | simulate | serve | stats | scan | score | diff | compliance
 ```
 
 ## Why Aegis?
@@ -633,6 +808,11 @@ aegis audit --tail                      # Live monitoring
 aegis audit --format jsonl -o export.jsonl  # Export
 aegis stats                             # Policy rule statistics
 aegis serve policy.yaml --port 8000     # Start REST API server
+aegis scan ./src/                       # Detect ungoverned AI tool calls (AST-based)
+aegis score ./src/ --policy policy.yaml # Governance score (0-100) + badge
+aegis diff policy-v1.yaml policy-v2.yaml           # Compare policies
+aegis diff policy-v1.yaml policy-v2.yaml --replay  # Impact analysis with action replay
+aegis compliance --type soc2 --output report.json  # Generate compliance report
 ```
 
 ## Roadmap
@@ -642,9 +822,9 @@ aegis serve policy.yaml --port 8000     # Start REST API server
 | **0.1** | **Released** | Policy engine, 7 adapters (incl. MCP), CLI, audit (SQLite + JSONL + webhook), conditions, JSON Schema |
 | **0.1.3** | **Released** | REST API server, retry/rollback, dry-run, hot-reload, policy merge, Slack/Discord/Telegram/email approval, simulate CLI, runtime hooks, stats, live tail |
 | **0.1.4** | **Released** | Multi-agent foundations (agent_id, PolicyHierarchy, conflict detection), performance optimizations (compiled globs, batch audit, eval cache), security hardening, MCP/LangChain/CrewAI/OpenAI cookbooks |
+| **0.1.5** | **Released** | Behavioral anomaly detection, compliance report generator (SOC2/GDPR), policy diff & impact analysis, semantic conditions engine, agent trust chain, `aegis scan` (static analysis), `aegis score` (governance scoring + badge) |
 | **0.2** | Q2 2026 | Dashboard UI, rate limiting, queue-based async execution |
-| **0.3** | Q3 2026 | Agent identity (`agent_id` in actions), policy hierarchy (org → team → agent), conflict detection |
-| **0.4** | Q4 2026 | Multi-agent governance (delegation, chain tracing), centralized policy server, cross-agent audit correlation |
+| **0.3** | Q3 2026 | Centralized policy server, cross-agent audit correlation |
 | **1.0** | 2027 | Distributed governance, policy versioning & rollback, multi-tenant REST API |
 
 ## Contributing

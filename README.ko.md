@@ -19,7 +19,7 @@
   <a href="https://github.com/Acacian/aegis"><img src="https://img.shields.io/github/stars/Acacian/aegis?style=social" alt="GitHub stars"></a>
   <br/>
   <a href="https://pypi.org/project/langchain-aegis/"><img src="https://img.shields.io/pypi/v/langchain-aegis?label=langchain-aegis&color=blue&cacheSeconds=3600" alt="langchain-aegis"></a>
-  <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-531_passed-brightgreen" alt="Tests"></a>
+  <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-878_passed-brightgreen" alt="Tests"></a>
   <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/coverage-92%25-brightgreen" alt="Coverage"></a>
   <a href="https://acacian.github.io/aegis/playground/"><img src="https://img.shields.io/badge/playground-브라우저에서_체험-ff6b6b" alt="Playground"></a>
 </p>
@@ -282,9 +282,16 @@ aegis audit
 |------|------|
 | **YAML 정책** | 글로브 매칭, 첫 매치 우선, JSON Schema 검증 |
 | **스마트 조건** | `time_after`, `time_before`, `weekdays`, `param_gt/lt/eq/contains/matches` |
+| **시맨틱 조건** | 2단계 아키텍처: 내장 키워드 매칭 + 플러그형 LLM 평가기 프로토콜 |
 | **4단계 위험 모델** | `low` / `medium` / `high` / `critical` (규칙별 오버라이드) |
 | **승인 게이트** | CLI, Slack, Discord, Telegram, 이메일, 웹훅, 또는 커스텀 |
 | **감사 추적** | SQLite, JSONL 내보내기, Python `logging`, 또는 외부 SIEM 웹훅 |
+| **행동 이상 탐지** | 에이전트별 행동 프로필 학습, 속도 급증/버스트/새로운 액션/비정상 타겟 감지 |
+| **컴플라이언스 리포트** | 감사 로그에서 SOC2/GDPR/거버넌스 보고서 생성, 점수화 |
+| **정책 비교 & 영향 분석** | 정책 비교, 액션 리플레이, 규칙 변경 영향도 분석 |
+| **에이전트 신뢰 체인** | 계층적 에이전트 ID, 위임(교집합 의미론), 연쇄 폐기 |
+| **`aegis scan`** | AST 기반 정적 분석 -- 코드베이스에서 거버넌스 미적용 AI 도구 호출 탐지 |
+| **`aegis score`** | 거버넌스 점수 (0-100) + shields.io 배지 생성 |
 | **REST API 서버** | `aegis serve policy.yaml` -- 모든 언어에서 HTTP로 거버넌스 |
 | **MCP 어댑터** | Model Context Protocol 도구 호출 거버넌스 |
 | **재시도 & 롤백** | 지수 백오프, 에러 필터, 실패 시 자동 롤백 |
@@ -308,7 +315,7 @@ aegis audit
 
 | 항목 | 상세 |
 |------|------|
-| **518개 테스트, 92% 커버리지** | 모든 어댑터, 핸들러, 엣지 케이스 테스트 |
+| **878+ 테스트, 92% 커버리지** | 모든 어댑터, 핸들러, 엣지 케이스 테스트 |
 | **타입 안전** | `mypy --strict` 에러 제로, `py.typed` 마커 |
 | **성능** | 정책 평가 < 1ms, 자동 승인 액션 오버헤드 < 5ms |
 | **페일 세이프** | 차단된 액션은 절대 실행 안 됨, 정책 변경 없이 우회 불가 |
@@ -560,15 +567,183 @@ rules:
 
 사용 가능: `time_after`, `time_before`, `weekdays`, `param_eq`, `param_gt`, `param_lt`, `param_gte`, `param_lte`, `param_contains`, `param_matches` (정규식).
 
+### 시맨틱 조건
+
+키워드 매칭을 넘어서는 2단계 시맨틱 조건 엔진:
+
+```yaml
+rules:
+  - name: block_harmful_content
+    match: { type: "generate*" }
+    conditions:
+      semantic: "유해하거나 폭력적이거나 불법적인 콘텐츠를 포함"
+    risk_level: critical
+    approval: block
+```
+
+1단계는 빠른 내장 키워드 매칭. 2단계는 `SemanticEvaluator` 프로토콜을 통해 LLM 평가기를 연결 -- 정밀한 콘텐츠 분석을 위해 자체 모델을 연동할 수 있습니다.
+
+## 심층 기능
+
+프로덕션 수준의 에이전트 거버넌스를 위한 고급 기능들.
+
+### 행동 이상 탐지
+
+Aegis가 에이전트별 행동 프로필을 학습하고 이상을 자동 탐지합니다 -- 수동 임계값 설정이 필요 없습니다.
+
+```python
+from aegis.core.anomaly import AnomalyDetector
+
+detector = AnomalyDetector()
+
+# 에이전트별 행동 프로필 구축을 위한 관찰 데이터 입력
+detector.observe(agent_id="agent-1", action_type="read", target="crm")
+detector.observe(agent_id="agent-1", action_type="read", target="crm")
+detector.observe(agent_id="agent-1", action_type="read", target="crm")
+
+# 이상 탐지: 속도 급증, 버스트, 새로운 액션, 비정상 타겟, 높은 차단율
+alerts = detector.check(agent_id="agent-1", action_type="delete", target="prod_db")
+# => [Anomaly(type=NEW_ACTION, detail="action 'delete' never seen for agent-1")]
+
+# 관찰된 행동에서 자동으로 정책 생성
+learned_policy = detector.generate_policy(agent_id="agent-1")
+```
+
+탐지 항목: **속도 급증** | **버스트 패턴** | **미관측 액션** | **비정상 타겟** | **높은 차단율**
+
+### 컴플라이언스 리포트 생성기
+
+기존 감사 로그에서 감사 대비 컴플라이언스 보고서를 생성합니다. 추가 도구 불필요.
+
+```bash
+aegis compliance --type soc2 --output report.json
+aegis compliance --type gdpr --output gdpr-report.json
+aegis compliance --type governance --days 30
+```
+
+```python
+from aegis.core.compliance import ComplianceReporter
+
+reporter = ComplianceReporter(audit_store=runtime.audit_store)
+report = await reporter.generate(report_type="soc2", days=90)
+
+print(report.score)        # 87.5
+print(report.findings)     # 심각도별 발견 사항 목록
+print(report.evidence)     # 연결된 감사 로그 항목
+```
+
+지원 보고서 유형: **SOC2** | **GDPR** | **Governance** -- 각각 점수, 발견 사항, 증빙 링크 포함.
+
+### 정책 비교 & 영향 분석
+
+두 정책 파일을 비교하고 정확히 무엇이 변경되었는지, 어떤 영향이 있는지 파악합니다.
+
+```bash
+# 두 정책 간 추가/삭제/수정된 규칙 표시
+aegis diff policy-v1.yaml policy-v2.yaml
+
+# 새 정책에 대해 과거 액션을 리플레이하여 영향도 분석
+aegis diff policy-v1.yaml policy-v2.yaml --replay audit.db
+```
+
+```
+ Rules: 2 added, 1 removed, 3 modified
+
+ + bulk_write_block     CRITICAL/block   (new)
+ + pii_access_approve   HIGH/approve     (new)
+ - legacy_allow_all     LOW/auto         (removed)
+ ~ read_safe            LOW/auto → LOW/auto  conditions changed
+ ~ deploy_prod          HIGH/approve → CRITICAL/block  risk escalated
+ ~ bulk_ops             MEDIUM/approve   param_gt.count: 100 → 50
+
+ Impact (replayed 1,247 actions):
+   23 actions would change from AUTO → BLOCK
+    7 actions would change from APPROVE → BLOCK
+```
+
+### 에이전트 신뢰 체인
+
+계층적 에이전트 아이덴티티와 위임, 기능 범위 기반 신뢰 관리.
+
+```python
+from aegis.core.trust import TrustChain, AgentIdentity, Capability
+
+# 전체 권한을 가진 루트 에이전트 생성
+root = AgentIdentity(
+    agent_id="orchestrator",
+    capabilities=[Capability("*")],  # 글로브 매칭
+)
+
+# 권한의 부분 집합을 위임 (교집합 의미론)
+worker = root.delegate(
+    agent_id="data-worker",
+    capabilities=[Capability("read:*"), Capability("write:staging_*")],
+)
+
+# 워커는 루트 권한과 위임 권한의 교집합만 가능
+chain = TrustChain()
+chain.register(root)
+chain.register(worker, parent=root)
+
+# 런타임에서 권한 확인
+chain.can(worker, "read:crm")           # True
+chain.can(worker, "delete:prod_db")     # False -- 위임에 포함되지 않음
+
+# 연쇄 폐기: 부모를 폐기하면 모든 자식도 폐기
+chain.revoke(root)
+chain.can(worker, "read:crm")           # False
+```
+
+### `aegis scan` -- 정적 분석
+
+AST 기반 스캐너로 Python 코드베이스에서 거버넌스가 적용되지 않은 AI 도구 호출을 탐지합니다.
+
+```bash
+aegis scan ./src/
+
+# 출력:
+# src/agents/mailer.py:42  openai.ChatCompletion.create()  -- ungoverned
+# src/agents/writer.py:18  anthropic.messages.create()     -- ungoverned
+# src/tools/search.py:7    langchain tool "web_search"     -- ungoverned
+#
+# 3 ungoverned calls found. Run `aegis score` for governance coverage.
+```
+
+### `aegis score` -- 거버넌스 점수
+
+거버넌스 적용률을 0-100 점수로 수치화하고 shields.io 배지를 생성합니다.
+
+```bash
+aegis score ./src/ --policy policy.yaml
+
+# Governance Score: 84/100
+#   Governed calls:   21/25 (84%)
+#   Policy coverage:  18 rules covering 6 action types
+#   Anomaly detection: enabled
+#   Audit trail:       enabled
+#
+# Badge: https://img.shields.io/badge/aegis_score-84-brightgreen
+```
+
+리포에 배지 추가:
+```markdown
+![Aegis Score](https://img.shields.io/badge/aegis_score-84-brightgreen)
+```
+
 ## 아키텍처
 
 ```
 aegis/
   core/        Action, Policy 엔진, Conditions, Risk levels, Retry, JSON Schema
+  core/anomaly     행동 이상 탐지 -- 에이전트별 프로파일링, 자동 정책 생성
+  core/compliance  컴플라이언스 리포트 생성기 -- SOC2, GDPR, 거버넌스 점수화
+  core/trust       에이전트 신뢰 체인 -- 계층적 아이덴티티, 위임, 폐기
+  core/semantic    시맨틱 조건 엔진 -- 키워드 매칭 + LLM 평가기 프로토콜
+  core/diff        정책 비교 & 영향 분석 -- 규칙 비교, 액션 리플레이
   adapters/    BaseExecutor, Playwright, httpx, LangChain, CrewAI, OpenAI, Anthropic, MCP
   runtime/     Runtime 엔진, ApprovalHandler, AuditLogger (SQLite/JSONL/웹훅/logging)
   server/      REST API (Starlette ASGI) -- 평가, 실행, 감사, 정책 엔드포인트
-  cli/         aegis validate | audit | schema | init | simulate | serve | stats
+  cli/         aegis validate | audit | schema | init | simulate | serve | stats | scan | score | diff | compliance
 ```
 
 ## 왜 Aegis인가?
@@ -609,6 +784,11 @@ aegis audit --tail                      # 실시간 모니터링
 aegis audit --format jsonl -o export.jsonl  # 내보내기
 aegis stats                             # 정책 규칙 통계
 aegis serve policy.yaml --port 8000     # REST API 서버 시작
+aegis scan ./src/                       # 거버넌스 미적용 AI 도구 호출 탐지 (AST 기반)
+aegis score ./src/ --policy policy.yaml # 거버넌스 점수 (0-100) + 배지
+aegis diff policy-v1.yaml policy-v2.yaml           # 정책 비교
+aegis diff policy-v1.yaml policy-v2.yaml --replay  # 액션 리플레이 영향 분석
+aegis compliance --type soc2 --output report.json  # 컴플라이언스 리포트 생성
 ```
 
 ## 로드맵
@@ -618,9 +798,9 @@ aegis serve policy.yaml --port 8000     # REST API 서버 시작
 | **0.1** | **출시됨** | 정책 엔진, 7개 어댑터 (MCP 포함), CLI, 감사 (SQLite + JSONL + 웹훅), 조건, JSON Schema |
 | **0.1.3** | **출시됨** | REST API 서버, 재시도/롤백, 드라이런, 핫 리로드, 정책 병합, Slack/Discord/Telegram/이메일 승인, 시뮬레이션 CLI, 런타임 훅, 통계, 실시간 모니터링 |
 | **0.1.4** | **출시됨** | 멀티 에이전트 기반 (agent_id, PolicyHierarchy, 충돌 감지), 성능 최적화 (컴파일된 글로브, 배치 감사, 평가 캐시), 보안 강화, MCP/LangChain/CrewAI/OpenAI 쿡북 |
+| **0.1.5** | **출시됨** | 행동 이상 탐지, 컴플라이언스 리포트 생성기 (SOC2/GDPR), 정책 비교 & 영향 분석, 시맨틱 조건 엔진, 에이전트 신뢰 체인, `aegis scan` (정적 분석), `aegis score` (거버넌스 점수 + 배지) |
 | **0.2** | 2026 Q2 | 대시보드 UI, 속도 제한, 큐 기반 비동기 실행 |
-| **0.3** | 2026 Q3 | 에이전트 아이덴티티 (Action에 `agent_id`), 정책 계층화 (조직 → 팀 → 에이전트), 충돌 감지 |
-| **0.4** | 2026 Q4 | 멀티 에이전트 거버넌스 (권한 위임, 체인 추적), 중앙 정책 서버, 크로스 에이전트 감사 추적 |
+| **0.3** | 2026 Q3 | 중앙 정책 서버, 크로스 에이전트 감사 추적 |
 | **1.0** | 2027 | 분산 거버넌스, 정책 버전 관리 및 롤백, 멀티 테넌트 REST API |
 
 ## 기여하기
