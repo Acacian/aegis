@@ -1,0 +1,125 @@
+name: "Aegis AI Governance Gate"
+description: "Scan for ungoverned AI agent tool calls and enforce governance scores in CI/CD"
+branding:
+  icon: "shield"
+  color: "blue"
+
+inputs:
+  command:
+    description: "Command to run: scan, score, validate, or all"
+    required: false
+    default: "all"
+  policy-file:
+    description: "Path to policy YAML file (for score/validate)"
+    required: false
+    default: "policy.yaml"
+  scan-directory:
+    description: "Directory to scan for ungoverned AI calls"
+    required: false
+    default: "."
+  min-score:
+    description: "Minimum governance score to pass (0-100)"
+    required: false
+    default: "0"
+  fail-on-ungoverned:
+    description: "Fail if ungoverned AI calls are found"
+    required: false
+    default: "false"
+  python-version:
+    description: "Python version to use"
+    required: false
+    default: "3.11"
+
+outputs:
+  score:
+    description: "Governance score (0-100)"
+    value: ${{ steps.score.outputs.score }}
+  grade:
+    description: "Governance grade (A+, A, B, C, D, F)"
+    value: ${{ steps.score.outputs.grade }}
+  ungoverned-count:
+    description: "Number of ungoverned AI calls found"
+    value: ${{ steps.scan.outputs.ungoverned_count }}
+  badge-url:
+    description: "Shields.io badge URL for governance score"
+    value: ${{ steps.score.outputs.badge_url }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install Aegis
+      shell: bash
+      run: pip install agent-aegis
+
+    - name: Run aegis scan
+      id: scan
+      if: ${{ inputs.command == 'scan' || inputs.command == 'all' }}
+      shell: bash
+      run: |
+        echo "::group::Aegis Scan — Detecting ungoverned AI calls"
+        set +e
+        output=$(aegis scan ${{ inputs.scan-directory }} 2>&1)
+        exit_code=$?
+        echo "$output"
+        echo "::endgroup::"
+
+        # Extract ungoverned count from output
+        count=$(echo "$output" | grep -oP '\d+(?= ungoverned)' || echo "0")
+        echo "ungoverned_count=${count}" >> "$GITHUB_OUTPUT"
+
+        if [ "${{ inputs.fail-on-ungoverned }}" = "true" ] && [ "$exit_code" -ne 0 ]; then
+          echo "::error::Found ungoverned AI tool calls. Run 'aegis scan' locally to fix."
+          exit 1
+        fi
+
+    - name: Run aegis validate
+      if: ${{ (inputs.command == 'validate' || inputs.command == 'all') && inputs.policy-file != '' }}
+      shell: bash
+      run: |
+        if [ -f "${{ inputs.policy-file }}" ]; then
+          echo "::group::Aegis Validate"
+          aegis validate ${{ inputs.policy-file }}
+          echo "::endgroup::"
+        else
+          echo "::notice::No policy file found at ${{ inputs.policy-file }}, skipping validation"
+        fi
+
+    - name: Run aegis score
+      id: score
+      if: ${{ (inputs.command == 'score' || inputs.command == 'all') && inputs.policy-file != '' }}
+      shell: bash
+      run: |
+        if [ ! -f "${{ inputs.policy-file }}" ]; then
+          echo "score=0" >> "$GITHUB_OUTPUT"
+          echo "grade=F" >> "$GITHUB_OUTPUT"
+          echo "badge_url=" >> "$GITHUB_OUTPUT"
+          echo "::notice::No policy file found, score=0"
+          exit 0
+        fi
+
+        echo "::group::Aegis Score"
+        json=$(aegis score ${{ inputs.policy-file }} --format json)
+        echo "$json" | python3 -c "
+        import sys, json
+        d = json.load(sys.stdin)
+        print(f\"Score: {d['score']}/100 (Grade: {d['grade']})\")
+        "
+        echo "::endgroup::"
+
+        score=$(echo "$json" | python3 -c "import sys,json; print(json.load(sys.stdin)['score'])")
+        grade=$(echo "$json" | python3 -c "import sys,json; print(json.load(sys.stdin)['grade'])")
+        badge=$(echo "$json" | python3 -c "import sys,json; print(json.load(sys.stdin).get('badge_url',''))")
+
+        echo "score=${score}" >> "$GITHUB_OUTPUT"
+        echo "grade=${grade}" >> "$GITHUB_OUTPUT"
+        echo "badge_url=${badge}" >> "$GITHUB_OUTPUT"
+
+        if [ "${{ inputs.min-score }}" -gt 0 ] && [ "${score}" -lt "${{ inputs.min-score }}" ]; then
+          echo "::error::Governance score ${score} is below minimum ${{ inputs.min-score }}"
+          exit 1
+        fi

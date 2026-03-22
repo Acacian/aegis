@@ -10,6 +10,12 @@ from aegis.core.agent_identity import AgentIdentity, AgentRegistry, DelegationEv
 from aegis.core.anomaly import AnomalyDetector, AnomalyResult, BehaviorProfile
 from aegis.core.builder import PolicyBuilder, RuleBuilder
 from aegis.core.compliance import ComplianceFinding, ComplianceReport, ReportGenerator
+from aegis.core.crypto_audit import (
+    AuditEntry,
+    CryptoAuditChain,
+    EvidencePackage,
+    VerificationResult,
+)
 from aegis.core.plan import ExecutionPlan
 from aegis.core.policy import Approval, Policy, PolicyDecision, PolicyRule
 from aegis.core.rate_limiter import RateLimiter, RateLimitResult, RateLimitRule
@@ -30,10 +36,13 @@ __all__ = [
     "AnomalyDetector",
     "AnomalyResult",
     "Approval",
+    "AuditEntry",
     "BehaviorProfile",
     "ComplianceFinding",
     "ComplianceReport",
+    "CryptoAuditChain",
     "DelegationEvent",
+    "EvidencePackage",
     "ExecutionPlan",
     "KeywordSemanticEvaluator",
     "Policy",
@@ -51,5 +60,6 @@ __all__ = [
     "RiskLevel",
     "SEMANTIC_CATEGORIES",
     "SemanticEvaluator",
+    "VerificationResult",
     "evaluate_semantic_condition",
 ]

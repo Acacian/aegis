@@ -111,6 +111,27 @@ def main(argv: list[str] | None = None) -> None:
         default=False,
         help="Live-tail new audit entries (poll every 1s, Ctrl+C to stop)",
     )
+    audit_parser.add_argument(
+        "--verify",
+        action="store_true",
+        default=False,
+        help="Verify cryptographic audit chain integrity",
+    )
+    audit_parser.add_argument(
+        "--export-chain",
+        metavar="PATH",
+        help="Export audit entries as a crypto-signed JSONL chain",
+    )
+    audit_parser.add_argument(
+        "--verify-chain",
+        metavar="PATH",
+        help="Verify an exported crypto-audit JSONL chain file",
+    )
+    audit_parser.add_argument(
+        "--evidence",
+        metavar="PATH",
+        help="Generate SOC2/EU AI Act evidence package to directory",
+    )
 
     # aegis validate
     validate_parser = subparsers.add_parser("validate", help="Validate a policy file")
@@ -283,7 +304,25 @@ def _cmd_audit(args: argparse.Namespace) -> None:
         print("Run your agent with Aegis first to generate audit data.", file=sys.stderr)
         sys.exit(1)
 
+    # Crypto-audit chain operations (don't need AuditLogger)
+    if args.verify_chain:
+        _verify_chain_file(Path(args.verify_chain))
+        return
+    if args.evidence:
+        _generate_evidence(db_path, Path(args.evidence))
+        return
+
     logger = AuditLogger(db_path=args.db)
+
+    # Export or verify crypto chain from DB
+    if args.export_chain:
+        _export_crypto_chain(logger, Path(args.export_chain))
+        logger.close()
+        return
+    if args.verify:
+        _verify_audit_db(logger)
+        logger.close()
+        return
 
     if args.tail:
         _audit_tail(logger, args)
@@ -741,6 +780,148 @@ def _cmd_stats(args: argparse.Namespace) -> None:
     print(colors.bold("\n--- Top 5 Matched Rules ---"))
     for rule, count in rule_rows:
         print(f"  {rule:<20} {count}")
+
+
+def _export_crypto_chain(
+    logger: AuditLogger,
+    out_path: Path,
+) -> None:
+    """Export audit DB entries as a cryptographic hash chain."""
+    from aegis.core.crypto_audit import CryptoAuditChain
+
+    entries = logger.get_log()
+    if not entries:
+        print("No audit entries to export.")
+        return
+
+    chain = CryptoAuditChain()
+    for entry in entries:
+        chain.append(
+            agent_id=str(entry.get("agent_id", "unknown")),
+            action_type=str(entry.get("action_type", "unknown")),
+            action_target=str(entry.get("target", "unknown")),
+            decision=str(entry.get("decision", "unknown")),
+            risk_level=str(entry.get("risk_level", "unknown")),
+            matched_rule=str(entry.get("matched_rule", "")),
+            metadata={
+                "original_id": entry.get("id"),
+                "session_id": entry.get("session_id"),
+            },
+        )
+
+    count = chain.export_jsonl(out_path)
+    print(f"Exported {count} entries as crypto-audit chain to {out_path}")
+    result = chain.verify()
+    if result.valid:
+        print(colors.green(f"Chain integrity verified ({result.chain_length} entries)"))
+    else:
+        print(colors.red(f"Chain verification FAILED: {result.error_message}"))
+
+
+def _verify_chain_file(path: Path) -> None:
+    """Verify an exported crypto-audit chain JSONL file."""
+    from aegis.core.crypto_audit import CryptoAuditChain
+
+    if not path.exists():
+        print(colors.red(f"File not found: {path}"), file=sys.stderr)
+        sys.exit(1)
+
+    chain = CryptoAuditChain()
+    try:
+        chain.import_jsonl(path)
+    except Exception as exc:
+        print(colors.red(f"Import failed: {exc}"), file=sys.stderr)
+        sys.exit(1)
+
+    result = chain.verify()
+    if result.valid:
+        print(colors.green("PASSED — Chain integrity verified"))
+        print(f"  Entries: {result.chain_length}")
+        print(f"  Verified: {result.verified_entries}")
+    else:
+        print(colors.bright_red("FAILED — Chain integrity broken"))
+        print(f"  Broke at entry: {result.first_broken_at}")
+        print(f"  Error: {result.error_message}")
+        sys.exit(1)
+
+
+def _verify_audit_db(logger: AuditLogger) -> None:
+    """Build crypto chain from audit DB and verify it."""
+    from aegis.core.crypto_audit import CryptoAuditChain
+
+    entries = logger.get_log()
+    if not entries:
+        print("No audit entries found.")
+        return
+
+    chain = CryptoAuditChain()
+    for entry in entries:
+        chain.append(
+            agent_id=str(entry.get("agent_id", "unknown")),
+            action_type=str(entry.get("action_type", "unknown")),
+            action_target=str(entry.get("target", "unknown")),
+            decision=str(entry.get("decision", "unknown")),
+            risk_level=str(entry.get("risk_level", "unknown")),
+            matched_rule=str(entry.get("matched_rule", "")),
+            metadata={
+                "original_id": entry.get("id"),
+                "session_id": entry.get("session_id"),
+            },
+        )
+
+    result = chain.verify()
+    if result.valid:
+        print(colors.green("PASSED — Audit log integrity verified"))
+        print(f"  Entries: {result.chain_length}")
+    else:
+        print(colors.bright_red("FAILED — Audit log integrity compromised"))
+        print(f"  Broke at entry: {result.first_broken_at}")
+        print(f"  Error: {result.error_message}")
+        sys.exit(1)
+
+
+def _generate_evidence(db_path: Path, out_dir: Path) -> None:
+    """Generate SOC2/EU AI Act evidence package."""
+    from aegis.core.crypto_audit import CryptoAuditChain
+
+    if not db_path.exists():
+        print(colors.red(f"Database not found: {db_path}"), file=sys.stderr)
+        sys.exit(1)
+
+    logger = AuditLogger(db_path=str(db_path))
+    entries = logger.get_log()
+    logger.close()
+
+    if not entries:
+        print("No audit entries found.")
+        return
+
+    chain = CryptoAuditChain()
+    for entry in entries:
+        chain.append(
+            agent_id=str(entry.get("agent_id", "unknown")),
+            action_type=str(entry.get("action_type", "unknown")),
+            action_target=str(entry.get("target", "unknown")),
+            decision=str(entry.get("decision", "unknown")),
+            risk_level=str(entry.get("risk_level", "unknown")),
+            matched_rule=str(entry.get("matched_rule", "")),
+            metadata={
+                "original_id": entry.get("id"),
+                "session_id": entry.get("session_id"),
+            },
+        )
+
+    out_dir.mkdir(parents=True, exist_ok=True)
+    package = chain.generate_evidence_package(out_dir)
+    print(colors.green("Evidence package generated"))
+    print(f"  Directory: {out_dir}")
+    print(f"  Chain length: {package.chain_length}")
+    print(f"  Algorithm: {package.algorithm}")
+    vr = package.verification_result
+    status = "PASSED" if vr.valid else "FAILED"
+    print(f"  Verification: {status}")
+    for note in package.compliance_notes:
+        print(f"  - {note}")
 
 
 def _cmd_monitor(args: argparse.Namespace) -> None:

@@ -14,20 +14,18 @@ from __future__ import annotations
 
 import json
 import threading
-from dataclasses import asdict, replace
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
 
 from aegis.core.crypto_audit import (
+    _GENESIS_HASH,
     AuditEntry,
     CryptoAuditChain,
     EvidencePackage,
-    VerificationResult,
-    _GENESIS_HASH,
     _hash_entry,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -167,9 +165,7 @@ class TestVerifyValid:
         assert result.verification_hash != ""
         assert len(result.verification_hash) == 64
 
-    def test_verification_hash_is_deterministic(
-        self, chain: CryptoAuditChain
-    ) -> None:
+    def test_verification_hash_is_deterministic(self, chain: CryptoAuditChain) -> None:
         _append_default(chain)
         r1 = chain.verify()
         r2 = chain.verify()
@@ -234,16 +230,12 @@ class TestVerifyTampered:
 
     def test_tampered_metadata_detected(self, chain: CryptoAuditChain) -> None:
         _append_default(chain, metadata={"key": "value"})
-        chain._chain[0] = replace(
-            chain._chain[0], metadata={"key": "TAMPERED"}
-        )
+        chain._chain[0] = replace(chain._chain[0], metadata={"key": "TAMPERED"})
         result = chain.verify()
         assert result.valid is False
         assert result.first_broken_at == 0
 
-    def test_tampered_previous_hash_detected(
-        self, chain: CryptoAuditChain
-    ) -> None:
+    def test_tampered_previous_hash_detected(self, chain: CryptoAuditChain) -> None:
         for i in range(3):
             _append_default(chain, agent_id=f"a-{i}")
         chain._chain[1] = replace(chain._chain[1], previous_hash="f" * 64)
@@ -277,9 +269,7 @@ class TestVerifyEntry:
             _append_default(chain, agent_id=f"a-{i}")
         assert chain.verify_entry(3) is True
 
-    def test_verify_entry_with_broken_previous_hash(
-        self, chain: CryptoAuditChain
-    ) -> None:
+    def test_verify_entry_with_broken_previous_hash(self, chain: CryptoAuditChain) -> None:
         for i in range(3):
             _append_default(chain, agent_id=f"a-{i}")
         chain._chain[2] = replace(chain._chain[2], previous_hash="a" * 64)
@@ -323,18 +313,14 @@ class TestGetEntries:
 
 
 class TestJsonlRoundtrip:
-    def test_export_creates_file(
-        self, chain: CryptoAuditChain, tmp_path: Path
-    ) -> None:
+    def test_export_creates_file(self, chain: CryptoAuditChain, tmp_path: Path) -> None:
         _append_default(chain)
         path = tmp_path / "audit.jsonl"
         count = chain.export_jsonl(path)
         assert count == 1
         assert path.exists()
 
-    def test_export_import_roundtrip(
-        self, chain: CryptoAuditChain, tmp_path: Path
-    ) -> None:
+    def test_export_import_roundtrip(self, chain: CryptoAuditChain, tmp_path: Path) -> None:
         for i in range(5):
             _append_default(chain, agent_id=f"a-{i}")
         path = tmp_path / "audit.jsonl"
@@ -346,9 +332,7 @@ class TestJsonlRoundtrip:
         result = chain2.verify()
         assert result.valid is True
 
-    def test_import_rejects_tampered_file(
-        self, chain: CryptoAuditChain, tmp_path: Path
-    ) -> None:
+    def test_import_rejects_tampered_file(self, chain: CryptoAuditChain, tmp_path: Path) -> None:
         for i in range(3):
             _append_default(chain, agent_id=f"a-{i}")
         path = tmp_path / "audit.jsonl"
@@ -379,17 +363,13 @@ class TestJsonlRoundtrip:
         # Original chain should be preserved
         assert len(chain2) == 1
 
-    def test_export_empty_chain(
-        self, chain: CryptoAuditChain, tmp_path: Path
-    ) -> None:
+    def test_export_empty_chain(self, chain: CryptoAuditChain, tmp_path: Path) -> None:
         path = tmp_path / "empty.jsonl"
         count = chain.export_jsonl(path)
         assert count == 0
         assert path.read_text() == ""
 
-    def test_import_empty_file(
-        self, chain: CryptoAuditChain, tmp_path: Path
-    ) -> None:
+    def test_import_empty_file(self, chain: CryptoAuditChain, tmp_path: Path) -> None:
         path = tmp_path / "empty.jsonl"
         path.write_text("")
         chain.import_jsonl(path)
@@ -407,9 +387,7 @@ class TestJsonlRoundtrip:
             assert "sequence_id" in data
             assert "entry_hash" in data
 
-    def test_import_creates_nested_dirs(
-        self, chain: CryptoAuditChain, tmp_path: Path
-    ) -> None:
+    def test_import_creates_nested_dirs(self, chain: CryptoAuditChain, tmp_path: Path) -> None:
         _append_default(chain)
         path = tmp_path / "nested" / "dir" / "audit.jsonl"
         chain.export_jsonl(path)
@@ -422,9 +400,7 @@ class TestJsonlRoundtrip:
 
 
 class TestEvidencePackage:
-    def test_generate_evidence_package(
-        self, chain: CryptoAuditChain, tmp_path: Path
-    ) -> None:
+    def test_generate_evidence_package(self, chain: CryptoAuditChain, tmp_path: Path) -> None:
         for i in range(5):
             _append_default(
                 chain,
@@ -448,17 +424,13 @@ class TestEvidencePackage:
         assert "EU AI Act" in notes_text
         assert "Article 12" in notes_text
 
-    def test_evidence_compliance_notes_soc2(
-        self, chain: CryptoAuditChain, tmp_path: Path
-    ) -> None:
+    def test_evidence_compliance_notes_soc2(self, chain: CryptoAuditChain, tmp_path: Path) -> None:
         _append_default(chain)
         pkg = chain.generate_evidence_package(tmp_path / "e.json")
         notes_text = " ".join(pkg.compliance_notes)
         assert "SOC2" in notes_text
 
-    def test_evidence_summary_counts(
-        self, chain: CryptoAuditChain, tmp_path: Path
-    ) -> None:
+    def test_evidence_summary_counts(self, chain: CryptoAuditChain, tmp_path: Path) -> None:
         _append_default(chain, agent_id="a1", decision="auto", action_type="read")
         _append_default(chain, agent_id="a1", decision="block", action_type="write")
         _append_default(chain, agent_id="a2", decision="auto", action_type="read")
@@ -470,25 +442,19 @@ class TestEvidencePackage:
         assert pkg.summary["agent_counts"]["a1"] == 2
         assert pkg.summary["agent_counts"]["a2"] == 1
 
-    def test_evidence_chain_hash(
-        self, chain: CryptoAuditChain, tmp_path: Path
-    ) -> None:
+    def test_evidence_chain_hash(self, chain: CryptoAuditChain, tmp_path: Path) -> None:
         _append_default(chain)
         pkg = chain.generate_evidence_package(tmp_path / "e.json")
         last_entry = chain.get_entry(0)
         assert last_entry is not None
         assert pkg.chain_hash == last_entry.entry_hash
 
-    def test_evidence_algorithm_field(
-        self, chain: CryptoAuditChain, tmp_path: Path
-    ) -> None:
+    def test_evidence_algorithm_field(self, chain: CryptoAuditChain, tmp_path: Path) -> None:
         _append_default(chain)
         pkg = chain.generate_evidence_package(tmp_path / "e.json")
         assert pkg.algorithm == "sha256"
 
-    def test_evidence_json_file_is_valid(
-        self, chain: CryptoAuditChain, tmp_path: Path
-    ) -> None:
+    def test_evidence_json_file_is_valid(self, chain: CryptoAuditChain, tmp_path: Path) -> None:
         _append_default(chain)
         path = tmp_path / "e.json"
         chain.generate_evidence_package(path)
@@ -496,17 +462,13 @@ class TestEvidencePackage:
         assert "verification_result" in data
         assert "compliance_notes" in data
 
-    def test_evidence_empty_chain(
-        self, chain: CryptoAuditChain, tmp_path: Path
-    ) -> None:
+    def test_evidence_empty_chain(self, chain: CryptoAuditChain, tmp_path: Path) -> None:
         pkg = chain.generate_evidence_package(tmp_path / "e.json")
         assert pkg.chain_length == 0
         assert pkg.chain_hash == _GENESIS_HASH
         assert pkg.verification_result.valid is True
 
-    def test_evidence_risk_counts(
-        self, chain: CryptoAuditChain, tmp_path: Path
-    ) -> None:
+    def test_evidence_risk_counts(self, chain: CryptoAuditChain, tmp_path: Path) -> None:
         _append_default(chain, risk_level="high")
         _append_default(chain, risk_level="high")
         _append_default(chain, risk_level="low")
@@ -543,9 +505,7 @@ class TestThreadSafety:
         assert result.valid is True
         assert result.verified_entries == 100
 
-    def test_concurrent_appends_unique_sequences(
-        self, chain: CryptoAuditChain
-    ) -> None:
+    def test_concurrent_appends_unique_sequences(self, chain: CryptoAuditChain) -> None:
         """All entries from concurrent appends must have unique sequence IDs."""
 
         def worker(i: int) -> None:
@@ -594,22 +554,16 @@ class TestAlgorithms:
     def test_sha3_256_tamper_detected(self, chain_sha3: CryptoAuditChain) -> None:
         for i in range(3):
             _append_default(chain_sha3, agent_id=f"a-{i}")
-        chain_sha3._chain[1] = replace(
-            chain_sha3._chain[1], action_type="TAMPERED"
-        )
+        chain_sha3._chain[1] = replace(chain_sha3._chain[1], action_type="TAMPERED")
         result = chain_sha3.verify()
         assert result.valid is False
 
-    def test_sha3_256_evidence_package(
-        self, chain_sha3: CryptoAuditChain, tmp_path: Path
-    ) -> None:
+    def test_sha3_256_evidence_package(self, chain_sha3: CryptoAuditChain, tmp_path: Path) -> None:
         _append_default(chain_sha3)
         pkg = chain_sha3.generate_evidence_package(tmp_path / "e.json")
         assert pkg.algorithm == "sha3_256"
 
-    def test_sha3_256_export_import(
-        self, chain_sha3: CryptoAuditChain, tmp_path: Path
-    ) -> None:
+    def test_sha3_256_export_import(self, chain_sha3: CryptoAuditChain, tmp_path: Path) -> None:
         for i in range(3):
             _append_default(chain_sha3, agent_id=f"a-{i}")
         path = tmp_path / "audit.jsonl"
@@ -631,9 +585,7 @@ class TestAlgorithms:
 
 
 class TestChainHashSensitivity:
-    def test_chain_hash_changes_on_any_modification(
-        self, chain: CryptoAuditChain
-    ) -> None:
+    def test_chain_hash_changes_on_any_modification(self, chain: CryptoAuditChain) -> None:
         """Modifying any single field in any entry changes the final chain hash."""
         for i in range(5):
             _append_default(chain, agent_id=f"a-{i}")
@@ -672,9 +624,7 @@ class TestFrozenDataclasses:
         with pytest.raises(AttributeError):
             result.valid = False  # type: ignore[misc]
 
-    def test_evidence_package_is_frozen(
-        self, chain: CryptoAuditChain, tmp_path: Path
-    ) -> None:
+    def test_evidence_package_is_frozen(self, chain: CryptoAuditChain, tmp_path: Path) -> None:
         _append_default(chain)
         pkg = chain.generate_evidence_package(tmp_path / "e.json")
         with pytest.raises(AttributeError):
