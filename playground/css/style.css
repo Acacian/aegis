@@ -1677,7 +1677,7 @@ kbd {
   align-items: center;
   justify-content: center;
   gap: 0;
-  margin: 40px auto 0;
+  margin: 56px auto 0;
   max-width: 780px;
   flex-wrap: wrap;
 }
@@ -3566,6 +3566,7 @@ footer code {
   align-items: center;
   justify-content: center;
   gap: 16px;
+  margin-top: 48px;
 }
 
 .step-card {
