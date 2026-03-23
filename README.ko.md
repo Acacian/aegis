@@ -19,7 +19,7 @@
   <a href="https://github.com/Acacian/aegis"><img src="https://img.shields.io/github/stars/Acacian/aegis?style=social" alt="GitHub stars"></a>
   <br/>
   <a href="https://pypi.org/project/langchain-aegis/"><img src="https://img.shields.io/pypi/v/langchain-aegis?label=langchain-aegis&color=blue&cacheSeconds=3600" alt="langchain-aegis"></a>
-  <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-878_passed-brightgreen" alt="Tests"></a>
+  <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-2238_passed-brightgreen" alt="Tests"></a>
   <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/coverage-92%25-brightgreen" alt="Coverage"></a>
   <a href="https://acacian.github.io/aegis/playground/"><img src="https://img.shields.io/badge/playground-브라우저에서_체험-ff6b6b" alt="Playground"></a>
 </p>
@@ -40,44 +40,53 @@
 
 ---
 
-## 문제
+## Aegis 없이 vs. Aegis로
 
-AI 에이전트가 실제 세계에 접근하고 있습니다. 거버넌스 없이는 환각하는 에이전트가:
+**Aegis 없이** — if/else 흩뿌리기, 감사 추적 없음, 툴 추가할 때마다 수정:
 
-- CRM 연락처를 대량 삭제하거나
-- 잘못된 양식을 정부 포털에 제출하거나
-- 새벽 3시에 되돌릴 수 없는 API 호출을 실행하거나
-- 무한 루프로 클라우드 비용을 폭발시킬 수 있습니다
-
-**AI 에이전트에는 `sudo`가 없었습니다. 지금까지는.**
-
-## 해결책
-
-Aegis는 AI 에이전트와 실제 실행 사이에 위치하는 **Python 미들웨어**입니다. 별도의 서버를 띄울 필요 없이 에이전트 코드에 직접 임포트하면, 모든 액션에 정책 체크 + 승인 게이트 + 감사 로깅이 자동 적용됩니다.
-
+```python
+async def handle_agent_action(tool_name, args):
+    if tool_name == "delete_users":
+        raise Exception("Blocked")                              # 깨지기 쉬움
+    if tool_name.startswith("bulk_") and args.get("count", 0) > 100:
+        approved = await ask_slack_approval(tool_name, args)     # 툴마다 커스텀
+        if not approved:
+            raise Exception("Denied")
+    if tool_name == "deploy" and datetime.now().hour >= 18:
+        raise Exception("No deploys after hours")               # 하드코딩
+    result = await execute(tool_name, args)
+    # 감사 로그 없음. 일관성 없음. 에이전트/프레임워크마다 반복.
+    return result
 ```
-에이전트                        Aegis                         실제 세계
-    |                           |                               |
-    |-- "전체 유저 삭제" ------> |                               |
-    |                      [정책 체크]                           |
-    |                      위험=CRITICAL                        |
-    |                      승인=BLOCK                           |
-    |                           |--- X (차단, 기록됨) ---------> |
-    |                           |                               |
-    |-- "연락처 읽기" ---------> |                               |
-    |                      [정책 체크]                           |
-    |                      위험=LOW                             |
-    |                      승인=AUTO                            |
-    |                           |--- 실행 (기록됨) ------------> |
-    |                           |                               |
-    |-- "500건 대량 수정" -----> |                               |
-    |                      [정책 체크]                           |
-    |                      위험=HIGH                            |
-    |                      승인=APPROVE                         |
-    |                           |--- 사람에게 질문 (Slack/CLI) -> |
-    |                           |<-- "승인" ------------------- |
-    |                           |--- 실행 (기록됨) ------------> |
+
+**Aegis로** — YAML 파일 하나로 전체 거버넌스, 감사 추적과 승인 게이트 내장:
+
+```yaml
+# policy.yaml
+rules:
+  - name: block_deletes
+    match: { type: "delete*" }
+    approval: block
+
+  - name: bulk_approval
+    match: { type: "bulk_*" }
+    conditions: { param_gt: { count: 100 } }
+    approval: approve          # Slack, CLI, Discord 등으로 사람에게 물어봄
+
+  - name: no_after_hours
+    match: { type: "deploy*" }
+    conditions: { time_after: "18:00" }
+    approval: block
 ```
+
+```python
+from aegis import Policy, Runtime
+
+runtime = Runtime(executor=my_executor, policy=Policy.from_yaml("policy.yaml"))
+result = await runtime.run_one(action)  # 정책 체크 + 승인 + 감사 — 끝.
+```
+
+**`pip install` 하나. YAML 파일 하나. LangChain, CrewAI, OpenAI, Anthropic, MCP 전부 지원.** 감사 추적, 사람 승인 게이트, 규제 컴플라이언스까지 — 서버 배포 없이.
 
 **복사 → 붙여넣기 → 실행 — 설정 파일 없이 바로 동작:**
 
@@ -294,6 +303,16 @@ aegis audit
 | **`aegis score`** | 거버넌스 점수 (0-100) + shields.io 배지 생성 |
 | **REST API 서버** | `aegis serve policy.yaml` -- 모든 언어에서 HTTP로 거버넌스 |
 | **MCP 어댑터** | Model Context Protocol 도구 호출 거버넌스 |
+| **MCP 공급망 보안** | 툴 포이즈닝 탐지 (10 패턴), 러그풀 감지 (SHA-256), 인자 새니타이징, 신뢰 점수 (L0-L4) |
+| **MCP 취약점 DB** | 8개 빌트인 CVE, 버전 매칭, 자동 차단 권고 |
+| **MCP SBOM 생성** | CycloneDX-inspired BOM, 도구 해시, 취약점 오버레이, JSON 내보내기 |
+| **비용 차단기** | 17개 모델 가격표, 루프 탐지, 계층적 예산, 스레드 안전 |
+| **크로스-프레임워크 비용 추적** | LangChain + OpenAI + Anthropic + Google → 통합 CostTracker |
+| **멀티에이전트 비용 귀속** | 위임 트리, 서브트리 비용 롤업, 귀속 리포트 |
+| **A2A 통신 거버넌스** | 케이퍼빌리티 기반 메시징, PII/크레덴셜 자동 삭제, 레이트 리밋, 감사 로그 |
+| **정책 Git 통합** | Diff 포맷팅, 영향 분석, 드리프트 감지, YAML 내보내기 |
+| **OpenTelemetry 내보내기** | 정책/비용/이상/MCP 이벤트 → OTel 스팬, 인메모리 폴백 |
+| **세션 리플레이** | 에이전트 세션 녹화/재생 + 20개 패턴 소급 보안 스캔 |
 | **재시도 & 롤백** | 지수 백오프, 에러 필터, 실패 시 자동 롤백 |
 | **드라이런 & 시뮬레이션** | 실행 없이 정책 테스트: `aegis simulate policy.yaml read:crm` |
 | **핫 리로드** | `runtime.update_policy(...)` -- 재시작 없이 정책 교체 |
@@ -799,9 +818,10 @@ aegis compliance --type soc2 --output report.json  # 컴플라이언스 리포�
 | **0.1.3** | **출시됨** | REST API 서버, 재시도/롤백, 드라이런, 핫 리로드, 정책 병합, Slack/Discord/Telegram/이메일 승인, 시뮬레이션 CLI, 런타임 훅, 통계, 실시간 모니터링 |
 | **0.1.4** | **출시됨** | 멀티 에이전트 기반 (agent_id, PolicyHierarchy, 충돌 감지), 성능 최적화 (컴파일된 글로브, 배치 감사, 평가 캐시), 보안 강화, MCP/LangChain/CrewAI/OpenAI 쿡북 |
 | **0.1.5** | **출시됨** | 행동 이상 탐지, 컴플라이언스 리포트 생성기 (SOC2/GDPR), 정책 비교 & 영향 분석, 시맨틱 조건 엔진, 에이전트 신뢰 체인, `aegis scan` (정적 분석), `aegis score` (거버넌스 점수 + 배지) |
-| **0.2** | 2026 Q2 | 대시보드 UI, 속도 제한, 큐 기반 비동기 실행 |
-| **0.3** | 2026 Q3 | 중앙 정책 서버, 크로스 에이전트 감사 추적 |
-| **1.0** | 2027 | 분산 거버넌스, 정책 버전 관리 및 롤백, 멀티 테넌트 REST API |
+| **0.2** | **출시됨** | LangChain AgentMiddleware, CrewAI GuardrailProvider, OpenAI Agents 네이티브 가드레일, OWASP Agentic Top 10, HTML 컴플라이언스 리포트, 인터랙티브 플레이그라운드 |
+| **0.3** | **출시됨** | MCP 공급망 보안 (포이즈닝/러그풀/SBOM/취약점 DB), 비용 차단기 (17 모델), 크로스-프레임워크 비용 추적 (LangChain/OpenAI/Anthropic/Google), A2A 통신 거버넌스, 세션 리플레이 + 소급 스캔, OpenTelemetry 내보내기, 정책 Git 통합 |
+| **0.4** | 2026 Q3 | 중앙 정책 서버, 크로스 에이전트 감사 추적 |
+| **1.0** | 2027 | 분산 거버넌스, 호스티드 SaaS, SSO/SCIM |
 
 ## 기여하기
 

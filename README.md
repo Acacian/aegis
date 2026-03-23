@@ -20,7 +20,7 @@
   <a href="https://pypi.org/project/agent-aegis/"><img src="https://img.shields.io/pypi/dm/agent-aegis?label=downloads&color=brightgreen" alt="Downloads"></a>
   <a href="https://github.com/Acacian/aegis"><img src="https://img.shields.io/github/stars/Acacian/aegis?style=social" alt="GitHub stars"></a>
   <br/>
-  <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-1950_passed-brightgreen" alt="Tests"></a>
+  <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-2238_passed-brightgreen" alt="Tests"></a>
   <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/coverage-92%25-brightgreen" alt="Coverage"></a>
   <a href="https://acacian.github.io/aegis/playground/"><img src="https://img.shields.io/badge/playground-Try_it_Live-ff6b6b" alt="Playground"></a>
 </p>
@@ -41,74 +41,53 @@
 
 ---
 
-## The Problem
+## Without Aegis vs. With Aegis
 
-AI agents are getting real-world access. Without governance, a hallucinating agent can:
-
-- Bulk-delete your CRM contacts
-- Submit wrong forms to government portals
-- Trigger irreversible API calls at 3am
-- Run up cloud bills with infinite loops
-
-**There's no `sudo` for AI agents. Until now.**
-
-## The Solution
-
-Aegis is a **Python middleware** that sits between your AI agent and the actions it takes. It's not a separate server you have to run -- you import it directly into your agent code and it wraps every action with policy checks, approval gates, and audit logging.
-
-```
-Your Agent                    Aegis                         Real World
-    |                           |                               |
-    |-- "delete all users" ---> |                               |
-    |                      [Policy check]                       |
-    |                      risk=CRITICAL                        |
-    |                      approval=BLOCK                       |
-    |                           |--- X (blocked, logged) -----> |
-    |                           |                               |
-    |-- "read contacts" ------> |                               |
-    |                      [Policy check]                       |
-    |                      risk=LOW                             |
-    |                      approval=AUTO                        |
-    |                           |--- execute (logged) --------> |
-    |                           |                               |
-    |-- "bulk update 500" ----> |                               |
-    |                      [Policy check]                       |
-    |                      risk=HIGH                            |
-    |                      approval=APPROVE                     |
-    |                           |--- ask human (Slack/CLI) ---> |
-    |                           |<-- "approved" --------------- |
-    |                           |--- execute (logged) --------> |
-```
-
-**Copy, paste, run — zero config needed:**
+**Without Aegis** — scattered if/else, no audit trail, breaks when you add new tools:
 
 ```python
-from aegis import Action, Policy
-
-policy = Policy.from_dict({
-    "version": "1",
-    "defaults": {"risk_level": "low", "approval": "auto"},
-    "rules": [{"name": "block_delete", "match": {"type": "delete_*"},
-               "risk_level": "critical", "approval": "block"}]
-})
-
-safe = policy.evaluate(Action(type="read_users", target="db"))
-print(safe.approval)   # Approval.AUTO  ✅
-
-danger = policy.evaluate(Action(type="delete_users", target="db"))
-print(danger.approval)  # Approval.BLOCK 🚫
+async def handle_agent_action(tool_name, args):
+    if tool_name == "delete_users":
+        raise Exception("Blocked")                              # fragile
+    if tool_name.startswith("bulk_") and args.get("count", 0) > 100:
+        approved = await ask_slack_approval(tool_name, args)     # custom per-tool
+        if not approved:
+            raise Exception("Denied")
+    if tool_name == "deploy" and datetime.now().hour >= 18:
+        raise Exception("No deploys after hours")               # hardcoded
+    result = await execute(tool_name, args)
+    # No audit. No consistency. Repeat for every agent, every framework.
+    return result
 ```
 
-Or with a YAML file — **3 lines:**
+**With Aegis** — one YAML file governs everything, with audit trail and approval gates built in:
+
+```yaml
+# policy.yaml
+rules:
+  - name: block_deletes
+    match: { type: "delete*" }
+    approval: block
+
+  - name: bulk_approval
+    match: { type: "bulk_*" }
+    conditions: { param_gt: { count: 100 } }
+    approval: approve          # asks human via Slack, CLI, Discord, etc.
+
+  - name: no_after_hours
+    match: { type: "deploy*" }
+    conditions: { time_after: "18:00" }
+    approval: block
+```
 
 ```python
-from aegis import Action, Policy, Runtime
+from aegis import Policy, Runtime
 
-runtime = Runtime(executor=your_executor, policy=Policy.from_yaml("policy.yaml"))
-results = await runtime.run_one(Action("write", "salesforce", params={...}))
+runtime = Runtime(executor=my_executor, policy=Policy.from_yaml("policy.yaml"))
+result = await runtime.run_one(action)  # policy check + approval + audit — done.
 ```
 
-**No servers to deploy. No Kubernetes. No vendor lock-in.** One `pip install`, one YAML file, and your agent has policy checks, human approval gates, and a full audit trail — across any AI provider.
+**One `pip install`. One YAML file. Works across LangChain, CrewAI, OpenAI, Anthropic, and MCP.** Full audit trail, human approval gates, and regulatory compliance — without deploying a single server.
 
 ## How It Works
 
@@ -279,46 +258,63 @@ aegis audit
 
 ## Features
 
-| Feature | Description |
-|---------|-------------|
-| **YAML policies** | Glob matching, first-match-wins, JSON Schema for validation |
-| **Smart conditions** | `time_after`, `time_before`, `weekdays`, `param_gt/lt/eq/contains/matches` |
-| **Semantic conditions** | Two-tier architecture: built-in keyword matching + pluggable LLM evaluator protocol |
+**Core** — what you get out of the box:
+
+| | |
+|---|---|
+| **YAML policies** | Glob matching, first-match-wins, smart conditions (`time_after`, `param_gt`, `weekdays`, regex, etc.) |
 | **4-tier risk model** | `low` / `medium` / `high` / `critical` with per-rule overrides |
 | **Approval gates** | CLI, Slack, Discord, Telegram, email, webhook, or custom |
-| **Audit trail** | SQLite, JSONL export, Python `logging`, or webhook to external SIEM |
-| **Behavioral anomaly detection** | Learns per-agent behavior profiles; detects rate spikes, bursts, new actions, unusual targets |
-| **Compliance reports** | Generate SOC2/GDPR/governance reports from audit logs with scoring |
-| **Policy diff & impact** | Compare policies, replay actions, analyze impact of rule changes |
-| **Agent trust chain** | Hierarchical identity, delegation with intersection semantics, cascade revocation |
-| **`aegis scan`** | AST-based static analysis detecting ungoverned AI tool calls in your codebase |
-| **`aegis score`** | Governance scoring (0-100) with shields.io badge generation |
-| **REST API server** | `aegis serve policy.yaml` -- govern from any language via HTTP |
-| **Web Dashboard** | Real-time governance dashboard with KPIs, audit log, compliance reports, anomaly detection |
-| **MCP adapter** | Govern Model Context Protocol tool calls |
-| **Retry & rollback** | Exponential backoff, error filters, automatic rollback on failure |
-| **Dry-run & simulate** | Test policies without executing: `aegis simulate policy.yaml read:crm` |
-| **Hot-reload** | `runtime.update_policy(...)` -- swap policies without restart |
-| **Policy merge** | `Policy.from_yaml_files("base.yaml", "prod.yaml")` -- layer configs |
-| **Runtime hooks** | Async callbacks for `on_decision`, `on_approval`, `on_execute` |
-| **Rate limiter** | Per-agent and global sliding-window rate limits with glob matching |
-| **RBAC** | 12 granular permissions, 5 hierarchical roles (viewer → super_admin), thread-safe |
-| **Policy versioning** | Git-like commit, diff, rollback, tagging with JSON persistence |
-| **Multi-tenant isolation** | `TenantContext` (contextvars), tenant registry, quota enforcement, data isolation |
-| **Cryptographic audit chain** | SHA-256/SHA3-256 hash-linked tamper-evident audit trail for EU AI Act Art.12 |
-| **Regulatory mapper** | EU AI Act, NIST AI RMF, SOC2, ISO 42001 gap analysis with evidence generation |
-| **Webhook notifications** | Slack, PagerDuty, generic JSON with severity filtering |
-| **Action replay** | What-if policy analysis by replaying historical actions against new rules |
-| **Policy-as-Code SDK** | Fluent `PolicyBuilder` API for programmatic policy construction |
-| **Policy testing framework** | Automated rule testing, regression detection, test auto-generation |
-| **GitHub Action** | CI/CD governance gates: `aegis validate`, `aegis scan`, `aegis score` in your pipeline |
-| **Natural language policies** | `aegis autopolicy "block deletes, allow reads"` -- generates YAML from English (Tier 1: keyword, Tier 2: LLM) |
-| **Adversarial probe** | `aegis probe policy.yaml` -- automated gap detection: glob bypass, escalation, missing coverage |
-| **Real-time monitor** | Terminal dashboard for live governance activity |
-| **Type-safe** | Full `mypy --strict` compliance, `py.typed` marker |
-| **9 policy templates** | Pre-built for CRM, code, finance, browser, DevOps, healthcare, and more |
-| **Interactive playground** | [Try in browser](https://acacian.github.io/aegis/playground/) -- no install needed |
-| **Docker ready** | [`examples/docker/`](examples/docker/) -- deploy REST API in one command |
+| **Audit trail** | Automatic SQLite logging. Export: JSONL, webhook, or query via CLI/API |
+| **7 adapters** | LangChain, CrewAI, OpenAI Agents, Anthropic, MCP, Playwright, httpx |
+| **REST API + Dashboard** | `aegis serve policy.yaml` — web UI with KPIs, audit log, compliance reports |
+
+**Enterprise** — production-grade governance:
+
+| | |
+|---|---|
+| **Cryptographic audit chain** | SHA-256/SHA3-256 hash-linked tamper-evident trail (EU AI Act Art.12, SOC2 CC7.2) |
+| **Regulatory mapper** | EU AI Act, NIST AI RMF, SOC2, ISO 42001, OWASP Agentic Top 10 — gap analysis + evidence |
+| **Behavioral anomaly detection** | Per-agent profiling, auto-policy generation from observed behavior |
+| **RBAC** | 12 permissions, 5 hierarchical roles, thread-safe AccessController |
+| **Multi-tenant isolation** | TenantContext, quota enforcement, data separation |
+| **Policy versioning** | Git-like commit, diff, rollback, tagging |
+
+**MCP Supply Chain Security** — defense-in-depth for MCP tool calls:
+
+| | |
+|---|---|
+| **Tool poisoning detection** | 10 regex patterns against Unicode-normalized text, schema recursion |
+| **Rug pull detection** | SHA-256 hash pinning, definition change alerts |
+| **Argument sanitization** | Path traversal, command injection, null byte detection |
+| **Trust scoring (L0-L4)** | Automated trust levels from scan + pin + audit status |
+| **Vulnerability database** | 8 built-in CVEs for popular MCP servers, version-range matching, auto-block |
+| **SBOM generation** | CycloneDX-inspired bill of materials with vulnerability overlay |
+| **Session replay** | Record/replay agent sessions with retroactive security scanning (20 patterns) |
+
+**Multi-Agent Governance:**
+
+| | |
+|---|---|
+| **Cost circuit breaker** | 17 model pricing entries, loop detection, hierarchical budgets, thread-safe |
+| **Cross-framework cost tracking** | LangChain + OpenAI + Anthropic + Google → unified CostTracker |
+| **Multi-agent cost attribution** | Delegation trees, subtree rollup, formatted attribution reports |
+| **A2A communication governance** | Capability-gated messaging, PII/credential redaction, rate limiting, audit log |
+| **Policy-as-code Git integration** | Diff formatting, impact analysis, drift detection, YAML export |
+| **OpenTelemetry export** | Policy/cost/anomaly/MCP events → OTel spans, in-memory fallback |
+
+**Developer experience:**
+
+| | |
+|---|---|
+| **`aegis scan`** | AST-based detection of ungoverned AI calls in your codebase |
+| **`aegis probe`** | Adversarial policy testing — glob bypass, missing coverage, escalation |
+| **`aegis autopolicy`** | Natural language → YAML (`"block deletes, allow reads"`) |
+| **`aegis score`** | Governance coverage 0-100 with shields.io badge |
+| **Policy-as-Code SDK** | Fluent `PolicyBuilder` API for programmatic construction |
+| **GitHub Action** | CI/CD governance gates in your pipeline |
+| **9 policy templates** | Pre-built for CRM, finance, DevOps, healthcare, and more |
+| **[Interactive playground](https://acacian.github.io/aegis/playground/)** | Try in browser — no install needed |
 
 ## Real-World Use Cases
 
@@ -1017,6 +1013,16 @@ aegis/
   core/autopolicy    Natural language -> YAML policy generation (keyword + LLM)
   core/probe         Adversarial policy testing -- gap detection, bypass attempts
   core/tiers         Enterprise tier system -- feature gating with soft nudge
+  core/mcp_security  MCP supply chain security -- poisoning, rug pull, sanitization, trust scoring
+  core/mcp_vuln_db   MCP vulnerability database -- CVE matching, version ranges, auto-block
+  core/mcp_sbom      MCP server SBOM generation -- tool catalog, vulnerability overlay, JSON export
+  core/budget        Cost circuit breaker -- 17 model pricing, loop detection, hierarchical budgets
+  core/cost_callbacks  Cross-framework cost tracking -- LangChain, OpenAI, Anthropic, Google
+  core/cost_attribution  Multi-agent cost attribution -- delegation trees, subtree rollup
+  core/a2a_governance  Agent-to-agent communication governance -- capability gates, content filter
+  core/policy_git    Policy-as-code Git integration -- diff, impact analysis, drift detection
+  core/otel_export   OpenTelemetry export -- governance events → OTel spans
+  core/session_replay  Session replay -- record/replay with retroactive security scanning
   adapters/          BaseExecutor, Playwright, httpx, LangChain, CrewAI, OpenAI, Anthropic, MCP
   runtime/           Runtime engine, ApprovalHandler, AuditLogger (SQLite/JSONL/webhook/logging)
   server/            REST API (Starlette ASGI) -- evaluate, execute, audit, policy endpoints
@@ -1026,28 +1032,13 @@ aegis/
 
 ## Why Aegis?
 
-There are many ways to add governance to AI agents. Here's how they compare:
-
-### vs. Writing Your Own
-
-| | DIY | Aegis |
-|---|---|---|
-| **Policy engine** | Custom if/else per action | YAML rules + glob + conditions |
-| **Risk model** | Hardcoded | 4-tier with per-rule overrides |
-| **Human approval** | Build your own | Pluggable (CLI, Slack, Discord, Telegram, email, webhook) |
-| **Audit trail** | printf debugging | SQLite + JSONL + session tracking |
-| **Framework support** | Rewrite per framework | 7 adapters out of the box |
-| **Retry & rollback** | DIY error handling | Exponential backoff + automatic rollback |
-| **Type safety** | Maybe | mypy strict, py.typed |
-| **Time to integrate** | Days | Minutes |
-
-### vs. Platform-Native Guardrails
-
-OpenAI, Google, and Anthropic each ship built-in guardrails — but they only govern their own ecosystem. If your agent calls OpenAI **and** Anthropic, or uses LangChain **and** MCP tools, you need one governance layer that works across all of them. That's Aegis.
-
-### vs. Enterprise Governance Platforms
-
-Enterprise platforms like centralized control planes need Kubernetes clusters, cloud infrastructure, and procurement cycles. Aegis is a **library** — `pip install` and you have governance in 5 minutes. Start with a library, graduate to a platform when you need to.
+| | Writing your own | Platform guardrails | Enterprise platforms | **Aegis** |
+|---|---|---|---|---|
+| **Setup** | Days of if/else | Vendor-specific config | Kubernetes + procurement | **`pip install` + YAML** |
+| **Cross-framework** | Rewrite per framework | Their ecosystem only | Usually single-vendor | **LangChain + CrewAI + OpenAI + Anthropic + MCP** |
+| **Audit trail** | printf debugging | Platform logs only | Cloud dashboard | **SQLite + JSONL + webhooks — local, no infra** |
+| **Compliance** | Manual documentation | None | Enterprise sales cycle | **EU AI Act, NIST, SOC2, ISO 42001 built-in** |
+| **Cost** | Engineering time | Free-to-$$$ per vendor | $$$$ + infra | **Free (MIT). Forever.** |
 
 ## CLI
 
@@ -1081,8 +1072,9 @@ aegis probe policy.yaml                            # Adversarial policy testing
 | **0.1.5** | **Released** | Behavioral anomaly detection, compliance report generator (SOC2/GDPR), policy diff & impact analysis, semantic conditions engine, agent trust chain, `aegis scan` (static analysis), `aegis score` (governance scoring + badge) |
 | **0.1.7** | **Released** | Cryptographic audit chain, rate limiter, RBAC, policy versioning, multi-tenant isolation, regulatory mapper (EU AI Act/NIST/SOC2/ISO 42001), webhook notifications, action replay, PolicyBuilder SDK, policy testing framework, real-time monitor, GitHub Action |
 | **0.1.9** | **Released** | Web governance dashboard (7 pages, 11 API endpoints), `aegis serve` with dashboard, natural language autopolicy, adversarial probe |
-| **0.2** | Q2 2026 | Queue-based async execution, WebSocket real-time updates |
-| **0.3** | Q3 2026 | Centralized policy server, cross-agent audit correlation |
+| **0.2** | **Released** | LangChain AgentMiddleware, CrewAI GuardrailProvider, OpenAI Agents native guardrails, OWASP Agentic Top 10, HTML compliance reports, interactive playground + challenge |
+| **0.3** | **Released** | MCP supply chain security (poisoning/rug pull/SBOM/vuln DB), cost circuit breaker (17 models), cross-framework cost tracking (LangChain/OpenAI/Anthropic/Google), A2A communication governance, session replay with retroactive scanning, OpenTelemetry export, policy Git integration |
+| **0.4** | Q3 2026 | Centralized policy server, cross-agent audit correlation |
 | **1.0** | 2027 | Distributed governance, hosted SaaS, SSO/SCIM |
 
 ## Contributing
