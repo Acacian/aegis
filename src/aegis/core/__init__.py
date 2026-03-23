@@ -5,6 +5,11 @@ Import from the top-level ``aegis`` package for convenience::
     from aegis import Action, Policy, Runtime
 """
 
+from aegis.core.a2a_governance import (
+    A2ADecision,
+    A2AGovernor,
+    A2AMessage,
+)
 from aegis.core.action import Action
 from aegis.core.agent_identity import AgentIdentity, AgentRegistry, DelegationEvent
 from aegis.core.anomaly import AnomalyDetector, AnomalyResult, BehaviorProfile
@@ -30,6 +35,12 @@ from aegis.core.crypto_audit import (
     CryptoAuditChain,
     EvidencePackage,
     VerificationResult,
+)
+from aegis.core.mcp_sbom import (
+    SBOM,
+    MCPServerInfo,
+    MCPToolInfo,
+    SBOMGenerator,
 )
 from aegis.core.mcp_security import (
     ArgumentSanitizer,
@@ -68,6 +79,9 @@ from aegis.core.session_replay import (
 )
 
 __all__ = [
+    "A2ADecision",
+    "A2AGovernor",
+    "A2AMessage",
     "Action",
     "AegisEvent",
     "AegisOTelExporter",
@@ -97,6 +111,8 @@ __all__ = [
     "LangChainCostCallback",
     "MCPFinding",
     "MCPSecurityGate",
+    "MCPServerInfo",
+    "MCPToolInfo",
     "MCPVulnDB",
     "ModelPricing",
     "OpenAICostExtractor",
@@ -118,6 +134,8 @@ __all__ = [
     "RuleBuilder",
     "RetryPolicy",
     "RiskLevel",
+    "SBOM",
+    "SBOMGenerator",
     "SEMANTIC_CATEGORIES",
     "SemanticEvaluator",
     "SessionRecorder",
