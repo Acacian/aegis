@@ -78,6 +78,7 @@ def test_version(capsys):
         main(["--version"])
     captured = capsys.readouterr()
     from aegis import __version__
+
     assert f"aegis {__version__}" in captured.out
 
 
@@ -87,7 +88,7 @@ def test_init_creates_policy(tmp_path: Path, capsys):
     captured = capsys.readouterr()
     assert "Created" in captured.out
     assert output.exists()
-    content = output.read_text()
+    content = output.read_text(encoding="utf-8")
     assert 'version: "1"' in content
     assert "read_auto" in content
     assert "delete_block" in content

@@ -23,7 +23,6 @@ import dataclasses
 import fnmatch
 import itertools
 import logging
-from typing import Any
 
 from aegis.core.action import Action
 from aegis.core.policy import Approval, Policy, PolicyDecision
@@ -102,27 +101,67 @@ class ProbeReport:
 
 # Common destructive action types that should be governed
 _DESTRUCTIVE_TYPES = [
-    "delete", "delete_all", "drop", "destroy", "remove", "purge",
-    "truncate", "kill", "terminate", "format", "wipe",
+    "delete",
+    "delete_all",
+    "drop",
+    "destroy",
+    "remove",
+    "purge",
+    "truncate",
+    "kill",
+    "terminate",
+    "format",
+    "wipe",
 ]
 
 # Common sensitive action types that should require approval
 _SENSITIVE_TYPES = [
-    "write", "update", "modify", "edit", "patch", "create",
-    "send", "send_email", "post", "publish", "deploy",
-    "transfer", "payment", "refund", "charge",
-    "export", "download", "upload", "share",
+    "write",
+    "update",
+    "modify",
+    "edit",
+    "patch",
+    "create",
+    "send",
+    "send_email",
+    "post",
+    "publish",
+    "deploy",
+    "transfer",
+    "payment",
+    "refund",
+    "charge",
+    "export",
+    "download",
+    "upload",
+    "share",
 ]
 
 # Common safe action types (should be auto-approved)
 _SAFE_TYPES = [
-    "read", "get", "list", "search", "query", "fetch", "view", "lookup",
+    "read",
+    "get",
+    "list",
+    "search",
+    "query",
+    "fetch",
+    "view",
+    "lookup",
 ]
 
 # Common targets
 _TARGETS = [
-    "db", "database", "prod", "production", "staging", "crm",
-    "filesystem", "api", "email", "users", "accounts",
+    "db",
+    "database",
+    "prod",
+    "production",
+    "staging",
+    "crm",
+    "filesystem",
+    "api",
+    "email",
+    "users",
+    "accounts",
 ]
 
 # Glob bypass patterns — variants that might slip through naive globs
@@ -200,34 +239,36 @@ class PolicyProbe:
                 probed.append((action, decision))
 
                 if decision.approval == Approval.AUTO:
-                    findings.append(ProbeFinding(
-                        severity="critical",
-                        category="missing_coverage",
-                        description=(
-                            f"Destructive action '{action_type}' on '{target}' "
-                            f"is auto-approved (no governance)"
-                        ),
-                        action=action,
-                        decision=decision,
-                        recommendation=(
-                            f"Add a rule to block or require approval for "
-                            f"'{action_type}' actions"
-                        ),
-                    ))
+                    findings.append(
+                        ProbeFinding(
+                            severity="critical",
+                            category="missing_coverage",
+                            description=(
+                                f"Destructive action '{action_type}' on '{target}' "
+                                f"is auto-approved (no governance)"
+                            ),
+                            action=action,
+                            decision=decision,
+                            recommendation=(
+                                f"Add a rule to block or require approval for "
+                                f"'{action_type}' actions"
+                            ),
+                        )
+                    )
                 elif decision.approval == Approval.APPROVE and not decision.matched_rule:
-                    findings.append(ProbeFinding(
-                        severity="high",
-                        category="missing_coverage",
-                        description=(
-                            f"Destructive action '{action_type}' on '{target}' "
-                            f"matched only the default rule"
-                        ),
-                        action=action,
-                        decision=decision,
-                        recommendation=(
-                            f"Add an explicit rule for '{action_type}' actions"
-                        ),
-                    ))
+                    findings.append(
+                        ProbeFinding(
+                            severity="high",
+                            category="missing_coverage",
+                            description=(
+                                f"Destructive action '{action_type}' on '{target}' "
+                                f"matched only the default rule"
+                            ),
+                            action=action,
+                            decision=decision,
+                            recommendation=(f"Add an explicit rule for '{action_type}' actions"),
+                        )
+                    )
 
         return findings, probed
 
@@ -263,21 +304,22 @@ class PolicyProbe:
                     if decision.is_allowed and not any(
                         fnmatch.fnmatch(variant, gt) for gt in governed_types
                     ):
-                        findings.append(ProbeFinding(
-                            severity="high",
-                            category="glob_bypass",
-                            description=(
-                                f"'{variant}' bypasses block rule '{rule.name}' "
-                                f"(pattern: '{rule.match_type}') — "
-                                f"got {decision.approval.value}"
-                            ),
-                            action=action,
-                            decision=decision,
-                            recommendation=(
-                                f"Broaden the glob pattern or add a rule for "
-                                f"'{variant}'"
-                            ),
-                        ))
+                        findings.append(
+                            ProbeFinding(
+                                severity="high",
+                                category="glob_bypass",
+                                description=(
+                                    f"'{variant}' bypasses block rule '{rule.name}' "
+                                    f"(pattern: '{rule.match_type}') — "
+                                    f"got {decision.approval.value}"
+                                ),
+                                action=action,
+                                decision=decision,
+                                recommendation=(
+                                    f"Broaden the glob pattern or add a rule for '{variant}'"
+                                ),
+                            )
+                        )
 
         return findings, probed
 
@@ -296,20 +338,22 @@ class PolicyProbe:
             probed.append((action, decision))
 
             if decision.approval == Approval.AUTO and not decision.matched_rule:
-                findings.append(ProbeFinding(
-                    severity="medium",
-                    category="default_fallthrough",
-                    description=(
-                        f"Sensitive action '{action_type}' hits permissive "
-                        f"default (auto-approved, no explicit rule)"
-                    ),
-                    action=action,
-                    decision=decision,
-                    recommendation=(
-                        f"Add an explicit rule for '{action_type}' or tighten "
-                        f"the default approval to 'approve'"
-                    ),
-                ))
+                findings.append(
+                    ProbeFinding(
+                        severity="medium",
+                        category="default_fallthrough",
+                        description=(
+                            f"Sensitive action '{action_type}' hits permissive "
+                            f"default (auto-approved, no explicit rule)"
+                        ),
+                        action=action,
+                        decision=decision,
+                        recommendation=(
+                            f"Add an explicit rule for '{action_type}' or tighten "
+                            f"the default approval to 'approve'"
+                        ),
+                    )
+                )
 
         return findings, probed
 
@@ -323,9 +367,16 @@ class PolicyProbe:
         probed: list[tuple[Action, PolicyDecision]] = []
 
         escalation_types = [
-            "read_then_delete", "search_and_destroy", "list_and_purge",
-            "get_admin_access", "view_then_export", "query_and_transfer",
-            "read_delete", "safe_destroy", "auto_purge", "quick_drop",
+            "read_then_delete",
+            "search_and_destroy",
+            "list_and_purge",
+            "get_admin_access",
+            "view_then_export",
+            "query_and_transfer",
+            "read_delete",
+            "safe_destroy",
+            "auto_purge",
+            "quick_drop",
         ]
 
         for action_type in escalation_types:
@@ -334,20 +385,22 @@ class PolicyProbe:
             probed.append((action, decision))
 
             if decision.is_allowed:
-                findings.append(ProbeFinding(
-                    severity="medium",
-                    category="escalation",
-                    description=(
-                        f"Escalation pattern '{action_type}' is allowed "
-                        f"({decision.approval.value}) — may hide destructive intent"
-                    ),
-                    action=action,
-                    decision=decision,
-                    recommendation=(
-                        "Consider adding semantic conditions to detect "
-                        "compound destructive patterns"
-                    ),
-                ))
+                findings.append(
+                    ProbeFinding(
+                        severity="medium",
+                        category="escalation",
+                        description=(
+                            f"Escalation pattern '{action_type}' is allowed "
+                            f"({decision.approval.value}) — may hide destructive intent"
+                        ),
+                        action=action,
+                        decision=decision,
+                        recommendation=(
+                            "Consider adding semantic conditions to detect "
+                            "compound destructive patterns"
+                        ),
+                    )
+                )
 
         return findings, probed
 
@@ -369,19 +422,18 @@ class PolicyProbe:
             probed.append((action, decision))
 
             if decision.approval == Approval.AUTO:
-                findings.append(ProbeFinding(
-                    severity="high",
-                    category="target_gap",
-                    description=(
-                        f"'{action_type}' on sensitive target '{target}' "
-                        f"is auto-approved"
-                    ),
-                    action=action,
-                    decision=decision,
-                    recommendation=(
-                        f"Add a target-specific rule for '{target}'"
-                    ),
-                ))
+                findings.append(
+                    ProbeFinding(
+                        severity="high",
+                        category="target_gap",
+                        description=(
+                            f"'{action_type}' on sensitive target '{target}' is auto-approved"
+                        ),
+                        action=action,
+                        decision=decision,
+                        recommendation=(f"Add a target-specific rule for '{target}'"),
+                    )
+                )
 
         return findings, probed
 
@@ -399,20 +451,21 @@ class PolicyProbe:
                 action = Action(type="any_action", target="any_target")
                 decision = policy.evaluate(action)
                 probed.append((action, decision))
-                findings.append(ProbeFinding(
-                    severity="critical",
-                    category="overly_permissive",
-                    description=(
-                        f"Rule '{rule.name}' auto-approves ALL actions "
-                        f"(match type='*')"
-                    ),
-                    action=action,
-                    decision=decision,
-                    recommendation=(
-                        "Replace wildcard auto-approve with specific rules, "
-                        "or change default to 'approve'"
-                    ),
-                ))
+                findings.append(
+                    ProbeFinding(
+                        severity="critical",
+                        category="overly_permissive",
+                        description=(
+                            f"Rule '{rule.name}' auto-approves ALL actions (match type='*')"
+                        ),
+                        action=action,
+                        decision=decision,
+                        recommendation=(
+                            "Replace wildcard auto-approve with specific rules, "
+                            "or change default to 'approve'"
+                        ),
+                    )
+                )
 
         return findings, probed
 
@@ -437,9 +490,7 @@ class PolicyProbe:
                 for suffix in _BYPASS_SUFFIXES:
                     if not prefix and not suffix:
                         continue
-                    actions.append(Action(
-                        type=f"{prefix}{base}{suffix}", target="test"
-                    ))
+                    actions.append(Action(type=f"{prefix}{base}{suffix}", target="test"))
         return actions
 
     @staticmethod
@@ -447,8 +498,11 @@ class PolicyProbe:
         return [
             Action(type=t, target="production")
             for t in [
-                "read_then_delete", "search_and_destroy",
-                "list_and_purge", "get_admin_access",
-                "view_then_export", "safe_destroy",
+                "read_then_delete",
+                "search_and_destroy",
+                "list_and_purge",
+                "get_admin_access",
+                "view_then_export",
+                "safe_destroy",
             ]
         ]

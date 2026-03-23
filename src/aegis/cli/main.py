@@ -281,7 +281,8 @@ def main(argv: list[str] | None = None) -> None:
         help='Natural language policy description (e.g. "block deletes, allow reads")',
     )
     auto_parser.add_argument(
-        "-o", "--output",
+        "-o",
+        "--output",
         default=None,
         help="Output file path (default: print to stdout)",
     )
@@ -570,7 +571,7 @@ def _cmd_init(args: argparse.Namespace) -> None:
         print(f"File already exists: {output}", file=sys.stderr)
         sys.exit(1)
 
-    output.write_text(_INIT_POLICY)
+    output.write_text(_INIT_POLICY, encoding="utf-8")
     print(f"Created {output}")
     print("Edit the rules to match your agent's actions, then:")
     print(f"  aegis validate {output}")

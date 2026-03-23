@@ -106,6 +106,8 @@ class HttpxExecutor(BaseExecutor):
         url = action.target
         params = action.params
 
+        assert self._client is not None
+
         try:
             import httpx
 

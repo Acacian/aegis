@@ -79,20 +79,95 @@ class PolicyGenerator(Protocol):
 # Maps action verbs to glob patterns and default risk levels.
 _ACTION_PATTERNS: list[tuple[re.Pattern[str], str, str, str]] = [
     # (regex, match_type glob, default_risk, default_approval)
-    (re.compile(r"\b(?:block|deny|forbid|prohibit|prevent)\b.*\b(?:delet|drop|destroy|remov|purg|truncat|kill|terminat)", re.I), "delete*", "critical", "block"),
-    (re.compile(r"\b(?:block|deny|forbid|prohibit|prevent)\b.*\b(?:export|download|transfer)", re.I), "export*", "high", "block"),
-    (re.compile(r"\b(?:block|deny|forbid|prohibit|prevent)\b.*\b(?:all|every)", re.I), "*", "critical", "block"),
-    (re.compile(r"\b(?:block|deny|forbid|prohibit|prevent)\b.*\b(\w+)", re.I), "{0}*", "critical", "block"),
-    (re.compile(r"\b(?:allow|auto|permit)\b.*\b(?:read|search|list|get|fetch|view|query|lookup)", re.I), "read*", "low", "auto"),
+    (
+        re.compile(
+            r"\b(?:block|deny|forbid|prohibit|prevent)\b.*\b(?:delet|drop|destroy|remov|purg|truncat|kill|terminat)",
+            re.I,
+        ),
+        "delete*",
+        "critical",
+        "block",
+    ),
+    (
+        re.compile(
+            r"\b(?:block|deny|forbid|prohibit|prevent)\b.*\b(?:export|download|transfer)", re.I
+        ),
+        "export*",
+        "high",
+        "block",
+    ),
+    (
+        re.compile(r"\b(?:block|deny|forbid|prohibit|prevent)\b.*\b(?:all|every)", re.I),
+        "*",
+        "critical",
+        "block",
+    ),
+    (
+        re.compile(r"\b(?:block|deny|forbid|prohibit|prevent)\b.*\b(\w+)", re.I),
+        "{0}*",
+        "critical",
+        "block",
+    ),
+    (
+        re.compile(
+            r"\b(?:allow|auto|permit)\b.*\b(?:read|search|list|get|fetch|view|query|lookup)", re.I
+        ),
+        "read*",
+        "low",
+        "auto",
+    ),
     (re.compile(r"\b(?:allow|auto|permit)\b.*\b(?:all|every)", re.I), "*", "low", "auto"),
     (re.compile(r"\b(?:allow|auto|permit)\b.*\b(\w+)", re.I), "{0}*", "low", "auto"),
-    (re.compile(r"\b(?:approv|review|confirm|human)\b.*\b(?:writ|updat|modif|edit|chang|patch)", re.I), "write*", "medium", "approve"),
-    (re.compile(r"\b(?:approv|review|confirm|human)\b.*\b(?:send|email|messag|notif)", re.I), "send*", "medium", "approve"),
-    (re.compile(r"\b(?:approv|review|confirm|human)\b.*\b(?:deploy|releas|publish)", re.I), "deploy*", "high", "approve"),
-    (re.compile(r"\b(?:approv|review|confirm|human)\b.*\b(\w+)", re.I), "{0}*", "medium", "approve"),
-    (re.compile(r"\b(?:read|search|list|get|fetch|view|query|lookup)\b.*\b(?:auto|safe|allow)", re.I), "read*", "low", "auto"),
-    (re.compile(r"\b(?:delet|drop|destroy|remov|purg|truncat)\b.*\b(?:block|deny|never|forbid)", re.I), "delete*", "critical", "block"),
-    (re.compile(r"\b(?:writ|updat|modif|edit|chang|patch)\b.*\b(?:approv|review|confirm)", re.I), "write*", "medium", "approve"),
+    (
+        re.compile(
+            r"\b(?:approv|review|confirm|human)\b.*\b(?:writ|updat|modif|edit|chang|patch)", re.I
+        ),
+        "write*",
+        "medium",
+        "approve",
+    ),
+    (
+        re.compile(r"\b(?:approv|review|confirm|human)\b.*\b(?:send|email|messag|notif)", re.I),
+        "send*",
+        "medium",
+        "approve",
+    ),
+    (
+        re.compile(r"\b(?:approv|review|confirm|human)\b.*\b(?:deploy|releas|publish)", re.I),
+        "deploy*",
+        "high",
+        "approve",
+    ),
+    (
+        re.compile(r"\b(?:approv|review|confirm|human)\b.*\b(\w+)", re.I),
+        "{0}*",
+        "medium",
+        "approve",
+    ),
+    (
+        re.compile(
+            r"\b(?:read|search|list|get|fetch|view|query|lookup)\b.*\b(?:auto|safe|allow)", re.I
+        ),
+        "read*",
+        "low",
+        "auto",
+    ),
+    (
+        re.compile(
+            r"\b(?:delet|drop|destroy|remov|purg|truncat)\b.*\b(?:block|deny|never|forbid)", re.I
+        ),
+        "delete*",
+        "critical",
+        "block",
+    ),
+    (
+        re.compile(
+            r"\b(?:writ|updat|modif|edit|chang|patch)\b.*\b(?:approv|review|confirm)", re.I
+        ),
+        "write*",
+        "medium",
+        "approve",
+    ),
 ]
 
 # Condition patterns (param thresholds, time restrictions, etc.)
@@ -100,7 +175,11 @@ _CONDITION_PATTERNS: list[tuple[re.Pattern[str], str, Any]] = [
     (re.compile(r"\bmore than (?:\$)?(\d[\d,]*)", re.I), "param_gt", "amount"),
     (re.compile(r"\bover (?:\$)?(\d[\d,]*)", re.I), "param_gt", "amount"),
     (re.compile(r"\bexceed(?:s|ing)? (?:\$)?(\d[\d,]*)", re.I), "param_gt", "amount"),
-    (re.compile(r"\b(?:greater|larger|bigger) than (?:\$)?(\d[\d,]*)", re.I), "param_gt", "amount"),
+    (
+        re.compile(r"\b(?:greater|larger|bigger) than (?:\$)?(\d[\d,]*)", re.I),
+        "param_gt",
+        "amount",
+    ),
     (re.compile(r"\bcount\b.*?(?:>|more than|over|exceed)\s*(\d+)", re.I), "param_gt", "count"),
     (re.compile(r"\bafter (?:business )?hours|after (\d{1,2}:\d{2})", re.I), "time_after", None),
     (re.compile(r"\bbefore (\d{1,2}:\d{2})", re.I), "time_before", None),
