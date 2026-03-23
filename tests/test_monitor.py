@@ -10,6 +10,7 @@ import pytest
 from aegis.cli.monitor import AgentMonitor, MonitorState, _format_duration
 from aegis.core.action import Action
 from aegis.core.anomaly import AnomalyDetector
+from aegis.core.budget import CostTracker, TokenUsage
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -510,3 +511,98 @@ class TestCLIRegistration:
         # Parse args without actually running (db won't exist)
         with pytest.raises(SystemExit):
             main(["monitor", "--db", "/nonexistent/path.db"])
+
+
+# ---------------------------------------------------------------------------
+# Cost tracking integration
+# ---------------------------------------------------------------------------
+
+
+class TestCostTracking:
+    def test_no_tracker_by_default(self) -> None:
+        m = AgentMonitor()
+        assert m.cost_tracker is None
+
+    def test_tracker_attached(self) -> None:
+        tracker = CostTracker(max_budget=10.0)
+        m = AgentMonitor(cost_tracker=tracker)
+        assert m.cost_tracker is tracker
+
+    def test_record_cost_without_tracker(self) -> None:
+        m = AgentMonitor()
+        result = m.record_cost(TokenUsage(model="gpt-4o", input_tokens=100, output_tokens=50))
+        assert result is None
+
+    def test_record_cost_with_tracker(self) -> None:
+        tracker = CostTracker(max_budget=10.0)
+        m = AgentMonitor(cost_tracker=tracker)
+        record = m.record_cost(
+            TokenUsage(model="gpt-4o", input_tokens=1000, output_tokens=200),
+            agent_id="agent-1",
+        )
+        assert record is not None
+        assert record.cost > 0
+        assert tracker.spent > 0
+
+    def test_render_without_tracker_no_cost_section(self) -> None:
+        m = AgentMonitor()
+        m.record_event("read", "a", "auto", target="crm")
+        output = m.render()
+        assert "Cost Tracking" not in output
+
+    def test_render_with_tracker_shows_cost(self) -> None:
+        tracker = CostTracker(max_budget=10.0)
+        m = AgentMonitor(cost_tracker=tracker)
+        m.record_cost(TokenUsage(model="gpt-4o", input_tokens=1000, output_tokens=200))
+        m.record_event("read", "a", "auto", target="crm")
+        output = m.render()
+        assert "Cost Tracking" in output
+        assert "$" in output
+        assert "Spent:" in output
+
+    def test_render_with_unlimited_budget(self) -> None:
+        tracker = CostTracker()  # no budget limit
+        m = AgentMonitor(cost_tracker=tracker)
+        m.record_cost(TokenUsage(model="gpt-4o", input_tokens=1000, output_tokens=200))
+        m.record_event("read", "a", "auto", target="crm")
+        output = m.render()
+        assert "no budget limit" in output
+
+    def test_render_shows_model_breakdown(self) -> None:
+        tracker = CostTracker(max_budget=10.0)
+        m = AgentMonitor(cost_tracker=tracker)
+        m.record_cost(TokenUsage(model="gpt-4o", input_tokens=1000, output_tokens=200))
+        m.record_cost(TokenUsage(model="claude-sonnet-4", input_tokens=500, output_tokens=100))
+        m.record_event("read", "a", "auto", target="crm")
+        output = m.render()
+        assert "By Model:" in output
+        assert "gpt-4o" in output
+        assert "claude-sonnet-4" in output
+
+    def test_render_shows_agent_cost_breakdown(self) -> None:
+        tracker = CostTracker(max_budget=10.0)
+        m = AgentMonitor(cost_tracker=tracker)
+        m.record_cost(
+            TokenUsage(model="gpt-4o", input_tokens=1000, output_tokens=200),
+            agent_id="agent-1",
+        )
+        m.record_cost(
+            TokenUsage(model="gpt-4o", input_tokens=500, output_tokens=100),
+            agent_id="agent-2",
+        )
+        m.record_event("read", "a", "auto", target="crm")
+        output = m.render()
+        assert "By Agent:" in output
+        assert "agent-1" in output
+        assert "agent-2" in output
+
+    def test_render_shows_budget_bar(self) -> None:
+        tracker = CostTracker(max_budget=1.0)
+        m = AgentMonitor(cost_tracker=tracker)
+        # Record enough to get ~50% utilization
+        # gpt-4o output: $10/M, so 50000 tokens = $0.50
+        m.record_cost(TokenUsage(model="gpt-4o", input_tokens=0, output_tokens=50_000))
+        m.record_event("read", "a", "auto", target="crm")
+        output = m.render()
+        assert "\u2588" in output  # filled bar character
+        assert "left" in output

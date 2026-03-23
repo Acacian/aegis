@@ -20,6 +20,22 @@ class Finding:
     line: int
     category: str
     detail: str
+    owasp_risk: str = ""
+
+
+# ---------------------------------------------------------------------------
+# OWASP Agentic Top 10 mapping
+# ---------------------------------------------------------------------------
+
+# Maps finding categories to OWASP Agentic Top 10 risks (Dec 2025)
+_OWASP_MAP: dict[str, tuple[str, str]] = {
+    "OpenAI": ("ASI02", "Tool Misuse & Exploitation"),
+    "Anthropic": ("ASI02", "Tool Misuse & Exploitation"),
+    "LangChain": ("ASI02", "Tool Misuse & Exploitation"),
+    "MCP": ("ASI04", "Supply Chain Vulnerabilities"),
+    "subprocess": ("ASI08", "Uncontrolled Code Execution"),
+    "HTTP": ("ASI07", "Data Leakage & Exfiltration"),
+}
 
 
 # ---------------------------------------------------------------------------
@@ -62,12 +78,15 @@ class _ToolCallVisitor(ast.NodeVisitor):
     # -- helpers ------------------------------------------------------------
 
     def _add(self, node: ast.AST, category: str, detail: str) -> None:
+        owasp = _OWASP_MAP.get(category)
+        owasp_risk = f"{owasp[0]}: {owasp[1]}" if owasp else ""
         self.findings.append(
             Finding(
                 file=self.filepath,
                 line=getattr(node, "lineno", 0),
                 category=category,
                 detail=detail,
+                owasp_risk=owasp_risk,
             )
         )
 
@@ -301,8 +320,21 @@ def format_report(
                 rel = str(Path(f.file).relative_to(Path(directory).resolve()))
             except ValueError:
                 rel = f.file
-            lines.append(f"  {rel}:{f.line:<8}{f.category:<14}{f.detail}")
+            owasp_tag = f"  [{f.owasp_risk}]" if f.owasp_risk else ""
+            lines.append(f"  {rel}:{f.line:<8}{f.category:<14}{f.detail}{owasp_tag}")
         lines.append("")
+
+        # OWASP Agentic Top 10 summary
+        owasp_counts: dict[str, int] = {}
+        for f in findings:
+            if f.owasp_risk:
+                owasp_counts[f.owasp_risk] = owasp_counts.get(f.owasp_risk, 0) + 1
+        if owasp_counts:
+            lines.append("OWASP Agentic Top 10 Risks:")
+            for risk, count in sorted(owasp_counts.items()):
+                lines.append(f"  {risk}: {count} finding(s)")
+            lines.append("")
+
         grade = _grade(len(findings))
         lines.append(f"Governance Score: {grade} ({len(findings)} ungoverned call(s))")
     else:
