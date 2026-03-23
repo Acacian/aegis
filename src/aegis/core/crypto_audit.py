@@ -480,10 +480,7 @@ class CryptoAuditChain:
 def _html_escape(text: str) -> str:
     """Escape HTML special characters in *text*."""
     return (
-        text.replace("&", "&amp;")
-        .replace("<", "&lt;")
-        .replace(">", "&gt;")
-        .replace('"', "&quot;")
+        text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
     )
 
 
@@ -534,9 +531,7 @@ def evidence_package_to_html(package: EvidencePackage) -> str:
     risk_table = _stats_table(risk_counts, "Risk Level")
 
     # Compliance notes
-    notes_items = "\n".join(
-        f"<li>{_html_escape(note)}</li>" for note in package.compliance_notes
-    )
+    notes_items = "\n".join(f"<li>{_html_escape(note)}</li>" for note in package.compliance_notes)
 
     # Error info
     error_html = ""
@@ -609,8 +604,8 @@ def evidence_package_to_html(package: EvidencePackage) -> str:
       </div>
     </div>
     <p style="margin-top:12px;"><strong>Coverage:</strong>
-      {_html_escape(package.first_entry_time or 'N/A')} to
-      {_html_escape(package.last_entry_time or 'N/A')}</p>
+      {_html_escape(package.first_entry_time or "N/A")} to
+      {_html_escape(package.last_entry_time or "N/A")}</p>
     <p><strong>Chain Hash:</strong>
       <span class="mono">{_html_escape(package.chain_hash)}</span></p>
     <p><strong>Verification Hash:</strong>

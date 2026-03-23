@@ -16,10 +16,7 @@ from aegis.core.policy import Policy
 def _html_escape(text: str) -> str:
     """Escape HTML special characters in *text*."""
     return (
-        text.replace("&", "&amp;")
-        .replace("<", "&lt;")
-        .replace(">", "&gt;")
-        .replace('"', "&quot;")
+        text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
     )
 
 
@@ -961,10 +958,7 @@ class ReportGenerator:
         findings_html = "\n".join(findings_rows)
 
         # Recommendations (only non-info findings)
-        recs = [
-            f for f in report.findings
-            if f.severity != "info" or ": FAIL" in f.title
-        ]
+        recs = [f for f in report.findings if f.severity != "info" or ": FAIL" in f.title]
         recs_html = ""
         if recs:
             recs_items = "\n".join(
@@ -1018,10 +1012,9 @@ class ReportGenerator:
   <div class="header">
     <h1>{_html_escape(title)}</h1>
     <div class="meta">
-      Period: {report.period_start.strftime('%Y-%m-%d')}
-      to {report.period_end.strftime('%Y-%m-%d')}
-      &middot; Generated: {report.generated_at.strftime(
-        '%Y-%m-%d %H:%M UTC')}
+      Period: {report.period_start.strftime("%Y-%m-%d")}
+      to {report.period_end.strftime("%Y-%m-%d")}
+      &middot; Generated: {report.generated_at.strftime("%Y-%m-%d %H:%M UTC")}
     </div>
   </div>
 

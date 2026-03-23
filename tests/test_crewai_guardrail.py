@@ -212,9 +212,7 @@ class TestAegisGuardrailProvider:
         from aegis.adapters.crewai import AegisGuardrailProvider, GuardrailRequest
 
         provider = AegisGuardrailProvider(runtime=_make_runtime(tmp_path))
-        decision = provider.evaluate(
-            GuardrailRequest(tool_name="write", tool_input={"data": "x"})
-        )
+        decision = provider.evaluate(GuardrailRequest(tool_name="write", tool_input={"data": "x"}))
         assert decision.allow is False
         assert "approval" in decision.reason.lower()
         assert decision.metadata.get("approval_required") is True
@@ -223,14 +221,10 @@ class TestAegisGuardrailProvider:
         """Evaluation errors result in deny when fail_closed=True."""
         from aegis.adapters.crewai import AegisGuardrailProvider, GuardrailRequest
 
-        provider = AegisGuardrailProvider(
-            runtime=_make_runtime(tmp_path), fail_closed=True
-        )
+        provider = AegisGuardrailProvider(runtime=_make_runtime(tmp_path), fail_closed=True)
         # Corrupt the policy to force an error
         provider._policy = None  # type: ignore[assignment]
-        decision = provider.evaluate(
-            GuardrailRequest(tool_name="search")
-        )
+        decision = provider.evaluate(GuardrailRequest(tool_name="search"))
         assert decision.allow is False
         assert "error" in decision.reason.lower() or "fail-closed" in decision.reason.lower()
         assert decision.metadata.get("fail_closed") is True
@@ -239,13 +233,9 @@ class TestAegisGuardrailProvider:
         """Evaluation errors result in allow when fail_closed=False."""
         from aegis.adapters.crewai import AegisGuardrailProvider, GuardrailRequest
 
-        provider = AegisGuardrailProvider(
-            runtime=_make_runtime(tmp_path), fail_closed=False
-        )
+        provider = AegisGuardrailProvider(runtime=_make_runtime(tmp_path), fail_closed=False)
         provider._policy = None  # type: ignore[assignment]
-        decision = provider.evaluate(
-            GuardrailRequest(tool_name="search")
-        )
+        decision = provider.evaluate(GuardrailRequest(tool_name="search"))
         assert decision.allow is True
         assert "fail-open" in decision.reason.lower()
         assert decision.metadata.get("fail_closed") is False

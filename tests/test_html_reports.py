@@ -135,7 +135,7 @@ class TestHtmlEscape:
         assert _compliance_html_escape("hello world") == "hello world"
 
     def test_combined(self) -> None:
-        assert _compliance_html_escape('<a href="x">&') == '&lt;a href=&quot;x&quot;&gt;&amp;'
+        assert _compliance_html_escape('<a href="x">&') == "&lt;a href=&quot;x&quot;&gt;&amp;"
 
 
 # ---------------------------------------------------------------------------
@@ -477,9 +477,7 @@ class TestCliComplianceHtml:
         audit_file.write_text("\n".join(lines), encoding="utf-8")
         return str(audit_file)
 
-    def test_compliance_html_stdout(
-        self, tmp_path, capsys: pytest.CaptureFixture[str]
-    ) -> None:
+    def test_compliance_html_stdout(self, tmp_path, capsys: pytest.CaptureFixture[str]) -> None:
         from aegis.cli.main import main
 
         audit_file = self._write_audit_file(tmp_path)
@@ -517,15 +515,17 @@ class TestCliRegulatoryHtml:
         from aegis.cli.main import main
 
         output_file = str(tmp_path / "regulatory.html")
-        main([
-            "regulatory",
-            "--framework",
-            "soc2",
-            "--format",
-            "html",
-            "--output",
-            output_file,
-        ])
+        main(
+            [
+                "regulatory",
+                "--framework",
+                "soc2",
+                "--format",
+                "html",
+                "--output",
+                output_file,
+            ]
+        )
 
         from pathlib import Path
 
@@ -533,9 +533,7 @@ class TestCliRegulatoryHtml:
         assert "<!DOCTYPE html>" in content
         assert "SOC2" in content
 
-    def test_regulatory_html_all_frameworks(
-        self, capsys: pytest.CaptureFixture[str]
-    ) -> None:
+    def test_regulatory_html_all_frameworks(self, capsys: pytest.CaptureFixture[str]) -> None:
         from aegis.cli.main import main
 
         main(["regulatory", "--framework", "all", "--format", "html"])

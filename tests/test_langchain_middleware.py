@@ -347,9 +347,7 @@ class TestWrapToolCallAsync:
         on_blocked.assert_not_awaited()
 
     @pytest.mark.asyncio
-    async def test_approval_required_passes_async(
-        self, mock_middleware_deps, block_delete_policy
-    ):
+    async def test_approval_required_passes_async(self, mock_middleware_deps, block_delete_policy):
         """Approval-required calls pass through in async context too."""
         mw = mock_middleware_deps.AegisMiddleware(policy=block_delete_policy)
 
