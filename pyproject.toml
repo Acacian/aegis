@@ -68,6 +68,8 @@ dev = [
     "types-PyYAML>=6.0",
     "playwright>=1.40",
     "httpx>=0.27",
+    "starlette>=0.37",
+    "uvicorn>=0.29",
 ]
 
 [project.scripts]

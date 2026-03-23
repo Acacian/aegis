@@ -434,11 +434,11 @@ class TestWebSocketAudit:
 
     def test_ws_receives_entry(self, policy, tmp_path):
         try:
+            from starlette.testclient import TestClient
+
             from aegis.server.app import create_app
         except ImportError:
             pytest.skip("starlette not installed")
-
-        from starlette.testclient import TestClient
 
         db_path = tmp_path / "ws_test.db"
         app = create_app(policy=policy, audit_db_path=db_path, enable_dashboard=True)
@@ -483,11 +483,11 @@ class TestWebSocketAudit:
 class TestDashboardDisabled:
     def test_no_dashboard_routes(self, policy, tmp_path):
         try:
+            from starlette.testclient import TestClient
+
             from aegis.server.app import create_app
         except ImportError:
             pytest.skip("starlette not installed")
-
-        from starlette.testclient import TestClient
 
         app = create_app(
             policy=policy,
