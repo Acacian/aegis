@@ -101,6 +101,7 @@ nav:
       - Gradio Playground: cookbook/gradio-playground.md
       - Docker REST API: cookbook/docker-rest-api.md
   - Playground: playground/index.md
+  - Challenge: playground/challenge.md
   - Enterprise: enterprise.md
   - Cheatsheet: cheatsheet.md
   - Examples: https://github.com/Acacian/aegis/tree/main/examples
