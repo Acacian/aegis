@@ -294,6 +294,7 @@ aegis audit
 | **`aegis scan`** | AST-based static analysis detecting ungoverned AI tool calls in your codebase |
 | **`aegis score`** | Governance scoring (0-100) with shields.io badge generation |
 | **REST API server** | `aegis serve policy.yaml` -- govern from any language via HTTP |
+| **Web Dashboard** | Real-time governance dashboard with KPIs, audit log, compliance reports, anomaly detection |
 | **MCP adapter** | Govern Model Context Protocol tool calls |
 | **Retry & rollback** | Exponential backoff, error filters, automatic rollback on failure |
 | **Dry-run & simulate** | Test policies without executing: `aegis simulate policy.yaml read:crm` |
@@ -620,6 +621,44 @@ rules:
 ```
 
 Tier 1 uses fast built-in keyword matching. Tier 2 plugs in any LLM evaluator via the `SemanticEvaluator` protocol -- bring your own model for nuanced content analysis.
+
+## Governance Dashboard
+
+Built-in web dashboard for real-time agent governance monitoring. No separate frontend build needed.
+
+```bash
+# Quick start
+pip install 'agent-aegis[server]'
+aegis serve policy.yaml
+
+# Open http://localhost:8000
+```
+
+**7 dashboard pages:**
+
+| Page | What it shows |
+|------|---------------|
+| **Overview** | KPI cards, action volume chart, risk distribution, compliance grade |
+| **Audit Log** | Filterable/paginated history of all agent actions and decisions |
+| **Policy** | Current rules, governance score (0-100), score breakdown |
+| **Anomalies** | Agent behavior profiles, block rates, anomaly alerts |
+| **Compliance** | SOC2/GDPR/governance reports with findings and letter grades |
+| **Regulatory** | EU AI Act, NIST, SOC2, ISO 42001 gap analysis |
+| **System** | Health status, version, API endpoints |
+
+**11 REST API endpoints** under `/api/v1/dashboard/` -- use programmatically or through the UI.
+
+```python
+# Programmatic access
+from aegis.server.app import create_app
+
+app = create_app(
+    policy_path="policy.yaml",
+    audit_db_path="audit.db",
+    enable_dashboard=True,
+    anomaly_detector=detector,  # optional
+)
+```
 
 ## Deep Features
 
@@ -981,7 +1020,7 @@ aegis audit --session abc --format json # Filter + format
 aegis audit --tail                      # Live monitoring
 aegis audit --format jsonl -o export.jsonl  # Export
 aegis stats                             # Policy rule statistics
-aegis serve policy.yaml --port 8000     # Start REST API server
+aegis serve policy.yaml --port 8000     # Start REST API + dashboard (http://localhost:8000)
 aegis scan ./src/                       # Detect ungoverned AI tool calls (AST-based)
 aegis score ./src/ --policy policy.yaml # Governance score (0-100) + badge
 aegis diff policy-v1.yaml policy-v2.yaml           # Compare policies
@@ -1000,9 +1039,10 @@ aegis probe policy.yaml                            # Adversarial policy testing
 | **0.1.4** | **Released** | Multi-agent foundations (agent_id, PolicyHierarchy, conflict detection), performance optimizations (compiled globs, batch audit, eval cache), security hardening, MCP/LangChain/CrewAI/OpenAI cookbooks |
 | **0.1.5** | **Released** | Behavioral anomaly detection, compliance report generator (SOC2/GDPR), policy diff & impact analysis, semantic conditions engine, agent trust chain, `aegis scan` (static analysis), `aegis score` (governance scoring + badge) |
 | **0.1.7** | **Released** | Cryptographic audit chain, rate limiter, RBAC, policy versioning, multi-tenant isolation, regulatory mapper (EU AI Act/NIST/SOC2/ISO 42001), webhook notifications, action replay, PolicyBuilder SDK, policy testing framework, real-time monitor, GitHub Action |
-| **0.2** | Q2 2026 | Dashboard UI, queue-based async execution |
+| **0.1.9** | **Released** | Web governance dashboard (7 pages, 11 API endpoints), `aegis serve` with dashboard, natural language autopolicy, adversarial probe |
+| **0.2** | Q2 2026 | Queue-based async execution, WebSocket real-time updates |
 | **0.3** | Q3 2026 | Centralized policy server, cross-agent audit correlation |
-| **1.0** | 2027 | Distributed governance, SaaS dashboard, SSO/SCIM |
+| **1.0** | 2027 | Distributed governance, hosted SaaS, SSO/SCIM |
 
 ## Contributing
 

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "agent-aegis"
-version = "0.1.8"
+version = "0.1.9"
 description = "The simplest way to add governance to AI agents. YAML policy + approval gates + audit trail. No infra required."
 readme = "README.md"
 license = "MIT"

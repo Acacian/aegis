@@ -202,6 +202,9 @@ def main(argv: list[str] | None = None) -> None:
     serve_parser.add_argument("--host", default="127.0.0.1", help="Bind host")
     serve_parser.add_argument("--port", type=int, default=8000, help="Bind port")
     serve_parser.add_argument("--audit-db", help="Audit database path")
+    serve_parser.add_argument(
+        "--no-dashboard", action="store_true", help="Disable the web dashboard"
+    )
 
     # aegis monitor
     monitor_parser = subparsers.add_parser(
@@ -704,7 +707,7 @@ def _cmd_scan(args: argparse.Namespace) -> None:
 
 
 def _cmd_serve(args: argparse.Namespace) -> None:
-    """Start the Aegis REST API server."""
+    """Start the Aegis REST API server with governance dashboard."""
     try:
         import uvicorn
     except ImportError:
@@ -716,13 +719,18 @@ def _cmd_serve(args: argparse.Namespace) -> None:
 
     from aegis.server.app import create_app
 
+    enable_dashboard = not getattr(args, "no_dashboard", False)
     app = create_app(
         policy_path=args.policy_file,
         audit_db_path=getattr(args, "audit_db", None),
+        enable_dashboard=enable_dashboard,
     )
-    print(f"Aegis API server starting on {args.host}:{args.port}")
+    base_url = f"http://{args.host}:{args.port}"
+    print(f"Aegis server starting on {base_url}")
     print(f"Policy: {args.policy_file}")
-    print(f"Docs: http://{args.host}:{args.port}/health")
+    if enable_dashboard:
+        print(f"Dashboard: {base_url}")
+    print(f"API: {base_url}/api/v1/")
     uvicorn.run(app, host=args.host, port=args.port)
 
 
