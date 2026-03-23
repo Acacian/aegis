@@ -68,8 +68,12 @@ class PolicyDiffFormatter:
             for key, (old, new) in sorted(delta.defaults_changed.items()):
                 lines.append(f"  {key}: {old} → {new}")
 
-        if not (delta.rules_added or delta.rules_removed or delta.rules_modified
-                or delta.defaults_changed):
+        if not (
+            delta.rules_added
+            or delta.rules_removed
+            or delta.rules_modified
+            or delta.defaults_changed
+        ):
             lines.append("\nNo changes detected.")
 
         return "\n".join(lines)
@@ -81,8 +85,10 @@ class PolicyDiffFormatter:
         lines.append("")
 
         has_changes = bool(
-            delta.rules_added or delta.rules_removed
-            or delta.rules_modified or delta.defaults_changed
+            delta.rules_added
+            or delta.rules_removed
+            or delta.rules_modified
+            or delta.defaults_changed
         )
 
         if not has_changes:
@@ -174,14 +180,8 @@ class PolicyImpactAnalyzer:
         Returns:
             An :class:`ImpactReport` describing the impact.
         """
-        old_rules = {
-            str(r.get("name", "")): r
-            for r in old_policy.get("rules", [])
-        }
-        new_rules = {
-            str(r.get("name", "")): r
-            for r in new_policy.get("rules", [])
-        }
+        old_rules = {str(r.get("name", "")): r for r in old_policy.get("rules", [])}
+        new_rules = {str(r.get("name", "")): r for r in new_policy.get("rules", [])}
 
         affected: list[str] = []
         newly_blocked: list[str] = []
@@ -300,6 +300,7 @@ class PolicyDriftDetector:
         running_dict = _policy_to_dict(running_policy)
 
         from aegis.core.versioning import _hash_dict
+
         file_hash = _hash_dict(file_dict)
         running_hash = _hash_dict(running_dict)
 
@@ -357,10 +358,7 @@ class PolicyDriftDetector:
         rules_a = {str(r.get("name", "")): r for r in running_dict.get("rules", [])}
         rules_b = {str(r.get("name", "")): r for r in file_dict.get("rules", [])}
 
-        modified = [
-            name for name in sorted(names_a & names_b)
-            if rules_a[name] != rules_b[name]
-        ]
+        modified = [name for name in sorted(names_a & names_b) if rules_a[name] != rules_b[name]]
 
         defaults_a = running_dict.get("defaults", {})
         defaults_b = file_dict.get("defaults", {})

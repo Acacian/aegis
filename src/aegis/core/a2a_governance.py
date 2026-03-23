@@ -128,35 +128,62 @@ class A2ALogEntry:
 
 # Patterns that should be redacted from inter-agent messages
 _SENSITIVE_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
-    ("api_key", re.compile(
-        r"(?:api[_-]?key|apikey|api[_-]?token)\s*[:=]\s*\S+",
-        re.IGNORECASE,
-    )),
-    ("password", re.compile(
-        r"(?:password|passwd|secret)\s*[:=]\s*\S+",
-        re.IGNORECASE,
-    )),
-    ("bearer_token", re.compile(
-        r"Bearer\s+[A-Za-z0-9\-._~+/]+=*",
-    )),
-    ("aws_key", re.compile(
-        r"(?:AKIA|ASIA)[A-Z0-9]{16}",
-    )),
-    ("private_key", re.compile(
-        r"-----BEGIN\s+(?:RSA\s+)?PRIVATE\s+KEY-----",
-    )),
-    ("email_address", re.compile(
-        r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}",
-    )),
-    ("ssn", re.compile(
-        r"\b\d{3}-\d{2}-\d{4}\b",
-    )),
-    ("credit_card", re.compile(
-        r"\b(?:4\d{3}|5[1-5]\d{2}|3[47]\d{2}|6(?:011|5\d{2}))\d{8,12}\b",
-    )),
-    ("internal_path", re.compile(
-        r"(?:/etc/(?:passwd|shadow|hosts)|/proc/|\.ssh/|\.aws/|\.env\b)",
-    )),
+    (
+        "api_key",
+        re.compile(
+            r"(?:api[_-]?key|apikey|api[_-]?token)\s*[:=]\s*\S+",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "password",
+        re.compile(
+            r"(?:password|passwd|secret)\s*[:=]\s*\S+",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "bearer_token",
+        re.compile(
+            r"Bearer\s+[A-Za-z0-9\-._~+/]+=*",
+        ),
+    ),
+    (
+        "aws_key",
+        re.compile(
+            r"(?:AKIA|ASIA)[A-Z0-9]{16}",
+        ),
+    ),
+    (
+        "private_key",
+        re.compile(
+            r"-----BEGIN\s+(?:RSA\s+)?PRIVATE\s+KEY-----",
+        ),
+    ),
+    (
+        "email_address",
+        re.compile(
+            r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}",
+        ),
+    ),
+    (
+        "ssn",
+        re.compile(
+            r"\b\d{3}-\d{2}-\d{4}\b",
+        ),
+    ),
+    (
+        "credit_card",
+        re.compile(
+            r"\b(?:4\d{3}|5[1-5]\d{2}|3[47]\d{2}|6(?:011|5\d{2}))\d{8,12}\b",
+        ),
+    ),
+    (
+        "internal_path",
+        re.compile(
+            r"(?:/etc/(?:passwd|shadow|hosts)|/proc/|\.ssh/|\.aws/|\.env\b)",
+        ),
+    ),
 ]
 
 
@@ -316,21 +343,19 @@ class A2AGovernor:
         # 1. Check sender exists
         sender = self._registry.get(message.sender_id)
         if sender is None:
-            return self._decide(
-                message, False, "Sender not registered", ["unknown_sender"]
-            )
+            return self._decide(message, False, "Sender not registered", ["unknown_sender"])
 
         # 2. Check receiver exists
         receiver = self._registry.get(message.receiver_id)
         if receiver is None:
-            return self._decide(
-                message, False, "Receiver not registered", ["unknown_receiver"]
-            )
+            return self._decide(message, False, "Receiver not registered", ["unknown_receiver"])
 
         # 3. Self-messaging blocked
         if message.sender_id == message.receiver_id:
             return self._decide(
-                message, False, "Self-messaging not allowed",
+                message,
+                False,
+                "Self-messaging not allowed",
                 ["self_message"],
             )
 
@@ -341,14 +366,13 @@ class A2AGovernor:
 
         # 5. Trust level check
         if sender.trust_level < self._min_trust:
-            violations.append(
-                f"insufficient_trust:{sender.trust_level}<{self._min_trust}"
-            )
+            violations.append(f"insufficient_trust:{sender.trust_level}<{self._min_trust}")
 
         # 6. If hard violations, block immediately
         if violations:
             return self._decide(
-                message, False,
+                message,
+                False,
                 f"Policy violations: {', '.join(violations)}",
                 violations,
             )
@@ -360,25 +384,21 @@ class A2AGovernor:
                 self._sender_windows[sender_key] = _RateWindow(
                     self._rate_per_sender, self._rate_window
                 )
-            if not self._sender_windows[sender_key].check_and_record(
-                message.timestamp
-            ):
+            if not self._sender_windows[sender_key].check_and_record(message.timestamp):
                 return self._decide(
-                    message, False,
+                    message,
+                    False,
                     f"Rate limit exceeded for sender {message.sender_id}",
                     ["rate_limit_sender"],
                 )
 
             pair_key = f"{message.sender_id}->{message.receiver_id}"
             if pair_key not in self._pair_windows:
-                self._pair_windows[pair_key] = _RateWindow(
-                    self._rate_per_pair, self._rate_window
-                )
-            if not self._pair_windows[pair_key].check_and_record(
-                message.timestamp
-            ):
+                self._pair_windows[pair_key] = _RateWindow(self._rate_per_pair, self._rate_window)
+            if not self._pair_windows[pair_key].check_and_record(message.timestamp):
                 return self._decide(
-                    message, False,
+                    message,
+                    False,
                     f"Rate limit exceeded for pair {pair_key}",
                     ["rate_limit_pair"],
                 )
@@ -391,17 +411,17 @@ class A2AGovernor:
                 pattern_names = [name for name, _text in findings]
                 if self._block_on_sensitive:
                     return self._decide(
-                        message, False,
+                        message,
+                        False,
                         f"Sensitive content detected: {', '.join(pattern_names)}",
                         [f"sensitive_content:{n}" for n in pattern_names],
                     )
                 # Redact and allow
                 filtered_payload = redact_payload(message.payload)
-                violations_info = [
-                    f"redacted:{n}" for n in pattern_names
-                ]
+                violations_info = [f"redacted:{n}" for n in pattern_names]
                 return self._decide(
-                    message, True,
+                    message,
+                    True,
                     f"Allowed with redaction: {', '.join(pattern_names)}",
                     violations_info,
                     filtered_payload=filtered_payload,
@@ -467,8 +487,7 @@ class A2AGovernor:
         for entry in entries:
             status = "ALLOW" if entry.allowed else "BLOCK"
             lines.append(
-                f"  [{status}] {entry.sender_id} -> {entry.receiver_id} "
-                f"({entry.message_type})"
+                f"  [{status}] {entry.sender_id} -> {entry.receiver_id} ({entry.message_type})"
             )
             lines.append(f"    Reason: {entry.reason}")
             if entry.violations:

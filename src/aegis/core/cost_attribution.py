@@ -219,8 +219,7 @@ class CostAttributionTree:
             for agent_id, tracker in self._trackers.items():
                 direct = tracker.spent
                 children_cost = sum(
-                    self._subtree_cost_unlocked(cid)
-                    for cid in self._children.get(agent_id, [])
+                    self._subtree_cost_unlocked(cid) for cid in self._children.get(agent_id, [])
                 )
                 total = direct + children_cost
                 nodes.append(
@@ -255,10 +254,7 @@ class CostAttributionTree:
             )
         lines.append("")
 
-        lines.append(
-            f"{'Agent':<20} {'Direct':>10} {'Delegated':>10} "
-            f"{'Total':>10} {'Calls':>6}"
-        )
+        lines.append(f"{'Agent':<20} {'Direct':>10} {'Delegated':>10} {'Total':>10} {'Calls':>6}")
         lines.append("-" * 60)
         for node in nodes:
             prefix = "  " if node.parent_id else ""

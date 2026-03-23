@@ -241,13 +241,7 @@ class TestArgumentSanitizer:
         assert any(f.category == "command_injection" for f in findings)
 
     def test_nested_arguments(self):
-        findings = self.sanitizer.check({
-            "config": {
-                "nested": {
-                    "path": "../../../etc/passwd"
-                }
-            }
-        })
+        findings = self.sanitizer.check({"config": {"nested": {"path": "../../../etc/passwd"}}})
         assert any(f.category == "path_traversal" for f in findings)
 
     def test_list_arguments(self):

@@ -350,9 +350,7 @@ class SBOMGenerator:
                 lines.append(f"    Vulnerabilities: {len(comp.vulnerabilities)}")
                 for vuln in comp.vulnerabilities:
                     block = " [BLOCK]" if vuln.should_block else ""
-                    lines.append(
-                        f"      [{vuln.severity.upper()}]{block} {vuln.cve_id}"
-                    )
+                    lines.append(f"      [{vuln.severity.upper()}]{block} {vuln.cve_id}")
                     lines.append(f"        {vuln.description[:100]}")
                     lines.append(f"        Fix: {vuln.recommendation}")
 
@@ -376,7 +374,5 @@ def _iso_now() -> str:
 
 def _generate_serial(servers: list[MCPServerInfo]) -> str:
     """Generate a deterministic serial number from server list."""
-    content = "|".join(
-        f"{s.name}:{s.version}:{len(s.tools)}" for s in servers
-    )
+    content = "|".join(f"{s.name}:{s.version}:{len(s.tools)}" for s in servers)
     return hashlib.sha256(content.encode("utf-8")).hexdigest()[:16]

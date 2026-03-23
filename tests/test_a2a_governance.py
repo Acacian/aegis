@@ -18,22 +18,26 @@ def _make_registry() -> AgentRegistry:
     orchestrator = AgentIdentity(
         agent_id="orchestrator",
         name="Orchestrator",
-        capabilities=frozenset({
-            "a2a_send_task",
-            "a2a_respond_task",
-            "a2a_delegate",
-            "a2a_notify",
-            "a2a_share_data",
-        }),
+        capabilities=frozenset(
+            {
+                "a2a_send_task",
+                "a2a_respond_task",
+                "a2a_delegate",
+                "a2a_notify",
+                "a2a_share_data",
+            }
+        ),
         trust_level=90,
     )
     worker = AgentIdentity(
         agent_id="worker-1",
         name="Worker 1",
-        capabilities=frozenset({
-            "a2a_respond_task",
-            "a2a_notify",
-        }),
+        capabilities=frozenset(
+            {
+                "a2a_respond_task",
+                "a2a_notify",
+            }
+        ),
         trust_level=60,
     )
     registry.register(orchestrator)
@@ -48,9 +52,7 @@ def _make_registry() -> AgentRegistry:
 
 class TestA2AMessage:
     def test_auto_timestamp(self) -> None:
-        msg = A2AMessage(
-            sender_id="a", receiver_id="b", message_type="notification"
-        )
+        msg = A2AMessage(sender_id="a", receiver_id="b", message_type="notification")
         assert msg.timestamp > 0
 
     def test_custom_timestamp(self) -> None:
@@ -63,9 +65,7 @@ class TestA2AMessage:
         assert msg.timestamp == 123.0
 
     def test_default_payload(self) -> None:
-        msg = A2AMessage(
-            sender_id="a", receiver_id="b", message_type="notification"
-        )
+        msg = A2AMessage(sender_id="a", receiver_id="b", message_type="notification")
         assert msg.payload == {}
 
     def test_correlation_id(self) -> None:
@@ -117,9 +117,11 @@ class TestContentScanning:
         assert any(name == "internal_path" for name, _ in findings)
 
     def test_nested_payload(self) -> None:
-        findings = scan_content({
-            "level1": {"level2": {"secret": "password=abc123"}},
-        })
+        findings = scan_content(
+            {
+                "level1": {"level2": {"secret": "password=abc123"}},
+            }
+        )
         assert any(name == "password" for name, _ in findings)
 
 
@@ -135,9 +137,11 @@ class TestRedaction:
         assert "[REDACTED]" in result["config"]
 
     def test_redact_nested(self) -> None:
-        result = redact_payload({
-            "outer": {"inner": "password=secret123"},
-        })
+        result = redact_payload(
+            {
+                "outer": {"inner": "password=secret123"},
+            }
+        )
         assert "secret123" not in str(result)
         assert "[REDACTED]" in result["outer"]["inner"]
 
@@ -147,9 +151,11 @@ class TestRedaction:
         assert result == payload
 
     def test_redact_list(self) -> None:
-        result = redact_payload({
-            "items": ["normal", "password=secret123"],
-        })
+        result = redact_payload(
+            {
+                "items": ["normal", "password=secret123"],
+            }
+        )
         assert "secret123" not in str(result)
         assert result["items"][0] == "normal"
 
@@ -479,16 +485,20 @@ class TestGovernorAuditLog:
     def test_format_audit_log_with_entries(self) -> None:
         registry = _make_registry()
         governor = A2AGovernor(registry=registry, content_filter=False)
-        governor.evaluate(A2AMessage(
-            sender_id="orchestrator",
-            receiver_id="worker-1",
-            message_type="task_request",
-        ))
-        governor.evaluate(A2AMessage(
-            sender_id="unknown",
-            receiver_id="worker-1",
-            message_type="notification",
-        ))
+        governor.evaluate(
+            A2AMessage(
+                sender_id="orchestrator",
+                receiver_id="worker-1",
+                message_type="task_request",
+            )
+        )
+        governor.evaluate(
+            A2AMessage(
+                sender_id="unknown",
+                receiver_id="worker-1",
+                message_type="notification",
+            )
+        )
         text = governor.format_audit_log()
         assert "ALLOW" in text
         assert "BLOCK" in text
