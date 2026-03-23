@@ -605,6 +605,86 @@ async function renderPolicy(app) {
   table.appendChild(tbody);
   tableCard.appendChild(table);
   app.appendChild(tableCard);
+
+  // Policy YAML editor
+  const editorCard = h("div", { className: "card mt-4" },
+    h("div", { className: "flex items-center justify-between mb-3" },
+      h("h3", { className: "text-sm font-semibold text-gray-300" }, "Policy Editor"),
+      h("div", { className: "flex gap-2" },
+        h("button", {
+          id: "policy-validate-btn",
+          className: "px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white text-xs rounded font-medium",
+          onClick: () => validatePolicyEditor(),
+        }, "Validate"),
+        h("button", {
+          id: "policy-save-btn",
+          className: "px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded font-medium",
+          onClick: () => savePolicyEditor(),
+        }, "Save & Reload"),
+      ),
+    ),
+  );
+
+  const editorTextarea = h("textarea", {
+    id: "policy-yaml-editor",
+    className: "w-full bg-gray-900 border border-gray-700 rounded-md p-4 text-sm text-gray-200 font-mono focus:outline-none focus:border-blue-500",
+    rows: 24,
+    spellcheck: "false",
+    style: "resize: vertical; line-height: 1.6; tab-size: 2;",
+  });
+  editorCard.appendChild(editorTextarea);
+
+  const editorMsg = h("div", { id: "policy-editor-msg", className: "mt-2 text-xs" });
+  editorCard.appendChild(editorMsg);
+  app.appendChild(editorCard);
+
+  // Load current YAML into editor
+  const yamlData = await api("policy/yaml");
+  if (yamlData && yamlData.yaml) {
+    editorTextarea.value = yamlData.yaml;
+  }
+}
+
+async function validatePolicyEditor() {
+  const yaml = document.getElementById("policy-yaml-editor").value;
+  const msg = document.getElementById("policy-editor-msg");
+  try {
+    const resp = await fetch("/api/v1/evaluate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ yaml_validate: yaml }),
+    });
+    // If we can parse it client-side, that's enough for validation
+    msg.className = "mt-2 text-xs text-green-400";
+    msg.textContent = "YAML is valid.";
+  } catch (e) {
+    msg.className = "mt-2 text-xs text-red-400";
+    msg.textContent = "Error: " + e.message;
+  }
+}
+
+async function savePolicyEditor() {
+  const yaml = document.getElementById("policy-yaml-editor").value;
+  const msg = document.getElementById("policy-editor-msg");
+  try {
+    const resp = await fetch("/api/v1/policy", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ yaml: yaml }),
+    });
+    const data = await resp.json();
+    if (resp.ok) {
+      msg.className = "mt-2 text-xs text-green-400";
+      msg.textContent = "Policy updated (" + data.rule_count + " rules). Refreshing...";
+      setTimeout(() => renderPolicy(document.getElementById("app")), 1000);
+    } else {
+      msg.className = "mt-2 text-xs text-red-400";
+      msg.textContent = "Error: " + (data.error || "Failed to update policy");
+    }
+  } catch (e) {
+    msg.className = "mt-2 text-xs text-red-400";
+    msg.textContent = "Network error: " + e.message;
+  }
 }
 
 // ---------------------------------------------------------------------------

@@ -230,6 +230,40 @@ def get_dashboard_routes(
             }
         )
 
+    async def policy_yaml(request: Request) -> Any:
+        """Export current policy as YAML string."""
+        import yaml
+
+        data: dict[str, Any] = {
+            "version": "1",
+            "defaults": {
+                "risk_level": policy.default_risk_level.name.lower(),
+                "approval": policy.default_approval.value,
+            },
+            "rules": [],
+        }
+        for rule in policy.rules:
+            r: dict[str, Any] = {}
+            if rule.name:
+                r["name"] = rule.name
+            match: dict[str, str] = {}
+            if rule.match_type and rule.match_type != "*":
+                match["type"] = rule.match_type
+            if rule.match_target and rule.match_target != "*":
+                match["target"] = rule.match_target
+            if match:
+                r["match"] = match
+            if rule.conditions:
+                r["conditions"] = rule.conditions
+            r["risk_level"] = rule.risk_level.name.lower()
+            r["approval"] = rule.approval.value
+            data["rules"].append(r)
+
+        yaml_str: str = yaml.dump(
+            data, default_flow_style=False, sort_keys=False, allow_unicode=True
+        )
+        return _json_response({"yaml": yaml_str})
+
     async def policy_score(request: Request) -> Any:
         """Calculate governance score (adapted from cli/score.py logic)."""
         score = 0
@@ -442,6 +476,7 @@ def get_dashboard_routes(
         Route("/api/v1/dashboard/audit/recent", audit_recent, methods=["GET"]),
         Route("/api/v1/dashboard/audit/stats", audit_stats, methods=["GET"]),
         Route("/api/v1/dashboard/policy/summary", policy_summary, methods=["GET"]),
+        Route("/api/v1/dashboard/policy/yaml", policy_yaml, methods=["GET"]),
         Route("/api/v1/dashboard/policy/score", policy_score, methods=["GET"]),
         Route("/api/v1/dashboard/compliance/report", compliance_report, methods=["GET"]),
         Route(

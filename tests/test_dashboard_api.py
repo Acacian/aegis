@@ -388,6 +388,19 @@ class TestDashboardServing:
         assert resp.status_code == 200
 
 
+# -- Policy YAML export -----------------------------------------------------
+
+
+class TestPolicyYaml:
+    def test_returns_yaml_string(self, app_with_data):
+        resp = _client(app_with_data).get("/api/v1/dashboard/policy/yaml")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "yaml" in data
+        assert "read_auto" in data["yaml"]
+        assert "delete_block" in data["yaml"]
+
+
 # -- Badge endpoint ---------------------------------------------------------
 
 
