@@ -386,16 +386,25 @@ class TestFormatReport:
     def test_owasp_summary_counts(self) -> None:
         findings = [
             Finding(
-                file="/p/a.py", line=1, category="OpenAI",
-                detail="x", owasp_risk="ASI02: Tool Misuse & Exploitation",
+                file="/p/a.py",
+                line=1,
+                category="OpenAI",
+                detail="x",
+                owasp_risk="ASI02: Tool Misuse & Exploitation",
             ),
             Finding(
-                file="/p/a.py", line=2, category="LangChain",
-                detail="y", owasp_risk="ASI02: Tool Misuse & Exploitation",
+                file="/p/a.py",
+                line=2,
+                category="LangChain",
+                detail="y",
+                owasp_risk="ASI02: Tool Misuse & Exploitation",
             ),
             Finding(
-                file="/p/a.py", line=3, category="subprocess",
-                detail="z", owasp_risk="ASI08: Uncontrolled Code Execution",
+                file="/p/a.py",
+                line=3,
+                category="subprocess",
+                detail="z",
+                owasp_risk="ASI08: Uncontrolled Code Execution",
             ),
         ]
         report = format_report(1, findings, directory="/p")

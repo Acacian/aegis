@@ -17,7 +17,9 @@ class TestInMemoryMode:
     def test_record_decision(self) -> None:
         exp = AegisOTelExporter()
         event = exp.record_decision(
-            "read", "crm", "allow",
+            "read",
+            "crm",
+            "allow",
             risk_level="low",
             matched_rule="default-allow",
             agent_id="agent-1",
@@ -31,7 +33,11 @@ class TestInMemoryMode:
     def test_record_cost(self) -> None:
         exp = AegisOTelExporter()
         event = exp.record_cost(
-            "gpt-4o", 1000, 200, 0.0045, 0.0045,
+            "gpt-4o",
+            1000,
+            200,
+            0.0045,
+            0.0045,
             agent_id="agent-1",
         )
         assert event.event_type == "cost_record"
@@ -42,7 +48,9 @@ class TestInMemoryMode:
     def test_record_anomaly(self) -> None:
         exp = AegisOTelExporter()
         event = exp.record_anomaly(
-            "agent-1", "burst", "read",
+            "agent-1",
+            "burst",
+            "read",
             severity="warning",
             details="50 actions in 10s",
         )
@@ -52,7 +60,9 @@ class TestInMemoryMode:
     def test_record_mcp_finding(self) -> None:
         exp = AegisOTelExporter()
         event = exp.record_mcp_finding(
-            "evil_tool", "tool_poisoning", "critical",
+            "evil_tool",
+            "tool_poisoning",
+            "critical",
             detail="Authority injection detected",
             trust_level="L0",
         )
@@ -62,7 +72,10 @@ class TestInMemoryMode:
     def test_record_budget_alert(self) -> None:
         exp = AegisOTelExporter()
         event = exp.record_budget_alert(
-            "warn", 8.0, 10.0, 0.8,
+            "warn",
+            8.0,
+            10.0,
+            0.8,
             session_id="sess-123",
         )
         assert event.event_type == "budget_alert"

@@ -206,7 +206,9 @@ class OpenAICostExtractor:
                 reasoning_tokens=reasoning_tokens,
             )
             self.tracker.record(
-                token_usage, agent_id=self.agent_id, action_type="llm_call",
+                token_usage,
+                agent_id=self.agent_id,
+                action_type="llm_call",
             )
             self._total_calls += 1
             return token_usage
@@ -288,7 +290,9 @@ class AnthropicCostExtractor:
                 cached_tokens=cached_tokens,
             )
             self.tracker.record(
-                token_usage, agent_id=self.agent_id, action_type="llm_call",
+                token_usage,
+                agent_id=self.agent_id,
+                action_type="llm_call",
             )
             self._total_calls += 1
             return token_usage
@@ -372,7 +376,9 @@ class GoogleCostExtractor:
                 cached_tokens=cached_tokens,
             )
             self.tracker.record(
-                token_usage, agent_id=self.agent_id, action_type="llm_call",
+                token_usage,
+                agent_id=self.agent_id,
+                action_type="llm_call",
             )
             self._total_calls += 1
             return token_usage
