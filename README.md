@@ -20,7 +20,7 @@
   <a href="https://pypi.org/project/agent-aegis/"><img src="https://img.shields.io/pypi/dm/agent-aegis?label=downloads&color=brightgreen" alt="Downloads"></a>
   <a href="https://github.com/Acacian/aegis"><img src="https://img.shields.io/github/stars/Acacian/aegis?style=social" alt="GitHub stars"></a>
   <br/>
-  <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-1642_passed-brightgreen" alt="Tests"></a>
+  <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-1950_passed-brightgreen" alt="Tests"></a>
   <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/coverage-92%25-brightgreen" alt="Coverage"></a>
   <a href="https://acacian.github.io/aegis/playground/"><img src="https://img.shields.io/badge/playground-Try_it_Live-ff6b6b" alt="Playground"></a>
 </p>
@@ -354,7 +354,7 @@ policy = Policy.from_yaml("policies/crm-agent.yaml")
 
 | Aspect | Detail |
 |--------|--------|
-| **1,642+ tests, 92% coverage** | Every adapter, handler, and edge case tested |
+| **1,950+ tests, 92% coverage** | Every adapter, handler, and edge case tested |
 | **Type-safe** | `mypy --strict` with zero errors, `py.typed` marker |
 | **Performance** | Policy evaluation < 1ms; auto-approved actions add < 5ms overhead |
 | **Fail-safe** | Blocked actions never execute; can't be bypassed without policy change |
@@ -407,23 +407,53 @@ governed = govern_tools(tools, policy="policy.yaml")
 agent = create_react_agent(model, governed)
 ```
 
-**Option B: `agent-aegis[langchain]`** — adapter-based
+**Option B: AgentMiddleware** — intercepts every tool call via LangChain's middleware protocol
+
+```python
+from aegis.adapters.langchain import AegisMiddleware
+
+middleware = AegisMiddleware(policy=Policy.from_yaml("policy.yaml"))
+# Blocked calls return a ToolMessage explaining the policy violation
+# Allowed calls proceed normally
+```
+
+**Option C: Executor/Tool adapter**
 
 ```python
 from aegis.adapters.langchain import LangChainExecutor, AegisTool
 
-# Wrap existing LangChain tools with governance
 executor = LangChainExecutor(tools=[DuckDuckGoSearchRun()])
 runtime = Runtime(executor=executor, policy=Policy.from_yaml("policy.yaml"))
-
-# Or expose governed actions AS LangChain tools
-tool = AegisTool.from_runtime(runtime, name="governed_search",
-    description="Policy-governed search", action_type="search", action_target="web")
 ```
 </details>
 
 <details>
-<summary><b>OpenAI Agents SDK</b> -- decorator-based governance</summary>
+<summary><b>OpenAI Agents SDK</b> -- native guardrails + decorator governance</summary>
+
+**Option A: Native guardrails (recommended)** — uses SDK's `@tool_input_guardrail` / `@tool_output_guardrail`
+
+```python
+from agents import function_tool
+from aegis import Policy
+from aegis.adapters.openai_agents import (
+    create_aegis_input_guardrail,
+    create_aegis_output_guardrail,
+)
+
+policy = Policy.from_yaml("policy.yaml")
+input_guard = create_aegis_input_guardrail(policy=policy, fail_closed=True)
+output_guard = create_aegis_output_guardrail(policy=policy)
+
+@function_tool(
+    tool_input_guardrails=[input_guard],
+    tool_output_guardrails=[output_guard],
+)
+def web_search(query: str) -> str:
+    """Search the web -- Aegis evaluates before AND after execution."""
+    return do_search(query)
+```
+
+**Option B: Decorator-based** — wraps function with full governance pipeline
 
 ```python
 from aegis.adapters.openai_agents import governed_tool
@@ -436,7 +466,18 @@ async def update_contact(name: str, email: str) -> str:
 </details>
 
 <details>
-<summary><b>CrewAI</b> -- governed tools for crews</summary>
+<summary><b>CrewAI</b> -- global guardrail hook + per-tool governance</summary>
+
+**Option A: Global guardrail (recommended)** — governs ALL tool calls across all Crews
+
+```python
+from aegis.adapters.crewai import enable_aegis_guardrail
+
+# One line — every tool call now goes through Aegis policy
+provider = enable_aegis_guardrail(runtime=my_runtime)
+```
+
+**Option B: Per-tool wrapper**
 
 ```python
 from aegis.adapters.crewai import AegisCrewAITool
