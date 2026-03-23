@@ -276,7 +276,7 @@ class AegisOTelExporter:
         """Send an event to OpenTelemetry as a span event."""
         try:
             # Use the tracer to create a zero-duration span with the event
-            with self._tracer.start_as_current_span(
+            with self._tracer.start_as_current_span(  # type: ignore[union-attr]
                 f"aegis.{event.event_type}",
                 attributes={
                     "service.name": self._service_name,
