@@ -410,6 +410,60 @@ class TestBadgeScore:
         assert data["color"] == "brightgreen"
 
 
+# -- WebSocket audit stream -------------------------------------------------
+
+
+class TestWebSocketAudit:
+    def test_ws_connects(self, app_with_data):
+        client = _client(app_with_data)
+        with client.websocket_connect("/ws/audit"):
+            pass  # Connection opens without error
+
+    def test_ws_receives_entry(self, policy, tmp_path):
+        try:
+            from aegis.server.app import create_app
+        except ImportError:
+            pytest.skip("starlette not installed")
+
+        from starlette.testclient import TestClient
+
+        db_path = tmp_path / "ws_test.db"
+        app = create_app(policy=policy, audit_db_path=db_path, enable_dashboard=True)
+        client = TestClient(app)
+
+        # We need access to the audit_logger used by the app.
+        # The simplest way: call /api/v1/execute to trigger an audit write
+        # while a WS connection is open.
+        import threading
+
+        received = []
+
+        def ws_listener():
+            with client.websocket_connect("/ws/audit") as ws:
+                data = ws.receive_text()
+                received.append(data)
+
+        t = threading.Thread(target=ws_listener, daemon=True)
+        t.start()
+
+        import time
+
+        time.sleep(0.3)  # Let WS connect
+
+        # Trigger an action that gets logged
+        client.post(
+            "/api/v1/execute",
+            json={"action_type": "read_test", "target": "ws"},
+        )
+        t.join(timeout=3)
+
+        assert len(received) == 1
+        import json
+
+        entry = json.loads(received[0])
+        assert entry["action_type"] == "read_test"
+
+
 # -- Dashboard disabled -----------------------------------------------------
 
 

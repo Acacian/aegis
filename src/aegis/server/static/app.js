@@ -18,6 +18,7 @@ const routes = {
 let _charts = [];
 let _refreshTimer = null;
 let _autoRefresh = true;
+let _pageLiveHandler = null;
 
 function destroyCharts() {
   _charts.forEach((c) => c.destroy());
@@ -33,6 +34,50 @@ function startAutoRefresh(fn, interval) {
   if (_autoRefresh) { _refreshTimer = setInterval(fn, interval); }
 }
 
+// ---------------------------------------------------------------------------
+// WebSocket real-time audit stream
+// ---------------------------------------------------------------------------
+
+let _ws = null;
+let _wsListeners = [];
+let _wsConnected = false;
+
+function connectWS() {
+  if (_ws && (_ws.readyState === WebSocket.OPEN || _ws.readyState === WebSocket.CONNECTING)) return;
+  const proto = location.protocol === "https:" ? "wss:" : "ws:";
+  _ws = new WebSocket(proto + "//" + location.host + "/ws/audit");
+  _ws.onopen = () => {
+    _wsConnected = true;
+    updateWSIndicator();
+  };
+  _ws.onmessage = (evt) => {
+    try {
+      const entry = JSON.parse(evt.data);
+      _wsListeners.forEach((fn) => { try { fn(entry); } catch (_) {} });
+    } catch (_) {}
+  };
+  _ws.onclose = () => {
+    _wsConnected = false;
+    updateWSIndicator();
+    setTimeout(connectWS, 5000);
+  };
+  _ws.onerror = () => {
+    _wsConnected = false;
+    updateWSIndicator();
+  };
+}
+
+function onAuditEntry(fn) { _wsListeners.push(fn); }
+function offAuditEntry(fn) { _wsListeners = _wsListeners.filter((f) => f !== fn); }
+
+function updateWSIndicator() {
+  const el = document.getElementById("ws-status");
+  if (!el) return;
+  el.innerHTML = _wsConnected
+    ? '<span class="inline-block w-2 h-2 rounded-full bg-green-500 mr-1"></span>Live'
+    : '<span class="inline-block w-2 h-2 rounded-full bg-red-500 mr-1 animate-pulse"></span>Connecting';
+}
+
 function router() {
   const hash = location.hash.replace(/^#\/?/, "") || "overview";
   const page = hash.split("/")[0];
@@ -44,6 +89,7 @@ function router() {
   });
 
   stopAutoRefresh();
+  if (_pageLiveHandler) { offAuditEntry(_pageLiveHandler); _pageLiveHandler = null; }
   destroyCharts();
   const app = document.getElementById("app");
   app.innerHTML = '<div class="flex items-center justify-center h-64"><div class="skeleton" style="width:200px;height:24px"></div></div>';
@@ -53,6 +99,7 @@ function router() {
 window.addEventListener("hashchange", router);
 window.addEventListener("DOMContentLoaded", () => {
   router();
+  connectWS();
   // Fetch version
   api("system/health").then((d) => {
     const el = document.getElementById("version");
@@ -227,6 +274,38 @@ async function renderOverview(app) {
   );
   bottomRow.appendChild(polCard);
   app.appendChild(bottomRow);
+
+  // Live feed (WebSocket)
+  const liveSection = h("div", { className: "card mt-4" },
+    h("div", { className: "flex items-center justify-between mb-3" },
+      h("h3", { className: "text-sm font-semibold text-gray-300" }, "Live Feed"),
+      h("span", { className: "text-xs text-gray-500" }, "Real-time via WebSocket"),
+    ),
+  );
+  const liveList = h("div", { id: "live-feed", className: "space-y-1 max-h-48 overflow-y-auto text-xs" });
+  liveList.appendChild(h("div", { className: "text-gray-600 italic" }, "Waiting for new events..."));
+  liveSection.appendChild(liveList);
+  app.appendChild(liveSection);
+
+  const liveHandler = (entry) => {
+    const feed = document.getElementById("live-feed");
+    if (!feed) return;
+    if (feed.children.length === 1 && feed.firstChild.tagName === "DIV" && feed.firstChild.classList.contains("italic")) {
+      feed.innerHTML = "";
+    }
+    const row = h("div", { className: "flex items-center gap-2 py-1 border-b border-gray-800" },
+      h("span", { className: "text-gray-500 font-mono" }, new Date().toLocaleTimeString()),
+      riskBadge(entry.risk_level),
+      h("span", { className: "text-gray-300 font-medium" }, entry.action_type || "?"),
+      h("span", { className: "text-gray-600" }, "\u2192"),
+      h("span", { className: "text-gray-400" }, entry.action_target || "?"),
+      h("span", { className: "text-gray-600 ml-auto" }, entry.agent_id || ""),
+    );
+    feed.insertBefore(row, feed.firstChild);
+    if (feed.children.length > 50) feed.removeChild(feed.lastChild);
+  };
+  onAuditEntry(liveHandler);
+  _pageLiveHandler = liveHandler;
 
   // Render charts
   if (tl && tl.buckets && tl.buckets.length > 0) {

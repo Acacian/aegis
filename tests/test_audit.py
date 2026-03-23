@@ -89,3 +89,38 @@ def test_audit_human_decision_recorded(tmp_path: Path):
     entries = logger.get_log()
     assert entries[0]["human_decision"] == "approved"
     logger.close()
+
+
+def test_subscribe_notifies_on_log(tmp_path: Path):
+    db = tmp_path / "sub.db"
+    logger = AuditLogger(db_path=db)
+
+    received: list[dict] = []  # type: ignore[type-arg]
+    logger.subscribe(lambda entry: received.append(entry))
+
+    decision = _make_decision("read", risk=RiskLevel.LOW, approval=Approval.AUTO)
+    result = Result(action=decision.action, status=ResultStatus.SUCCESS)
+    logger.log("s1", decision, result=result)
+
+    assert len(received) == 1
+    assert received[0]["action_type"] == "read"
+    assert received[0]["risk_level"] == "LOW"
+    logger.close()
+
+
+def test_unsubscribe_stops_notifications(tmp_path: Path):
+    db = tmp_path / "unsub.db"
+    logger = AuditLogger(db_path=db)
+
+    received: list[dict] = []  # type: ignore[type-arg]
+    cb = lambda entry: received.append(entry)  # noqa: E731
+    logger.subscribe(cb)
+
+    decision = _make_decision("read")
+    logger.log("s1", decision)
+    assert len(received) == 1
+
+    logger.unsubscribe(cb)
+    logger.log("s2", decision)
+    assert len(received) == 1  # No new notification
+    logger.close()

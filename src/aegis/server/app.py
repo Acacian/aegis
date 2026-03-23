@@ -77,7 +77,7 @@ def create_app(
     from starlette.applications import Starlette
     from starlette.requests import Request
     from starlette.responses import FileResponse, JSONResponse
-    from starlette.routing import Mount, Route
+    from starlette.routing import Mount, Route, WebSocketRoute
     from starlette.staticfiles import StaticFiles
 
     if policy is None and policy_path is not None:
@@ -242,7 +242,7 @@ def create_app(
         # Do not leak internal exception details to clients
         return JSONResponse({"error": "Internal server error"}, status_code=500)
 
-    routes: list[Route | Mount] = [
+    routes: list[Route | Mount | WebSocketRoute] = [
         Route("/health", health, methods=["GET"]),
         Route("/api/v1/evaluate", evaluate, methods=["POST"]),
         Route("/api/v1/execute", execute_action, methods=["POST"]),
@@ -250,6 +250,13 @@ def create_app(
         Route("/api/v1/policy", get_policy, methods=["GET"]),
         Route("/api/v1/policy", update_policy, methods=["PUT"]),
     ]
+
+    # WebSocket for real-time audit streaming
+    from aegis.server.ws import AuditBroadcaster, get_ws_route
+
+    broadcaster = AuditBroadcaster()
+    broadcaster.attach(audit_logger)
+    routes.append(get_ws_route(broadcaster))
 
     if enable_dashboard:
         from aegis.server.dashboard_api import get_dashboard_routes

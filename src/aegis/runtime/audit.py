@@ -6,10 +6,13 @@ post-hoc review, compliance, and debugging.
 
 from __future__ import annotations
 
+import contextlib
 import json
 import sqlite3
+from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 from aegis.core.policy import PolicyDecision
 from aegis.core.result import Result
@@ -61,6 +64,7 @@ class AuditLogger:
         self._conn.execute(_SCHEMA)
         self._conn.commit()
         self._migrate()
+        self._subscribers: list[Callable[[dict[str, Any]], Any]] = []
 
     def _migrate(self) -> None:
         """Add agent context columns to existing databases if missing."""
@@ -114,7 +118,25 @@ class AuditLogger:
             ),
         )
         self._conn.commit()
-        return cursor.lastrowid  # type: ignore[return-value]
+        row_id: int = cursor.lastrowid  # type: ignore[assignment]
+
+        if self._subscribers:
+            entry: dict[str, Any] = {
+                "id": row_id,
+                "session_id": session_id,
+                "action_type": decision.action.type,
+                "action_target": decision.action.target,
+                "risk_level": decision.risk_level.name,
+                "approval": decision.approval.value,
+                "matched_rule": decision.matched_rule,
+                "result_status": result.status.value if result else None,
+                "agent_id": decision.action.agent_id or None,
+            }
+            for cb in self._subscribers:
+                with contextlib.suppress(Exception):
+                    cb(entry)
+
+        return row_id
 
     def get_log(
         self,
@@ -234,6 +256,15 @@ class AuditLogger:
             for entry in entries:
                 f.write(json.dumps(entry) + "\n")
         return len(entries)
+
+    def subscribe(self, callback: Callable[[dict[str, Any]], Any]) -> None:
+        """Register a callback to receive new audit entries."""
+        self._subscribers.append(callback)
+
+    def unsubscribe(self, callback: Callable[[dict[str, Any]], Any]) -> None:
+        """Remove a previously registered callback."""
+        with contextlib.suppress(ValueError):
+            self._subscribers.remove(callback)
 
     def close(self) -> None:
         """Close the database connection."""
