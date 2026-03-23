@@ -41,6 +41,7 @@ from aegis.core.mcp_security import (
     TrustLevel,
     TrustScore,
 )
+from aegis.core.mcp_vuln_db import MCPVulnDB, VulnEntry, VulnFinding
 from aegis.core.otel_export import AegisEvent, AegisOTelExporter
 from aegis.core.plan import ExecutionPlan
 from aegis.core.policy import Approval, Policy, PolicyDecision, PolicyRule
@@ -59,6 +60,11 @@ from aegis.core.semantic import (
     KeywordSemanticEvaluator,
     SemanticEvaluator,
     evaluate_semantic_condition,
+)
+from aegis.core.session_replay import (
+    ReplayReport,
+    SessionRecorder,
+    SessionReplayer,
 )
 
 __all__ = [
@@ -91,6 +97,7 @@ __all__ = [
     "LangChainCostCallback",
     "MCPFinding",
     "MCPSecurityGate",
+    "MCPVulnDB",
     "ModelPricing",
     "OpenAICostExtractor",
     "Policy",
@@ -100,6 +107,7 @@ __all__ = [
     "PolicyDriftDetector",
     "PolicyImpactAnalyzer",
     "PolicyRule",
+    "ReplayReport",
     "RateLimitResult",
     "RateLimitRule",
     "RateLimiter",
@@ -112,12 +120,16 @@ __all__ = [
     "RiskLevel",
     "SEMANTIC_CATEGORIES",
     "SemanticEvaluator",
+    "SessionRecorder",
+    "SessionReplayer",
     "TokenUsage",
     "ToolDescriptionScanner",
     "ToolTrustScorer",
     "TrustLevel",
     "TrustScore",
     "VerificationResult",
+    "VulnEntry",
+    "VulnFinding",
     "evaluate_semantic_condition",
     "export_policy_yaml",
 ]
