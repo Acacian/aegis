@@ -1,9 +1,5 @@
-# Claude Code — track safe project config, ignore machine-specific + sensitive context
-.claude/*
-!.claude/agents/
-!.claude/scripts/
-!.claude/skills/
-!.claude/hooks/
+# Claude Code — entire .claude/ synced via private repo (aegis-context)
+.claude/
 !CLAUDE.md
 
 .github/SOCIAL.md
