@@ -271,6 +271,40 @@ def main(argv: list[str] | None = None) -> None:
         help="Comma-separated list of enabled features (default: all)",
     )
 
+    # aegis autopolicy
+    auto_parser = subparsers.add_parser(
+        "autopolicy",
+        help="Generate a YAML policy from natural language description",
+    )
+    auto_parser.add_argument(
+        "description",
+        help='Natural language policy description (e.g. "block deletes, allow reads")',
+    )
+    auto_parser.add_argument(
+        "-o", "--output",
+        default=None,
+        help="Output file path (default: print to stdout)",
+    )
+    auto_parser.add_argument(
+        "--format",
+        choices=["yaml", "json"],
+        default="yaml",
+        dest="fmt",
+    )
+
+    # aegis probe
+    probe_parser = subparsers.add_parser(
+        "probe",
+        help="Run adversarial tests against a policy to find governance gaps",
+    )
+    probe_parser.add_argument("policy_file", help="Path to YAML policy file")
+    probe_parser.add_argument(
+        "--format",
+        choices=["table", "json"],
+        default="table",
+        dest="fmt",
+    )
+
     # aegis stats
     stats_parser = subparsers.add_parser(
         "stats",
@@ -319,6 +353,10 @@ def main(argv: list[str] | None = None) -> None:
         _cmd_stats(args)
     elif args.command == "regulatory":
         _cmd_regulatory(args)
+    elif args.command == "autopolicy":
+        _cmd_autopolicy(args)
+    elif args.command == "probe":
+        _cmd_probe(args)
     else:
         parser.print_help()
 
@@ -1053,6 +1091,114 @@ def _cmd_monitor(args: argparse.Namespace) -> None:
     from aegis.cli.monitor import run_monitor
 
     run_monitor(str(db_path), interval=args.interval)
+
+
+def _cmd_autopolicy(args: argparse.Namespace) -> None:
+    """Generate a policy from natural language description."""
+    from aegis.core.autopolicy import generate_policy, generate_policy_yaml
+
+    description = args.description
+
+    if args.fmt == "json":
+        policy = generate_policy(description)
+        data = {
+            "version": "1",
+            "defaults": {
+                "risk_level": policy.default_risk_level.name.lower(),
+                "approval": policy.default_approval.value,
+            },
+            "rules": [
+                {
+                    "name": r.name,
+                    "match_type": r.match_type,
+                    "match_target": r.match_target,
+                    "risk_level": r.risk_level.name.lower(),
+                    "approval": r.approval.value,
+                }
+                for r in policy.rules
+            ],
+        }
+        output = json.dumps(data, indent=2)
+    else:
+        output = generate_policy_yaml(description)
+
+    if args.output:
+        Path(args.output).write_text(output, encoding="utf-8")
+        print(f"Policy written to {args.output}")
+    else:
+        print(output)
+
+
+def _cmd_probe(args: argparse.Namespace) -> None:
+    """Run adversarial probes against a policy."""
+    from aegis.core.policy import Policy
+    from aegis.core.probe import PolicyProbe
+
+    policy_path = Path(args.policy_file)
+    if not policy_path.exists():
+        print(colors.red(f"File not found: {policy_path}"), file=sys.stderr)
+        sys.exit(1)
+
+    try:
+        policy = Policy.from_yaml(args.policy_file)
+    except Exception as e:
+        print(colors.red(f"Failed to load policy: {e}"), file=sys.stderr)
+        sys.exit(1)
+
+    probe = PolicyProbe()
+    report = probe.run(policy)
+
+    if args.fmt == "json":
+        data = {
+            "total_probes": report.total_probes,
+            "gap_count": report.gap_count,
+            "critical_count": report.critical_count,
+            "robustness_score": report.score,
+            "findings": [
+                {
+                    "severity": f.severity,
+                    "category": f.category,
+                    "description": f.description,
+                    "action_type": f.action.type,
+                    "action_target": f.action.target,
+                    "recommendation": f.recommendation,
+                }
+                for f in report.findings
+            ],
+        }
+        print(json.dumps(data, indent=2))
+        return
+
+    # Table format
+    print(colors.bold(f"Aegis Policy Probe — {report.total_probes} probes"))
+    print("=" * 50)
+
+    score = report.score
+    if score >= 80:
+        score_str = colors.green(f"{score}/100")
+    elif score >= 50:
+        score_str = colors.yellow(f"{score}/100")
+    else:
+        score_str = colors.red(f"{score}/100")
+    print(f"  Robustness score: {score_str}")
+    print(f"  Findings: {report.gap_count}")
+    print()
+
+    if report.findings:
+        for f in report.findings:
+            sev_color = {
+                "critical": colors.bright_red,
+                "high": colors.red,
+                "medium": colors.yellow,
+                "low": colors.cyan,
+            }.get(f.severity, str)
+            print(f"  {sev_color(f.severity.upper())} [{f.category}]")
+            print(f"    {f.description}")
+            if f.recommendation:
+                print(f"    -> {f.recommendation}")
+            print()
+    else:
+        print(colors.green("  No governance gaps found."))
 
 
 if __name__ == "__main__":

@@ -20,7 +20,7 @@
   <a href="https://pypi.org/project/agent-aegis/"><img src="https://img.shields.io/pypi/dm/agent-aegis?label=downloads&color=brightgreen" alt="Downloads"></a>
   <a href="https://github.com/Acacian/aegis"><img src="https://img.shields.io/github/stars/Acacian/aegis?style=social" alt="GitHub stars"></a>
   <br/>
-  <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-878_passed-brightgreen" alt="Tests"></a>
+  <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-1642_passed-brightgreen" alt="Tests"></a>
   <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/coverage-92%25-brightgreen" alt="Coverage"></a>
   <a href="https://acacian.github.io/aegis/playground/"><img src="https://img.shields.io/badge/playground-Try_it_Live-ff6b6b" alt="Playground"></a>
 </p>
@@ -300,6 +300,20 @@ aegis audit
 | **Hot-reload** | `runtime.update_policy(...)` -- swap policies without restart |
 | **Policy merge** | `Policy.from_yaml_files("base.yaml", "prod.yaml")` -- layer configs |
 | **Runtime hooks** | Async callbacks for `on_decision`, `on_approval`, `on_execute` |
+| **Rate limiter** | Per-agent and global sliding-window rate limits with glob matching |
+| **RBAC** | 12 granular permissions, 5 hierarchical roles (viewer → super_admin), thread-safe |
+| **Policy versioning** | Git-like commit, diff, rollback, tagging with JSON persistence |
+| **Multi-tenant isolation** | `TenantContext` (contextvars), tenant registry, quota enforcement, data isolation |
+| **Cryptographic audit chain** | SHA-256/SHA3-256 hash-linked tamper-evident audit trail for EU AI Act Art.12 |
+| **Regulatory mapper** | EU AI Act, NIST AI RMF, SOC2, ISO 42001 gap analysis with evidence generation |
+| **Webhook notifications** | Slack, PagerDuty, generic JSON with severity filtering |
+| **Action replay** | What-if policy analysis by replaying historical actions against new rules |
+| **Policy-as-Code SDK** | Fluent `PolicyBuilder` API for programmatic policy construction |
+| **Policy testing framework** | Automated rule testing, regression detection, test auto-generation |
+| **GitHub Action** | CI/CD governance gates: `aegis validate`, `aegis scan`, `aegis score` in your pipeline |
+| **Natural language policies** | `aegis autopolicy "block deletes, allow reads"` -- generates YAML from English (Tier 1: keyword, Tier 2: LLM) |
+| **Adversarial probe** | `aegis probe policy.yaml` -- automated gap detection: glob bypass, escalation, missing coverage |
+| **Real-time monitor** | Terminal dashboard for live governance activity |
 | **Type-safe** | Full `mypy --strict` compliance, `py.typed` marker |
 | **9 policy templates** | Pre-built for CRM, code, finance, browser, DevOps, healthcare, and more |
 | **Interactive playground** | [Try in browser](https://acacian.github.io/aegis/playground/) -- no install needed |
@@ -339,7 +353,7 @@ policy = Policy.from_yaml("policies/crm-agent.yaml")
 
 | Aspect | Detail |
 |--------|--------|
-| **878+ tests, 92% coverage** | Every adapter, handler, and edge case tested |
+| **1,642+ tests, 92% coverage** | Every adapter, handler, and edge case tested |
 | **Type-safe** | `mypy --strict` with zero errors, `py.typed` marker |
 | **Performance** | Policy evaluation < 1ms; auto-approved actions add < 5ms overhead |
 | **Fail-safe** | Blocked actions never execute; can't be bypassed without policy change |
@@ -718,6 +732,153 @@ chain.revoke(root)
 chain.can(worker, "read:crm")           # False
 ```
 
+### Rate Limiter
+
+Per-agent and global sliding-window rate limiting with glob-pattern matching on agent IDs.
+
+```python
+from aegis.core.rate_limiter import RateLimiter
+
+limiter = RateLimiter()
+limiter.add_rule("agent-*", max_requests=100, window_seconds=60)
+limiter.add_rule("agent-untrusted", max_requests=10, window_seconds=60)
+
+limiter.check("agent-untrusted", action_type="write")  # True (allowed)
+# After 10 calls in 60s:
+limiter.check("agent-untrusted", action_type="write")  # False (rate limited)
+```
+
+### RBAC (Role-Based Access Control)
+
+12 granular permissions across 5 hierarchical roles. Thread-safe `AccessController` for multi-agent environments.
+
+```python
+from aegis.core.rbac import AccessController, Role
+
+ac = AccessController()
+ac.assign_role("alice", Role.ADMIN)
+ac.assign_role("bot-1", Role.OPERATOR)
+
+ac.check("alice", "policy:write")   # True
+ac.check("bot-1", "policy:write")   # False -- operators can execute, not configure
+ac.check("bot-1", "action:execute") # True
+```
+
+Roles: `viewer` < `operator` < `admin` < `policy_admin` < `super_admin`
+
+### Policy Versioning
+
+Git-like policy version control with commit, diff, rollback, and tagging.
+
+```python
+from aegis.core.versioning import PolicyVersionStore
+
+store = PolicyVersionStore("./policy-versions.json")
+store.commit(policy, message="Initial production policy")
+store.tag("v1.0")
+
+# Later...
+store.commit(updated_policy, message="Relax read rules")
+diff = store.diff("v1.0", "HEAD")   # See what changed
+store.rollback("v1.0")               # Revert to tagged version
+```
+
+### Multi-Tenant Isolation
+
+Context-based tenant isolation with quota enforcement and data separation.
+
+```python
+from aegis.core.tenant import TenantContext, TenantRegistry, TenantIsolation
+
+registry = TenantRegistry()
+registry.register("acme-corp", quota={"max_actions_per_hour": 1000})
+
+with TenantContext("acme-corp"):
+    # All policy evaluations, audit writes, and rate limits
+    # are automatically scoped to this tenant
+    result = await runtime.run_one(action)
+```
+
+### Cryptographic Audit Chain
+
+Tamper-evident audit trail with hash-linked entries. Meets EU AI Act Article 12 and SOC2 CC7.2 requirements.
+
+```bash
+aegis audit --verify              # Verify chain integrity
+aegis audit --export-chain        # Export full hash chain
+aegis audit --evidence soc2       # Generate compliance evidence package
+```
+
+```python
+from aegis.core.crypto_audit import CryptoAuditLogger
+
+logger = CryptoAuditLogger(algorithm="sha3-256")
+# Each entry is hash-linked to the previous -- any tampering breaks the chain
+logger.log(action, decision, result)
+assert logger.verify_chain()  # True if untampered
+```
+
+### Regulatory Compliance Mapper
+
+Maps your governance posture against EU AI Act, NIST AI RMF, SOC2, and ISO 42001. Identifies gaps and generates evidence.
+
+```bash
+aegis regulatory --framework eu-ai-act    # Gap analysis
+aegis regulatory --framework nist-ai-rmf  # NIST mapping
+aegis regulatory --all --output report.json
+```
+
+29 regulatory requirements mapped across 4 frameworks with automatic evidence collection from audit logs.
+
+### Natural Language Policy Generation
+
+Generate YAML policies from plain English. Two tiers: built-in keyword parser (no dependencies) and pluggable LLM evaluator (bring your own API key).
+
+```bash
+aegis autopolicy "block all deletes on production, allow reads, require approval for writes over $10K"
+```
+```yaml
+# Generated output:
+version: '1'
+defaults:
+  risk_level: medium
+  approval: approve
+rules:
+- name: delete_block
+  match: { type: "delete*", target: "prod*" }
+  risk_level: critical
+  approval: block
+- name: read_auto
+  match: { type: "read*" }
+  risk_level: low
+  approval: auto
+```
+
+Tier 2 (LLM-backed): implement the `PolicyGenerator` protocol with your preferred provider (OpenAI, Anthropic, etc.) -- same pattern as `SemanticEvaluator`.
+
+### Adversarial Policy Probe
+
+Automated testing for governance gaps. Probes for glob bypasses, missing coverage, escalation patterns, and overly permissive defaults.
+
+```bash
+aegis probe policy.yaml
+
+# Aegis Policy Probe — 205 probes
+# ==================================================
+#   Robustness score: 72/100
+#   Findings: 8
+#
+#   CRITICAL [missing_coverage]
+#     Destructive action 'drop' on 'production' is auto-approved
+#     -> Add a rule to block or require approval for 'drop' actions
+#
+#   HIGH [glob_bypass]
+#     'bulk_delete' bypasses block rule 'no_deletes' (pattern: 'delete')
+#     -> Broaden the glob pattern to 'delete*' or add a rule for 'bulk_delete'
+```
+
+Probe categories: **missing coverage** | **glob bypass** | **default fallthrough** | **escalation patterns** | **target gaps** | **wildcard rules**
+
 ### `aegis scan` -- Static Analysis
 
 AST-based scanner that detects ungoverned AI tool calls in your Python codebase.
@@ -758,16 +919,29 @@ Add the badge to your repo:
 
 ```
 aegis/
-  core/        Action, Policy engine, Conditions, Risk levels, Retry, JSON Schema
-  core/anomaly     Behavioral anomaly detection -- per-agent profiling, auto-policy generation
-  core/compliance  Compliance report generator -- SOC2, GDPR, governance scoring
-  core/trust       Agent trust chain -- hierarchical identity, delegation, revocation
-  core/semantic    Semantic conditions engine -- keyword matching + LLM evaluator protocol
-  core/diff        Policy diff & impact analysis -- rule comparison, action replay
-  adapters/    BaseExecutor, Playwright, httpx, LangChain, CrewAI, OpenAI, Anthropic, MCP
-  runtime/     Runtime engine, ApprovalHandler, AuditLogger (SQLite/JSONL/webhook/logging)
-  server/      REST API (Starlette ASGI) -- evaluate, execute, audit, policy endpoints
-  cli/         aegis validate | audit | schema | init | simulate | serve | stats | scan | score | diff | compliance
+  core/              Action, Policy engine, Conditions, Risk levels, Retry, JSON Schema
+  core/anomaly       Behavioral anomaly detection -- per-agent profiling, auto-policy generation
+  core/compliance    Compliance report generator -- SOC2, GDPR, governance scoring
+  core/trust         Agent trust chain -- hierarchical identity, delegation, revocation
+  core/semantic      Semantic conditions engine -- keyword matching + LLM evaluator protocol
+  core/diff          Policy diff & impact analysis -- rule comparison, action replay
+  core/rate_limiter  Per-agent/global sliding-window rate limiting
+  core/rbac          Role-based access control -- 12 permissions, 5 roles, AccessController
+  core/versioning    Policy version control -- commit, diff, rollback, tagging
+  core/tenant        Multi-tenant isolation -- context, registry, quota enforcement
+  core/crypto_audit  Cryptographic audit chain -- hash-linked tamper-evident logs
+  core/replay        Action replay engine -- what-if policy analysis
+  core/regulatory    EU AI Act / NIST / SOC2 / ISO 42001 compliance mapper
+  core/webhooks      Webhook notifications -- Slack, PagerDuty, JSON
+  core/builder       Policy-as-Code SDK -- fluent PolicyBuilder API
+  core/autopolicy    Natural language -> YAML policy generation (keyword + LLM)
+  core/probe         Adversarial policy testing -- gap detection, bypass attempts
+  core/tiers         Enterprise tier system -- feature gating with soft nudge
+  adapters/          BaseExecutor, Playwright, httpx, LangChain, CrewAI, OpenAI, Anthropic, MCP
+  runtime/           Runtime engine, ApprovalHandler, AuditLogger (SQLite/JSONL/webhook/logging)
+  server/            REST API (Starlette ASGI) -- evaluate, execute, audit, policy endpoints
+  cli/               aegis validate | audit | schema | init | simulate | serve | stats |
+                     scan | score | diff | compliance | regulatory | monitor
 ```
 
 ## Why Aegis?
@@ -813,6 +987,8 @@ aegis score ./src/ --policy policy.yaml # Governance score (0-100) + badge
 aegis diff policy-v1.yaml policy-v2.yaml           # Compare policies
 aegis diff policy-v1.yaml policy-v2.yaml --replay  # Impact analysis with action replay
 aegis compliance --type soc2 --output report.json  # Generate compliance report
+aegis autopolicy "block deletes, allow reads"      # Generate policy from English
+aegis probe policy.yaml                            # Adversarial policy testing
 ```
 
 ## Roadmap
@@ -823,9 +999,10 @@ aegis compliance --type soc2 --output report.json  # Generate compliance report
 | **0.1.3** | **Released** | REST API server, retry/rollback, dry-run, hot-reload, policy merge, Slack/Discord/Telegram/email approval, simulate CLI, runtime hooks, stats, live tail |
 | **0.1.4** | **Released** | Multi-agent foundations (agent_id, PolicyHierarchy, conflict detection), performance optimizations (compiled globs, batch audit, eval cache), security hardening, MCP/LangChain/CrewAI/OpenAI cookbooks |
 | **0.1.5** | **Released** | Behavioral anomaly detection, compliance report generator (SOC2/GDPR), policy diff & impact analysis, semantic conditions engine, agent trust chain, `aegis scan` (static analysis), `aegis score` (governance scoring + badge) |
-| **0.2** | Q2 2026 | Dashboard UI, rate limiting, queue-based async execution |
+| **0.1.7** | **Released** | Cryptographic audit chain, rate limiter, RBAC, policy versioning, multi-tenant isolation, regulatory mapper (EU AI Act/NIST/SOC2/ISO 42001), webhook notifications, action replay, PolicyBuilder SDK, policy testing framework, real-time monitor, GitHub Action |
+| **0.2** | Q2 2026 | Dashboard UI, queue-based async execution |
 | **0.3** | Q3 2026 | Centralized policy server, cross-agent audit correlation |
-| **1.0** | 2027 | Distributed governance, policy versioning & rollback, multi-tenant REST API |
+| **1.0** | 2027 | Distributed governance, SaaS dashboard, SSO/SCIM |
 
 ## Contributing
 

@@ -1,16 +1,18 @@
 """Aegis MCP Server — policy-based governance for AI agent tool calls.
 
-Runs as a standalone MCP server (stdio transport) that exposes Aegis
-governance capabilities as MCP tools. Any MCP client can connect to
-evaluate actions against YAML policies, check audit logs, and manage
-policy rules at runtime.
+Runs as a standalone MCP server that exposes Aegis governance capabilities
+as MCP tools. Supports stdio, SSE, and Streamable HTTP transports. Any MCP
+client can connect to evaluate actions against YAML policies, check audit
+logs, and manage policy rules at runtime.
 
 Install & run::
 
     pip install 'agent-aegis[mcp]'
-    aegis-mcp-server                           # default (empty policy)
-    aegis-mcp-server --policy policy.yaml      # with policy file
-    AEGIS_POLICY_PATH=policy.yaml aegis-mcp-server  # via env var
+    aegis-mcp-server                                          # stdio (default)
+    aegis-mcp-server --policy policy.yaml                     # with policy file
+    aegis-mcp-server --transport sse --port 8080              # SSE (remote)
+    aegis-mcp-server --transport streamable-http --port 8080  # Streamable HTTP
+    AEGIS_POLICY_PATH=policy.yaml aegis-mcp-server            # via env var
 
 Or with uvx::
 
@@ -41,7 +43,7 @@ def _load_policy(policy_path: str | None = None) -> Policy:
 _policy: Policy = Policy(rules=[])
 
 
-def _create_server() -> Any:
+def _create_server(host: str = "0.0.0.0", port: int = 8080) -> Any:
     """Create and configure the MCP server with Aegis tools."""
     try:
         from mcp.server.fastmcp import FastMCP
@@ -59,6 +61,8 @@ def _create_server() -> Any:
             "action is allowed by the current YAML policy. Use get_policy to inspect "
             "rules. Use update_policy to hot-reload policy YAML."
         ),
+        host=host,
+        port=port,
     )
 
     @mcp.tool()
@@ -216,15 +220,37 @@ def main(argv: list[str] | None = None) -> None:
         default=None,
         help="Path to YAML policy file (or set AEGIS_POLICY_PATH env var).",
     )
+    parser.add_argument(
+        "--transport",
+        type=str,
+        choices=["stdio", "sse", "streamable-http"],
+        default="stdio",
+        help="Transport protocol (default: stdio).",
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=8080,
+        help="Port for SSE/HTTP transport (default: 8080).",
+    )
+    parser.add_argument(
+        "--host",
+        type=str,
+        default="0.0.0.0",
+        help="Host for SSE/HTTP transport (default: 0.0.0.0).",
+    )
     args = parser.parse_args(argv)
 
     _policy = _load_policy(args.policy)
 
     rule_count = len(_policy.rules)
+    transport = args.transport
     print(f"Aegis MCP server starting with {rule_count} policy rules.", file=sys.stderr)
+    if transport != "stdio":
+        print(f"Listening on {args.host}:{args.port} ({transport})", file=sys.stderr)
 
-    server = _create_server()
-    server.run()
+    server = _create_server(host=args.host, port=args.port)
+    server.run(transport=transport)
 
 
 if __name__ == "__main__":
