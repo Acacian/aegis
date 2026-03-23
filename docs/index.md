@@ -71,7 +71,8 @@ result = await runtime.run_one(Action("delete", "crm", params={"id": "all"}))
 | **Audit trail** | SQLite + JSONL + webhook + Python `logging` — compliance-ready |
 | **7 framework adapters** | LangChain, CrewAI, OpenAI Agents SDK, Anthropic Claude, Playwright, httpx, MCP |
 | **REST API server** | `aegis serve policy.yaml` — govern from any language |
-| **CLI tools** | `aegis init`, `validate`, `simulate`, `audit`, `stats`, `serve` |
+| **Web dashboard** | Real-time governance dashboard with compliance reports and anomaly detection |
+| **CLI tools** | `aegis init`, `validate`, `simulate`, `audit`, `serve`, `scan`, `score`, `probe` |
 | **Type-safe** | Full `mypy --strict`, `py.typed` marker |
 | **< 1ms overhead** | Policy evaluation adds minimal latency to your agent |
 
@@ -132,7 +133,7 @@ async with Runtime(
 
 | Aspect | Detail |
 |--------|--------|
-| **518 tests, 92% coverage** | Every adapter, handler, and edge case tested |
+| **1,769+ tests** | Every adapter, handler, and edge case tested |
 | **Type-safe** | `mypy --strict` with zero errors |
 | **< 1ms evaluation** | Policy check adds negligible overhead |
 | **Fail-safe** | Blocked actions never execute, period |
@@ -143,13 +144,13 @@ async with Runtime(
 
 | Version | Status | Features |
 |---------|--------|----------|
-| **0.1** | **Released** | Policy engine, 7 adapters (incl. MCP), CLI, audit, conditions, JSON Schema |
-| **0.1.3** | **Released** | REST API server, retry/rollback, dry-run, hot-reload, policy merge, 7 approval handlers, runtime hooks |
-| **0.1.4** | **Released** | Multi-agent foundations, PolicyHierarchy, performance optimizations, security hardening |
-| **0.2** | Q2 2026 | Dashboard UI, rate limiting, queue-based async execution |
-| **0.3** | Q3 2026 | Agent identity, cross-agent audit correlation |
-| **0.4** | Q4 2026 | Multi-agent governance, centralized policy server |
-| **1.0** | 2027 | Distributed governance, policy versioning, multi-tenant API |
+| **0.1** | **Released** | Policy engine, 7 adapters, CLI, audit, conditions, JSON Schema |
+| **0.1.3** | **Released** | REST API, retry/rollback, dry-run, hot-reload, 7 approval handlers |
+| **0.1.7** | **Released** | Crypto audit chain, RBAC, rate limiter, regulatory mapper, anomaly detection, policy versioning |
+| **0.1.9** | **Released** | Web dashboard, autopolicy (NL to YAML), adversarial probe, multi-tenant isolation |
+| **0.2** | Q2 2026 | Queue-based async execution, WebSocket real-time updates |
+| **0.3** | Q3 2026 | Centralized policy server, cross-agent audit correlation |
+| **1.0** | 2027 | Distributed governance, hosted SaaS, SSO/SCIM |
 
 ## Links
 
