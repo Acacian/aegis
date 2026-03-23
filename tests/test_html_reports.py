@@ -8,8 +8,6 @@ from datetime import UTC, datetime, timedelta
 import pytest
 
 from aegis.core.compliance import (
-    ComplianceFinding,
-    ComplianceReport,
     ReportGenerator,
 )
 from aegis.core.compliance import _html_escape as _compliance_html_escape

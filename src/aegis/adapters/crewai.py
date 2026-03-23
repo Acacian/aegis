@@ -49,7 +49,6 @@ from typing import Any
 from aegis.core.action import Action
 from aegis.core.policy import Approval, Policy, PolicyDecision
 from aegis.core.result import Result, ResultStatus
-from aegis.core.risk import RiskLevel
 
 logger = logging.getLogger(__name__)
 

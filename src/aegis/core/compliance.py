@@ -1018,8 +1018,10 @@ class ReportGenerator:
   <div class="header">
     <h1>{_html_escape(title)}</h1>
     <div class="meta">
-      Period: {report.period_start.strftime('%Y-%m-%d')} to {report.period_end.strftime('%Y-%m-%d')}
-      &middot; Generated: {report.generated_at.strftime('%Y-%m-%d %H:%M UTC')}
+      Period: {report.period_start.strftime('%Y-%m-%d')}
+      to {report.period_end.strftime('%Y-%m-%d')}
+      &middot; Generated: {report.generated_at.strftime(
+        '%Y-%m-%d %H:%M UTC')}
     </div>
   </div>
 

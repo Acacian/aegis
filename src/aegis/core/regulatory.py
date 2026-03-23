@@ -1508,8 +1508,14 @@ class ComplianceMapper:
                 )
                 continue
             seen_reqs.add(req.requirement_id)
-            badge = (' <span style="background:#ef4444;color:#fff;padding:2px 6px;'
-                     'border-radius:3px;font-size:11px;">MANDATORY</span>' if req.mandatory else "")
+            mand_style = (
+                "background:#ef4444;color:#fff;padding:2px 6px;"
+                "border-radius:3px;font-size:11px;"
+            )
+            badge = (
+                f' <span style="{mand_style}">MANDATORY</span>'
+                if req.mandatory else ""
+            )
             req_rows.append(
                 f'<tr><td style="padding:8px 12px;font-weight:600;">'
                 f"{_html_escape(req.requirement_id)}{badge}</td>"
@@ -1524,54 +1530,135 @@ class ComplianceMapper:
         if analysis.gaps:
             gap_items = []
             for gap in analysis.gaps:
-                m = (' <span style="background:#ef4444;color:#fff;padding:2px 6px;'
-                     'border-radius:3px;font-size:11px;">MANDATORY</span>' if gap.mandatory else "")
-                d = f" &mdash; Deadline: {_html_escape(gap.deadline)}" if gap.deadline else ""
-                p = (f"<br><small style='color:#991b1b;'>Penalty: "
-                     f"{_html_escape(gap.penalty)}</small>" if gap.penalty else "")
-                gap_items.append(f"<li><strong>{_html_escape(gap.requirement_id)}: "
-                                 f"{_html_escape(gap.title)}</strong>{m}{d}{p}</li>")
-            gaps_html = f'<div class="section"><h2>Compliance Gaps</h2><ul>{"".join(gap_items)}</ul></div>'
+                m_style = (
+                    "background:#ef4444;color:#fff;"
+                    "padding:2px 6px;"
+                    "border-radius:3px;font-size:11px;"
+                )
+                m = (
+                    f' <span style="{m_style}">'
+                    f"MANDATORY</span>"
+                    if gap.mandatory else ""
+                )
+                d = (
+                    f" &mdash; Deadline: "
+                    f"{_html_escape(gap.deadline)}"
+                    if gap.deadline else ""
+                )
+                p = (
+                    f"<br><small style='color:#991b1b;'>"
+                    f"Penalty: "
+                    f"{_html_escape(gap.penalty)}</small>"
+                    if gap.penalty else ""
+                )
+                gap_items.append(
+                    f"<li><strong>"
+                    f"{_html_escape(gap.requirement_id)}"
+                    f": {_html_escape(gap.title)}"
+                    f"</strong>{m}{d}{p}</li>"
+                )
+            gaps_html = (
+                '<div class="section"><h2>Compliance Gaps</h2>'
+                f'<ul>{"".join(gap_items)}</ul></div>'
+            )
         recs_html = ""
         if analysis.recommendations:
             ri = "".join(f"<li>{_html_escape(r)}</li>" for r in analysis.recommendations)
             recs_html = f'<div class="section"><h2>Recommendations</h2><ol>{ri}</ol></div>'
-        return f"""<!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Compliance Gap Analysis: {_html_escape(name)}</title>
-<style>
-body{{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;margin:0;padding:0;background:#f8fafc;color:#1e293b}}
-.container{{max-width:1100px;margin:0 auto;padding:24px}}
-.header{{background:#1e293b;color:#f8fafc;padding:32px;border-radius:8px 8px 0 0}}
-.header h1{{margin:0 0 8px 0;font-size:28px}}.header .meta{{font-size:14px;opacity:.8}}
-.section{{background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:24px;margin:16px 0}}
-.section h2{{margin:0 0 16px 0;font-size:20px;color:#334155}}
-.summary-grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px}}
-.summary-card{{background:#f1f5f9;border-radius:6px;padding:16px;text-align:center}}
-.summary-card .value{{font-size:28px;font-weight:700;color:#0f172a}}
-.summary-card .label{{font-size:13px;color:#64748b;margin-top:4px}}
-.bar-container{{background:#e2e8f0;border-radius:8px;height:28px;overflow:hidden;margin:8px 0}}
-.bar-fill{{height:100%;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:14px}}
-table{{width:100%;border-collapse:collapse;font-size:13px}}
-th{{background:#f1f5f9;padding:10px 12px;text-align:left;font-weight:600;color:#475569;border-bottom:2px solid #e2e8f0}}
-td{{padding:8px 12px;border-bottom:1px solid #e2e8f0;vertical-align:top}}
-tr:hover{{background:#f8fafc}}ul,ol{{padding-left:20px}}li{{margin-bottom:8px}}
-.footer{{text-align:center;font-size:12px;color:#94a3b8;padding:16px}}
-</style></head><body><div class="container">
-<div class="header"><h1>Compliance Gap Analysis</h1><div class="meta">{_html_escape(name)}</div></div>
-<div class="section"><h2>Coverage Overview</h2>
-<div class="summary-grid">
-<div class="summary-card"><div class="value">{analysis.total_requirements}</div><div class="label">Total Requirements</div></div>
-<div class="summary-card"><div class="value" style="color:#22c55e;">{analysis.fully_covered}</div><div class="label">Fully Covered</div></div>
-<div class="summary-card"><div class="value" style="color:#eab308;">{analysis.partially_covered}</div><div class="label">Partially Covered</div></div>
-<div class="summary-card"><div class="value" style="color:#ef4444;">{analysis.not_covered}</div><div class="label">Not Covered</div></div>
-</div><div class="bar-container"><div class="bar-fill" style="width:{score:.1f}%;background:{bar_color};">{score:.1f}%</div></div></div>
-<div class="section"><h2>Requirements Detail</h2>
-<table><thead><tr><th>Requirement</th><th>Title</th><th>Coverage</th><th>Aegis Feature</th><th>Evidence Type</th><th>Notes</th></tr></thead>
-<tbody>{"".join(req_rows)}</tbody></table></div>
-{gaps_html}{recs_html}
-<div class="footer">Generated by Aegis Compliance Mapper</div></div></body></html>"""
+        # Build CSS as a separate string to stay within line limits
+        css = (
+            "body{font-family:-apple-system,BlinkMacSystemFont,"
+            "'Segoe UI',Roboto,sans-serif;"
+            "margin:0;padding:0;background:#f8fafc;color:#1e293b}"
+            ".container{max-width:1100px;margin:0 auto;padding:24px}"
+            ".header{background:#1e293b;color:#f8fafc;"
+            "padding:32px;border-radius:8px 8px 0 0}"
+            ".header h1{margin:0 0 8px 0;font-size:28px}"
+            ".header .meta{font-size:14px;opacity:.8}"
+            ".section{background:#fff;border:1px solid #e2e8f0;"
+            "border-radius:8px;padding:24px;margin:16px 0}"
+            ".section h2{margin:0 0 16px 0;font-size:20px;"
+            "color:#334155}"
+            ".summary-grid{display:grid;"
+            "grid-template-columns:repeat(auto-fit,"
+            "minmax(140px,1fr));gap:12px;margin-bottom:20px}"
+            ".summary-card{background:#f1f5f9;"
+            "border-radius:6px;padding:16px;text-align:center}"
+            ".summary-card .value{font-size:28px;"
+            "font-weight:700;color:#0f172a}"
+            ".summary-card .label{font-size:13px;"
+            "color:#64748b;margin-top:4px}"
+            ".bar-container{background:#e2e8f0;border-radius:8px;"
+            "height:28px;overflow:hidden;margin:8px 0}"
+            ".bar-fill{height:100%;border-radius:8px;display:flex;"
+            "align-items:center;justify-content:center;"
+            "color:#fff;font-weight:600;font-size:14px}"
+            "table{width:100%;border-collapse:collapse;"
+            "font-size:13px}"
+            "th{background:#f1f5f9;padding:10px 12px;"
+            "text-align:left;font-weight:600;color:#475569;"
+            "border-bottom:2px solid #e2e8f0}"
+            "td{padding:8px 12px;border-bottom:1px solid #e2e8f0;"
+            "vertical-align:top}"
+            "tr:hover{background:#f8fafc}"
+            "ul,ol{padding-left:20px}li{margin-bottom:8px}"
+            ".footer{text-align:center;font-size:12px;"
+            "color:#94a3b8;padding:16px}"
+        )
+        esc_name = _html_escape(name)
+        total = analysis.total_requirements
+        full = analysis.fully_covered
+        partial = analysis.partially_covered
+        uncov = analysis.not_covered
+        rows_html = "".join(req_rows)
+        return (
+            f"<!DOCTYPE html><html lang='en'><head>"
+            f"<meta charset='utf-8'>"
+            f"<meta name='viewport' "
+            f"content='width=device-width, initial-scale=1'>"
+            f"<title>Compliance Gap Analysis: "
+            f"{esc_name}</title>"
+            f"<style>{css}</style></head>"
+            f"<body><div class='container'>"
+            f"<div class='header'>"
+            f"<h1>Compliance Gap Analysis</h1>"
+            f"<div class='meta'>{esc_name}</div></div>"
+            f"<div class='section'>"
+            f"<h2>Coverage Overview</h2>"
+            f"<div class='summary-grid'>"
+            f"<div class='summary-card'>"
+            f"<div class='value'>{total}</div>"
+            f"<div class='label'>Total Requirements</div></div>"
+            f"<div class='summary-card'>"
+            f"<div class='value' style='color:#22c55e;'>"
+            f"{full}</div>"
+            f"<div class='label'>Fully Covered</div></div>"
+            f"<div class='summary-card'>"
+            f"<div class='value' style='color:#eab308;'>"
+            f"{partial}</div>"
+            f"<div class='label'>Partially Covered</div></div>"
+            f"<div class='summary-card'>"
+            f"<div class='value' style='color:#ef4444;'>"
+            f"{uncov}</div>"
+            f"<div class='label'>Not Covered</div></div>"
+            f"</div>"
+            f"<div class='bar-container'>"
+            f"<div class='bar-fill' style='"
+            f"width:{score:.1f}%;background:{bar_color};'>"
+            f"{score:.1f}%</div></div></div>"
+            f"<div class='section'>"
+            f"<h2>Requirements Detail</h2>"
+            f"<table><thead><tr>"
+            f"<th>Requirement</th><th>Title</th>"
+            f"<th>Coverage</th><th>Aegis Feature</th>"
+            f"<th>Evidence Type</th><th>Notes</th>"
+            f"</tr></thead>"
+            f"<tbody>{rows_html}</tbody></table></div>"
+            f"{gaps_html}{recs_html}"
+            f"<div class='footer'>"
+            f"Generated by Aegis Compliance Mapper"
+            f"</div></div></body></html>"
+        )
 
     def generate_evidence_map(self, analysis: ComplianceGapAnalysis) -> dict[str, object]:
         """Generate a JSON-serializable evidence map from an analysis.

@@ -7,17 +7,13 @@ without any optional packages installed.
 from __future__ import annotations
 
 import sys
-from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from aegis.core.action import Action
 from aegis.core.policy import Approval, Policy, PolicyDecision, PolicyRule
-from aegis.core.result import ResultStatus
 from aegis.core.risk import RiskLevel
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -491,7 +487,7 @@ class TestEdgeCases:
         request = _make_tool_call_request(tool_name="search", tool_args={})
         handler = MagicMock(return_value=SimpleNamespace(content="ok"))
 
-        result = mw.wrap_tool_call(request, handler)
+        mw.wrap_tool_call(request, handler)
         handler.assert_called_once()
 
     def test_missing_tool_call_fields(self, mock_middleware_deps, block_delete_policy):
@@ -505,7 +501,7 @@ class TestEdgeCases:
         )
         handler = MagicMock(return_value=SimpleNamespace(content="ok"))
 
-        result = mw.wrap_tool_call(request, handler)
+        mw.wrap_tool_call(request, handler)
         handler.assert_called_once()
 
     def test_policy_with_target_matching(self, mock_middleware_deps):
