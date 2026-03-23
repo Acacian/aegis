@@ -33,7 +33,8 @@ class TestSessionRecorder:
     def test_record_policy_decision(self) -> None:
         rec = SessionRecorder("sess-1")
         event = rec.record_policy_decision(
-            "delete_file", "block",
+            "delete_file",
+            "block",
             rule="no-delete",
             risk_level="high",
         )
@@ -103,9 +104,11 @@ class TestScanArguments:
         assert any(cat == "sql_injection" for _, cat, _ in findings)
 
     def test_nested_arguments(self) -> None:
-        findings = _scan_arguments({
-            "nested": {"deep": {"path": "../../../etc/shadow"}},
-        })
+        findings = _scan_arguments(
+            {
+                "nested": {"deep": {"path": "../../../etc/shadow"}},
+            }
+        )
         assert any(cat == "path_traversal" for _, cat, _ in findings)
         assert any(cat == "sensitive_file_access" for _, cat, _ in findings)
 

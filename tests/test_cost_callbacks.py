@@ -365,10 +365,7 @@ class TestCrossFrameworkIntegration:
         report = tracker.get_report()
         assert report["call_count"] == 4
         assert len(report["by_agent"]) == 4
-        assert all(
-            agent in report["by_agent"]
-            for agent in ["lc", "oai", "ant", "goog"]
-        )
+        assert all(agent in report["by_agent"] for agent in ["lc", "oai", "ant", "goog"])
 
     def test_budget_enforcement_across_frameworks(self) -> None:
         """Budget exhaustion works across mixed framework calls."""

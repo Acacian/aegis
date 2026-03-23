@@ -285,7 +285,8 @@ class MCPVulnDB:
         return findings
 
     def check_all(
-        self, packages: dict[str, str],
+        self,
+        packages: dict[str, str],
     ) -> dict[str, list[VulnFinding]]:
         """Check multiple packages at once.
 
@@ -328,17 +329,16 @@ class MCPVulnDB:
         )
         lines.append("")
 
-        for finding in sorted(findings, key=lambda f: (
-            {"critical": 0, "high": 1, "medium": 2, "low": 3}.get(
-                f.entry.severity, 4
+        for finding in sorted(
+            findings,
+            key=lambda f: (
+                {"critical": 0, "high": 1, "medium": 2, "low": 3}.get(f.entry.severity, 4),
+                f.package,
             ),
-            f.package,
-        )):
+        ):
             e = finding.entry
             block = " [BLOCK]" if finding.should_block else ""
-            lines.append(
-                f"  [{e.severity.upper()}]{block} {finding.package}@{finding.version}"
-            )
+            lines.append(f"  [{e.severity.upper()}]{block} {finding.package}@{finding.version}")
             lines.append(f"    {e.cve_id}: {e.description}")
             lines.append(f"    Fix: {e.recommendation}")
             if e.owasp_mcp:
