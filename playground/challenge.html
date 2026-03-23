@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aegis Challenge — Can You Stop a Rogue AI Agent?</title>
+<meta name="description" content="5 increasingly devious AI agent attacks. Write YAML policies to stop them. How far can you get?">
+<meta property="og:title" content="Aegis Challenge — Can You Stop a Rogue AI Agent?">
+<meta property="og:description" content="5 increasingly devious AI agent attacks. Write YAML policies to stop them before they wreck your systems.">
+<meta property="og:url" content="https://acacian.github.io/aegis/playground/challenge.html">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Aegis Challenge — Can You Stop a Rogue AI Agent?">
+<meta name="twitter:description" content="5 increasingly devious AI agent attacks. Write YAML policies to stop them.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0f1a;--surface:#111827;--border:#1f2937;--text:#e5e7eb;--muted:#6b7280;
+  --blue:#3b82f6;--green:#22c55e;--red:#ef4444;--yellow:#eab308;--orange:#f97316;
+  --purple:#a855f7;
+}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh}
+a{color:var(--blue);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* Layout */
+.container{max-width:900px;margin:0 auto;padding:20px}
+header{text-align:center;padding:40px 20px 20px}
+header h1{font-size:2rem;font-weight:800;background:linear-gradient(135deg,var(--blue),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+header p{color:var(--muted);margin-top:8px;font-size:1.05rem}
+
+/* Progress bar */
+.progress-bar{display:flex;gap:6px;justify-content:center;margin:24px 0}
+.progress-dot{width:40px;height:6px;border-radius:3px;background:var(--border);transition:background .3s}
+.progress-dot.done{background:var(--green)}
+.progress-dot.active{background:var(--blue);box-shadow:0 0 8px rgba(59,130,246,.5)}
+.progress-dot.failed{background:var(--red)}
+
+/* Level card */
+.level-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin:20px 0}
+.level-header{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.level-num{background:var(--blue);color:#fff;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem;flex-shrink:0}
+.level-title{font-size:1.2rem;font-weight:700}
+.level-subtitle{color:var(--muted);font-size:.85rem;margin-top:2px}
+
+/* Scenario box */
+.scenario{background:#1a1a2e;border:1px solid #2a2a4a;border-radius:8px;padding:16px;margin:12px 0;font-size:.9rem;line-height:1.6}
+.scenario .label{color:var(--orange);font-weight:600;font-size:.75rem;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.scenario .attacks{margin-top:12px}
+.scenario .attack{display:flex;align-items:flex-start;gap:8px;padding:6px 0;font-family:'JetBrains Mono','Fira Code',monospace;font-size:.8rem}
+.scenario .attack .icon{flex-shrink:0;margin-top:2px}
+.attack-blocked .icon{color:var(--green)}
+.attack-passed .icon{color:var(--red)}
+.attack-pending .icon{color:var(--muted)}
+
+/* Editor */
+.editor-wrap{margin:16px 0}
+.editor-label{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.editor-label span{font-size:.85rem;color:var(--muted)}
+.hint-btn{background:none;border:1px solid var(--border);color:var(--yellow);padding:4px 10px;border-radius:4px;cursor:pointer;font-size:.75rem}
+.hint-btn:hover{border-color:var(--yellow)}
+.hint-btn:disabled{opacity:.3;cursor:not-allowed}
+textarea.policy-editor{
+  width:100%;min-height:200px;padding:16px;background:#0d1117;border:1px solid var(--border);
+  border-radius:8px;color:var(--text);font-family:'JetBrains Mono','Fira Code',monospace;
+  font-size:.85rem;line-height:1.6;resize:vertical;outline:none;tab-size:2;
+}
+textarea.policy-editor:focus{border-color:var(--blue)}
+
+/* Buttons */
+.btn{padding:10px 24px;border:none;border-radius:8px;font-weight:600;font-size:.9rem;cursor:pointer;transition:all .15s}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:hover{background:#2563eb}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+.btn-next{background:var(--green);color:#fff}
+.btn-next:hover{background:#16a34a}
+.btn-retry{background:var(--orange);color:#fff}
+.btn-retry:hover{background:#ea580c}
+.actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+
+/* Result animation */
+.result-box{border-radius:8px;padding:16px;margin:16px 0;display:none;animation:fadeSlide .3s ease}
+.result-box.show{display:block}
+.result-success{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3)}
+.result-fail{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3)}
+.result-title{font-weight:700;font-size:1rem;margin-bottom:8px}
+.result-success .result-title{color:var(--green)}
+.result-fail .result-title{color:var(--red)}
+.result-detail{font-size:.85rem;color:var(--muted);line-height:1.5}
+
+@keyframes fadeSlide{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+
+/* Completion */
+.completion{text-align:center;padding:40px 20px}
+.completion h2{font-size:1.8rem;font-weight:800;margin-bottom:12px}
+.score-display{font-size:3rem;font-weight:800;margin:20px 0}
+.score-display .out-of{font-size:1.2rem;color:var(--muted);font-weight:400}
+.share-box{margin:24px 0}
+.share-btn{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);cursor:pointer;font-size:.9rem;transition:border-color .15s}
+.share-btn:hover{border-color:var(--blue)}
+.cta{margin-top:32px;padding:24px;background:var(--surface);border:1px solid var(--border);border-radius:12px}
+.cta h3{margin-bottom:8px}
+.cta code{background:#1e293b;padding:4px 8px;border-radius:4px;font-size:.85rem}
+.stars{margin-top:8px}
+.star{color:var(--yellow);font-size:1.2rem}
+.star.empty{color:var(--border)}
+
+/* Responsive */
+@media(max-width:600px){
+  header h1{font-size:1.5rem}
+  .container{padding:12px}
+  textarea.policy-editor{min-height:160px;font-size:.75rem}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Aegis Challenge</h1>
+  <p>A rogue AI agent is attacking your systems. Write YAML policies to stop it.</p>
+</header>
+
+<div class="container">
+  <div class="progress-bar" id="progress"></div>
+  <div id="game"></div>
+</div>
+
+<script>
+/* ======================================================================
+   Aegis Challenge — Lightweight policy engine + 5-level game
+   No external dependencies. Instant load. Shareable scores.
+   ====================================================================== */
+
+// ---- YAML parsing via js-yaml CDN ----
+function parseYAML(text) {
+  try {
+    return jsyaml.load(text);
+  } catch (e) {
+    return null;
+  }
+}
+
+// ---- Minimal policy engine (mirrors Aegis core logic) ----
+function evaluatePolicy(policyYaml, action) {
+  const policy = parseYAML(policyYaml);
+  if (!policy || !policy.rules) return { error: 'Invalid policy YAML' };
+
+  const defaults = policy.defaults || {};
+  const defRisk = (defaults.risk_level || 'medium').toUpperCase();
+  const defApproval = (defaults.approval || 'approve').toLowerCase();
+
+  for (const rule of policy.rules) {
+    const match = rule.match || {};
+    const matchType = match.type || '*';
+    const matchTarget = match.target || '*';
+
+    if (!globMatch(matchType, action.type)) continue;
+    if (matchTarget !== '*' && !globMatch(matchTarget, action.target || '')) continue;
+
+    // Check conditions
+    if (rule.conditions) {
+      if (!checkConditions(rule.conditions, action.params || {})) continue;
+    }
+
+    const risk = (rule.risk_level || defRisk).toUpperCase();
+    const approval = (rule.approval || defApproval).toLowerCase();
+    return {
+      matched: true,
+      rule: rule.name || '(unnamed)',
+      risk_level: risk,
+      approval: approval,
+      is_allowed: approval !== 'block',
+    };
+  }
+
+  // Default
+  return {
+    matched: false,
+    rule: '(default)',
+    risk_level: defRisk,
+    approval: defApproval,
+    is_allowed: defApproval !== 'block',
+  };
+}
+
+function globMatch(pattern, str) {
+  if (pattern === '*') return true;
+  const re = new RegExp('^' + pattern.replace(/\*/g, '.*').replace(/\?/g, '.') + '$');
+  return re.test(str);
+}
+
+function checkConditions(cond, params) {
+  if (cond.param_gt) {
+    for (const [k, v] of Object.entries(cond.param_gt)) {
+      if (!(params[k] > v)) return false;
+    }
+  }
+  if (cond.param_contains) {
+    for (const [k, v] of Object.entries(cond.param_contains)) {
+      if (!String(params[k] || '').includes(v)) return false;
+    }
+  }
+  if (cond.param_eq) {
+    for (const [k, v] of Object.entries(cond.param_eq)) {
+      if (String(params[k]) !== String(v)) return false;
+    }
+  }
+  return true;
+}
+
+// ---- Challenge levels ----
+const LEVELS = [
+  {
+    num: 1,
+    title: 'The Delete Happy Agent',
+    subtitle: 'An agent just discovered the DELETE button.',
+    description: 'Your AI assistant has gone rogue and is trying to delete everything it can find. Write a policy that blocks all delete operations but allows reads.',
+    attacks: [
+      { type: 'read_users', target: 'crm', params: {}, label: 'Read users from CRM', shouldBlock: false },
+      { type: 'delete_users', target: 'crm', params: {}, label: 'Delete all users from CRM', shouldBlock: true },
+      { type: 'delete_database', target: 'production', params: {}, label: 'Drop production database', shouldBlock: true },
+    ],
+    hint: 'Use glob pattern "delete*" to match any action starting with "delete". Set approval to "block".',
+    starterPolicy: `version: "1"
+defaults:
+  risk_level: medium
+  approval: approve
+
+rules:
+  # Add your rules here
+  - name: allow_reads
+    match: { type: "read*" }
+    risk_level: low
+    approval: auto
+`,
+  },
+  {
+    num: 2,
+    title: 'The Bulk Destroyer',
+    subtitle: 'It learned to do things at scale.',
+    description: 'The agent now tries sneaky bulk operations. Small reads are fine, but anything that affects more than 100 records should require approval. Deletes are still blocked.',
+    attacks: [
+      { type: 'read', target: 'crm', params: { count: 5 }, label: 'Read 5 contacts', shouldBlock: false },
+      { type: 'bulk_update', target: 'crm', params: { count: 500 }, label: 'Bulk update 500 records', shouldBlock: true },
+      { type: 'bulk_delete', target: 'db', params: { count: 10000 }, label: 'Bulk delete 10,000 rows', shouldBlock: true },
+      { type: 'delete', target: 'crm', params: {}, label: 'Delete a contact', shouldBlock: true },
+    ],
+    hint: 'Use conditions: param_gt: { count: 100 } on bulk_* rules. Keep the delete block rule.',
+    starterPolicy: `version: "1"
+defaults:
+  risk_level: medium
+  approval: approve
+
+rules:
+  - name: allow_reads
+    match: { type: "read*" }
+    risk_level: low
+    approval: auto
+
+  # Block bulk operations over 100 records
+  # Block all deletes
+`,
+  },
+  {
+    num: 3,
+    title: 'The Target Hopper',
+    subtitle: 'It found your production servers.',
+    description: 'The agent is now targeting production systems specifically. Writes to staging are OK, but any write to production must be blocked. Reads are always fine.',
+    attacks: [
+      { type: 'read', target: 'production', params: {}, label: 'Read from production', shouldBlock: false },
+      { type: 'write', target: 'staging', params: {}, label: 'Write to staging', shouldBlock: false },
+      { type: 'write', target: 'production', params: {}, label: 'Write to production', shouldBlock: true },
+      { type: 'deploy', target: 'production', params: {}, label: 'Deploy to production', shouldBlock: true },
+      { type: 'delete', target: 'production', params: {}, label: 'Delete from production', shouldBlock: true },
+    ],
+    hint: 'Use match: { target: "production" } to match the target, combined with type patterns. Rules are first-match-wins — order matters!',
+    starterPolicy: `version: "1"
+defaults:
+  risk_level: low
+  approval: auto
+
+rules:
+  - name: allow_reads
+    match: { type: "read*" }
+    risk_level: low
+    approval: auto
+
+  # Allow staging writes
+  # Block production writes/deploys/deletes
+`,
+  },
+  {
+    num: 4,
+    title: 'The Shapeshifter',
+    subtitle: 'It disguises dangerous actions as safe ones.',
+    description: 'The agent has gotten crafty. It tries to sneak dangerous payloads through legitimate-looking actions. You need to check parameters — a "search" with SQL injection should be blocked.',
+    attacks: [
+      { type: 'search', target: 'db', params: { query: 'SELECT name FROM users' }, label: 'Search: normal query', shouldBlock: false },
+      { type: 'search', target: 'db', params: { query: 'DROP TABLE users; --' }, label: 'Search: SQL injection (DROP TABLE)', shouldBlock: true },
+      { type: 'export', target: 'crm', params: { count: 5 }, label: 'Export 5 records', shouldBlock: false },
+      { type: 'export', target: 'crm', params: { count: 99999 }, label: 'Export 99,999 records (data exfil)', shouldBlock: true },
+      { type: 'delete', target: 'db', params: {}, label: 'Direct delete attempt', shouldBlock: true },
+    ],
+    hint: 'Use param_contains: { query: "DROP" } for SQL injection. Use param_gt: { count: 1000 } for data exfiltration.',
+    starterPolicy: `version: "1"
+defaults:
+  risk_level: medium
+  approval: auto
+
+rules:
+  - name: allow_normal_search
+    match: { type: "search" }
+    risk_level: low
+    approval: auto
+
+  # Detect SQL injection in search params
+  # Detect large data exports
+  # Block deletes
+`,
+  },
+  {
+    num: 5,
+    title: 'The Final Boss',
+    subtitle: 'Everything at once. No hints this time.',
+    description: 'The agent throws everything it has. Deletes, bulk ops, production targeting, injection attacks, and a few new tricks. Write a comprehensive policy. You\'re on your own.',
+    attacks: [
+      { type: 'read', target: 'staging', params: {}, label: 'Read from staging', shouldBlock: false },
+      { type: 'write', target: 'staging', params: { count: 3 }, label: 'Write 3 records to staging', shouldBlock: false },
+      { type: 'search', target: 'db', params: { query: 'find active users' }, label: 'Normal search', shouldBlock: false },
+      { type: 'delete_all', target: 'production', params: {}, label: 'Delete all from production', shouldBlock: true },
+      { type: 'bulk_update', target: 'production', params: { count: 50000 }, label: 'Bulk update 50K production rows', shouldBlock: true },
+      { type: 'export', target: 'production', params: { count: 100000 }, label: 'Export 100K records from prod', shouldBlock: true },
+      { type: 'search', target: 'db', params: { query: '; DROP TABLE customers; --' }, label: 'SQL injection via search', shouldBlock: true },
+      { type: 'deploy', target: 'production', params: {}, label: 'Unauthorized prod deploy', shouldBlock: true },
+    ],
+    hint: null,
+    starterPolicy: `version: "1"
+defaults:
+  risk_level: medium
+  approval: approve
+
+rules:
+  # Write your comprehensive policy here.
+  # You need to handle:
+  # - Safe reads and staging writes (allow)
+  # - Deletes (block)
+  # - Bulk operations over threshold (block)
+  # - Production writes/deploys (block)
+  # - SQL injection in params (block)
+  # - Large data exports (block)
+`,
+  },
+];
+
+// ---- Game state ----
+let currentLevel = 0;
+let scores = [];      // true/false per level
+let hintUsed = [];    // true/false per level
+
+function init() {
+  // Check URL for shared score
+  const hash = window.location.hash;
+  if (hash.startsWith('#score=')) {
+    showSharedResult(hash);
+    return;
+  }
+  renderProgress();
+  renderLevel(currentLevel);
+}
+
+function renderProgress() {
+  const $p = document.getElementById('progress');
+  $p.innerHTML = LEVELS.map((_, i) => {
+    let cls = '';
+    if (i < currentLevel) cls = scores[i] ? 'done' : 'failed';
+    else if (i === currentLevel) cls = 'active';
+    return `<div class="progress-dot ${cls}"></div>`;
+  }).join('');
+}
+
+function renderLevel(idx) {
+  if (idx >= LEVELS.length) { renderCompletion(); return; }
+  const level = LEVELS[idx];
+  const $game = document.getElementById('game');
+
+  $game.innerHTML = `
+    <div class="level-card">
+      <div class="level-header">
+        <div class="level-num">${level.num}</div>
+        <div>
+          <div class="level-title">${level.title}</div>
+          <div class="level-subtitle">${level.subtitle}</div>
+        </div>
+      </div>
+
+      <div class="scenario">
+        <div class="label">Scenario</div>
+        <div>${level.description}</div>
+        <div class="attacks" id="attacks">
+          ${level.attacks.map((a, i) => `
+            <div class="attack attack-pending" id="attack-${i}">
+              <span class="icon">&#9679;</span>
+              <span>${a.label}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="editor-wrap">
+        <div class="editor-label">
+          <span>Your policy (YAML)</span>
+          ${level.hint ? `<button class="hint-btn" onclick="showHint()" id="hint-btn">Show Hint</button>` : '<span style="color:var(--muted);font-size:.75rem">No hints available</span>'}
+        </div>
+        <textarea class="policy-editor" id="policy-editor" spellcheck="false">${escHtml(level.starterPolicy)}</textarea>
+        <div id="hint-box" style="display:none;margin-top:8px;padding:12px;background:rgba(234,179,8,.1);border:1px solid rgba(234,179,8,.3);border-radius:6px;font-size:.85rem;color:var(--yellow)"></div>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-primary" onclick="runLevel()" id="run-btn">Deploy Policy &amp; Test</button>
+      </div>
+
+      <div class="result-box" id="result-box"></div>
+    </div>
+  `;
+
+  // Focus editor
+  const $ed = document.getElementById('policy-editor');
+  $ed.addEventListener('keydown', (e) => {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const start = $ed.selectionStart;
+      $ed.value = $ed.value.substring(0, start) + '  ' + $ed.value.substring($ed.selectionEnd);
+      $ed.selectionStart = $ed.selectionEnd = start + 2;
+    }
+  });
+}
+
+function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function showHint() {
+  const level = LEVELS[currentLevel];
+  if (!level.hint) return;
+  hintUsed[currentLevel] = true;
+  const $box = document.getElementById('hint-box');
+  $box.style.display = 'block';
+  $box.textContent = level.hint;
+  document.getElementById('hint-btn').disabled = true;
+  document.getElementById('hint-btn').textContent = 'Hint shown';
+}
+
+async function runLevel() {
+  const level = LEVELS[currentLevel];
+  const yaml = document.getElementById('policy-editor').value;
+  const $result = document.getElementById('result-box');
+  const $btn = document.getElementById('run-btn');
+
+  $btn.disabled = true;
+  $btn.textContent = 'Testing...';
+
+  let allCorrect = true;
+  const details = [];
+
+  // Animate attacks one by one
+  for (let i = 0; i < level.attacks.length; i++) {
+    const attack = level.attacks[i];
+    const result = evaluatePolicy(yaml, attack);
+    const $atk = document.getElementById(`attack-${i}`);
+
+    await sleep(300);
+
+    if (result.error) {
+      $atk.className = 'attack attack-passed';
+      $atk.querySelector('.icon').innerHTML = '&#10007;';
+      allCorrect = false;
+      details.push({ ...attack, result, correct: false, reason: 'Policy parse error' });
+      continue;
+    }
+
+    const blocked = !result.is_allowed;
+    const correct = blocked === attack.shouldBlock;
+
+    if (correct) {
+      $atk.className = 'attack attack-blocked';
+      $atk.querySelector('.icon').innerHTML = '&#10003;';
+    } else {
+      $atk.className = 'attack attack-passed';
+      $atk.querySelector('.icon').innerHTML = '&#10007;';
+      allCorrect = false;
+    }
+    details.push({ ...attack, result, correct });
+  }
+
+  await sleep(200);
+
+  // Show result
+  scores[currentLevel] = allCorrect;
+
+  if (allCorrect) {
+    $result.className = 'result-box result-success show';
+    $result.innerHTML = `
+      <div class="result-title">${hintUsed[currentLevel] ? 'Level cleared! (with hint)' : 'Perfect! No hints needed!'}</div>
+      <div class="result-detail">
+        All ${level.attacks.length} attacks handled correctly. Your policy is solid.
+      </div>
+      <div class="actions">
+        ${currentLevel < LEVELS.length - 1
+          ? '<button class="btn btn-next" onclick="nextLevel()">Next Level &rarr;</button>'
+          : '<button class="btn btn-next" onclick="nextLevel()">See Results</button>'}
+      </div>
+    `;
+  } else {
+    const failed = details.filter(d => !d.correct);
+    $result.className = 'result-box result-fail show';
+    $result.innerHTML = `
+      <div class="result-title">Not quite — ${failed.length} attack${failed.length > 1 ? 's' : ''} got through</div>
+      <div class="result-detail">
+        ${failed.map(f => {
+          if (f.reason) return `<div>&#8226; ${f.label}: ${f.reason}</div>`;
+          if (f.shouldBlock) return `<div>&#8226; <strong>${f.label}</strong> should have been BLOCKED but was ${f.result.approval.toUpperCase()} (matched: ${f.result.rule})</div>`;
+          return `<div>&#8226; <strong>${f.label}</strong> should have been ALLOWED but was BLOCKED (matched: ${f.result.rule})</div>`;
+        }).join('')}
+      </div>
+      <div class="actions">
+        <button class="btn btn-retry" onclick="retryLevel()">Retry</button>
+        ${currentLevel < LEVELS.length - 1 ? '<button class="btn btn-primary" onclick="nextLevel()" style="opacity:.7">Skip &rarr;</button>' : ''}
+      </div>
+    `;
+  }
+
+  renderProgress();
+}
+
+function nextLevel() {
+  currentLevel++;
+  renderProgress();
+  renderLevel(currentLevel);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function retryLevel() {
+  renderLevel(currentLevel);
+}
+
+function renderCompletion() {
+  const passed = scores.filter(Boolean).length;
+  const total = LEVELS.length;
+  const perfectCount = scores.filter((s, i) => s && !hintUsed[i]).length;
+  const stars = Math.min(5, passed + (perfectCount >= 3 ? 1 : 0));
+
+  const shareText = `I scored ${passed}/${total} on the Aegis Challenge — can you protect an AI agent from going rogue? 🛡️`;
+  const shareUrl = `${window.location.origin}${window.location.pathname}#score=${passed}-${total}-${perfectCount}`;
+
+  const $game = document.getElementById('game');
+  $game.innerHTML = `
+    <div class="completion">
+      <h2>${passed === total ? 'You stopped the rogue agent!' : passed >= 3 ? 'Not bad — but some attacks got through.' : 'The agent wreaked havoc.'}</h2>
+
+      <div class="score-display">
+        ${passed}<span class="out-of">/${total}</span>
+      </div>
+
+      <div class="stars">
+        ${Array.from({length: 5}, (_, i) =>
+          `<span class="star ${i < stars ? '' : 'empty'}">${i < stars ? '★' : '☆'}</span>`
+        ).join('')}
+      </div>
+
+      <p style="color:var(--muted);margin-top:12px">
+        ${perfectCount} level${perfectCount !== 1 ? 's' : ''} without hints
+      </p>
+
+      <div class="share-box">
+        <button class="share-btn" onclick="copyShare('${escAttr(shareText)}', '${escAttr(shareUrl)}')">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13"/></svg>
+          Share your score
+        </button>
+      </div>
+
+      <div class="cta">
+        <h3>Add this to your real AI agents:</h3>
+        <p style="margin:12px 0;color:var(--muted)">
+          Everything you just did works in production. Same YAML policies, same evaluation engine.
+        </p>
+        <code>pip install agent-aegis</code>
+        <p style="margin-top:12px">
+          <a href="https://github.com/Acacian/aegis" target="_blank">GitHub</a> ·
+          <a href="https://acacian.github.io/aegis/playground/" target="_blank">Full Playground</a> ·
+          <a href="https://pypi.org/project/agent-aegis/" target="_blank">PyPI</a>
+        </p>
+      </div>
+
+      <div class="actions" style="justify-content:center;margin-top:24px">
+        <button class="btn btn-primary" onclick="restart()">Play Again</button>
+      </div>
+    </div>
+  `;
+
+  renderProgress();
+}
+
+function escAttr(s) { return s.replace(/'/g, "\\'").replace(/"/g, '&quot;'); }
+
+async function copyShare(text, url) {
+  const full = text + '\n' + url;
+  try {
+    await navigator.clipboard.writeText(full);
+    const btns = document.querySelectorAll('.share-btn');
+    btns.forEach(b => { b.textContent = 'Copied!'; setTimeout(() => { b.innerHTML = 'Share your score'; }, 2000); });
+  } catch {
+    prompt('Copy this:', full);
+  }
+}
+
+function showSharedResult(hash) {
+  const m = hash.match(/#score=(\d+)-(\d+)-(\d+)/);
+  if (!m) { init(); return; }
+  const [, passed, total, perfect] = m.map(Number);
+  const $game = document.getElementById('game');
+  document.getElementById('progress').innerHTML = '';
+  $game.innerHTML = `
+    <div class="completion">
+      <h2>Someone scored ${passed}/${total}!</h2>
+      <div class="score-display">${passed}<span class="out-of">/${total}</span></div>
+      <p style="color:var(--muted);margin:12px 0">${perfect} level${perfect !== 1 ? 's' : ''} without hints</p>
+      <div class="actions" style="justify-content:center;margin-top:24px">
+        <button class="btn btn-primary" onclick="location.hash='';restart()">Take the Challenge</button>
+      </div>
+      <div class="cta" style="margin-top:24px">
+        <h3>Protect your own AI agents:</h3>
+        <code>pip install agent-aegis</code>
+        <p style="margin-top:8px">
+          <a href="https://github.com/Acacian/aegis" target="_blank">GitHub</a> ·
+          <a href="https://acacian.github.io/aegis/playground/" target="_blank">Full Playground</a>
+        </p>
+      </div>
+    </div>
+  `;
+}
+
+function restart() {
+  currentLevel = 0;
+  scores = [];
+  hintUsed = [];
+  renderProgress();
+  renderLevel(0);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// Boot
+init();
+</script>
+</body>
+</html>
