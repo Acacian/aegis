@@ -16,10 +16,21 @@ const routes = {
 };
 
 let _charts = [];
+let _refreshTimer = null;
+let _autoRefresh = true;
 
 function destroyCharts() {
   _charts.forEach((c) => c.destroy());
   _charts = [];
+}
+
+function stopAutoRefresh() {
+  if (_refreshTimer) { clearInterval(_refreshTimer); _refreshTimer = null; }
+}
+
+function startAutoRefresh(fn, interval) {
+  stopAutoRefresh();
+  if (_autoRefresh) { _refreshTimer = setInterval(fn, interval); }
 }
 
 function router() {
@@ -32,6 +43,7 @@ function router() {
     el.classList.toggle("active", el.dataset.page === page);
   });
 
+  stopAutoRefresh();
   destroyCharts();
   const app = document.getElementById("app");
   app.innerHTML = '<div class="flex items-center justify-center h-64"><div class="skeleton" style="width:200px;height:24px"></div></div>';
@@ -128,11 +140,30 @@ async function renderOverview(app) {
 
   app.innerHTML = "";
 
-  // Header
-  app.appendChild(h("div", { className: "page-header" },
-    h("h2", null, "Dashboard Overview"),
-    h("p", null, "Real-time AI agent governance metrics"),
+  // Header with auto-refresh toggle
+  const refreshToggle = h("label", { className: "flex items-center gap-2 text-xs text-gray-400 cursor-pointer" },
+    h("input", {
+      type: "checkbox",
+      className: "accent-blue-500",
+      ..._autoRefresh ? { checked: "" } : {},
+      onChange: (e) => {
+        _autoRefresh = e.target.checked;
+        if (_autoRefresh) startAutoRefresh(() => renderOverview(app), 30000);
+        else stopAutoRefresh();
+      },
+    }),
+    "Auto-refresh (30s)",
+  );
+  app.appendChild(h("div", { className: "page-header flex justify-between items-start" },
+    h("div", null,
+      h("h2", null, "Dashboard Overview"),
+      h("p", null, "Real-time AI agent governance metrics"),
+    ),
+    refreshToggle,
   ));
+
+  // Start auto-refresh
+  startAutoRefresh(() => renderOverview(app), 30000);
 
   // KPI row
   const kpis = h("div", { className: "grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6" });
@@ -299,6 +330,12 @@ async function renderAudit(app) {
     onClick: () => loadAuditData(0),
   }, "Search");
   filters.appendChild(searchBtn);
+
+  const exportBtn = h("button", {
+    className: "px-4 py-1.5 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded font-medium",
+    onClick: () => exportAuditJSON(),
+  }, "Export JSON");
+  filters.appendChild(exportBtn);
   app.appendChild(filters);
 
   const tableContainer = h("div", { id: "audit-table-container" });
@@ -372,6 +409,26 @@ async function loadAuditData(offset) {
     }, "Next →"));
   }
   container.appendChild(pagination);
+}
+
+async function exportAuditJSON() {
+  const params = new URLSearchParams();
+  params.set("limit", "10000");
+  ["risk_level", "action_type", "agent_id", "result_status"].forEach((key) => {
+    const el = document.getElementById("filter-" + key);
+    if (el && el.value) params.set(key, el.value);
+  });
+  const data = await api("audit/recent?" + params.toString());
+  if (!data) return;
+  const blob = new Blob([JSON.stringify(data.entries, null, 2)], {
+    type: "application/json",
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "aegis-audit-" + new Date().toISOString().slice(0, 10) + ".json";
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 function filterSelect(name, label, options) {

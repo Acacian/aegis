@@ -205,6 +205,12 @@ def main(argv: list[str] | None = None) -> None:
     serve_parser.add_argument(
         "--no-dashboard", action="store_true", help="Disable the web dashboard"
     )
+    serve_parser.add_argument(
+        "--seed-demo",
+        type=int,
+        metavar="N",
+        help="Seed N demo audit entries before starting",
+    )
 
     # aegis monitor
     monitor_parser = subparsers.add_parser(
@@ -706,6 +712,69 @@ def _cmd_scan(args: argparse.Namespace) -> None:
     sys.exit(exit_code)
 
 
+def _seed_demo_data(n: int, audit_db: str | None) -> None:
+    """Seed *n* random audit entries for demo/evaluation purposes."""
+    import random
+
+    from aegis.core.action import Action
+    from aegis.core.policy import Approval, PolicyDecision
+    from aegis.core.result import Result, ResultStatus
+    from aegis.core.risk import RiskLevel
+
+    db_path = audit_db or "aegis_audit.db"
+    logger = AuditLogger(db_path=db_path)
+
+    agents = ["agent-web", "agent-data", "agent-crm", "agent-ops", "agent-ml"]
+    targets = ["/users", "/orders", "/db", "/api", "/files", "/reports"]
+    scenarios: list[tuple[str, RiskLevel, Approval, str, ResultStatus]] = [
+        ("read_users", RiskLevel.LOW, Approval.AUTO, "read_auto", ResultStatus.SUCCESS),
+        ("get_orders", RiskLevel.LOW, Approval.AUTO, "get_auto", ResultStatus.SUCCESS),
+        (
+            "write_config",
+            RiskLevel.MEDIUM,
+            Approval.APPROVE,
+            "write_approve",
+            ResultStatus.SUCCESS,
+        ),
+        (
+            "update_record",
+            RiskLevel.MEDIUM,
+            Approval.APPROVE,
+            "update_approve",
+            ResultStatus.SUCCESS,
+        ),
+        ("bulk_export", RiskLevel.HIGH, Approval.APPROVE, "bulk_high", ResultStatus.SUCCESS),
+        (
+            "delete_records",
+            RiskLevel.CRITICAL,
+            Approval.BLOCK,
+            "delete_block",
+            ResultStatus.BLOCKED,
+        ),
+        ("read_reports", RiskLevel.LOW, Approval.AUTO, "read_auto", ResultStatus.SUCCESS),
+        ("post_webhook", RiskLevel.MEDIUM, Approval.APPROVE, "write_approve", ResultStatus.FAILED),
+        ("drop_table", RiskLevel.CRITICAL, Approval.BLOCK, "delete_block", ResultStatus.BLOCKED),
+        ("get_metrics", RiskLevel.LOW, Approval.AUTO, "get_auto", ResultStatus.SUCCESS),
+    ]
+
+    for _i in range(n):
+        action_type, risk, approval, rule, status = random.choice(scenarios)
+        agent = random.choice(agents)
+        target = random.choice(targets)
+        action = Action(type=action_type, target=target, agent_id=agent)
+        decision = PolicyDecision(
+            action=action,
+            risk_level=risk,
+            approval=approval,
+            matched_rule=rule,
+        )
+        result = Result(action=action, status=status)
+        logger.log(f"session-{agent}", decision, result=result)
+
+    logger.close()
+    print(f"Seeded {n} demo audit entries into {db_path}")
+
+
 def _cmd_serve(args: argparse.Namespace) -> None:
     """Start the Aegis REST API server with governance dashboard."""
     try:
@@ -720,9 +789,15 @@ def _cmd_serve(args: argparse.Namespace) -> None:
     from aegis.server.app import create_app
 
     enable_dashboard = not getattr(args, "no_dashboard", False)
+    audit_db = getattr(args, "audit_db", None)
+    seed_n = getattr(args, "seed_demo", None)
+
+    if seed_n and seed_n > 0:
+        _seed_demo_data(seed_n, audit_db)
+
     app = create_app(
         policy_path=args.policy_file,
-        audit_db_path=getattr(args, "audit_db", None),
+        audit_db_path=audit_db,
         enable_dashboard=enable_dashboard,
     )
     base_url = f"http://{args.host}:{args.port}"
