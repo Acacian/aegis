@@ -368,6 +368,40 @@ class TestFormatReport:
         assert "Governance Score:" in report
         assert "pip install agent-aegis" in report
 
+    def test_owasp_risk_in_report(self) -> None:
+        findings = [
+            Finding(
+                file="/project/agent.py",
+                line=10,
+                category="OpenAI",
+                detail="tools=",
+                owasp_risk="ASI02: Tool Misuse & Exploitation",
+            ),
+        ]
+        report = format_report(1, findings, directory="/project")
+        assert "ASI02" in report
+        assert "Tool Misuse & Exploitation" in report
+        assert "OWASP Agentic Top 10 Risks:" in report
+
+    def test_owasp_summary_counts(self) -> None:
+        findings = [
+            Finding(
+                file="/p/a.py", line=1, category="OpenAI",
+                detail="x", owasp_risk="ASI02: Tool Misuse & Exploitation",
+            ),
+            Finding(
+                file="/p/a.py", line=2, category="LangChain",
+                detail="y", owasp_risk="ASI02: Tool Misuse & Exploitation",
+            ),
+            Finding(
+                file="/p/a.py", line=3, category="subprocess",
+                detail="z", owasp_risk="ASI08: Uncontrolled Code Execution",
+            ),
+        ]
+        report = format_report(1, findings, directory="/p")
+        assert "ASI02: Tool Misuse & Exploitation: 2 finding(s)" in report
+        assert "ASI08: Uncontrolled Code Execution: 1 finding(s)" in report
+
 
 # ---------------------------------------------------------------------------
 # Grade calculation
@@ -440,6 +474,66 @@ class TestCLIScan:
         # It should produce output either way
         out = capsys.readouterr().out
         assert "Aegis Governance Scan" in out
+
+
+# ---------------------------------------------------------------------------
+# Multiple findings in one file
+# ---------------------------------------------------------------------------
+
+
+# ---------------------------------------------------------------------------
+# OWASP mapping auto-population
+# ---------------------------------------------------------------------------
+
+
+class TestOWASPMapping:
+    def test_openai_gets_asi02(self, tmp_path: Path) -> None:
+        f = _write(
+            tmp_path,
+            "ai.py",
+            """\
+import openai
+client = openai.OpenAI()
+client.chat.completions.create(model="gpt-4", tools=[{"type": "function"}])
+""",
+        )
+        findings = scan_file(f)
+        assert len(findings) == 1
+        assert findings[0].owasp_risk == "ASI02: Tool Misuse & Exploitation"
+
+    def test_subprocess_gets_asi08(self, tmp_path: Path) -> None:
+        f = _write(tmp_path, "a.py", "import subprocess\nsubprocess.run(['ls'])\n")
+        findings = scan_file(f)
+        assert len(findings) == 1
+        assert findings[0].owasp_risk == "ASI08: Uncontrolled Code Execution"
+
+    def test_mcp_gets_asi04(self, tmp_path: Path) -> None:
+        f = _write(
+            tmp_path,
+            "s.py",
+            """\
+from mcp.server.fastmcp import FastMCP
+mcp = FastMCP("demo")
+
+@mcp.tool()
+def search(query: str) -> str:
+    return "results"
+""",
+        )
+        findings = scan_file(f)
+        assert len(findings) == 1
+        assert findings[0].owasp_risk == "ASI04: Supply Chain Vulnerabilities"
+
+    def test_http_gets_asi07(self, tmp_path: Path) -> None:
+        f = _write(tmp_path, "a.py", "import requests\nrequests.post('http://x')\n")
+        findings = scan_file(f)
+        assert len(findings) == 1
+        assert findings[0].owasp_risk == "ASI07: Data Leakage & Exfiltration"
+
+    def test_clean_file_no_owasp(self, tmp_path: Path) -> None:
+        f = _write(tmp_path, "clean.py", "x = 1\n")
+        findings = scan_file(f)
+        assert len(findings) == 0
 
 
 # ---------------------------------------------------------------------------
