@@ -57,13 +57,17 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 _HAS_MIDDLEWARE = False
 try:
-    from langchain.agents.middleware.types import AgentMiddleware  # type: ignore[import-untyped]
-    from langgraph.prebuilt.tool_node import ToolCallRequest  # type: ignore[import-untyped]
+    from langchain.agents.middleware.types import (  # type: ignore[import-not-found]
+        AgentMiddleware,
+    )
+    from langgraph.prebuilt.tool_node import (  # type: ignore[import-not-found]
+        ToolCallRequest,
+    )
 
     _HAS_MIDDLEWARE = True
 except Exception:  # pragma: no cover – optional dependency
-    AgentMiddleware = None  # type: ignore[assignment,misc]
-    ToolCallRequest = None  # type: ignore[assignment,misc]
+    AgentMiddleware = None
+    ToolCallRequest = None
 
 
 def _require_langchain() -> None:

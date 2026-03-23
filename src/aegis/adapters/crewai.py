@@ -230,7 +230,7 @@ class AegisGuardrailProvider:
         tool_target_map: dict[str, str] | None = None,
     ) -> None:
         if runtime is not None:
-            self._policy = runtime.policy
+            self._policy: Policy = runtime.policy
             self._audit = getattr(runtime, "audit", audit_logger)
             self._session_id = getattr(runtime, "session_id", session_id) or session_id
         elif policy is not None:
