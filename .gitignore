@@ -1,5 +1,6 @@
-# Claude Code — .claude/ synced via private repo (aegis-context)
+# Claude Code — synced via private repo (aegis-context)
 .claude/
+CLAUDE.md
 
 .github/SOCIAL.md
 .github/DEVTO_ARTICLE.md
@@ -32,4 +33,3 @@ site/
 
 # Aegis runtime artifacts
 aegis_audit.db
-CLAUDE.md
