@@ -470,3 +470,171 @@ class CryptoAuditChain:
             json.dump(asdict(package), fh, indent=2, sort_keys=True)
 
         return package
+
+
+# ---------------------------------------------------------------------------
+# HTML report for EvidencePackage
+# ---------------------------------------------------------------------------
+
+
+def _html_escape(text: str) -> str:
+    """Escape HTML special characters in *text*."""
+    return (
+        text.replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace('"', "&quot;")
+    )
+
+
+def evidence_package_to_html(package: EvidencePackage) -> str:
+    """Render an :class:`EvidencePackage` as self-contained HTML.
+
+    The output includes chain verification status, entry summary statistics,
+    and compliance mapping references. No external assets are required.
+    """
+    vr = package.verification_result
+    if vr.valid:
+        status_text = "VALID"
+        status_color = "#22c55e"
+        status_bg = "#dcfce7"
+    else:
+        status_text = "BROKEN"
+        status_color = "#ef4444"
+        status_bg = "#fee2e2"
+
+    # Summary stats
+    summary = package.summary
+    action_counts = summary.get("action_counts", {})
+    decision_counts = summary.get("decision_counts", {})
+    agent_counts = summary.get("agent_counts", {})
+    risk_counts = summary.get("risk_counts", {})
+
+    def _stats_table(counts: dict[str, int], label: str) -> str:
+        if not counts:
+            return f"<p>No {label.lower()} data.</p>"
+        rows = "\n".join(
+            f"<tr><td style='padding:6px 12px;'>{_html_escape(str(k))}</td>"
+            f"<td style='padding:6px 12px;font-weight:600;'>{v:,}</td></tr>"
+            for k, v in sorted(counts.items())
+        )
+        return f"""<table style="width:100%;border-collapse:collapse;font-size:14px;">
+      <thead><tr>
+        <th style="background:#f1f5f9;padding:8px 12px;text-align:left;font-weight:600;
+            color:#475569;border-bottom:2px solid #e2e8f0;">{_html_escape(label)}</th>
+        <th style="background:#f1f5f9;padding:8px 12px;text-align:left;font-weight:600;
+            color:#475569;border-bottom:2px solid #e2e8f0;">Count</th>
+      </tr></thead>
+      <tbody>{rows}</tbody>
+    </table>"""
+
+    action_table = _stats_table(action_counts, "Action Type")
+    decision_table = _stats_table(decision_counts, "Decision")
+    agent_table = _stats_table(agent_counts, "Agent")
+    risk_table = _stats_table(risk_counts, "Risk Level")
+
+    # Compliance notes
+    notes_items = "\n".join(
+        f"<li>{_html_escape(note)}</li>" for note in package.compliance_notes
+    )
+
+    # Error info
+    error_html = ""
+    if not vr.valid:
+        error_html = f"""
+    <div style="background:#fee2e2;border:1px solid #fecaca;border-radius:6px;
+                padding:12px;margin-top:12px;">
+      <strong>Error:</strong> {_html_escape(vr.error_message)}<br>
+      First broken at entry: {vr.first_broken_at}
+    </div>"""
+
+    return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cryptographic Audit Evidence Package</title>
+<style>
+  body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+         margin: 0; padding: 0; background: #f8fafc; color: #1e293b; }}
+  .container {{ max-width: 960px; margin: 0 auto; padding: 24px; }}
+  .header {{ background: #1e293b; color: #f8fafc; padding: 32px; border-radius: 8px 8px 0 0; }}
+  .header h1 {{ margin: 0 0 8px 0; font-size: 28px; }}
+  .header .meta {{ font-size: 14px; opacity: 0.8; }}
+  .section {{ background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
+              padding: 24px; margin: 16px 0; }}
+  .section h2 {{ margin: 0 0 16px 0; font-size: 20px; color: #334155; }}
+  .status-box {{ display: inline-block; padding: 12px 20px; border-radius: 8px;
+                 font-size: 24px; font-weight: 700; }}
+  .summary-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+                   gap: 12px; }}
+  .summary-card {{ background: #f1f5f9; border-radius: 6px; padding: 16px; text-align: center; }}
+  .summary-card .value {{ font-size: 28px; font-weight: 700; color: #0f172a; }}
+  .summary-card .label {{ font-size: 13px; color: #64748b; margin-top: 4px; }}
+  .stats-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }}
+  table {{ margin-bottom: 12px; }}
+  td {{ border-bottom: 1px solid #e2e8f0; }}
+  ul {{ padding-left: 20px; }}
+  li {{ margin-bottom: 8px; }}
+  .mono {{ font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px;
+           word-break: break-all; }}
+  .footer {{ text-align: center; font-size: 12px; color: #94a3b8; padding: 16px; }}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>Cryptographic Audit Evidence Package</h1>
+    <div class="meta">Generated: {_html_escape(package.generated_at)}</div>
+  </div>
+
+  <div class="section" style="text-align:center;">
+    <h2>Chain Verification Status</h2>
+    <div class="status-box" style="background:{status_bg};color:{status_color};">
+      {status_text}
+    </div>
+    <p>Verified {vr.verified_entries:,} of {vr.chain_length:,} entries</p>{error_html}
+  </div>
+
+  <div class="section">
+    <h2>Chain Metadata</h2>
+    <div class="summary-grid">
+      <div class="summary-card">
+        <div class="value">{package.chain_length:,}</div>
+        <div class="label">Total Entries</div>
+      </div>
+      <div class="summary-card">
+        <div class="value">{_html_escape(package.algorithm)}</div>
+        <div class="label">Hash Algorithm</div>
+      </div>
+    </div>
+    <p style="margin-top:12px;"><strong>Coverage:</strong>
+      {_html_escape(package.first_entry_time or 'N/A')} to
+      {_html_escape(package.last_entry_time or 'N/A')}</p>
+    <p><strong>Chain Hash:</strong>
+      <span class="mono">{_html_escape(package.chain_hash)}</span></p>
+    <p><strong>Verification Hash:</strong>
+      <span class="mono">{_html_escape(vr.verification_hash)}</span></p>
+  </div>
+
+  <div class="section">
+    <h2>Entry Statistics</h2>
+    <div class="stats-grid">
+      <div>{action_table}</div>
+      <div>{decision_table}</div>
+      <div>{agent_table}</div>
+      <div>{risk_table}</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Compliance Mapping References</h2>
+    <ul>{notes_items}</ul>
+  </div>
+
+  <div class="footer">
+    Generated by Aegis Cryptographic Audit Engine
+  </div>
+</div>
+</body>
+</html>"""

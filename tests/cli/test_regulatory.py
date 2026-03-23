@@ -32,6 +32,7 @@ def test_regulatory_all_frameworks_table(capsys: pytest.CaptureFixture[str]) -> 
     assert "NIST AI RMF" in out
     assert "SOC2" in out
     assert "ISO 42001" in out
+    assert "OWASP Agentic AI" in out
 
 
 def test_regulatory_default_is_all(capsys: pytest.CaptureFixture[str]) -> None:
@@ -41,6 +42,7 @@ def test_regulatory_default_is_all(capsys: pytest.CaptureFixture[str]) -> None:
 
     assert "EU AI Act" in out
     assert "SOC2" in out
+    assert "OWASP Agentic AI" in out
 
 
 # ---------------------------------------------------------------------------
@@ -55,7 +57,7 @@ def test_regulatory_json_output(capsys: pytest.CaptureFixture[str]) -> None:
 
     data = json.loads(out)
     assert isinstance(data, list)
-    assert len(data) == 4  # four frameworks
+    assert len(data) == 5  # five frameworks
     for entry in data:
         assert "framework" in entry
         assert "summary" in entry
@@ -93,8 +95,44 @@ def test_regulatory_markdown_all(capsys: pytest.CaptureFixture[str]) -> None:
     main(["regulatory", "--format", "markdown"])
     out = capsys.readouterr().out
 
-    # Should have at least 4 top-level headings (one per framework)
-    assert out.count("# Compliance Gap Analysis") >= 4
+    # Should have at least 5 top-level headings (one per framework)
+    assert out.count("# Compliance Gap Analysis") >= 5
+
+
+# ---------------------------------------------------------------------------
+# OWASP Agentic AI framework
+# ---------------------------------------------------------------------------
+
+
+def test_regulatory_owasp_agentic_table(capsys: pytest.CaptureFixture[str]) -> None:
+    """Table output for OWASP Agentic framework."""
+    main(["regulatory", "--framework", "owasp-agentic"])
+    out = capsys.readouterr().out
+
+    assert "OWASP Agentic AI" in out
+    assert "Coverage Score:" in out
+    assert "%" in out
+
+
+def test_regulatory_owasp_agentic_json(capsys: pytest.CaptureFixture[str]) -> None:
+    """JSON output for OWASP Agentic framework is a dict with 10 requirements."""
+    main(["regulatory", "--framework", "owasp-agentic", "--format", "json"])
+    out = capsys.readouterr().out
+
+    data = json.loads(out)
+    assert isinstance(data, dict)
+    assert data["framework"] == "OWASP Agentic AI"
+    assert data["summary"]["total_requirements"] == 10
+
+
+def test_regulatory_owasp_agentic_markdown(capsys: pytest.CaptureFixture[str]) -> None:
+    """Markdown output for OWASP Agentic framework."""
+    main(["regulatory", "--framework", "owasp-agentic", "--format", "markdown"])
+    out = capsys.readouterr().out
+
+    assert "OWASP Top 10 for Agentic Applications" in out
+    assert "Agent Goal Hijack" in out
+    assert "Rogue Agents" in out
 
 
 # ---------------------------------------------------------------------------

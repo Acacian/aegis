@@ -13,6 +13,16 @@ from typing import Any
 from aegis.core.policy import Policy
 
 
+def _html_escape(text: str) -> str:
+    """Escape HTML special characters in *text*."""
+    return (
+        text.replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace('"', "&quot;")
+    )
+
+
 @dataclass
 class ComplianceFinding:
     """A single finding within a compliance report.
@@ -887,6 +897,185 @@ class ReportGenerator:
         lines.append("")
 
         return "\n".join(lines)
+
+    def to_html(self, report: ComplianceReport) -> str:
+        """Render a compliance report as self-contained HTML.
+
+        The output includes inline CSS styling, score visualization with
+        color-coded letter grades, a findings table with severity highlighting,
+        and a recommendations section. No external assets are required.
+        """
+        title_map = {
+            "soc2": "SOC2 Compliance Report",
+            "gdpr": "GDPR Compliance Report",
+            "governance": "Governance Compliance Report",
+        }
+        default_title = f"{report.report_type.upper()} Compliance Report"
+        title = title_map.get(report.report_type, default_title)
+
+        # Score color
+        if report.score >= 90:
+            score_color = "#22c55e"  # green
+            grade_bg = "#dcfce7"
+        elif report.score >= 70:
+            score_color = "#eab308"  # yellow
+            grade_bg = "#fef9c3"
+        elif report.score >= 50:
+            score_color = "#f97316"  # orange
+            grade_bg = "#ffedd5"
+        else:
+            score_color = "#ef4444"  # red
+            grade_bg = "#fee2e2"
+
+        # Severity colors for findings
+        severity_styles = {
+            "critical": "background:#fee2e2;color:#991b1b;",
+            "warning": "background:#fef9c3;color:#854d0e;",
+            "info": "background:#dbeafe;color:#1e40af;",
+        }
+
+        # Build percentages
+        if report.total_actions > 0:
+            blocked_pct = report.blocked_actions / report.total_actions * 100
+            approved_pct = report.approved_actions / report.total_actions * 100
+            auto_pct = report.auto_approved / report.total_actions * 100
+        else:
+            blocked_pct = 0.0
+            approved_pct = 0.0
+            auto_pct = 0.0
+
+        # Build findings rows
+        findings_rows = []
+        for f in report.findings:
+            sev_style = severity_styles.get(f.severity, "")
+            findings_rows.append(
+                f"<tr>"
+                f'<td style="padding:8px 12px;{sev_style}font-weight:600;">'
+                f"{_html_escape(f.severity.upper())}</td>"
+                f'<td style="padding:8px 12px;">{_html_escape(f.category)}</td>'
+                f'<td style="padding:8px 12px;">{_html_escape(f.title)}</td>'
+                f'<td style="padding:8px 12px;">{_html_escape(f.description)}</td>'
+                f'<td style="padding:8px 12px;">{_html_escape(f.recommendation)}</td>'
+                f"</tr>"
+            )
+        findings_html = "\n".join(findings_rows)
+
+        # Recommendations (only non-info findings)
+        recs = [
+            f for f in report.findings
+            if f.severity != "info" or ": FAIL" in f.title
+        ]
+        recs_html = ""
+        if recs:
+            recs_items = "\n".join(
+                f"<li><strong>{_html_escape(r.title)}</strong>: "
+                f"{_html_escape(r.recommendation)}</li>"
+                for r in recs
+            )
+            recs_html = f"""
+    <div class="section">
+      <h2>Recommendations</h2>
+      <ul>{recs_items}</ul>
+    </div>"""
+
+        return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{_html_escape(title)}</title>
+<style>
+  body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+         margin: 0; padding: 0; background: #f8fafc; color: #1e293b; }}
+  .container {{ max-width: 960px; margin: 0 auto; padding: 24px; }}
+  .header {{ background: #1e293b; color: #f8fafc; padding: 32px; border-radius: 8px 8px 0 0; }}
+  .header h1 {{ margin: 0 0 8px 0; font-size: 28px; }}
+  .header .meta {{ font-size: 14px; opacity: 0.8; }}
+  .grade-box {{ display: inline-block; padding: 16px 24px; border-radius: 8px;
+                background: {grade_bg}; text-align: center; margin: 16px 0; }}
+  .grade-letter {{ font-size: 48px; font-weight: 700; color: {score_color}; }}
+  .grade-score {{ font-size: 18px; color: {score_color}; }}
+  .section {{ background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
+              padding: 24px; margin: 16px 0; }}
+  .section h2 {{ margin: 0 0 16px 0; font-size: 20px; color: #334155; }}
+  .summary-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+                   gap: 12px; }}
+  .summary-card {{ background: #f1f5f9; border-radius: 6px; padding: 16px; text-align: center; }}
+  .summary-card .value {{ font-size: 28px; font-weight: 700; color: #0f172a; }}
+  .summary-card .label {{ font-size: 13px; color: #64748b; margin-top: 4px; }}
+  table {{ width: 100%; border-collapse: collapse; font-size: 14px; }}
+  th {{ background: #f1f5f9; padding: 10px 12px; text-align: left;
+       font-weight: 600; color: #475569; border-bottom: 2px solid #e2e8f0; }}
+  td {{ padding: 8px 12px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }}
+  tr:hover {{ background: #f8fafc; }}
+  ul {{ padding-left: 20px; }}
+  li {{ margin-bottom: 8px; }}
+  .footer {{ text-align: center; font-size: 12px; color: #94a3b8; padding: 16px; }}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>{_html_escape(title)}</h1>
+    <div class="meta">
+      Period: {report.period_start.strftime('%Y-%m-%d')} to {report.period_end.strftime('%Y-%m-%d')}
+      &middot; Generated: {report.generated_at.strftime('%Y-%m-%d %H:%M UTC')}
+    </div>
+  </div>
+
+  <div class="section" style="text-align:center;">
+    <div class="grade-box">
+      <div class="grade-letter">{_html_escape(report.grade)}</div>
+      <div class="grade-score">{report.score} / 100</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Summary</h2>
+    <div class="summary-grid">
+      <div class="summary-card">
+        <div class="value">{report.total_actions:,}</div>
+        <div class="label">Total Actions</div>
+      </div>
+      <div class="summary-card">
+        <div class="value">{report.blocked_actions:,}</div>
+        <div class="label">Blocked ({blocked_pct:.1f}%)</div>
+      </div>
+      <div class="summary-card">
+        <div class="value">{report.approved_actions:,}</div>
+        <div class="label">Human Approved ({approved_pct:.1f}%)</div>
+      </div>
+      <div class="summary-card">
+        <div class="value">{report.auto_approved:,}</div>
+        <div class="label">Auto-Approved ({auto_pct:.1f}%)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Findings</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Severity</th>
+          <th>Category</th>
+          <th>Title</th>
+          <th>Description</th>
+          <th>Recommendation</th>
+        </tr>
+      </thead>
+      <tbody>
+{findings_html}
+      </tbody>
+    </table>
+  </div>
+{recs_html}
+  <div class="footer">
+    Generated by Aegis Compliance Engine
+  </div>
+</div>
+</body>
+</html>"""
 
     def to_dict(self, report: ComplianceReport) -> dict[str, Any]:
         """Serialize a compliance report to a plain dict."""

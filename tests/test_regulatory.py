@@ -32,8 +32,11 @@ class TestRegulatoryFramework:
     def test_iso_42001_value(self) -> None:
         assert RegulatoryFramework.ISO_42001.value == "iso_42001"
 
+    def test_owasp_agentic_value(self) -> None:
+        assert RegulatoryFramework.OWASP_AGENTIC.value == "owasp_agentic"
+
     def test_all_members_count(self) -> None:
-        assert len(RegulatoryFramework) == 4
+        assert len(RegulatoryFramework) == 5
 
 
 # ---------------------------------------------------------------------------
@@ -384,6 +387,124 @@ class TestISO42001Analysis:
         # All ISO 42001 mappings are partial since they need organizational processes
         assert analysis.fully_covered == 0
         assert analysis.partially_covered > 0
+
+
+# ---------------------------------------------------------------------------
+# OWASP Agentic AI analysis tests
+# ---------------------------------------------------------------------------
+
+
+class TestOWASPAgenticAnalysis:
+    @pytest.fixture()
+    def mapper(self) -> ComplianceMapper:
+        return ComplianceMapper()
+
+    def test_all_features_enabled(self, mapper: ComplianceMapper) -> None:
+        analysis = mapper.analyze(RegulatoryFramework.OWASP_AGENTIC)
+        assert analysis.framework == RegulatoryFramework.OWASP_AGENTIC
+        assert analysis.total_requirements == 10
+        assert analysis.coverage_score > 0
+
+    def test_has_all_10_requirements(self, mapper: ComplianceMapper) -> None:
+        reqs = mapper.get_requirements(RegulatoryFramework.OWASP_AGENTIC)
+        assert len(reqs) == 10
+        ids = [r.requirement_id for r in reqs]
+        for i in range(1, 11):
+            assert f"OWASP-AGENT-{i:02d}" in ids
+
+    def test_requirement_titles(self, mapper: ComplianceMapper) -> None:
+        """Each OWASP requirement has the official risk title."""
+        reqs = mapper.get_requirements(RegulatoryFramework.OWASP_AGENTIC)
+        titles = {r.requirement_id: r.title for r in reqs}
+        assert titles["OWASP-AGENT-01"] == "Agent Goal Hijack"
+        assert titles["OWASP-AGENT-02"] == "Tool Misuse"
+        assert titles["OWASP-AGENT-03"] == "Identity and Privilege Abuse"
+        assert titles["OWASP-AGENT-04"] == "Supply Chain Vulnerabilities"
+        assert titles["OWASP-AGENT-05"] == "Unexpected Code Execution"
+        assert titles["OWASP-AGENT-06"] == "Memory and Context Poisoning"
+        assert titles["OWASP-AGENT-07"] == "Insecure Inter-Agent Communication"
+        assert titles["OWASP-AGENT-08"] == "Cascading Failures"
+        assert titles["OWASP-AGENT-09"] == "Human-Agent Trust Exploitation"
+        assert titles["OWASP-AGENT-10"] == "Rogue Agents"
+
+    def test_all_requirements_voluntary(self, mapper: ComplianceMapper) -> None:
+        """OWASP is a best-practice framework, not legally mandatory."""
+        reqs = mapper.get_requirements(RegulatoryFramework.OWASP_AGENTIC)
+        assert all(not r.mandatory for r in reqs)
+
+    def test_no_deadlines(self, mapper: ComplianceMapper) -> None:
+        reqs = mapper.get_requirements(RegulatoryFramework.OWASP_AGENTIC)
+        assert all(r.deadline is None for r in reqs)
+
+    def test_no_penalties(self, mapper: ComplianceMapper) -> None:
+        reqs = mapper.get_requirements(RegulatoryFramework.OWASP_AGENTIC)
+        assert all(r.penalty is None for r in reqs)
+
+    def test_all_requirements_covered(self, mapper: ComplianceMapper) -> None:
+        """Every OWASP requirement has at least one Aegis feature mapping."""
+        analysis = mapper.analyze(RegulatoryFramework.OWASP_AGENTIC)
+        assert analysis.not_covered == 0
+
+    def test_no_full_coverage(self, mapper: ComplianceMapper) -> None:
+        """All OWASP mappings are partial since agentic security needs defense-in-depth."""
+        analysis = mapper.analyze(RegulatoryFramework.OWASP_AGENTIC)
+        assert analysis.fully_covered == 0
+        assert analysis.partially_covered == 10
+
+    def test_totals_add_up(self, mapper: ComplianceMapper) -> None:
+        analysis = mapper.analyze(RegulatoryFramework.OWASP_AGENTIC)
+        assert (
+            analysis.fully_covered + analysis.partially_covered + analysis.not_covered
+            == analysis.total_requirements
+        )
+
+    def test_policy_engine_maps_to_goal_hijack(self, mapper: ComplianceMapper) -> None:
+        analysis = mapper.analyze(RegulatoryFramework.OWASP_AGENTIC)
+        mappings = [
+            m
+            for m in analysis.mappings
+            if m.requirement.requirement_id == "OWASP-AGENT-01"
+            and m.aegis_feature == "policy_engine"
+        ]
+        assert len(mappings) == 1
+        assert mappings[0].coverage == "partial"
+
+    def test_agent_trust_chain_maps_to_privilege_abuse(self, mapper: ComplianceMapper) -> None:
+        analysis = mapper.analyze(RegulatoryFramework.OWASP_AGENTIC)
+        mappings = [
+            m
+            for m in analysis.mappings
+            if m.requirement.requirement_id == "OWASP-AGENT-03"
+            and m.aegis_feature == "agent_trust_chain"
+        ]
+        assert len(mappings) == 1
+        assert mappings[0].coverage == "partial"
+
+    def test_human_oversight_maps_to_trust_exploitation(self, mapper: ComplianceMapper) -> None:
+        analysis = mapper.analyze(RegulatoryFramework.OWASP_AGENTIC)
+        mappings = [
+            m
+            for m in analysis.mappings
+            if m.requirement.requirement_id == "OWASP-AGENT-09"
+            and m.aegis_feature == "human_oversight"
+        ]
+        assert len(mappings) == 1
+        assert mappings[0].coverage == "partial"
+
+    def test_framework_specific_recommendation(self, mapper: ComplianceMapper) -> None:
+        analysis = mapper.analyze(RegulatoryFramework.OWASP_AGENTIC)
+        owasp_recs = [r for r in analysis.recommendations if "OWASP" in r]
+        assert len(owasp_recs) > 0
+
+    def test_report_contains_framework_name(self, mapper: ComplianceMapper) -> None:
+        analysis = mapper.analyze(RegulatoryFramework.OWASP_AGENTIC)
+        report = mapper.generate_report(analysis)
+        assert "OWASP Top 10 for Agentic Applications" in report
+
+    def test_evidence_map_framework_name(self, mapper: ComplianceMapper) -> None:
+        analysis = mapper.analyze(RegulatoryFramework.OWASP_AGENTIC)
+        ev = mapper.generate_evidence_map(analysis)
+        assert ev["framework"] == "OWASP Agentic AI"
 
 
 # ---------------------------------------------------------------------------

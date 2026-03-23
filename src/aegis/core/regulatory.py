@@ -1,4 +1,4 @@
-"""EU AI Act & NIST AI RMF Compliance Mapper.
+"""Regulatory Compliance Mapper.
 
 Maps Aegis governance features to regulatory requirements, generates
 compliance gap analysis, and produces auditor-ready documentation.
@@ -8,6 +8,7 @@ Supported frameworks:
 - NIST AI RMF 1.0 (AI 100-1)
 - SOC2 Trust Services Criteria
 - ISO/IEC 42001:2023 (AI Management System)
+- OWASP Top 10 for Agentic Applications (2025)
 """
 
 from __future__ import annotations
@@ -17,6 +18,16 @@ from enum import Enum
 from typing import Any
 
 
+def _html_escape(text: str) -> str:
+    """Escape HTML special characters in *text*."""
+    return (
+        text.replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace('"', "&quot;")
+    )
+
+
 class RegulatoryFramework(Enum):
     """Supported regulatory and standards frameworks."""
 
@@ -24,6 +35,7 @@ class RegulatoryFramework(Enum):
     NIST_AI_RMF = "nist_ai_rmf"
     SOC2 = "soc2"
     ISO_42001 = "iso_42001"
+    OWASP_AGENTIC = "owasp_agentic"
 
 
 @dataclass(frozen=True)
@@ -537,6 +549,160 @@ _ISO_42001_REQUIREMENTS: list[ComplianceRequirement] = [
     ),
 ]
 
+_OWASP_AGENTIC_REQUIREMENTS: list[ComplianceRequirement] = [
+    ComplianceRequirement(
+        framework=RegulatoryFramework.OWASP_AGENTIC,
+        requirement_id="OWASP-AGENT-01",
+        title="Agent Goal Hijack",
+        description=(
+            "AI agents can be redirected through natural language when processing "
+            "external content like emails or documents containing hidden instructions "
+            "that override intended objectives, resulting in total loss of control "
+            "where an autonomous agent operates contrary to its intended purpose."
+        ),
+        category="prompt_security",
+        mandatory=False,
+        deadline=None,
+        penalty=None,
+    ),
+    ComplianceRequirement(
+        framework=RegulatoryFramework.OWASP_AGENTIC,
+        requirement_id="OWASP-AGENT-02",
+        title="Tool Misuse",
+        description=(
+            "Attackers who influence agent reasoning can weaponize legitimate tools "
+            "such as email, databases, APIs, and command execution capabilities that "
+            "agents were given to perform their intended functions, bending them into "
+            "destructive outputs."
+        ),
+        category="tool_security",
+        mandatory=False,
+        deadline=None,
+        penalty=None,
+    ),
+    ComplianceRequirement(
+        framework=RegulatoryFramework.OWASP_AGENTIC,
+        requirement_id="OWASP-AGENT-03",
+        title="Identity and Privilege Abuse",
+        description=(
+            "When compromised, agents grant attackers access to all permissions they "
+            "possess. Databases, cloud resources, and internal APIs become the "
+            "attacker's access scope, enabling lateral movement and privilege "
+            "escalation far beyond the agent's intended boundaries."
+        ),
+        category="access_control",
+        mandatory=False,
+        deadline=None,
+        penalty=None,
+    ),
+    ComplianceRequirement(
+        framework=RegulatoryFramework.OWASP_AGENTIC,
+        requirement_id="OWASP-AGENT-04",
+        title="Supply Chain Vulnerabilities",
+        description=(
+            "Malicious MCP servers, plugins, and external tools can be loaded "
+            "dynamically at runtime, bypassing traditional dependency security "
+            "controls and running with agent privileges. Runtime components are "
+            "poisoned while natural-language execution paths unlock dangerous new "
+            "avenues for remote code execution."
+        ),
+        category="supply_chain",
+        mandatory=False,
+        deadline=None,
+        penalty=None,
+    ),
+    ComplianceRequirement(
+        framework=RegulatoryFramework.OWASP_AGENTIC,
+        requirement_id="OWASP-AGENT-05",
+        title="Unexpected Code Execution",
+        description=(
+            "Code generation and execution features in agentic systems create direct "
+            "paths from text input to system commands when untrusted instructions are "
+            "embedded in input, enabling remote code execution through natural "
+            "language interfaces."
+        ),
+        category="code_execution",
+        mandatory=False,
+        deadline=None,
+        penalty=None,
+    ),
+    ComplianceRequirement(
+        framework=RegulatoryFramework.OWASP_AGENTIC,
+        requirement_id="OWASP-AGENT-06",
+        title="Memory and Context Poisoning",
+        description=(
+            "Agents maintaining persistent memory create sleeper agent scenarios "
+            "where a single successful injection corrupts memory permanently, "
+            "affecting all future sessions and reshaping behavior long after the "
+            "initial interaction."
+        ),
+        category="memory_integrity",
+        mandatory=False,
+        deadline=None,
+        penalty=None,
+    ),
+    ComplianceRequirement(
+        framework=RegulatoryFramework.OWASP_AGENTIC,
+        requirement_id="OWASP-AGENT-07",
+        title="Insecure Inter-Agent Communication",
+        description=(
+            "Multi-agent systems lack authentication and integrity checks on "
+            "messages exchanged between agents, allowing malicious agents to inject "
+            "false information into coordination channels and misdirect entire "
+            "clusters of agents."
+        ),
+        category="communication_security",
+        mandatory=False,
+        deadline=None,
+        penalty=None,
+    ),
+    ComplianceRequirement(
+        framework=RegulatoryFramework.OWASP_AGENTIC,
+        requirement_id="OWASP-AGENT-08",
+        title="Cascading Failures",
+        description=(
+            "A compromised agent poisons downstream connected agents, and errors "
+            "propagate through automated workflows faster than incident response "
+            "can contain them. False signals cascade through pipelines with "
+            "escalating impact."
+        ),
+        category="resilience",
+        mandatory=False,
+        deadline=None,
+        penalty=None,
+    ),
+    ComplianceRequirement(
+        framework=RegulatoryFramework.OWASP_AGENTIC,
+        requirement_id="OWASP-AGENT-09",
+        title="Human-Agent Trust Exploitation",
+        description=(
+            "Agents generate authoritative explanations that humans trust, making "
+            "approval prompts become rubber stamps even when agents are manipulated "
+            "or compromised. Humans overly rely on agent recommendations, leading "
+            "to unsafe approvals of harmful actions."
+        ),
+        category="human_oversight",
+        mandatory=False,
+        deadline=None,
+        penalty=None,
+    ),
+    ComplianceRequirement(
+        framework=RegulatoryFramework.OWASP_AGENTIC,
+        requirement_id="OWASP-AGENT-10",
+        title="Rogue Agents",
+        description=(
+            "Agents develop misaligned objectives autonomous of external attacks, "
+            "pursuing goals conflicting with their original purpose through reward "
+            "function exploitation. Compromised or misaligned agents act harmfully "
+            "while appearing legitimate."
+        ),
+        category="agent_alignment",
+        mandatory=False,
+        deadline=None,
+        penalty=None,
+    ),
+]
+
 
 # ---------------------------------------------------------------------------
 # Feature-to-requirement mapping rules
@@ -905,6 +1071,166 @@ _FEATURE_MAP: dict[str, list[tuple[str, str, str, str]]] = {
             "Reports highlight areas for improvement",
         ),
     ],
+    # ---- OWASP Top 10 for Agentic Applications ----
+    "OWASP-AGENT-01": [
+        (
+            "policy_engine",
+            "partial",
+            "Policy enforcement decision logs blocking unauthorized actions",
+            "Policy engine can block actions that deviate from allowed goals; "
+            "full prompt injection defense requires input sanitization layers",
+        ),
+        (
+            "anomaly_detection",
+            "partial",
+            "Behavioral anomaly detection alerts",
+            "Anomaly detection can identify goal drift by profiling expected behavior",
+        ),
+    ],
+    "OWASP-AGENT-02": [
+        (
+            "policy_engine",
+            "partial",
+            "Tool invocation policy enforcement logs",
+            "Policy engine restricts which tools can be called and under what conditions; "
+            "tool-level sandboxing is external",
+        ),
+        (
+            "rate_limiting",
+            "partial",
+            "Rate limit enforcement on tool calls",
+            "Rate limiting constrains tool invocation frequency to limit misuse impact",
+        ),
+        (
+            "audit_logging",
+            "partial",
+            "Tool usage audit trail",
+            "Audit logging records all tool invocations for forensic review",
+        ),
+    ],
+    "OWASP-AGENT-03": [
+        (
+            "policy_engine",
+            "partial",
+            "Access control policy enforcement logs",
+            "Policy engine enforces least-privilege rules on agent actions; "
+            "identity and credential management is external",
+        ),
+        (
+            "agent_trust_chain",
+            "partial",
+            "Agent identity and delegation chain records",
+            "Agent trust chain tracks delegation and prevents privilege escalation "
+            "across agent boundaries",
+        ),
+    ],
+    "OWASP-AGENT-04": [
+        (
+            "policy_engine",
+            "partial",
+            "Plugin and tool allowlist enforcement logs",
+            "Policy engine can restrict which external tools and plugins are permitted; "
+            "supply chain integrity verification is external",
+        ),
+    ],
+    "OWASP-AGENT-05": [
+        (
+            "policy_engine",
+            "partial",
+            "Code execution policy enforcement logs",
+            "Policy engine can block or constrain code execution actions; "
+            "sandboxed execution environments are external",
+        ),
+        (
+            "audit_logging",
+            "partial",
+            "Code execution audit trail",
+            "Audit logging records all code execution events for review",
+        ),
+    ],
+    "OWASP-AGENT-06": [
+        (
+            "audit_logging",
+            "partial",
+            "Memory and context modification audit trail",
+            "Audit logging records context changes enabling detection of poisoning; "
+            "memory integrity protection mechanisms are external",
+        ),
+        (
+            "crypto_audit",
+            "partial",
+            "Cryptographic hash chain over context events",
+            "Crypto audit trail detects tampering with logged context modifications",
+        ),
+    ],
+    "OWASP-AGENT-07": [
+        (
+            "agent_trust_chain",
+            "partial",
+            "Inter-agent authentication and delegation records",
+            "Agent trust chain provides authentication between agents; "
+            "message-level encryption and signing is external",
+        ),
+        (
+            "audit_logging",
+            "partial",
+            "Inter-agent communication audit logs",
+            "Audit logging records all inter-agent messages for integrity review",
+        ),
+    ],
+    "OWASP-AGENT-08": [
+        (
+            "anomaly_detection",
+            "partial",
+            "Cascading failure anomaly detection alerts",
+            "Anomaly detection can identify unusual error propagation patterns; "
+            "circuit breakers and isolation mechanisms are external",
+        ),
+        (
+            "rate_limiting",
+            "partial",
+            "Rate limiting to contain blast radius",
+            "Rate limiting constrains downstream impact during failure cascades",
+        ),
+    ],
+    "OWASP-AGENT-09": [
+        (
+            "human_oversight",
+            "partial",
+            "Approval gate logs with approver identity",
+            "Approval gates enforce human-in-the-loop for high-risk actions; "
+            "preventing blind trust requires organizational training and UX design",
+        ),
+        (
+            "compliance_reports",
+            "partial",
+            "Decision explanation and justification reports",
+            "Compliance reports provide auditable decision rationale to support "
+            "informed human review rather than rubber-stamping",
+        ),
+    ],
+    "OWASP-AGENT-10": [
+        (
+            "anomaly_detection",
+            "partial",
+            "Rogue behavior detection via behavioral profiling",
+            "Anomaly detection profiles expected agent behavior and flags deviations "
+            "that may indicate misalignment or compromise",
+        ),
+        (
+            "policy_engine",
+            "partial",
+            "Behavioral boundary enforcement logs",
+            "Policy engine enforces behavioral boundaries to prevent goal drift; "
+            "alignment verification is external",
+        ),
+        (
+            "audit_logging",
+            "partial",
+            "Comprehensive agent action audit trail",
+            "Audit logging enables forensic analysis of rogue agent behavior",
+        ),
+    ],
 }
 
 # All Aegis features recognized by the mapper.
@@ -945,6 +1271,7 @@ class ComplianceMapper:
             RegulatoryFramework.NIST_AI_RMF: list(_NIST_AI_RMF_REQUIREMENTS),
             RegulatoryFramework.SOC2: list(_SOC2_REQUIREMENTS),
             RegulatoryFramework.ISO_42001: list(_ISO_42001_REQUIREMENTS),
+            RegulatoryFramework.OWASP_AGENTIC: list(_OWASP_AGENTIC_REQUIREMENTS),
         }
 
     def get_requirements(self, framework: RegulatoryFramework) -> list[ComplianceRequirement]:
@@ -1068,6 +1395,7 @@ class ComplianceMapper:
             RegulatoryFramework.NIST_AI_RMF: "NIST AI Risk Management Framework 1.0",
             RegulatoryFramework.SOC2: "SOC2 Trust Services Criteria",
             RegulatoryFramework.ISO_42001: "ISO/IEC 42001:2023",
+            RegulatoryFramework.OWASP_AGENTIC: "OWASP Top 10 for Agentic Applications (2025)",
         }
         name = framework_names.get(analysis.framework, analysis.framework.value)
 
@@ -1146,6 +1474,105 @@ class ComplianceMapper:
 
         return "\n".join(lines)
 
+    def generate_html_report(self, analysis: ComplianceGapAnalysis) -> str:
+        """Generate a self-contained HTML compliance gap analysis report."""
+        framework_names = {
+            RegulatoryFramework.EU_AI_ACT: "EU AI Act (Regulation (EU) 2024/1689)",
+            RegulatoryFramework.NIST_AI_RMF: "NIST AI Risk Management Framework 1.0",
+            RegulatoryFramework.SOC2: "SOC2 Trust Services Criteria",
+            RegulatoryFramework.ISO_42001: "ISO/IEC 42001:2023",
+            RegulatoryFramework.OWASP_AGENTIC: "OWASP Top 10 for Agentic Applications (2025)",
+        }
+        name = framework_names.get(analysis.framework, analysis.framework.value)
+        score = analysis.coverage_score
+        bar_color = "#22c55e" if score >= 80 else "#eab308" if score >= 50 else "#ef4444"
+        coverage_styles = {
+            "full": "background:#dcfce7;color:#166534;",
+            "partial": "background:#fef9c3;color:#854d0e;",
+            "none": "background:#fee2e2;color:#991b1b;",
+        }
+        seen_reqs: set[str] = set()
+        req_rows: list[str] = []
+        for mapping in analysis.mappings:
+            req = mapping.requirement
+            cov_style = coverage_styles.get(mapping.coverage, "")
+            if req.requirement_id in seen_reqs:
+                req_rows.append(
+                    f'<tr><td style="padding:8px 12px;"></td>'
+                    f'<td style="padding:8px 12px;"></td>'
+                    f'<td style="padding:8px 12px;{cov_style}font-weight:600;">'
+                    f"{_html_escape(mapping.coverage.upper())}</td>"
+                    f'<td style="padding:8px 12px;">{_html_escape(mapping.aegis_feature)}</td>'
+                    f'<td style="padding:8px 12px;">{_html_escape(mapping.evidence_type)}</td>'
+                    f'<td style="padding:8px 12px;">{_html_escape(mapping.notes)}</td></tr>'
+                )
+                continue
+            seen_reqs.add(req.requirement_id)
+            badge = (' <span style="background:#ef4444;color:#fff;padding:2px 6px;'
+                     'border-radius:3px;font-size:11px;">MANDATORY</span>' if req.mandatory else "")
+            req_rows.append(
+                f'<tr><td style="padding:8px 12px;font-weight:600;">'
+                f"{_html_escape(req.requirement_id)}{badge}</td>"
+                f'<td style="padding:8px 12px;">{_html_escape(req.title)}</td>'
+                f'<td style="padding:8px 12px;{cov_style}font-weight:600;">'
+                f"{_html_escape(mapping.coverage.upper())}</td>"
+                f'<td style="padding:8px 12px;">{_html_escape(mapping.aegis_feature)}</td>'
+                f'<td style="padding:8px 12px;">{_html_escape(mapping.evidence_type)}</td>'
+                f'<td style="padding:8px 12px;">{_html_escape(mapping.notes)}</td></tr>'
+            )
+        gaps_html = ""
+        if analysis.gaps:
+            gap_items = []
+            for gap in analysis.gaps:
+                m = (' <span style="background:#ef4444;color:#fff;padding:2px 6px;'
+                     'border-radius:3px;font-size:11px;">MANDATORY</span>' if gap.mandatory else "")
+                d = f" &mdash; Deadline: {_html_escape(gap.deadline)}" if gap.deadline else ""
+                p = (f"<br><small style='color:#991b1b;'>Penalty: "
+                     f"{_html_escape(gap.penalty)}</small>" if gap.penalty else "")
+                gap_items.append(f"<li><strong>{_html_escape(gap.requirement_id)}: "
+                                 f"{_html_escape(gap.title)}</strong>{m}{d}{p}</li>")
+            gaps_html = f'<div class="section"><h2>Compliance Gaps</h2><ul>{"".join(gap_items)}</ul></div>'
+        recs_html = ""
+        if analysis.recommendations:
+            ri = "".join(f"<li>{_html_escape(r)}</li>" for r in analysis.recommendations)
+            recs_html = f'<div class="section"><h2>Recommendations</h2><ol>{ri}</ol></div>'
+        return f"""<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Compliance Gap Analysis: {_html_escape(name)}</title>
+<style>
+body{{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;margin:0;padding:0;background:#f8fafc;color:#1e293b}}
+.container{{max-width:1100px;margin:0 auto;padding:24px}}
+.header{{background:#1e293b;color:#f8fafc;padding:32px;border-radius:8px 8px 0 0}}
+.header h1{{margin:0 0 8px 0;font-size:28px}}.header .meta{{font-size:14px;opacity:.8}}
+.section{{background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:24px;margin:16px 0}}
+.section h2{{margin:0 0 16px 0;font-size:20px;color:#334155}}
+.summary-grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px}}
+.summary-card{{background:#f1f5f9;border-radius:6px;padding:16px;text-align:center}}
+.summary-card .value{{font-size:28px;font-weight:700;color:#0f172a}}
+.summary-card .label{{font-size:13px;color:#64748b;margin-top:4px}}
+.bar-container{{background:#e2e8f0;border-radius:8px;height:28px;overflow:hidden;margin:8px 0}}
+.bar-fill{{height:100%;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:14px}}
+table{{width:100%;border-collapse:collapse;font-size:13px}}
+th{{background:#f1f5f9;padding:10px 12px;text-align:left;font-weight:600;color:#475569;border-bottom:2px solid #e2e8f0}}
+td{{padding:8px 12px;border-bottom:1px solid #e2e8f0;vertical-align:top}}
+tr:hover{{background:#f8fafc}}ul,ol{{padding-left:20px}}li{{margin-bottom:8px}}
+.footer{{text-align:center;font-size:12px;color:#94a3b8;padding:16px}}
+</style></head><body><div class="container">
+<div class="header"><h1>Compliance Gap Analysis</h1><div class="meta">{_html_escape(name)}</div></div>
+<div class="section"><h2>Coverage Overview</h2>
+<div class="summary-grid">
+<div class="summary-card"><div class="value">{analysis.total_requirements}</div><div class="label">Total Requirements</div></div>
+<div class="summary-card"><div class="value" style="color:#22c55e;">{analysis.fully_covered}</div><div class="label">Fully Covered</div></div>
+<div class="summary-card"><div class="value" style="color:#eab308;">{analysis.partially_covered}</div><div class="label">Partially Covered</div></div>
+<div class="summary-card"><div class="value" style="color:#ef4444;">{analysis.not_covered}</div><div class="label">Not Covered</div></div>
+</div><div class="bar-container"><div class="bar-fill" style="width:{score:.1f}%;background:{bar_color};">{score:.1f}%</div></div></div>
+<div class="section"><h2>Requirements Detail</h2>
+<table><thead><tr><th>Requirement</th><th>Title</th><th>Coverage</th><th>Aegis Feature</th><th>Evidence Type</th><th>Notes</th></tr></thead>
+<tbody>{"".join(req_rows)}</tbody></table></div>
+{gaps_html}{recs_html}
+<div class="footer">Generated by Aegis Compliance Mapper</div></div></body></html>"""
+
     def generate_evidence_map(self, analysis: ComplianceGapAnalysis) -> dict[str, object]:
         """Generate a JSON-serializable evidence map from an analysis.
 
@@ -1160,6 +1587,7 @@ class ComplianceMapper:
             RegulatoryFramework.NIST_AI_RMF: "NIST AI RMF",
             RegulatoryFramework.SOC2: "SOC2",
             RegulatoryFramework.ISO_42001: "ISO 42001",
+            RegulatoryFramework.OWASP_AGENTIC: "OWASP Agentic AI",
         }
 
         evidence_entries: list[dict[str, Any]] = []
@@ -1272,6 +1700,12 @@ class ComplianceMapper:
             recs.append(
                 "ISO 42001 certification requires management commitment; use Aegis "
                 "reports to demonstrate operational AI governance controls."
+            )
+        elif framework == RegulatoryFramework.OWASP_AGENTIC:
+            recs.append(
+                "OWASP Agentic AI risks require defense-in-depth; combine Aegis "
+                "policy enforcement and monitoring with input sanitization, sandboxing, "
+                "and secure agent architecture."
             )
 
         # Coverage score feedback

@@ -248,10 +248,14 @@ def main(argv: list[str] | None = None) -> None:
     )
     compliance_parser.add_argument(
         "--format",
-        choices=["markdown", "json"],
+        choices=["markdown", "json", "html"],
         default="markdown",
         dest="fmt",
         help="Output format (default: markdown)",
+    )
+    compliance_parser.add_argument(
+        "--output", "-o", default=None,
+        help="Output file path (useful for HTML reports)",
     )
     compliance_parser.add_argument(
         "--policy",
@@ -266,14 +270,18 @@ def main(argv: list[str] | None = None) -> None:
     )
     reg_parser.add_argument(
         "--framework",
-        choices=["eu-ai-act", "nist", "soc2", "iso-42001", "all"],
+        choices=["eu-ai-act", "nist", "soc2", "iso-42001", "owasp-agentic", "all"],
         default="all",
     )
     reg_parser.add_argument(
         "--format",
-        choices=["table", "json", "markdown"],
+        choices=["table", "json", "markdown", "html"],
         default="table",
         dest="fmt",
+    )
+    reg_parser.add_argument(
+        "--output", "-o", default=None,
+        help="Output file path (useful for HTML reports)",
     )
     reg_parser.add_argument(
         "--features",
@@ -852,9 +860,18 @@ def _cmd_compliance(args: argparse.Namespace) -> None:
     report = gen.generate(entries, report_type=args.report_type)
 
     if args.fmt == "json":
-        print(_json.dumps(gen.to_dict(report), indent=2))
+        output_text = _json.dumps(gen.to_dict(report), indent=2)
+    elif args.fmt == "html":
+        output_text = gen.to_html(report)
     else:
-        print(gen.to_markdown(report))
+        output_text = gen.to_markdown(report)
+
+    output_path = getattr(args, "output", None)
+    if output_path:
+        Path(output_path).write_text(output_text, encoding="utf-8")
+        print(f"Report written to {output_path}")
+    else:
+        print(output_text)
 
 
 def _cmd_stats(args: argparse.Namespace) -> None:
@@ -940,6 +957,7 @@ def _cmd_regulatory(args: argparse.Namespace) -> None:
         "nist": RegulatoryFramework.NIST_AI_RMF,
         "soc2": RegulatoryFramework.SOC2,
         "iso-42001": RegulatoryFramework.ISO_42001,
+        "owasp-agentic": RegulatoryFramework.OWASP_AGENTIC,
     }
 
     # Parse features
@@ -960,16 +978,38 @@ def _cmd_regulatory(args: argparse.Namespace) -> None:
     mapper = ComplianceMapper()
     analyses = [mapper.analyze(fw, features=features) for fw in frameworks]
 
+    output_path = getattr(args, "output", None)
+
     if args.fmt == "json":
         data = []
         for analysis in analyses:
             data.append(mapper.generate_evidence_map(analysis))
-        print(json.dumps(data if len(data) > 1 else data[0], indent=2))
+        output_text = json.dumps(data if len(data) > 1 else data[0], indent=2)
+        if output_path:
+            Path(output_path).write_text(output_text, encoding="utf-8")
+            print(f"Report written to {output_path}")
+        else:
+            print(output_text)
         return
 
     if args.fmt == "markdown":
-        for analysis in analyses:
-            print(mapper.generate_report(analysis))
+        parts = [mapper.generate_report(a) for a in analyses]
+        output_text = "\n".join(parts)
+        if output_path:
+            Path(output_path).write_text(output_text, encoding="utf-8")
+            print(f"Report written to {output_path}")
+        else:
+            print(output_text)
+        return
+
+    if args.fmt == "html":
+        parts = [mapper.generate_html_report(a) for a in analyses]
+        output_text = "\n".join(parts)
+        if output_path:
+            Path(output_path).write_text(output_text, encoding="utf-8")
+            print(f"Report written to {output_path}")
+        else:
+            print(output_text)
         return
 
     # Table format
@@ -985,6 +1025,7 @@ def _print_regulatory_table(analysis: ComplianceGapAnalysis) -> None:
         "nist_ai_rmf": "NIST AI RMF",
         "soc2": "SOC2",
         "iso_42001": "ISO 42001",
+        "owasp_agentic": "OWASP Agentic AI",
     }
     name = fw_names.get(analysis.framework.value, analysis.framework.value)
 
