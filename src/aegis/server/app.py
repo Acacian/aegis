@@ -57,6 +57,8 @@ def create_app(
     policy: Policy | None = None,
     executor: Any | None = None,
     audit_db_path: str | Path | None = None,
+    enable_dashboard: bool = True,
+    anomaly_detector: Any | None = None,
 ) -> Any:
     """Create the Aegis ASGI application.
 
@@ -65,6 +67,8 @@ def create_app(
         policy: A pre-built Policy instance (takes precedence over policy_path).
         executor: Optional executor for /execute endpoint. Defaults to no-op.
         audit_db_path: Path for SQLite audit DB. Defaults to in-memory.
+        enable_dashboard: Serve the web dashboard at ``/``. Default ``True``.
+        anomaly_detector: Optional :class:`AnomalyDetector` for dashboard anomaly pages.
 
     Returns:
         A Starlette ASGI application.
@@ -72,8 +76,9 @@ def create_app(
     _require_starlette()
     from starlette.applications import Starlette
     from starlette.requests import Request
-    from starlette.responses import JSONResponse
-    from starlette.routing import Route
+    from starlette.responses import FileResponse, JSONResponse
+    from starlette.routing import Mount, Route
+    from starlette.staticfiles import StaticFiles
 
     if policy is None and policy_path is not None:
         policy = Policy.from_yaml(policy_path)
@@ -237,7 +242,7 @@ def create_app(
         # Do not leak internal exception details to clients
         return JSONResponse({"error": "Internal server error"}, status_code=500)
 
-    routes = [
+    routes: list[Route | Mount] = [
         Route("/health", health, methods=["GET"]),
         Route("/api/v1/evaluate", evaluate, methods=["POST"]),
         Route("/api/v1/execute", execute_action, methods=["POST"]),
@@ -245,6 +250,27 @@ def create_app(
         Route("/api/v1/policy", get_policy, methods=["GET"]),
         Route("/api/v1/policy", update_policy, methods=["PUT"]),
     ]
+
+    if enable_dashboard:
+        from aegis.server.dashboard_api import get_dashboard_routes
+
+        dashboard_routes = get_dashboard_routes(
+            policy=policy,
+            audit_logger=audit_logger,
+            anomaly_detector=anomaly_detector,
+        )
+        routes.extend(dashboard_routes)
+
+        # Serve the SPA frontend
+        _static_dir = Path(__file__).parent / "static"
+        _index_html = _static_dir / "index.html"
+
+        async def serve_index(request: Request) -> FileResponse:
+            return FileResponse(str(_index_html), media_type="text/html")
+
+        routes.append(Route("/", serve_index, methods=["GET"]))
+        routes.append(Route("/dashboard", serve_index, methods=["GET"]))
+        routes.append(Mount("/static", app=StaticFiles(directory=str(_static_dir)), name="static"))
 
     exception_handlers = {
         400: handle_error,

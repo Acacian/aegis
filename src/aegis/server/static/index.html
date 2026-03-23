@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aegis — AI Agent Governance Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <link rel="stylesheet" href="/static/app.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            dark: { 900: '#0f172a', 800: '#1e293b', 700: '#334155' }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <h1>&#x1F6E1; AEGIS</h1>
+      <p>AI Agent Governance</p>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">Monitor</div>
+      <a href="#/overview" class="nav-item" data-page="overview">
+        <span class="nav-icon">&#9635;</span> Overview
+      </a>
+      <a href="#/audit" class="nav-item" data-page="audit">
+        <span class="nav-icon">&#128196;</span> Audit Log
+      </a>
+      <a href="#/anomalies" class="nav-item" data-page="anomalies">
+        <span class="nav-icon">&#9888;</span> Anomalies
+      </a>
+
+      <div class="nav-section">Governance</div>
+      <a href="#/policy" class="nav-item" data-page="policy">
+        <span class="nav-icon">&#128220;</span> Policy
+      </a>
+      <a href="#/compliance" class="nav-item" data-page="compliance">
+        <span class="nav-icon">&#9989;</span> Compliance
+      </a>
+      <a href="#/regulatory" class="nav-item" data-page="regulatory">
+        <span class="nav-icon">&#127970;</span> Regulatory
+      </a>
+
+      <div class="nav-section">System</div>
+      <a href="#/system" class="nav-item" data-page="system">
+        <span class="nav-icon">&#9881;</span> System
+      </a>
+    </nav>
+    <div style="padding: 1rem 1.25rem; border-top: 1px solid #1e293b;">
+      <p style="font-size: 0.625rem; color: #475569;">Powered by Aegis v<span id="version">-</span></p>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main-content" id="app">
+    <div class="flex items-center justify-center h-64">
+      <div class="skeleton" style="width: 200px; height: 24px;"></div>
+    </div>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
