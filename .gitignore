@@ -1,5 +1,11 @@
-.claude/
-CLAUDE.md
+# Claude Code — track safe project config, ignore machine-specific + sensitive context
+.claude/*
+!.claude/agents/
+!.claude/scripts/
+!.claude/skills/
+!.claude/hooks/
+!CLAUDE.md
+
 .github/SOCIAL.md
 .github/DEVTO_ARTICLE.md
 .idea/
