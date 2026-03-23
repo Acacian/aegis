@@ -56,7 +56,8 @@ class TestModelPricing:
         p = ModelPricing()
         usage = TokenUsage(
             model="claude-sonnet-4-20250514",
-            input_tokens=1_000_000, output_tokens=0,
+            input_tokens=1_000_000,
+            output_tokens=0,
         )
         assert p.cost(usage) == pytest.approx(3.00, rel=1e-3)
 

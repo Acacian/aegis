@@ -14,6 +14,7 @@ from aegis.core.versioning import PolicyDelta
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_policy_dict(
     rules: list[dict] | None = None,
     defaults: dict | None = None,
@@ -170,9 +171,9 @@ class TestPolicyImpactAnalyzer:
     def test_critical_severity(self) -> None:
         analyzer = PolicyImpactAnalyzer()
         old = _make_policy_dict(rules=[])
-        new = _make_policy_dict(rules=[
-            _make_rule(f"block-{i}", approval="block") for i in range(5)
-        ])
+        new = _make_policy_dict(
+            rules=[_make_rule(f"block-{i}", approval="block") for i in range(5)]
+        )
         report = analyzer.analyze(old, new)
         assert report.severity == "critical"
 
@@ -212,10 +213,12 @@ class TestPolicyDriftDetector:
     def test_drift_with_defaults_change(self) -> None:
         detector = PolicyDriftDetector()
         running = _make_policy_dict(
-            rules=[], defaults={"risk_level": "low", "approval": "auto"},
+            rules=[],
+            defaults={"risk_level": "low", "approval": "auto"},
         )
         on_disk = _make_policy_dict(
-            rules=[], defaults={"risk_level": "high", "approval": "auto"},
+            rules=[],
+            defaults={"risk_level": "high", "approval": "auto"},
         )
         result = detector.detect_from_dicts(on_disk, running)
         assert result.has_drift

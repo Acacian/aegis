@@ -138,11 +138,13 @@ class TestVulnChecking:
 
     def test_check_all(self) -> None:
         db = MCPVulnDB()
-        results = db.check_all({
-            "mcp-server-filesystem": "0.5.0",
-            "mcp-server-sqlite": "0.4.0",
-            "safe-package": "1.0.0",
-        })
+        results = db.check_all(
+            {
+                "mcp-server-filesystem": "0.5.0",
+                "mcp-server-sqlite": "0.4.0",
+                "safe-package": "1.0.0",
+            }
+        )
         assert "mcp-server-filesystem" in results
         assert "mcp-server-sqlite" in results
         assert "safe-package" not in results
@@ -181,9 +183,8 @@ class TestReportFormatting:
 
     def test_mixed_severities(self) -> None:
         db = MCPVulnDB()
-        findings = (
-            db.check("mcp-server-filesystem", "0.5.0")
-            + db.check("mcp-server-fetch", "0.2.0")
+        findings = db.check("mcp-server-filesystem", "0.5.0") + db.check(
+            "mcp-server-fetch", "0.2.0"
         )
         report = db.format_report(findings)
         assert "CRITICAL" in report
