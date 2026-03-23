@@ -355,11 +355,11 @@ class AegisToolInputGuardrail:
         if allow:
             return ToolGuardrailFunctionOutput.allow(output_info=metadata)
         if self._on_tripwire:
-            return ToolGuardrailFunctionOutput.raise_exception(                output_info={"reason": reason, **metadata}
+            return ToolGuardrailFunctionOutput.raise_exception(
+                output_info={"reason": reason, **metadata}
             )
 
-        return ToolGuardrailFunctionOutput.reject_content(            reason, output_info=metadata
-        )
+        return ToolGuardrailFunctionOutput.reject_content(reason, output_info=metadata)
 
     def health_check(self) -> dict[str, Any]:
         """Return guardrail health status."""
@@ -548,11 +548,11 @@ class AegisToolOutputGuardrail:
         if allow:
             return ToolGuardrailFunctionOutput.allow(output_info=metadata)
         if self._on_tripwire:
-            return ToolGuardrailFunctionOutput.raise_exception(                output_info={"reason": reason, **metadata}
+            return ToolGuardrailFunctionOutput.raise_exception(
+                output_info={"reason": reason, **metadata}
             )
 
-        return ToolGuardrailFunctionOutput.reject_content(            reason, output_info=metadata
-        )
+        return ToolGuardrailFunctionOutput.reject_content(reason, output_info=metadata)
 
     def health_check(self) -> dict[str, Any]:
         """Return guardrail health status."""
