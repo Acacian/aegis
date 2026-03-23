@@ -195,7 +195,8 @@ def scan_content(payload: dict[str, Any]) -> list[tuple[str, str]]:
 
 def redact_payload(payload: dict[str, Any]) -> dict[str, Any]:
     """Return a copy of payload with sensitive content redacted."""
-    return _redact_recursive(payload, depth=0)
+    result: dict[str, Any] = _redact_recursive(payload, depth=0)
+    return result
 
 
 def _redact_recursive(obj: Any, depth: int) -> Any:

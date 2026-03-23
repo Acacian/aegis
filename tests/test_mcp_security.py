@@ -2,11 +2,8 @@
 
 from __future__ import annotations
 
-import json
 import tempfile
 from pathlib import Path
-
-import pytest
 
 from aegis.core.mcp_security import (
     ArgumentSanitizer,
@@ -17,10 +14,8 @@ from aegis.core.mcp_security import (
     ToolDescriptionScanner,
     ToolTrustScorer,
     TrustLevel,
-    TrustScore,
     _normalize_text,
 )
-
 
 # ---------------------------------------------------------------------------
 # Unicode normalization
