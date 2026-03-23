@@ -366,7 +366,36 @@ class AegisGuardrailProvider:
                 )
             self._audit.log(self._session_id, decision, result=result)
 
-    # -- BeforeToolCallHook protocol ----------------------------------------
+    # -- CrewAI BeforeToolCallHook -------------------------------------------
+
+    def __call__(self, context: Any) -> bool | None:
+        """CrewAI ``BeforeToolCallHook`` protocol — receives ``ToolCallHookContext``.
+
+        This method matches the signature CrewAI expects::
+
+            def __call__(self, context: ToolCallHookContext) -> bool | None
+
+        ``False`` blocks tool execution, ``None`` allows it.
+
+        The ``context`` object (from ``crewai.hooks.tool_hooks``) has:
+        ``tool_name``, ``tool_input``, ``tool``, ``agent``, ``task``, ``crew``.
+        """
+        tool_name: str = getattr(context, "tool_name", "")
+        tool_input: dict[str, Any] = getattr(context, "tool_input", {}) or {}
+        agent = getattr(context, "agent", None)
+        task = getattr(context, "task", None)
+
+        agent_role = getattr(agent, "role", "") if agent else ""
+        task_desc = getattr(task, "description", "") if task else ""
+
+        request = GuardrailRequest(
+            tool_name=tool_name,
+            tool_input=tool_input,
+            agent_role=agent_role,
+            task_description=task_desc,
+        )
+        decision = self.evaluate(request)
+        return False if not decision.allow else None
 
     def before_tool_call(
         self,
@@ -376,20 +405,10 @@ class AegisGuardrailProvider:
         task_description: str = "",
         **context: Any,
     ) -> bool:
-        """CrewAI ``BeforeToolCallHook`` protocol implementation.
+        """Standalone evaluation without CrewAI context object.
 
-        Returns ``True`` to allow, ``False`` to block. This method is called
-        by CrewAI before each tool invocation when the provider is registered.
-
-        Args:
-            tool_name: Name of the tool being called.
-            tool_input: Arguments being passed to the tool.
-            agent_role: Role of the calling agent.
-            task_description: Description of the current task.
-            **context: Additional context from CrewAI.
-
-        Returns:
-            ``True`` if the tool call is allowed, ``False`` otherwise.
+        Convenience method for testing or non-CrewAI usage.
+        Returns ``True`` to allow, ``False`` to block.
         """
         request = GuardrailRequest(
             tool_name=tool_name,
@@ -430,21 +449,27 @@ def enable_aegis_guardrail(
     session_id: str = "",
     target: str = "default",
     tool_target_map: dict[str, str] | None = None,
+    register: bool = True,
 ) -> AegisGuardrailProvider:
-    """Create and return an :class:`AegisGuardrailProvider`.
+    """Create an :class:`AegisGuardrailProvider` and optionally register it
+    as a global CrewAI ``BeforeToolCallHook``.
 
-    This is a convenience factory for one-liner activation::
+    When ``register=True`` (default) and crewai is installed, calls
+    ``crewai.hooks.tool_hooks.register_before_tool_call_hook`` so that
+    **all** tool calls across all Crews are governed automatically::
 
         from aegis.adapters.crewai import enable_aegis_guardrail
         provider = enable_aegis_guardrail(runtime=my_runtime)
-        # Register provider with CrewAI when the hook API lands.
+        # Done — every tool call now goes through Aegis policy.
 
-    All parameters are forwarded to :class:`AegisGuardrailProvider`.
+    Args:
+        register: If ``True``, register as a global CrewAI hook.
+            Set to ``False`` to create the provider without registering.
 
     Returns:
         A configured :class:`AegisGuardrailProvider` instance.
     """
-    return AegisGuardrailProvider(
+    provider = AegisGuardrailProvider(
         runtime=runtime,
         policy=policy,
         fail_closed=fail_closed,
@@ -453,3 +478,14 @@ def enable_aegis_guardrail(
         target=target,
         tool_target_map=tool_target_map,
     )
+    if register:
+        try:
+            from crewai.hooks.tool_hooks import (
+                register_before_tool_call_hook,
+            )
+
+            register_before_tool_call_hook(provider)
+            logger.info("Aegis guardrail registered as CrewAI global hook")
+        except ImportError:
+            logger.debug("crewai not installed — provider created but not registered")
+    return provider

@@ -331,12 +331,133 @@ class TestAegisGuardrailProvider:
 
 
 # ---------------------------------------------------------------------------
-# before_tool_call (BeforeToolCallHook protocol) tests
+# __call__ (CrewAI ToolCallHookContext protocol) tests
 # ---------------------------------------------------------------------------
 
 
-class TestBeforeToolCallHook:
-    """Tests for the BeforeToolCallHook protocol."""
+class TestCallableHook:
+    """Tests for __call__ with ToolCallHookContext-like objects."""
+
+    def test_call_allows(self, tmp_path):
+        from types import SimpleNamespace
+
+        from aegis.adapters.crewai import AegisGuardrailProvider
+
+        provider = AegisGuardrailProvider(runtime=_make_runtime(tmp_path))
+        ctx = SimpleNamespace(
+            tool_name="search",
+            tool_input={"query": "test"},
+            tool=None,
+            agent=SimpleNamespace(role="researcher"),
+            task=SimpleNamespace(description="Find info"),
+            crew=None,
+        )
+        result = provider(ctx)
+        assert result is None  # None = allow in CrewAI hook protocol
+
+    def test_call_blocks(self, tmp_path):
+        from types import SimpleNamespace
+
+        from aegis.adapters.crewai import AegisGuardrailProvider
+
+        provider = AegisGuardrailProvider(runtime=_make_runtime(tmp_path))
+        ctx = SimpleNamespace(
+            tool_name="delete",
+            tool_input={"target": "db"},
+            tool=None,
+            agent=None,
+            task=None,
+            crew=None,
+        )
+        result = provider(ctx)
+        assert result is False  # False = block
+
+    def test_call_blocks_approval_required(self, tmp_path):
+        from types import SimpleNamespace
+
+        from aegis.adapters.crewai import AegisGuardrailProvider
+
+        provider = AegisGuardrailProvider(runtime=_make_runtime(tmp_path))
+        ctx = SimpleNamespace(
+            tool_name="write",
+            tool_input={"data": "x"},
+            tool=None,
+            agent=None,
+            task=None,
+            crew=None,
+        )
+        result = provider(ctx)
+        assert result is False
+
+    def test_call_extracts_agent_role(self, tmp_path):
+        from types import SimpleNamespace
+
+        from aegis.adapters.crewai import AegisGuardrailProvider
+
+        provider = AegisGuardrailProvider(runtime=_make_runtime(tmp_path))
+        ctx = SimpleNamespace(
+            tool_name="search",
+            tool_input={},
+            tool=None,
+            agent=SimpleNamespace(role="admin"),
+            task=None,
+            crew=None,
+        )
+        result = provider(ctx)
+        assert result is None  # allowed
+
+    def test_call_extracts_task_description(self, tmp_path):
+        from types import SimpleNamespace
+
+        from aegis.adapters.crewai import AegisGuardrailProvider
+
+        provider = AegisGuardrailProvider(runtime=_make_runtime(tmp_path))
+        ctx = SimpleNamespace(
+            tool_name="search",
+            tool_input={},
+            tool=None,
+            agent=None,
+            task=SimpleNamespace(description="Research AI governance"),
+            crew=None,
+        )
+        result = provider(ctx)
+        assert result is None
+
+    def test_call_handles_missing_attrs(self, tmp_path):
+        """Gracefully handle context with missing attributes."""
+        from types import SimpleNamespace
+
+        from aegis.adapters.crewai import AegisGuardrailProvider
+
+        provider = AegisGuardrailProvider(runtime=_make_runtime(tmp_path))
+        # Minimal context — only tool_name
+        ctx = SimpleNamespace(tool_name="search")
+        result = provider(ctx)
+        assert result is None
+
+    def test_call_handles_none_agent(self, tmp_path):
+        from types import SimpleNamespace
+
+        from aegis.adapters.crewai import AegisGuardrailProvider
+
+        provider = AegisGuardrailProvider(runtime=_make_runtime(tmp_path))
+        ctx = SimpleNamespace(
+            tool_name="search",
+            tool_input={"q": "test"},
+            agent=None,
+            task=None,
+        )
+        result = provider(ctx)
+        assert result is None
+
+
+# ---------------------------------------------------------------------------
+# before_tool_call (standalone convenience) tests
+# ---------------------------------------------------------------------------
+
+
+class TestBeforeToolCallStandalone:
+    """Tests for the standalone before_tool_call method."""
 
     def test_hook_allows(self, tmp_path):
         from aegis.adapters.crewai import AegisGuardrailProvider
@@ -368,28 +489,6 @@ class TestBeforeToolCallHook:
         )
         assert result is False
 
-    def test_hook_with_agent_role(self, tmp_path):
-        from aegis.adapters.crewai import AegisGuardrailProvider
-
-        provider = AegisGuardrailProvider(runtime=_make_runtime(tmp_path))
-        result = provider.before_tool_call(
-            tool_name="search",
-            agent_role="researcher",
-            task_description="Research AI policy",
-        )
-        assert result is True
-
-    def test_hook_with_extra_context(self, tmp_path):
-        from aegis.adapters.crewai import AegisGuardrailProvider
-
-        provider = AegisGuardrailProvider(runtime=_make_runtime(tmp_path))
-        result = provider.before_tool_call(
-            tool_name="search",
-            crew_id="crew-123",
-            iteration=3,
-        )
-        assert result is True
-
     def test_hook_none_input(self, tmp_path):
         from aegis.adapters.crewai import AegisGuardrailProvider
 
@@ -410,7 +509,7 @@ class TestEnableAegisGuardrail:
         from aegis.adapters.crewai import AegisGuardrailProvider, enable_aegis_guardrail
 
         runtime = _make_runtime(tmp_path)
-        provider = enable_aegis_guardrail(runtime=runtime)
+        provider = enable_aegis_guardrail(runtime=runtime, register=False)
         assert isinstance(provider, AegisGuardrailProvider)
         assert provider.policy is runtime.policy
 
@@ -418,7 +517,7 @@ class TestEnableAegisGuardrail:
         from aegis.adapters.crewai import AegisGuardrailProvider, enable_aegis_guardrail
 
         policy = _make_policy()
-        provider = enable_aegis_guardrail(policy=policy, fail_closed=False)
+        provider = enable_aegis_guardrail(policy=policy, fail_closed=False, register=False)
         assert isinstance(provider, AegisGuardrailProvider)
         assert provider.fail_closed is False
 
@@ -433,6 +532,7 @@ class TestEnableAegisGuardrail:
             session_id="factory-test",
             target="custom",
             tool_target_map={"search": "web"},
+            register=False,
         )
         assert provider.fail_closed is True
         audit.close()
@@ -441,4 +541,12 @@ class TestEnableAegisGuardrail:
         from aegis.adapters.crewai import enable_aegis_guardrail
 
         with pytest.raises(ValueError):
-            enable_aegis_guardrail()
+            enable_aegis_guardrail(register=False)
+
+    def test_factory_register_without_crewai(self, tmp_path):
+        """register=True gracefully degrades when crewai is not installed."""
+        from aegis.adapters.crewai import enable_aegis_guardrail
+
+        # crewai not installed in test env, should not raise
+        provider = enable_aegis_guardrail(policy=_make_policy(), register=True)
+        assert provider is not None
