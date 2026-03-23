@@ -388,6 +388,28 @@ class TestDashboardServing:
         assert resp.status_code == 200
 
 
+# -- Badge endpoint ---------------------------------------------------------
+
+
+class TestBadgeScore:
+    def test_returns_shields_io_format(self, app_with_data):
+        resp = _client(app_with_data).get("/api/v1/badge/score")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["schemaVersion"] == 1
+        assert data["label"] == "aegis score"
+        assert "/100)" in data["message"]
+        assert data["color"] in ("brightgreen", "yellow", "orange", "red")
+
+    def test_score_value_in_message(self, app_with_data):
+        resp = _client(app_with_data).get("/api/v1/badge/score")
+        data = resp.json()
+        # Our test policy has 3 rules, blocks, approves, all named, non-auto default
+        # Should score: 15 + 20 + 15 + 10 + 0 + 0 + 10 + 10 = 80
+        assert "80/100" in data["message"]
+        assert data["color"] == "brightgreen"
+
+
 # -- Dashboard disabled -----------------------------------------------------
 
 

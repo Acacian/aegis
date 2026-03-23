@@ -404,7 +404,39 @@ def get_dashboard_routes(
             }
         )
 
+    async def badge_score(request: Request) -> Any:
+        """Shields.io endpoint badge for governance score."""
+        score = 0
+        score += 15 if policy.rules else 0
+        score += 20 if any(r.approval.value == "block" for r in policy.rules) else 0
+        score += 15 if any(r.approval.value == "approve" for r in policy.rules) else 0
+        score += 10 if len(policy.rules) >= 3 else 0
+        score += 10 if any(r.match_target and r.match_target != "*" for r in policy.rules) else 0
+        score += 10 if any(r.conditions for r in policy.rules) else 0
+        score += 10 if policy.default_approval.value != "auto" else 0
+        score += 10 if (policy.rules and all(r.name for r in policy.rules)) else 0
+
+        grade = _score_to_grade(score)
+        if score >= 80:
+            color = "brightgreen"
+        elif score >= 60:
+            color = "yellow"
+        elif score >= 40:
+            color = "orange"
+        else:
+            color = "red"
+
+        return _json_response(
+            {
+                "schemaVersion": 1,
+                "label": "aegis score",
+                "message": f"{grade} ({score}/100)",
+                "color": color,
+            }
+        )
+
     return [
+        Route("/api/v1/badge/score", badge_score, methods=["GET"]),
         Route("/api/v1/dashboard/overview", overview, methods=["GET"]),
         Route("/api/v1/dashboard/stats/timeline", timeline, methods=["GET"]),
         Route("/api/v1/dashboard/audit/recent", audit_recent, methods=["GET"]),
