@@ -77,7 +77,8 @@ def test_version(capsys):
     with pytest.raises(SystemExit, match="0"):
         main(["--version"])
     captured = capsys.readouterr()
-    assert "aegis 0.1.3" in captured.out
+    from aegis import __version__
+    assert f"aegis {__version__}" in captured.out
 
 
 def test_init_creates_policy(tmp_path: Path, capsys):
