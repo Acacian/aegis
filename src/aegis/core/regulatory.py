@@ -21,10 +21,7 @@ from typing import Any
 def _html_escape(text: str) -> str:
     """Escape HTML special characters in *text*."""
     return (
-        text.replace("&", "&amp;")
-        .replace("<", "&lt;")
-        .replace(">", "&gt;")
-        .replace('"', "&quot;")
+        text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
     )
 
 
@@ -1509,13 +1506,9 @@ class ComplianceMapper:
                 continue
             seen_reqs.add(req.requirement_id)
             mand_style = (
-                "background:#ef4444;color:#fff;padding:2px 6px;"
-                "border-radius:3px;font-size:11px;"
+                "background:#ef4444;color:#fff;padding:2px 6px;border-radius:3px;font-size:11px;"
             )
-            badge = (
-                f' <span style="{mand_style}">MANDATORY</span>'
-                if req.mandatory else ""
-            )
+            badge = f' <span style="{mand_style}">MANDATORY</span>' if req.mandatory else ""
             req_rows.append(
                 f'<tr><td style="padding:8px 12px;font-weight:600;">'
                 f"{_html_escape(req.requirement_id)}{badge}</td>"
@@ -1535,21 +1528,14 @@ class ComplianceMapper:
                     "padding:2px 6px;"
                     "border-radius:3px;font-size:11px;"
                 )
-                m = (
-                    f' <span style="{m_style}">'
-                    f"MANDATORY</span>"
-                    if gap.mandatory else ""
-                )
-                d = (
-                    f" &mdash; Deadline: "
-                    f"{_html_escape(gap.deadline)}"
-                    if gap.deadline else ""
-                )
+                m = f' <span style="{m_style}">MANDATORY</span>' if gap.mandatory else ""
+                d = f" &mdash; Deadline: {_html_escape(gap.deadline)}" if gap.deadline else ""
                 p = (
                     f"<br><small style='color:#991b1b;'>"
                     f"Penalty: "
                     f"{_html_escape(gap.penalty)}</small>"
-                    if gap.penalty else ""
+                    if gap.penalty
+                    else ""
                 )
                 gap_items.append(
                     f"<li><strong>"
@@ -1558,8 +1544,7 @@ class ComplianceMapper:
                     f"</strong>{m}{d}{p}</li>"
                 )
             gaps_html = (
-                '<div class="section"><h2>Compliance Gaps</h2>'
-                f'<ul>{"".join(gap_items)}</ul></div>'
+                f'<div class="section"><h2>Compliance Gaps</h2><ul>{"".join(gap_items)}</ul></div>'
             )
         recs_html = ""
         if analysis.recommendations:

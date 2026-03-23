@@ -254,7 +254,9 @@ def main(argv: list[str] | None = None) -> None:
         help="Output format (default: markdown)",
     )
     compliance_parser.add_argument(
-        "--output", "-o", default=None,
+        "--output",
+        "-o",
+        default=None,
         help="Output file path (useful for HTML reports)",
     )
     compliance_parser.add_argument(
@@ -280,7 +282,9 @@ def main(argv: list[str] | None = None) -> None:
         dest="fmt",
     )
     reg_parser.add_argument(
-        "--output", "-o", default=None,
+        "--output",
+        "-o",
+        default=None,
         help="Output file path (useful for HTML reports)",
     )
     reg_parser.add_argument(
