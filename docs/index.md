@@ -133,7 +133,7 @@ async with Runtime(
 
 | Aspect | Detail |
 |--------|--------|
-| **1,769+ tests** | Every adapter, handler, and edge case tested |
+| **1,776+ tests** | Every adapter, handler, and edge case tested |
 | **Type-safe** | `mypy --strict` with zero errors |
 | **< 1ms evaluation** | Policy check adds negligible overhead |
 | **Fail-safe** | Blocked actions never execute, period |
@@ -148,7 +148,7 @@ async with Runtime(
 | **0.1.3** | **Released** | REST API, retry/rollback, dry-run, hot-reload, 7 approval handlers |
 | **0.1.7** | **Released** | Crypto audit chain, RBAC, rate limiter, regulatory mapper, anomaly detection, policy versioning |
 | **0.1.9** | **Released** | Web dashboard, autopolicy (NL to YAML), adversarial probe, multi-tenant isolation |
-| **0.2** | Q2 2026 | Queue-based async execution, WebSocket real-time updates |
+| **0.2** | **Released** | WebSocket real-time streaming, interactive playground, policy editor, shields.io badge |
 | **0.3** | Q3 2026 | Centralized policy server, cross-agent audit correlation |
 | **1.0** | 2027 | Distributed governance, hosted SaaS, SSO/SCIM |
 
