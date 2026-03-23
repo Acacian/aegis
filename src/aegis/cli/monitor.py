@@ -18,6 +18,7 @@ from dataclasses import dataclass, field
 
 from aegis.core.action import Action
 from aegis.core.anomaly import AnomalyDetector, AnomalyResult
+from aegis.core.budget import CostRecord, CostTracker, TokenUsage
 
 # ---------------------------------------------------------------------------
 # Data models
@@ -82,10 +83,12 @@ class AgentMonitor:
         *,
         max_alerts: int = 20,
         rate_window: float = 60.0,
+        cost_tracker: CostTracker | None = None,
     ) -> None:
         self._detector = detector or AnomalyDetector()
         self._state = MonitorState(max_alerts=max_alerts)
         self._rate_window = rate_window
+        self._cost_tracker = cost_tracker
         self._lock = threading.Lock()
 
     # -- public API ---------------------------------------------------------
@@ -164,6 +167,27 @@ class AgentMonitor:
                 return anomaly
 
         return None
+
+    @property
+    def cost_tracker(self) -> CostTracker | None:
+        """Return the attached cost tracker, if any."""
+        return self._cost_tracker
+
+    def record_cost(
+        self,
+        usage: TokenUsage,
+        *,
+        agent_id: str = "",
+        action_type: str = "",
+    ) -> CostRecord | None:
+        """Record a cost event if a cost tracker is attached.
+
+        Returns the :class:`CostRecord` from the tracker, or ``None``
+        if no tracker is configured.
+        """
+        if self._cost_tracker is None:
+            return None
+        return self._cost_tracker.record(usage, agent_id=agent_id, action_type=action_type)
 
     def actions_per_minute(self) -> float:
         """Compute the current actions-per-minute rate.
@@ -276,6 +300,51 @@ class AgentMonitor:
             dist_parts.append(f"{label}: {cnt:,} ({pct:.1f}%)")
         dist_line = " " + " | ".join(dist_parts) + " "
         lines.append(f"\u2551{dist_line:<{iw}}\u2551")
+
+        # Cost section (only if tracker attached)
+        if self._cost_tracker is not None:
+            lines.append(f"\u2560{h_bar * iw}\u2563")
+            cost_hdr = " Cost Tracking"
+            lines.append(f"\u2551{cost_hdr:<{iw}}\u2551")
+
+            tracker = self._cost_tracker
+            spent = tracker.spent
+            remaining = tracker.remaining
+            util = tracker.utilization
+
+            if tracker.max_budget > 0:
+                remaining_str = f"${remaining:.4f}"
+                bar_len = iw - 22  # space for label + borders
+                filled = int(util * bar_len)
+                bar = "\u2588" * filled + "\u2591" * (bar_len - filled)
+                cost_line = f" Spent: ${spent:.4f} / ${tracker.max_budget:.2f} ({util:.0%})"
+                lines.append(f"\u2551{cost_line:<{iw}}\u2551")
+                bar_line = f" [{bar}] {remaining_str} left"
+                lines.append(f"\u2551{bar_line:<{iw}}\u2551")
+            else:
+                cost_line = f" Spent: ${spent:.4f} (no budget limit)"
+                lines.append(f"\u2551{cost_line:<{iw}}\u2551")
+
+            # Per-model breakdown (top 5)
+            report = tracker.get_report()
+            by_model = report.get("by_model", {})
+            if by_model:
+                model_hdr = " By Model:"
+                lines.append(f"\u2551{model_hdr:<{iw}}\u2551")
+                sorted_models = sorted(by_model.items(), key=lambda kv: kv[1], reverse=True)
+                for model, cost in sorted_models[:5]:
+                    model_line = f"   {model:<28} ${cost:.6f}"
+                    lines.append(f"\u2551{model_line:<{iw}}\u2551")
+
+            # Per-agent cost breakdown
+            by_agent = report.get("by_agent", {})
+            if by_agent:
+                agent_cost_hdr = " By Agent:"
+                lines.append(f"\u2551{agent_cost_hdr:<{iw}}\u2551")
+                sorted_agents = sorted(by_agent.items(), key=lambda kv: kv[1], reverse=True)
+                for agent, cost in sorted_agents[:5]:
+                    agent_line = f"   {agent:<28} ${cost:.6f}"
+                    lines.append(f"\u2551{agent_line:<{iw}}\u2551")
 
         # Bottom border
         lines.append(f"\u255a{h_bar * iw}\u255d")
