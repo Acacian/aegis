@@ -1,7 +1,7 @@
 """Zero-code auto-instrumentation for AI agent frameworks.
 
-Add governance to **any** LangChain, CrewAI, or OpenAI Agents SDK project
-with a single line of code — no refactoring required.
+Add governance to **any** AI framework project with a single line of
+code — no refactoring required.  Supports 9 frameworks + raw API clients.
 
 Quick start::
 
@@ -10,17 +10,23 @@ Quick start::
 
     # Option 2: Explicit control
     from aegis.instrument import auto_instrument
-    auto_instrument(frameworks=["langchain"], on_block="warn")
+    auto_instrument(frameworks=["langchain", "litellm"], on_block="warn")
 
     # Option 3: Environment variable — zero code changes
     # AEGIS_INSTRUMENT=1 python my_agent.py
 
 Per-framework functions::
 
-    from aegis.instrument import patch_langchain, patch_crewai, patch_openai_agents
-    patch_langchain()       # Only LangChain
-    patch_crewai()          # Only CrewAI
-    patch_openai_agents()   # Only OpenAI Agents SDK
+    from aegis.instrument import patch_langchain, patch_litellm, ...
+    patch_langchain()        # Only LangChain
+    patch_litellm()          # Only LiteLLM
+    patch_google_genai()     # Only Google GenAI (Gemini)
+    patch_pydantic_ai()      # Only Pydantic AI
+    patch_llamaindex()       # Only LlamaIndex
+    patch_instructor()       # Only Instructor
+    patch_dspy()             # Only DSPy
+    patch_crewai()           # Only CrewAI
+    patch_openai_agents()    # Only OpenAI Agents SDK
 
 Also patches raw OpenAI/Anthropic API clients via the existing
 :mod:`aegis.integrations` module.
@@ -35,11 +41,17 @@ from typing import Any
 
 from aegis.instrument._crewai import patch_crewai, unpatch_crewai
 from aegis.instrument._defaults import resolve_guardrails
+from aegis.instrument._dspy import patch_dspy, unpatch_dspy
+from aegis.instrument._google_genai import patch_google_genai, unpatch_google_genai
+from aegis.instrument._instructor import patch_instructor, unpatch_instructor
 from aegis.instrument._langchain import patch_langchain, unpatch_langchain
+from aegis.instrument._litellm import patch_litellm, unpatch_litellm
+from aegis.instrument._llamaindex import patch_llamaindex, unpatch_llamaindex
 from aegis.instrument._openai_agents import (
     patch_openai_agents,
     unpatch_openai_agents,
 )
+from aegis.instrument._pydantic_ai import patch_pydantic_ai, unpatch_pydantic_ai
 from aegis.instrument._state import FrameworkPatch, InstrumentationState
 
 logger = logging.getLogger("aegis.instrument")
@@ -48,13 +60,25 @@ __all__ = [
     "auto_instrument",
     "InstrumentationReport",
     "patch_crewai",
+    "patch_dspy",
+    "patch_google_genai",
+    "patch_instructor",
     "patch_langchain",
+    "patch_litellm",
+    "patch_llamaindex",
     "patch_openai_agents",
+    "patch_pydantic_ai",
     "reset",
     "status",
     "unpatch_crewai",
+    "unpatch_dspy",
+    "unpatch_google_genai",
+    "unpatch_instructor",
     "unpatch_langchain",
+    "unpatch_litellm",
+    "unpatch_llamaindex",
     "unpatch_openai_agents",
+    "unpatch_pydantic_ai",
 ]
 
 # All known frameworks and their patch/unpatch functions
@@ -62,6 +86,12 @@ _FRAMEWORK_REGISTRY: dict[str, tuple[Any, Any]] = {
     "langchain": (patch_langchain, unpatch_langchain),
     "crewai": (patch_crewai, unpatch_crewai),
     "openai_agents": (patch_openai_agents, unpatch_openai_agents),
+    "litellm": (patch_litellm, unpatch_litellm),
+    "google_genai": (patch_google_genai, unpatch_google_genai),
+    "pydantic_ai": (patch_pydantic_ai, unpatch_pydantic_ai),
+    "llamaindex": (patch_llamaindex, unpatch_llamaindex),
+    "instructor": (patch_instructor, unpatch_instructor),
+    "dspy": (patch_dspy, unpatch_dspy),
 }
 
 
@@ -117,7 +147,9 @@ def auto_instrument(
             ``"raise"`` (default), ``"warn"``, or ``"log"``.
         audit: Whether to enable audit logging. Default ``True``.
         frameworks: Which frameworks to patch. ``None`` = auto-detect all.
-            Valid names: ``"langchain"``, ``"crewai"``, ``"openai_agents"``.
+            Valid names: ``"langchain"``, ``"crewai"``, ``"openai_agents"``,
+            ``"litellm"``, ``"google_genai"``, ``"pydantic_ai"``,
+            ``"llamaindex"``, ``"instructor"``, ``"dspy"``.
 
     Returns:
         An :class:`InstrumentationReport` summarizing what was patched.

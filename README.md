@@ -2,12 +2,10 @@
 <p align="center">
   <h1 align="center">Aegis</h1>
   <p align="center">
-    <strong>Open-source AI governance framework.<br/>Guardrails + Policy + Protocol — one <code>aegis.init()</code> to protect your agents.</strong>
+    <strong>OpenTelemetry for AI safety.<br/>Auto-instrument any AI framework with guardrails — zero code changes.</strong>
   </p>
   <p align="center">
-    Runtime guardrails (PII, injection) + Policy engine (YAML rules, approval gates) + Open standards (AGEF/AGP).<br/>
-    <code>pip install agent-aegis</code> &#8594; <code>aegis.init()</code> &#8594; all AI calls governed.<br/>
-    <strong>Works with LangChain, CrewAI, OpenAI, Anthropic, MCP, and more.</strong>
+    <code>pip install agent-aegis</code> and add <b>one line</b>. Aegis monkey-patches LangChain, CrewAI, OpenAI Agents SDK, OpenAI, and Anthropic at runtime — every LLM call and tool invocation passes through prompt-injection detection, PII masking, toxicity filtering, and a full audit trail. No refactoring. No infra. No LLM-based guardrails (all checks are deterministic and sub-millisecond).
   </p>
 </p>
 
@@ -26,13 +24,13 @@
 </p>
 
 <p align="center">
-  <a href="https://acacian.github.io/aegis/playground/"><strong>Try it Live in Your Browser</strong></a> &bull;
+  <a href="#auto-instrumentation"><strong>Auto-Instrumentation</strong></a> &bull;
   <a href="#quick-start">Quick Start</a> &bull;
+  <a href="#supported-frameworks">Supported Frameworks</a> &bull;
   <a href="#three-pillars">Three Pillars</a> &bull;
-  <a href="#runtime-guardrails">Guardrails</a> &bull;
   <a href="https://acacian.github.io/aegis/">Documentation</a> &bull;
   <a href="#integrations">Integrations</a> &bull;
-  <a href="#agef--agp--open-governance-standards">AGEF & AGP</a> &bull;
+  <a href="https://acacian.github.io/aegis/playground/"><strong>Try it Live</strong></a> &bull;
   <a href="https://github.com/Acacian/aegis/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22">Contributing</a>
 </p>
 
@@ -43,35 +41,143 @@
 
 ---
 
-## Without Aegis vs. With Aegis
+## Auto-Instrumentation
 
-**Without Aegis** — scattered if/else, no audit trail, breaks when you add new tools:
-
-```python
-async def handle_agent_action(tool_name, args):
-    if tool_name == "delete_users":
-        raise Exception("Blocked")                              # fragile
-    if tool_name.startswith("bulk_") and args.get("count", 0) > 100:
-        approved = await ask_slack_approval(tool_name, args)     # custom per-tool
-        if not approved:
-            raise Exception("Denied")
-    if tool_name == "deploy" and datetime.now().hour >= 18:
-        raise Exception("No deploys after hours")               # hardcoded
-    result = await execute(tool_name, args)
-    # No audit. No consistency. Repeat for every agent, every framework.
-    return result
-```
-
-**With Aegis** — zero-config activation or YAML for full control. PII masking, injection blocking, policy enforcement, and audit logging are all built in:
-
-**Zero-config** — two lines to govern all AI calls:
+Add AI safety to any project in 30 seconds. No refactoring, no wrappers, no config files.
 
 ```python
 import aegis
-aegis.init()  # PII masking, injection blocking, policy enforcement, audit logging — done.
+aegis.auto_instrument()
+
+# That's it. Every LangChain, CrewAI, OpenAI Agents SDK, OpenAI API,
+# and Anthropic API call in your application now passes through:
+#   - Prompt injection detection (blocks attacks)
+#   - Toxicity detection (blocks harmful content)
+#   - PII detection (warns on personal data exposure)
+#   - Prompt leak detection (warns on system prompt extraction)
+#   - Full audit trail (every call logged)
 ```
 
-**YAML config** — full control when you need it:
+Or zero code changes — just set an environment variable:
+
+```bash
+AEGIS_INSTRUMENT=1 python my_agent.py
+```
+
+Aegis monkey-patches framework internals at import time, the same approach used by OpenTelemetry for observability and Sentry for error tracking. Your existing code stays untouched.
+
+### How It Works
+
+```
+Your code                          Aegis layer (invisible)
+---------                          -----------------------
+chain.invoke("Hello")       -->    [input guardrails] --> LangChain --> [output guardrails] --> response
+Runner.run(agent, "query")  -->    [input guardrails] --> OpenAI SDK --> [output guardrails] --> response
+crew.kickoff()              -->    [task guardrails]  --> CrewAI     --> [tool guardrails]   --> response
+client.chat.completions()   -->    [input guardrails] --> OpenAI API --> [output guardrails] --> response
+```
+
+Every call is checked on both input and output. Blocked content raises `AegisGuardrailError` (configurable to warn or log instead).
+
+### Supported Frameworks
+
+| Framework | What gets patched | Status |
+|-----------|------------------|--------|
+| **LangChain** | `BaseChatModel.invoke/ainvoke`, `BaseTool.invoke/ainvoke` | Stable |
+| **CrewAI** | `Crew.kickoff/kickoff_async`, global `BeforeToolCallHook` | Stable |
+| **OpenAI Agents SDK** | `Runner.run`, `Runner.run_sync` | Stable |
+| **OpenAI API** | `Completions.create` (chat & completions) | Stable |
+| **Anthropic API** | `Messages.create` | Stable |
+| **LiteLLM** | `completion`, `acompletion` | Coming soon |
+| **Google GenAI (Gemini)** | `GenerativeModel.generate_content` | Coming soon |
+| **Pydantic AI** | Agent run methods | Coming soon |
+| **LlamaIndex** | LLM and tool calls | Coming soon |
+| **Instructor** | Patched completions | Coming soon |
+| **DSPy** | LM calls | Coming soon |
+
+### Default Guardrails
+
+All guardrails are deterministic (no LLM calls), sub-millisecond, and require zero configuration:
+
+| Guardrail | Default action | What it catches |
+|-----------|---------------|-----------------|
+| **Prompt injection** | Block | 10 attack categories, 85+ patterns, multi-language (EN/KO/ZH/JA) |
+| **Toxicity** | Block | Harmful, violent, or abusive content |
+| **PII detection** | Warn | 12 categories (email, credit card, SSN, API keys, etc.) |
+| **Prompt leak** | Warn | System prompt extraction attempts |
+
+### Fine-Grained Control
+
+```python
+from aegis.instrument import auto_instrument, patch_langchain, status, reset
+
+# Instrument only specific frameworks
+auto_instrument(frameworks=["langchain", "openai_agents"])
+
+# Customize behavior
+auto_instrument(
+    on_block="warn",       # "raise" (default), "warn", or "log"
+    guardrails="default",  # or "none" for audit-only mode
+    audit=True,            # log every call
+)
+
+# Instrument a single framework
+patch_langchain()
+
+# Check what's instrumented
+print(status())
+# {"active": True, "frameworks": {"langchain": {"patched": True, ...}}, "guardrails": 4}
+
+# Clean removal — restore all original methods
+reset()
+```
+
+---
+
+## Quick Start
+
+### Step 1: Install
+
+```bash
+pip install agent-aegis
+```
+
+### Step 2: Choose your integration level
+
+**Level 1: Auto-instrument (recommended)** -- one line, governs everything:
+
+```python
+import aegis
+aegis.auto_instrument()
+# Every LangChain/CrewAI/OpenAI/Anthropic call is now governed.
+```
+
+**Level 2: Init with full governance stack** -- guardrails + policy engine + audit:
+
+```python
+import aegis
+aegis.init()
+# Discovers aegis.yaml, activates policy engine, audit logging, cost tracking.
+```
+
+**Level 3: Targeted patching** -- govern specific APIs:
+
+```python
+import aegis
+aegis.patch_openai()    # Only OpenAI calls
+aegis.patch_anthropic() # Only Anthropic calls
+
+# Or use the decorator for custom functions
+@aegis.guard
+def my_agent_function():
+    ...
+```
+
+**Level 4: YAML config** -- full control when you need it:
+
+```bash
+aegis init  # Creates aegis.yaml with sensible defaults
+```
 
 ```yaml
 # aegis.yaml
@@ -80,21 +186,66 @@ guardrails:
   injection: { enabled: true, action: block, sensitivity: medium }
 
 policy:
+  version: "1"
+  defaults:
+    risk_level: medium
+    approval: approve
   rules:
-    - name: block_deletes
-      match: { type: "delete*" }
-      approval: block
-    - name: bulk_approval
+    - name: read_safe
+      match: { type: "read*" }
+      risk_level: low
+      approval: auto
+    - name: bulk_ops_need_approval
       match: { type: "bulk_*" }
-      conditions: { param_gt: { count: 100 } }
-      approval: approve       # asks human via Slack, CLI, Discord, etc.
-    - name: no_after_hours
-      match: { type: "deploy*" }
-      conditions: { time_after: "18:00" }
+      conditions:
+        param_gt: { count: 100 }
+      risk_level: high
+      approval: approve
+    - name: no_deletes
+      match: { type: "delete*" }
+      risk_level: critical
       approval: block
 ```
 
-**One `pip install`. One `aegis.init()`. Works across LangChain, CrewAI, OpenAI, Anthropic, and MCP.** Runtime guardrails, policy engine, human approval gates, and full audit trail — without deploying a single server.
+**Level 5: Full Runtime() control** -- custom executors, approval gates, the works:
+
+```python
+import asyncio
+from aegis import Action, Policy, Runtime
+from aegis.adapters.base import BaseExecutor
+from aegis.core.result import Result, ResultStatus
+
+class MyExecutor(BaseExecutor):
+    async def execute(self, action):
+        print(f"  Executing: {action.type} -> {action.target}")
+        return Result(action=action, status=ResultStatus.SUCCESS)
+
+async def main():
+    async with Runtime(
+        executor=MyExecutor(),
+        policy=Policy.from_yaml("policy.yaml"),
+    ) as runtime:
+        plan = runtime.plan([
+            Action("read", "crm", description="Fetch contacts"),
+            Action("bulk_update", "crm", params={"count": 150}),
+            Action("delete", "crm", description="Drop table"),
+        ])
+        results = await runtime.execute(plan)
+
+asyncio.run(main())
+```
+
+### Step 3: See what happened
+
+```bash
+aegis audit
+```
+```
+  ID  Session       Action        Target   Risk      Decision    Result
+  1   a1b2c3d4...   read          crm      LOW       auto        success
+  2   a1b2c3d4...   bulk_update   crm      HIGH      approved    success
+  3   a1b2c3d4...   delete        crm      CRITICAL  block       blocked
+```
 
 ## Three Pillars
 
@@ -207,132 +358,20 @@ aegis stats                              # Statistics per rule
 aegis audit --format jsonl -o export.jsonl  # Export
 ```
 
----
-
-## Quick Start
-
-### Step 1: Install
-
-```bash
-pip install agent-aegis
-```
-
-### Step 2: Activate (choose your level)
-
-**Simplest — two lines, zero config:**
-
-```python
-import aegis
-aegis.init()
-# That's it. All OpenAI/Anthropic calls are now governed.
-# PII masking, injection blocking, policy enforcement, audit logging — all active.
-```
-
-`aegis.init()` auto-discovers your `aegis.yaml` (or uses sensible defaults) and activates the full governance stack: runtime guardrails, policy engine, audit logging, and cost tracking.
-
-**Zero-code integration — govern existing LLM calls without changing your app:**
-
-```python
-import aegis
-aegis.patch_openai()    # All OpenAI calls now governed
-aegis.patch_anthropic() # All Anthropic calls now governed
-
-# Or use the decorator for custom functions
-from aegis import guard
-
-@guard
-def my_agent_function():
-    ...
-```
-
-**YAML config — full control when you need it:**
-
-```bash
-aegis init  # Creates aegis.yaml with sensible defaults
-```
-
-```yaml
-# aegis.yaml
-guardrails:
-  pii: { enabled: true, action: mask }
-  injection: { enabled: true, action: block, sensitivity: medium }
-
-policy:
-  version: "1"
-  defaults:
-    risk_level: medium
-    approval: approve
-  rules:
-    - name: read_safe
-      match: { type: "read*" }
-      risk_level: low
-      approval: auto
-    - name: bulk_ops_need_approval
-      match: { type: "bulk_*" }
-      conditions:
-        param_gt: { count: 100 }
-      risk_level: high
-      approval: approve
-    - name: no_deletes
-      match: { type: "delete*" }
-      risk_level: critical
-      approval: block
-```
-
-**Advanced — full Runtime() control for custom executors:**
-
-```python
-import asyncio
-from aegis import Action, Policy, Runtime
-from aegis.adapters.base import BaseExecutor
-from aegis.core.result import Result, ResultStatus
-
-class MyExecutor(BaseExecutor):
-    async def execute(self, action):
-        print(f"  Executing: {action.type} -> {action.target}")
-        return Result(action=action, status=ResultStatus.SUCCESS)
-
-async def main():
-    async with Runtime(
-        executor=MyExecutor(),
-        policy=Policy.from_yaml("policy.yaml"),
-    ) as runtime:
-        plan = runtime.plan([
-            Action("read", "crm", description="Fetch contacts"),
-            Action("bulk_update", "crm", params={"count": 150}),
-            Action("delete", "crm", description="Drop table"),
-        ])
-        print(plan.summary())
-        results = await runtime.execute(plan)
-
-asyncio.run(main())
-```
-
-### Step 3: See what happened
-
-```bash
-aegis audit
-```
-```
-  ID  Session       Action        Target   Risk      Decision    Result
-  1   a1b2c3d4...   read          crm      LOW       auto        success
-  2   a1b2c3d4...   bulk_update   crm      HIGH      approved    success
-  3   a1b2c3d4...   delete        crm      CRITICAL  block       blocked
-```
-
 ## Features
 
 **Core** — what you get out of the box:
 
 | | |
 |---|---|
+| **Auto-instrumentation** | `aegis.auto_instrument()` — monkey-patches LangChain, CrewAI, OpenAI Agents SDK, OpenAI, Anthropic. Zero code changes to your app. |
+| **Runtime guardrails** | PII detection (12 categories) + prompt injection blocking (10 categories, 85+ patterns, multi-language) + toxicity + prompt leak |
+| **One-line activation** | `aegis.init()` — guardrails, policy engine, audit, cost tracking, all active |
 | **YAML policies** | Glob matching, first-match-wins, smart conditions (`time_after`, `param_gt`, `weekdays`, regex, etc.) |
 | **4-tier risk model** | `low` / `medium` / `high` / `critical` with per-rule overrides |
 | **Approval gates** | CLI, Slack, Discord, Telegram, email, webhook, or custom |
 | **Audit trail** | Automatic SQLite logging. Export: JSONL, webhook, or query via CLI/API |
-| **Runtime guardrails** | PII detection (12 categories) + prompt injection blocking (10 categories, 85+ patterns, multi-language) |
-| **One-line activation** | `aegis.init()` — PII masking, injection blocking, policy, audit, cost tracking, all active |
-| **Zero-code integration** | `aegis.patch_openai()`, `aegis.patch_anthropic()`, `@guard` decorator |
+| **Env var activation** | `AEGIS_INSTRUMENT=1` — add governance via environment variable, no code changes at all |
 | **7 adapters** | LangChain, CrewAI, OpenAI Agents, Anthropic, MCP, Playwright, httpx |
 | **REST API + Dashboard** | `aegis serve policy.yaml` — web UI with KPIs, audit log, compliance reports |
 
@@ -495,7 +534,7 @@ policy = Policy.from_yaml("policies/crm-agent.yaml")
 | **Performance** | Policy evaluation < 1ms (LRU-cached); O(log n) timestamp pruning; SQLite WAL mode; `execute(parallel=True)` for concurrent actions |
 | **Fail-safe** | Blocked actions never execute; can't be bypassed without policy change |
 | **Audit immutability** | Results are frozen dataclasses; audit writes happen before returning |
-| **No magic** | Pure Python, no monkey-patching, no global state |
+| **Clean patching** | Controlled monkey-patching with `auto_instrument()` — fully reversible via `reset()`, idempotent, skip-if-missing |
 
 ## Compliance & Audit
 
@@ -512,9 +551,12 @@ Export as JSONL, query via CLI/API, or stream to external SIEM via webhook. For 
 
 ## Integrations
 
-Works with the agent frameworks you already use:
+**Easiest way: auto-instrument.** Install the framework, call `aegis.auto_instrument()`, done.
+
+For manual control, use adapters:
 
 ```bash
+pip install agent-aegis                   # Core — includes auto_instrument() for all frameworks
 pip install langchain-aegis               # LangChain (standalone integration)
 pip install 'agent-aegis[langchain]'      # LangChain (adapter)
 pip install 'agent-aegis[crewai]'         # CrewAI
@@ -1168,6 +1210,7 @@ See [`specs/agp/v1/`](specs/agp/v1/) for the full protocol specification.
 
 ```
 aegis/
+  instrument/        Auto-instrumentation — monkey-patches LangChain, CrewAI, OpenAI Agents SDK, OpenAI, Anthropic
   core/              Action, Policy engine, Conditions, Risk levels, Retry, JSON Schema
   core/anomaly       Behavioral anomaly detection -- per-agent profiling, auto-policy generation
   core/compliance    Compliance report generator -- SOC2, GDPR, governance scoring
@@ -1210,7 +1253,8 @@ aegis/
 
 | | Writing your own | Platform guardrails | Enterprise platforms | **Aegis** |
 |---|---|---|---|---|
-| **Setup** | Days of if/else | Vendor-specific config | Kubernetes + procurement | **`pip install` + YAML** |
+| **Setup** | Days of if/else | Vendor-specific config | Kubernetes + procurement | **`pip install` + one line** |
+| **Code changes** | Wrap every call | SDK-specific integration | Months of integration | **Zero — auto-instruments at runtime** |
 | **Cross-framework** | Rewrite per framework | Their ecosystem only | Usually single-vendor | **LangChain + CrewAI + OpenAI + Anthropic + MCP** |
 | **Audit trail** | printf debugging | Platform logs only | Cloud dashboard | **SQLite + JSONL + webhooks — local, no infra** |
 | **Compliance** | Manual documentation | None | Enterprise sales cycle | **EU AI Act, NIST, SOC2, ISO 42001 built-in** |
@@ -1252,7 +1296,8 @@ aegis probe policy.yaml                            # Adversarial policy testing
 | **0.3** | **Released** | MCP supply chain security (poisoning/rug pull/SBOM/vuln DB), cost circuit breaker (17 models), cross-framework cost tracking (LangChain/OpenAI/Anthropic/Google), A2A communication governance, session replay with retroactive scanning, OpenTelemetry export, policy Git integration |
 | **0.4** | **Released** | `aegis.init()` one-line activation, runtime guardrails (PII detection/masking, prompt injection blocking), rule pack ecosystem, zero-code integration (`patch_openai`/`patch_anthropic`, `@guard`), AGEF/AGP open governance specs, Redis/PostgreSQL audit backends |
 | **0.4.1** | **Released** | 13 performance & correctness fixes: LRU cache, O(log n) bisect pruning, SQLite WAL + indexes, parallel `execute()`, async guardrails, multi-anomaly `check_all()`, cache key correctness, lock leak fix, batch flush race fix |
-| **0.5** | Q3 2026 | Centralized policy server, rule pack registry (npm-like install/publish), cross-agent audit correlation |
+| **0.4.2** | **Released** | **Auto-instrumentation** (`aegis.auto_instrument()`) — zero-code monkey-patching for LangChain, CrewAI, OpenAI Agents SDK, OpenAI API, Anthropic API. `AEGIS_INSTRUMENT=1` env var. Default guardrails (injection/toxicity/PII/prompt leak). Per-framework `patch_`/`unpatch_` + `status()`/`reset()` |
+| **0.5** | Q3 2026 | Auto-instrumentation for LiteLLM, Google GenAI, Pydantic AI, LlamaIndex, Instructor, DSPy. Centralized policy server, rule pack registry, cross-agent audit correlation |
 | **1.0** | 2027 | Distributed governance, hosted SaaS, SSO/SCIM |
 
 ## Contributing
@@ -1294,6 +1339,6 @@ Copyright (c) 2026 구동하 (Dongha Koo, [@Acacian](https://github.com/Acacian)
 ---
 
 <p align="center">
-  <sub>Built for the era of autonomous AI agents.</sub><br/>
+  <sub>OpenTelemetry for AI safety. Built for the era of autonomous AI agents.</sub><br/>
   <sub>If Aegis helps you, consider giving it a star -- it helps others find it too.</sub>
 </p>

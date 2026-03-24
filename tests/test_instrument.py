@@ -26,17 +26,20 @@ def _clean_state():
     InstrumentationState.reset()
 
     import aegis.instrument._crewai as _cr
+    import aegis.instrument._dspy as _ds
+    import aegis.instrument._google_genai as _gg
+    import aegis.instrument._instructor as _ins
     import aegis.instrument._langchain as _lc
+    import aegis.instrument._litellm as _ll
+    import aegis.instrument._llamaindex as _li
     import aegis.instrument._openai_agents as _oa
+    import aegis.instrument._pydantic_ai as _pa
 
     # Save originals before resetting
-    _lc._patched = False
-    _lc._originals.clear()
-    _cr._patched = False
-    _cr._originals.clear()
+    for mod in [_lc, _cr, _oa, _ll, _gg, _pa, _li, _ins, _ds]:
+        mod._patched = False
+        mod._originals.clear()
     _cr._hook_registered = False
-    _oa._patched = False
-    _oa._originals.clear()
 
     yield
 
@@ -44,6 +47,12 @@ def _clean_state():
     _lc.unpatch_langchain()
     _cr.unpatch_crewai()
     _oa.unpatch_openai_agents()
+    _ll.unpatch_litellm()
+    _gg.unpatch_google_genai()
+    _pa.unpatch_pydantic_ai()
+    _li.unpatch_llamaindex()
+    _ins.unpatch_instructor()
+    _ds.unpatch_dspy()
     InstrumentationState.reset()
 
 
@@ -826,3 +835,517 @@ class TestLangChainGuardrailsIntegration:
 
         report = auto_instrument(frameworks=["langchain"])
         assert "langchain" in report.patched
+
+
+# =========================================================================
+# LiteLLM Patch Tests (mocked)
+# =========================================================================
+
+
+class TestLiteLLMPatch:
+    """Test LiteLLM instrumentation with mock module."""
+
+    def _setup_mock_litellm(self):
+        mock_litellm = types.ModuleType("litellm")
+        mock_litellm.completion = MagicMock(return_value="response")
+        mock_litellm.acompletion = MagicMock(return_value="response")
+        sys.modules["litellm"] = mock_litellm
+        return mock_litellm
+
+    def _teardown_mock_litellm(self):
+        import aegis.instrument._litellm as _ll
+
+        _ll._patched = False
+        _ll._originals.clear()
+        sys.modules.pop("litellm", None)
+
+    def test_patch_litellm_mocked(self):
+        self._setup_mock_litellm()
+        try:
+            import importlib
+
+            import aegis.instrument._litellm as _ll
+
+            importlib.reload(_ll)
+
+            result = _ll.patch_litellm()
+            assert result.patched is True
+            assert "litellm.completion" in result.targets
+            assert "litellm.acompletion" in result.targets
+        finally:
+            self._teardown_mock_litellm()
+
+    def test_patch_without_litellm(self):
+        import aegis.instrument._litellm as _ll
+
+        result = _ll.patch_litellm()
+        assert result.patched is False
+        assert "not installed" in (result.error or "")
+
+    def test_completion_runs_guardrails(self):
+        mock_litellm = self._setup_mock_litellm()
+        try:
+            import importlib
+
+            import aegis.instrument._litellm as _ll
+
+            importlib.reload(_ll)
+
+            from aegis.guardrails.engine import GuardrailEngine
+            from aegis.guardrails.injection import InjectionGuardrail
+
+            engine = GuardrailEngine(guardrails=[InjectionGuardrail(action="block")])
+            InstrumentationState.get().configure(guardrail_engine=engine, on_block="raise")
+
+            # Save reference to original mock before patching
+            original_mock = mock_litellm.completion
+
+            _ll.patch_litellm()
+
+            import litellm
+
+            # Clean input should pass through to original
+            litellm.completion(model="test", messages=[{"role": "user", "content": "Hello!"}])
+            original_mock.assert_called()
+        finally:
+            self._teardown_mock_litellm()
+
+
+# =========================================================================
+# Google GenAI Patch Tests (mocked)
+# =========================================================================
+
+
+class TestGoogleGenAIPatch:
+    """Test Google GenAI instrumentation with mock modules."""
+
+    def _setup_mock_genai(self):
+        models_mod = types.ModuleType("google.genai.models")
+        ModelsClass = type("Models", (), {"generate_content": lambda self, **kwargs: "response"})
+        models_mod.Models = ModelsClass
+
+        genai_mod = types.ModuleType("google.genai")
+        genai_mod.models = models_mod
+
+        google_mod = types.ModuleType("google")
+        google_mod.genai = genai_mod
+
+        sys.modules["google"] = google_mod
+        sys.modules["google.genai"] = genai_mod
+        sys.modules["google.genai.models"] = models_mod
+        return ModelsClass
+
+    def _teardown_mock_genai(self):
+        import aegis.instrument._google_genai as _gg
+
+        _gg._patched = False
+        _gg._originals.clear()
+        for k in list(sys.modules.keys()):
+            if k.startswith("google"):
+                sys.modules.pop(k, None)
+
+    def test_patch_google_genai_mocked(self):
+        self._setup_mock_genai()
+        try:
+            import importlib
+
+            import aegis.instrument._google_genai as _gg
+
+            importlib.reload(_gg)
+
+            result = _gg.patch_google_genai()
+            assert result.patched is True
+            assert "Models.generate_content" in result.targets
+        finally:
+            self._teardown_mock_genai()
+
+    def test_patch_without_google_genai(self):
+        import aegis.instrument._google_genai as _gg
+
+        result = _gg.patch_google_genai()
+        assert result.patched is False
+
+
+# =========================================================================
+# Pydantic AI Patch Tests (mocked)
+# =========================================================================
+
+
+class TestPydanticAIPatch:
+    """Test Pydantic AI instrumentation with mock module."""
+
+    def _setup_mock_pydantic_ai(self):
+        AgentClass = type(
+            "Agent",
+            (),
+            {
+                "run": lambda self, *a, **kw: "result",
+                "run_sync": lambda self, *a, **kw: "result",
+            },
+        )
+
+        pydantic_ai_mod = types.ModuleType("pydantic_ai")
+        pydantic_ai_mod.Agent = AgentClass
+        sys.modules["pydantic_ai"] = pydantic_ai_mod
+        return AgentClass
+
+    def _teardown_mock_pydantic_ai(self):
+        import aegis.instrument._pydantic_ai as _pa
+
+        _pa._patched = False
+        _pa._originals.clear()
+        sys.modules.pop("pydantic_ai", None)
+
+    def test_patch_pydantic_ai_mocked(self):
+        self._setup_mock_pydantic_ai()
+        try:
+            import importlib
+
+            import aegis.instrument._pydantic_ai as _pa
+
+            importlib.reload(_pa)
+
+            result = _pa.patch_pydantic_ai()
+            assert result.patched is True
+            assert "Agent.run" in result.targets
+            assert "Agent.run_sync" in result.targets
+        finally:
+            self._teardown_mock_pydantic_ai()
+
+    def test_patch_without_pydantic_ai(self):
+        import aegis.instrument._pydantic_ai as _pa
+
+        result = _pa.patch_pydantic_ai()
+        assert result.patched is False
+
+
+# =========================================================================
+# LlamaIndex Patch Tests (mocked)
+# =========================================================================
+
+
+class TestLlamaIndexPatch:
+    """Test LlamaIndex instrumentation with mock modules."""
+
+    def _setup_mock_llamaindex(self):
+        LLMClass = type(
+            "LLM",
+            (),
+            {
+                "chat": lambda self, *a, **kw: "chat_response",
+                "achat": lambda self, *a, **kw: "achat_response",
+                "complete": lambda self, *a, **kw: "completion",
+                "acomplete": lambda self, *a, **kw: "acompletion",
+            },
+        )
+
+        llms_mod = types.ModuleType("llama_index.core.llms")
+        llms_mod.LLM = LLMClass
+
+        core_mod = types.ModuleType("llama_index.core")
+        core_mod.llms = llms_mod
+
+        li_mod = types.ModuleType("llama_index")
+        li_mod.core = core_mod
+
+        sys.modules["llama_index"] = li_mod
+        sys.modules["llama_index.core"] = core_mod
+        sys.modules["llama_index.core.llms"] = llms_mod
+
+        return LLMClass
+
+    def _teardown_mock_llamaindex(self):
+        import aegis.instrument._llamaindex as _li
+
+        _li._patched = False
+        _li._originals.clear()
+        for k in list(sys.modules.keys()):
+            if k.startswith("llama_index"):
+                sys.modules.pop(k, None)
+
+    def test_patch_llamaindex_mocked(self):
+        self._setup_mock_llamaindex()
+        try:
+            import importlib
+
+            import aegis.instrument._llamaindex as _li
+
+            importlib.reload(_li)
+
+            result = _li.patch_llamaindex()
+            assert result.patched is True
+            assert "LLM.chat" in result.targets
+            assert "LLM.complete" in result.targets
+        finally:
+            self._teardown_mock_llamaindex()
+
+    def test_patch_without_llamaindex(self):
+        import aegis.instrument._llamaindex as _li
+
+        result = _li.patch_llamaindex()
+        assert result.patched is False
+
+
+# =========================================================================
+# Instructor Patch Tests (mocked)
+# =========================================================================
+
+
+class TestInstructorPatch:
+    """Test Instructor instrumentation with mock module."""
+
+    def _setup_mock_instructor(self):
+        InstructorClass = type("Instructor", (), {"create": lambda self, *a, **kw: "result"})
+        AsyncInstructorClass = type(
+            "AsyncInstructor", (), {"create": lambda self, *a, **kw: "result"}
+        )
+
+        client_mod = types.ModuleType("instructor.client")
+        client_mod.Instructor = InstructorClass
+        client_mod.AsyncInstructor = AsyncInstructorClass
+
+        instructor_mod = types.ModuleType("instructor")
+        instructor_mod.client = client_mod
+
+        sys.modules["instructor"] = instructor_mod
+        sys.modules["instructor.client"] = client_mod
+        return InstructorClass
+
+    def _teardown_mock_instructor(self):
+        import aegis.instrument._instructor as _ins
+
+        _ins._patched = False
+        _ins._originals.clear()
+        sys.modules.pop("instructor", None)
+        sys.modules.pop("instructor.client", None)
+
+    def test_patch_instructor_mocked(self):
+        self._setup_mock_instructor()
+        try:
+            import importlib
+
+            import aegis.instrument._instructor as _ins
+
+            importlib.reload(_ins)
+
+            result = _ins.patch_instructor()
+            assert result.patched is True
+            assert "Instructor.create" in result.targets
+            assert "AsyncInstructor.create" in result.targets
+        finally:
+            self._teardown_mock_instructor()
+
+    def test_patch_without_instructor(self):
+        import aegis.instrument._instructor as _ins
+
+        result = _ins.patch_instructor()
+        assert result.patched is False
+
+
+# =========================================================================
+# DSPy Patch Tests (mocked)
+# =========================================================================
+
+
+class TestDSPyPatch:
+    """Test DSPy instrumentation with mock modules."""
+
+    def _setup_mock_dspy(self):
+        LMClass = type(
+            "LM",
+            (),
+            {
+                "forward": lambda self, *a, **kw: [{"text": "output"}],
+                "aforward": lambda self, *a, **kw: [{"text": "output"}],
+            },
+        )
+        ModuleClass = type("Module", (), {"__call__": lambda self, *a, **kw: "prediction"})
+
+        lm_mod = types.ModuleType("dspy.clients.lm")
+        lm_mod.LM = LMClass
+
+        clients_mod = types.ModuleType("dspy.clients")
+        clients_mod.lm = lm_mod
+
+        dspy_mod = types.ModuleType("dspy")
+        dspy_mod.Module = ModuleClass
+        dspy_mod.clients = clients_mod
+
+        sys.modules["dspy"] = dspy_mod
+        sys.modules["dspy.clients"] = clients_mod
+        sys.modules["dspy.clients.lm"] = lm_mod
+        return LMClass, ModuleClass
+
+    def _teardown_mock_dspy(self):
+        import aegis.instrument._dspy as _ds
+
+        _ds._patched = False
+        _ds._originals.clear()
+        for k in list(sys.modules.keys()):
+            if k.startswith("dspy"):
+                sys.modules.pop(k, None)
+
+    def test_patch_dspy_mocked(self):
+        self._setup_mock_dspy()
+        try:
+            import importlib
+
+            import aegis.instrument._dspy as _ds
+
+            importlib.reload(_ds)
+
+            result = _ds.patch_dspy()
+            assert result.patched is True
+            assert "LM.forward" in result.targets
+            assert "Module.__call__" in result.targets
+        finally:
+            self._teardown_mock_dspy()
+
+    def test_patch_without_dspy(self):
+        import aegis.instrument._dspy as _ds
+
+        result = _ds.patch_dspy()
+        assert result.patched is False
+
+
+# =========================================================================
+# Extraction Helpers for New Frameworks
+# =========================================================================
+
+
+class TestNewExtractionHelpers:
+    """Test extraction helpers for newly added frameworks."""
+
+    def test_litellm_extract_input(self):
+        from aegis.instrument._litellm import _extract_input
+
+        text = _extract_input((), {"messages": [{"role": "user", "content": "Hello"}]})
+        assert "Hello" in text
+
+    def test_litellm_extract_output(self):
+        from aegis.instrument._litellm import _extract_output
+
+        @dataclass
+        class Message:
+            content: str = "response text"
+
+        @dataclass
+        class Choice:
+            message: Message = None
+
+            def __post_init__(self):
+                if self.message is None:
+                    self.message = Message()
+
+        @dataclass
+        class Response:
+            choices: list = None
+
+            def __post_init__(self):
+                if self.choices is None:
+                    self.choices = [Choice()]
+
+        assert _extract_output(Response()) == "response text"
+
+    def test_google_genai_extract_contents_string(self):
+        from aegis.instrument._google_genai import _extract_contents
+
+        assert _extract_contents({"contents": "Hello Gemini"}) == "Hello Gemini"
+
+    def test_google_genai_extract_contents_list(self):
+        from aegis.instrument._google_genai import _extract_contents
+
+        assert "Hello" in _extract_contents({"contents": ["Hello", "World"]})
+
+    def test_pydantic_ai_extract_input(self):
+        from aegis.instrument._pydantic_ai import _extract_input
+
+        assert _extract_input(("Hello",), {}) == "Hello"
+        assert _extract_input((), {"user_prompt": "Hi"}) == "Hi"
+
+    def test_pydantic_ai_extract_output(self):
+        from aegis.instrument._pydantic_ai import _extract_output
+
+        @dataclass
+        class RunResult:
+            output: str = "result text"
+
+        assert _extract_output(RunResult()) == "result text"
+
+    def test_llamaindex_extract_query_input(self):
+        from aegis.instrument._llamaindex import _extract_query_input
+
+        assert _extract_query_input(("What is AI?",), {}) == "What is AI?"
+
+    def test_llamaindex_extract_query_output(self):
+        from aegis.instrument._llamaindex import _extract_query_output
+
+        @dataclass
+        class QueryResponse:
+            response: str = "AI is..."
+
+        assert _extract_query_output(QueryResponse()) == "AI is..."
+
+    def test_instructor_extract_input(self):
+        from aegis.instrument._instructor import _extract_input
+
+        text = _extract_input({"messages": [{"role": "user", "content": "Extract data"}]})
+        assert "Extract data" in text
+
+    def test_dspy_extract_lm_input(self):
+        from aegis.instrument._dspy import _extract_lm_input
+
+        assert _extract_lm_input({"prompt": "Hello DSPy"}) == "Hello DSPy"
+
+    def test_dspy_extract_lm_output(self):
+        from aegis.instrument._dspy import _extract_lm_output
+
+        assert _extract_lm_output([{"text": "output"}]) == "output"
+
+    def test_dspy_extract_module_input(self):
+        from aegis.instrument._dspy import _extract_module_input
+
+        assert "question" in _extract_module_input({"question": "question"})
+
+
+# =========================================================================
+# Framework Registry Test
+# =========================================================================
+
+
+class TestFrameworkRegistry:
+    """Test that all 9 frameworks are registered."""
+
+    def test_all_frameworks_registered(self):
+        from aegis.instrument import _FRAMEWORK_REGISTRY
+
+        expected = {
+            "langchain",
+            "crewai",
+            "openai_agents",
+            "litellm",
+            "google_genai",
+            "pydantic_ai",
+            "llamaindex",
+            "instructor",
+            "dspy",
+        }
+        assert set(_FRAMEWORK_REGISTRY.keys()) == expected
+
+    def test_auto_instrument_with_new_framework(self):
+        from aegis.instrument import auto_instrument
+
+        # All new frameworks are not installed, should be skipped cleanly
+        report = auto_instrument(
+            frameworks=[
+                "litellm",
+                "google_genai",
+                "pydantic_ai",
+                "llamaindex",
+                "instructor",
+                "dspy",
+            ]
+        )
+        # They should all be skipped (not installed)
+        assert len(report.skipped) == 6
+        assert len(report.errors) == 0

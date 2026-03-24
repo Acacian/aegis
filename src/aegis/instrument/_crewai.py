@@ -129,7 +129,7 @@ def patch_crewai() -> FrameworkPatch:
 
             return _originals["Crew.kickoff"](self, *args, **kwargs)
 
-        Crew.kickoff = governed_kickoff  
+        Crew.kickoff = governed_kickoff
         targets.append("Crew.kickoff")
 
     except ImportError:
@@ -155,7 +155,7 @@ def patch_crewai() -> FrameworkPatch:
 
                 return await _originals["Crew.kickoff_async"](self, *args, **kwargs)
 
-            Crew.kickoff_async = governed_kickoff_async  
+            Crew.kickoff_async = governed_kickoff_async
             targets.append("Crew.kickoff_async")
 
     except ImportError:
@@ -183,9 +183,9 @@ def unpatch_crewai() -> None:
         from crewai import Crew
 
         if "Crew.kickoff" in _originals:
-            Crew.kickoff = _originals.pop("Crew.kickoff")  
+            Crew.kickoff = _originals.pop("Crew.kickoff")
         if "Crew.kickoff_async" in _originals:
-            Crew.kickoff_async = _originals.pop("Crew.kickoff_async")  
+            Crew.kickoff_async = _originals.pop("Crew.kickoff_async")
     except ImportError:
         pass
 

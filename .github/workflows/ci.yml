@@ -29,7 +29,7 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -e ".[dev]"
-      - run: mypy src/aegis/
+      - run: mypy src/aegis/ --ignore-missing-imports
 
   test:
     runs-on: ubuntu-latest
