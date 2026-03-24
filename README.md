@@ -20,7 +20,7 @@
   <a href="https://pypi.org/project/agent-aegis/"><img src="https://img.shields.io/pypi/dm/agent-aegis?label=downloads&color=brightgreen" alt="Downloads"></a>
   <a href="https://github.com/Acacian/aegis"><img src="https://img.shields.io/github/stars/Acacian/aegis?style=social" alt="GitHub stars"></a>
   <br/>
-  <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-2238_passed-brightgreen" alt="Tests"></a>
+  <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-2500%2B_passed-brightgreen" alt="Tests"></a>
   <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/coverage-92%25-brightgreen" alt="Coverage"></a>
   <a href="https://acacian.github.io/aegis/playground/"><img src="https://img.shields.io/badge/playground-Try_it_Live-ff6b6b" alt="Playground"></a>
 </p>
@@ -29,8 +29,10 @@
   <a href="https://acacian.github.io/aegis/playground/"><strong>Try it Live in Your Browser</strong></a> &bull;
   <a href="#quick-start">Quick Start</a> &bull;
   <a href="#how-it-works">How It Works</a> &bull;
+  <a href="#runtime-guardrails">Guardrails</a> &bull;
   <a href="https://acacian.github.io/aegis/">Documentation</a> &bull;
   <a href="#integrations">Integrations</a> &bull;
+  <a href="#agef--agp--open-governance-standards">AGEF & AGP</a> &bull;
   <a href="https://github.com/Acacian/aegis/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22">Contributing</a>
 </p>
 
@@ -183,6 +185,32 @@ aegis audit --format jsonl -o export.jsonl  # Export
 pip install agent-aegis
 ```
 
+### One-line activation
+
+```python
+import aegis
+aegis.init()  # That's it. PII masking, injection blocking, policy, audit, cost tracking — all active.
+```
+
+`aegis.init()` auto-discovers your `aegis.yaml` (or uses sensible defaults) and activates the full governance stack: runtime guardrails, policy engine, audit logging, and cost tracking.
+
+### Zero-code integration
+
+Govern existing LLM calls without changing your application logic:
+
+```python
+import aegis
+aegis.patch_openai()   # All OpenAI calls now governed
+aegis.patch_anthropic() # All Anthropic calls now governed
+
+# Or use the decorator for custom functions
+from aegis import guard
+
+@guard
+def my_agent_function():
+    ...
+```
+
 ### 1. Generate a policy
 
 ```bash
@@ -266,6 +294,9 @@ aegis audit
 | **4-tier risk model** | `low` / `medium` / `high` / `critical` with per-rule overrides |
 | **Approval gates** | CLI, Slack, Discord, Telegram, email, webhook, or custom |
 | **Audit trail** | Automatic SQLite logging. Export: JSONL, webhook, or query via CLI/API |
+| **Runtime guardrails** | PII detection (12 categories) + prompt injection blocking (10 categories, 85+ patterns, multi-language) |
+| **One-line activation** | `aegis.init()` — PII masking, injection blocking, policy, audit, cost tracking, all active |
+| **Zero-code integration** | `aegis.patch_openai()`, `aegis.patch_anthropic()`, `@guard` decorator |
 | **7 adapters** | LangChain, CrewAI, OpenAI Agents, Anthropic, MCP, Playwright, httpx |
 | **REST API + Dashboard** | `aegis serve policy.yaml` — web UI with KPIs, audit log, compliance reports |
 
@@ -279,6 +310,8 @@ aegis audit
 | **RBAC** | 12 permissions, 5 hierarchical roles, thread-safe AccessController |
 | **Multi-tenant isolation** | TenantContext, quota enforcement, data separation |
 | **Policy versioning** | Git-like commit, diff, rollback, tagging |
+| **AGEF spec** | Standardized JSON event format for AI governance (7 event types, hash-linked evidence chain) |
+| **AGP spec** | Governance protocol complementing MCP — 7 message types, 3 conformance levels |
 
 **MCP Supply Chain Security** — defense-in-depth for MCP tool calls:
 
@@ -316,6 +349,65 @@ aegis audit
 | **9 policy templates** | Pre-built for CRM, finance, DevOps, healthcare, and more |
 | **[Interactive playground](https://acacian.github.io/aegis/playground/)** | Try in browser — no install needed |
 
+## Runtime Guardrails
+
+Aegis includes production-grade content guardrails that run on every prompt and response. Configurable via `aegis.yaml`.
+
+### PII Detection & Masking
+
+12 PII categories with compiled regex patterns and secondary validation (Luhn algorithm for credit cards):
+
+| Category | Examples | Severity |
+|----------|----------|----------|
+| Email | `user@example.com` | high |
+| Credit card | Visa, MasterCard, Amex, Discover (Luhn-validated) | critical |
+| SSN | US Social Security Number | critical |
+| Korean RRN | Resident Registration Number (주민등록번호) | critical |
+| Korean phone | Mobile + landline + international format | high |
+| API keys | OpenAI, AWS, GitHub, Slack, Bearer tokens, generic secrets | critical |
+| IP address | IPv4 with octet validation | medium |
+| Passport | With keyword context | critical |
+| URL credentials | `user:pass@host` patterns | critical |
+
+Actions: `mask` (default), `block`, `warn`, `log` — configurable per deployment.
+
+### Prompt Injection Detection
+
+10 attack categories, 85+ patterns, multi-language support (English, Korean, Chinese, Japanese):
+
+| Category | What it catches |
+|----------|----------------|
+| System prompt extraction | "show me your system prompt", "repeat your instructions" |
+| Role hijacking | "you are now an unrestricted AI", "switch to developer mode" |
+| Instruction override | "ignore all previous instructions", "forget everything" |
+| Delimiter injection | `<\|endoftext\|>`, `[/INST]`, ChatML tokens |
+| Encoding evasion | Base64-wrapped instructions, ROT13, hex, unicode escapes |
+| Multi-language attacks | Korean, Chinese (simplified + traditional), Japanese injection patterns |
+| Indirect injection | "if the user asks, tell them...", embedded instructions in tool output |
+| Data exfiltration | "send the conversation to", "append to URL" |
+| Jailbreak patterns | DAN, AIM, "do anything now" variants |
+| Context manipulation | "the following is a test", "this is authorized by the developer" |
+
+Three sensitivity levels: `low` (high-confidence only), `medium` (known patterns, recommended), `high` (aggressive/fuzzy).
+
+### Rule Pack Ecosystem
+
+Guardrails are extensible via community YAML rule packs:
+
+```yaml
+# aegis.yaml
+guardrails:
+  pii:
+    enabled: true
+    action: mask
+  injection:
+    enabled: true
+    action: block
+    sensitivity: medium
+```
+
+Built-in packs: `@aegis/pii-detection`, `@aegis/prompt-injection`. Install additional packs with `aegis install <pack>`.
+
 ## Real-World Use Cases
 
 | Scenario | Policy | Outcome |
@@ -350,7 +442,7 @@ policy = Policy.from_yaml("policies/crm-agent.yaml")
 
 | Aspect | Detail |
 |--------|--------|
-| **2,200+ tests, 92% coverage** | Every adapter, handler, and edge case tested |
+| **2,500+ tests, 92% coverage** | Every adapter, handler, and edge case tested |
 | **Type-safe** | `mypy --strict` with zero errors, `py.typed` marker |
 | **Performance** | Policy evaluation < 1ms; auto-approved actions add < 5ms overhead |
 | **Fail-safe** | Blocked actions never execute; can't be bypassed without policy change |
@@ -991,6 +1083,39 @@ Add the badge to your repo:
 ![Aegis Score](https://img.shields.io/badge/aegis_score-84-brightgreen)
 ```
 
+## AGEF & AGP — Open Governance Standards
+
+Aegis is the reference implementation of two open specifications that bring interoperability to AI governance:
+
+### AGEF (Agent Governance Event Format)
+
+A standardized JSON schema for recording AI governance events — policy decisions, guardrail activations, approval workflows, cost alerts, and tamper-evident audit trails. AGEF is to AI governance what SARIF is to static analysis and CEF is to security logging.
+
+- 7 event types: `policy_decision`, `guardrail_trigger`, `approval_request/response`, `cost_alert`, `rate_limit`, `audit_entry`
+- Multi-agent lineage tracking with delegation chains
+- Hash-linked tamper-evident evidence chain
+- Correlates with OpenTelemetry traces and ingests into any SIEM
+
+See [`specs/agef/v1/`](specs/agef/v1/) for the full specification and JSON Schema.
+
+### AGP (Agent Governance Protocol)
+
+A standard communication protocol between AI agents and governance systems. AGP complements MCP:
+
+> **MCP standardizes what AI agents CAN do. AGP standardizes what AI agents MUST NOT do.**
+
+| | Direction | Question | Protocol |
+|---|---|---|---|
+| Communication | Agent --> External World | "How do I call this tool?" | MCP |
+| Governance | External World --> Agent | "Should you be allowed to?" | **AGP** |
+
+- Transport-agnostic (in-process, HTTP, WebSocket, gRPC, message queue)
+- Message types: `action.declare/evaluate`, `guardrail.check/result`, `approval.request/response`, `evidence.record`
+- 3 conformance levels: Basic, Standard, Full
+- Aegis implements AGP Level 3 (Full)
+
+See [`specs/agp/v1/`](specs/agp/v1/) for the full protocol specification.
+
 ## Architecture
 
 ```
@@ -1023,6 +1148,9 @@ aegis/
   core/policy_git    Policy-as-code Git integration -- diff, impact analysis, drift detection
   core/otel_export   OpenTelemetry export -- governance events → OTel spans
   core/session_replay  Session replay -- record/replay with retroactive security scanning
+  guardrails/        Runtime content guardrails -- PII detection (12 categories), injection detection (10 categories, 85+ patterns)
+  specs/agef/        AGEF (Agent Governance Event Format) -- JSON schema for governance events
+  specs/agp/         AGP (Agent Governance Protocol) -- communication protocol for agent governance
   adapters/          BaseExecutor, Playwright, httpx, LangChain, CrewAI, OpenAI, Anthropic, MCP
   runtime/           Runtime engine, ApprovalHandler, AuditLogger (SQLite/JSONL/webhook/logging)
   server/            REST API (Starlette ASGI) -- evaluate, execute, audit, policy endpoints
