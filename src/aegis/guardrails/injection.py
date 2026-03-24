@@ -632,6 +632,153 @@ _DATA_EXFILTRATION: list[PatternEntry] = [
     ),
 ]
 
+# -- Category: sql_injection ------------------------------------------------
+
+_SQL_INJECTION: list[PatternEntry] = [
+    _compile(
+        "union_select",
+        r"\bUNION\s+(?:ALL\s+)?SELECT\b",
+        confidence="high",
+        sensitivity="low",
+    ),
+    _compile(
+        "or_true",
+        r"'\s*OR\s+['\d].*?=\s*['\d]"
+        r"|'\s*OR\s+(?:1\s*=\s*1|true)\b",
+        confidence="high",
+        sensitivity="low",
+    ),
+    _compile(
+        "drop_table",
+        r"\bDROP\s+(?:TABLE|DATABASE|INDEX|VIEW)\b",
+        confidence="high",
+        sensitivity="low",
+    ),
+    _compile(
+        "sql_comment_bypass",
+        r"(?:--|#|/\*)\s*(?:admin|password|select|union)",
+        confidence="high",
+        sensitivity="low",
+    ),
+    _compile(
+        "sql_semicolon_chain",
+        r";\s*(?:SELECT|INSERT|UPDATE|DELETE|DROP|ALTER|CREATE|EXEC)\b",
+        confidence="high",
+        sensitivity="low",
+    ),
+    _compile(
+        "sql_sleep_benchmark",
+        r"\b(?:SLEEP|BENCHMARK|WAITFOR\s+DELAY|PG_SLEEP)\s*\(",
+        confidence="high",
+        sensitivity="low",
+    ),
+    _compile(
+        "sql_info_schema",
+        r"\b(?:INFORMATION_SCHEMA|SYS\.TABLES|SQLITE_MASTER|PG_CATALOG)\b",
+        confidence="high",
+        sensitivity="medium",
+    ),
+    _compile(
+        "sql_hex_encode",
+        r"0x[0-9a-f]{6,}"
+        r"|\bCHAR\s*\(\s*\d+(?:\s*,\s*\d+)+\s*\)",
+        confidence="medium",
+        sensitivity="medium",
+    ),
+    _compile(
+        "sql_stacked_queries",
+        r";\s*(?:EXEC(?:UTE)?|xp_cmdshell|sp_executesql)\b",
+        confidence="high",
+        sensitivity="low",
+    ),
+]
+
+# -- Category: ssrf_attempt -------------------------------------------------
+
+_SSRF_ATTEMPT: list[PatternEntry] = [
+    _compile(
+        "internal_ip_access",
+        r"(?:https?://)?(?:127\.\d+\.\d+\.\d+|10\.\d+\.\d+\.\d+|"
+        r"172\.(?:1[6-9]|2\d|3[01])\.\d+\.\d+|"
+        r"192\.168\.\d+\.\d+|0\.0\.0\.0|localhost|\[::1?\])",
+        confidence="high",
+        sensitivity="low",
+    ),
+    _compile(
+        "cloud_metadata",
+        r"(?:https?://)?169\.254\.169\.254"
+        r"|metadata\.google\.internal"
+        r"|100\.100\.100\.200",
+        confidence="high",
+        sensitivity="low",
+    ),
+    _compile(
+        "file_protocol",
+        r"\bfile://",
+        confidence="high",
+        sensitivity="low",
+    ),
+    _compile(
+        "dns_rebinding",
+        r"(?:https?://)?(?:[a-z0-9-]+\.)?(?:nip\.io|xip\.io|sslip\.io|localtest\.me)\b",
+        confidence="high",
+        sensitivity="medium",
+    ),
+    _compile(
+        "scheme_smuggle",
+        r"\b(?:gopher|dict|ftp|ldap|tftp)://",
+        confidence="high",
+        sensitivity="medium",
+    ),
+]
+
+# -- Category: command_injection --------------------------------------------
+
+_COMMAND_INJECTION: list[PatternEntry] = [
+    _compile(
+        "shell_chain",
+        r"(?:;|\|{1,2}|&&)\s*(?:cat|ls|id|whoami|pwd|curl|wget|nc|ncat|bash|sh|python|perl|ruby|php)\b",
+        confidence="high",
+        sensitivity="low",
+    ),
+    _compile(
+        "backtick_exec",
+        r"`[^`]*(?:cat|ls|id|whoami|curl|wget|bash|sh|python)\b[^`]*`",
+        confidence="high",
+        sensitivity="low",
+    ),
+    _compile(
+        "subshell_exec",
+        r"\$\(\s*(?:cat|ls|id|whoami|curl|wget|bash|sh|python|perl)\b",
+        confidence="high",
+        sensitivity="low",
+    ),
+    _compile(
+        "path_traversal",
+        r"(?:\.\./){2,}|(?:%2e%2e[/\\%]){2,}",
+        confidence="high",
+        sensitivity="low",
+    ),
+    _compile(
+        "null_byte",
+        r"%00|\\x00|\\0",
+        confidence="high",
+        sensitivity="low",
+    ),
+    _compile(
+        "heredoc_injection",
+        r"<<\s*(?:EOF|END|EOT|HEREDOC)\b",
+        confidence="medium",
+        sensitivity="medium",
+    ),
+    _compile(
+        "env_exfil",
+        r"\$\{?(?:AWS_SECRET|DATABASE_URL|DB_PASSWORD|API_KEY|SECRET_KEY|PRIVATE_KEY|TOKEN)\}?",
+        confidence="high",
+        sensitivity="medium",
+    ),
+]
+
 # -- Category: jailbreak_patterns ------------------------------------------
 
 _JAILBREAK_PATTERNS: list[PatternEntry] = [
@@ -774,6 +921,9 @@ ALL_CATEGORIES: dict[str, list[PatternEntry]] = {
     "multi_language_injection": _MULTI_LANGUAGE_INJECTION,
     "indirect_injection": _INDIRECT_INJECTION,
     "data_exfiltration": _DATA_EXFILTRATION,
+    "sql_injection": _SQL_INJECTION,
+    "ssrf_attempt": _SSRF_ATTEMPT,
+    "command_injection": _COMMAND_INJECTION,
     "jailbreak_patterns": _JAILBREAK_PATTERNS,
     "context_manipulation": _CONTEXT_MANIPULATION,
 }
