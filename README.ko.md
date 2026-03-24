@@ -20,7 +20,7 @@
   <a href="https://github.com/Acacian/aegis"><img src="https://img.shields.io/github/stars/Acacian/aegis?style=social" alt="GitHub stars"></a>
   <br/>
   <a href="https://pypi.org/project/langchain-aegis/"><img src="https://img.shields.io/pypi/v/langchain-aegis?label=langchain-aegis&color=blue&cacheSeconds=3600" alt="langchain-aegis"></a>
-  <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-2500%2B_passed-brightgreen" alt="Tests"></a>
+  <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-2540%2B_passed-brightgreen" alt="Tests"></a>
   <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/coverage-92%25-brightgreen" alt="Coverage"></a>
   <a href="https://acacian.github.io/aegis/playground/"><img src="https://img.shields.io/badge/playground-브라우저에서_체험-ff6b6b" alt="Playground"></a>
 </p>
@@ -435,7 +435,7 @@ guardrails:
 |------|------|
 | **2,500+ 테스트, 92% 커버리지** | 모든 어댑터, 핸들러, 엣지 케이스 테스트 |
 | **타입 안전** | `mypy --strict` 에러 제로, `py.typed` 마커 |
-| **성능** | 정책 평가 < 1ms, 자동 승인 액션 오버헤드 < 5ms |
+| **성능** | 정책 평가 < 1ms (LRU 캐시); O(log n) 타임스탬프 pruning; SQLite WAL 모드; `execute(parallel=True)` 병렬 실행 |
 | **페일 세이프** | 차단된 액션은 절대 실행 안 됨, 정책 변경 없이 우회 불가 |
 | **감사 불변성** | Result는 frozen 데이터클래스, 감사 기록은 반환 전에 완료 |
 | **블랙 매직 없음** | 순수 Python, monkey-patching 없음, 전역 상태 없음 |
@@ -958,6 +958,7 @@ aegis compliance --type soc2 --output report.json  # 컴플라이언스 리포�
 | **0.2** | **출시됨** | LangChain AgentMiddleware, CrewAI GuardrailProvider, OpenAI Agents 네이티브 가드레일, OWASP Agentic Top 10, HTML 컴플라이언스 리포트, 인터랙티브 플레이그라운드 |
 | **0.3** | **출시됨** | MCP 공급망 보안 (포이즈닝/러그풀/SBOM/취약점 DB), 비용 차단기 (17 모델), 크로스-프레임워크 비용 추적 (LangChain/OpenAI/Anthropic/Google), A2A 통신 거버넌스, 세션 리플레이 + 소급 스캔, OpenTelemetry 내보내기, 정책 Git 통합 |
 | **0.4** | **출시됨** | `aegis.init()` 한 줄 활성화, 런타임 가드레일 (PII 탐지/마스킹, 프롬프트 인젝션 차단), 룰 팩 생태계, 제로-코드 통합 (`patch_openai`/`patch_anthropic`, `@guard`), AGEF/AGP 개방형 거버넌스 사양, Redis/PostgreSQL 감사 백엔드 |
+| **0.4.1** | **출시됨** | 13개 성능 & 정합성 수정: LRU 캐시, O(log n) bisect pruning, SQLite WAL + 인덱스, 병렬 `execute()`, async 가드레일, 다중 이상 탐지 `check_all()`, 캐시 키 정합성, 락 메모리 누수 수정, 배치 flush 경합 수정 |
 | **0.5** | 2026 Q3 | 중앙 정책 서버, 룰 팩 레지스트리 (npm 스타일 설치/퍼블리시), 크로스 에이전트 감사 연관 분석 |
 | **1.0** | 2027 | 분산 거버넌스, 호스티드 SaaS, SSO/SCIM |
 
