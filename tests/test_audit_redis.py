@@ -12,6 +12,8 @@ from unittest.mock import patch
 
 import pytest
 
+pytest.importorskip("redis", reason="redis not installed")
+
 from aegis.core.action import Action
 from aegis.core.policy import Approval, PolicyDecision
 from aegis.core.result import Result, ResultStatus
