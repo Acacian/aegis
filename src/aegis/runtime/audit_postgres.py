@@ -147,7 +147,7 @@ class PostgresAuditLogger:
                 decision.action.chain_depth,
             )
 
-        row_id: int = row["id"]  # type: ignore[index]
+        row_id: int = row["id"]
 
         # Notify in-process subscribers
         if self._subscribers:

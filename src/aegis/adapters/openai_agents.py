@@ -615,7 +615,7 @@ def create_aegis_input_guardrail(
     try:
         from agents import tool_input_guardrail
 
-        @tool_input_guardrail(name=name)  # type: ignore[untyped-decorator]
+        @tool_input_guardrail(name=name)  # type: ignore[misc]
         async def _aegis_input(data: Any) -> Any:
             return await guardrail(data)
 
@@ -669,7 +669,7 @@ def create_aegis_output_guardrail(
     try:
         from agents import tool_output_guardrail
 
-        @tool_output_guardrail(name=name)  # type: ignore[untyped-decorator]
+        @tool_output_guardrail(name=name)  # type: ignore[misc]
         async def _aegis_output(data: Any) -> Any:
             return await guardrail(data)
 
