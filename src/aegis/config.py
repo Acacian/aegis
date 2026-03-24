@@ -122,6 +122,26 @@ class AegisConfig:
     audit: AuditConfig | None = None
     integrations: IntegrationsConfig | None = None
 
+    @classmethod
+    def sensible_defaults(cls) -> AegisConfig:
+        """Return a config with basic protections enabled.
+
+        Used by ``aegis.init()`` when no explicit config or YAML file is
+        found.  Enables PII masking, injection blocking, audit logging,
+        and auto-patching of OpenAI/Anthropic clients.
+        """
+        return cls(
+            guardrails=GuardrailsConfig(
+                pii=PIIConfig(enabled=True, action="mask"),
+                injection=InjectionConfig(enabled=True, action="block"),
+            ),
+            audit=AuditConfig(enabled=True, backend="sqlite", path="./aegis_audit.db"),
+            integrations=IntegrationsConfig(
+                auto_patch=["openai", "anthropic"],
+                on_block="raise",
+            ),
+        )
+
     # ------------------------------------------------------------------
     # Factories
     # ------------------------------------------------------------------
