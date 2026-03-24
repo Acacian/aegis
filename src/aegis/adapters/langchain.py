@@ -57,10 +57,10 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 _HAS_MIDDLEWARE = False
 try:
-    from langchain.agents.middleware.types import (  # type: ignore[import-not-found]
+    from langchain.agents.middleware.types import (
         AgentMiddleware,
     )
-    from langgraph.prebuilt.tool_node import (  # type: ignore[import-not-found]
+    from langgraph.prebuilt.tool_node import (
         ToolCallRequest,
     )
 

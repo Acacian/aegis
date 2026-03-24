@@ -195,9 +195,7 @@ def unpatch_google_genai() -> None:
         from google.generativeai import GenerativeModel
 
         if "GenerativeModel.generate_content" in _originals:
-            GenerativeModel.generate_content = _originals.pop(
-                "GenerativeModel.generate_content"
-            )
+            GenerativeModel.generate_content = _originals.pop("GenerativeModel.generate_content")
     except ImportError:
         pass
 

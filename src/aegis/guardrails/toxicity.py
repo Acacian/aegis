@@ -37,10 +37,19 @@ _ZERO_WIDTH = re.compile(
     "\u202a\u202b\u202c\u202d\u202e\u2060\u2061\u2062\u2063\u2064]"
 )
 
-_LEET_MAP = str.maketrans({
-    "0": "o", "1": "i", "3": "e", "4": "a", "5": "s",
-    "7": "t", "@": "a", "$": "s", "!": "i",
-})
+_LEET_MAP = str.maketrans(
+    {
+        "0": "o",
+        "1": "i",
+        "3": "e",
+        "4": "a",
+        "5": "s",
+        "7": "t",
+        "@": "a",
+        "$": "s",
+        "!": "i",
+    }
+)
 
 
 def _normalize(text: str) -> str:
@@ -423,8 +432,7 @@ class ToxicityGuardrail:
 
         categories_found = sorted({m.category for m in matches})
         details = (
-            f"Toxic content detected: {', '.join(categories_found)} "
-            f"({len(matches)} pattern(s))"
+            f"Toxic content detected: {', '.join(categories_found)} ({len(matches)} pattern(s))"
         )
 
         action_str = self.action + "ed" if self.action != "log" else "allowed"

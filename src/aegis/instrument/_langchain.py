@@ -113,7 +113,7 @@ def patch_langchain() -> FrameworkPatch:
 
             return response
 
-        BaseChatModel.invoke = governed_invoke
+        BaseChatModel.invoke = governed_invoke  # type: ignore[method-assign]
         targets.append("BaseChatModel.invoke")
 
         # Async ainvoke
@@ -134,7 +134,7 @@ def patch_langchain() -> FrameworkPatch:
 
             return response
 
-        BaseChatModel.ainvoke = governed_ainvoke
+        BaseChatModel.ainvoke = governed_ainvoke  # type: ignore[method-assign]
         targets.append("BaseChatModel.ainvoke")
 
     except ImportError:
@@ -163,7 +163,7 @@ def patch_langchain() -> FrameworkPatch:
 
             return response
 
-        BaseTool.invoke = governed_tool_invoke
+        BaseTool.invoke = governed_tool_invoke  # type: ignore[method-assign]
         targets.append("BaseTool.invoke")
 
         # Async
@@ -184,7 +184,7 @@ def patch_langchain() -> FrameworkPatch:
 
             return response
 
-        BaseTool.ainvoke = governed_tool_ainvoke
+        BaseTool.ainvoke = governed_tool_ainvoke  # type: ignore[method-assign]
         targets.append("BaseTool.ainvoke")
 
     except ImportError:
@@ -216,9 +216,9 @@ def unpatch_langchain() -> None:
         from langchain_core.language_models.chat_models import BaseChatModel
 
         if "BaseChatModel.invoke" in _originals:
-            BaseChatModel.invoke = _originals.pop("BaseChatModel.invoke")
+            BaseChatModel.invoke = _originals.pop("BaseChatModel.invoke")  # type: ignore[method-assign]
         if "BaseChatModel.ainvoke" in _originals:
-            BaseChatModel.ainvoke = _originals.pop("BaseChatModel.ainvoke")
+            BaseChatModel.ainvoke = _originals.pop("BaseChatModel.ainvoke")  # type: ignore[method-assign]
     except ImportError:
         pass
 
@@ -226,9 +226,9 @@ def unpatch_langchain() -> None:
         from langchain_core.tools import BaseTool
 
         if "BaseTool.invoke" in _originals:
-            BaseTool.invoke = _originals.pop("BaseTool.invoke")
+            BaseTool.invoke = _originals.pop("BaseTool.invoke")  # type: ignore[method-assign]
         if "BaseTool.ainvoke" in _originals:
-            BaseTool.ainvoke = _originals.pop("BaseTool.ainvoke")
+            BaseTool.ainvoke = _originals.pop("BaseTool.ainvoke")  # type: ignore[method-assign]
     except ImportError:
         pass
 
