@@ -2,10 +2,11 @@
 <p align="center">
   <h1 align="center">Aegis</h1>
   <p align="center">
-    <strong>The simplest way to govern AI agent actions. No infra. No lock-in. Just Python.</strong>
+    <strong>Open-source AI governance framework.<br/>Guardrails + Policy + Protocol — one <code>aegis.init()</code> to protect your agents.</strong>
   </p>
   <p align="center">
-    <code>pip install agent-aegis</code> &#8594; YAML policy &#8594; governance in 5 minutes.<br/>
+    Runtime guardrails (PII, injection) + Policy engine (YAML rules, approval gates) + Open standards (AGEF/AGP).<br/>
+    <code>pip install agent-aegis</code> &#8594; <code>aegis.init()</code> &#8594; all AI calls governed.<br/>
     <strong>Works with LangChain, CrewAI, OpenAI, Anthropic, MCP, and more.</strong>
   </p>
 </p>
@@ -28,7 +29,7 @@
 <p align="center">
   <a href="https://acacian.github.io/aegis/playground/"><strong>Try it Live in Your Browser</strong></a> &bull;
   <a href="#quick-start">Quick Start</a> &bull;
-  <a href="#how-it-works">How It Works</a> &bull;
+  <a href="#three-pillars">Three Pillars</a> &bull;
   <a href="#runtime-guardrails">Guardrails</a> &bull;
   <a href="https://acacian.github.io/aegis/">Documentation</a> &bull;
   <a href="#integrations">Integrations</a> &bull;
@@ -62,54 +63,84 @@ async def handle_agent_action(tool_name, args):
     return result
 ```
 
-**With Aegis** — one YAML file governs everything, with audit trail and approval gates built in:
+**With Aegis** — zero-config activation or YAML for full control. PII masking, injection blocking, policy enforcement, and audit logging are all built in:
 
-```yaml
-# policy.yaml
-rules:
-  - name: block_deletes
-    match: { type: "delete*" }
-    approval: block
-
-  - name: bulk_approval
-    match: { type: "bulk_*" }
-    conditions: { param_gt: { count: 100 } }
-    approval: approve          # asks human via Slack, CLI, Discord, etc.
-
-  - name: no_after_hours
-    match: { type: "deploy*" }
-    conditions: { time_after: "18:00" }
-    approval: block
-```
+**Zero-config** — two lines to govern all AI calls:
 
 ```python
-from aegis import Policy, Runtime
-
-runtime = Runtime(executor=my_executor, policy=Policy.from_yaml("policy.yaml"))
-result = await runtime.run_one(action)  # policy check + approval + audit — done.
+import aegis
+aegis.init()  # PII masking, injection blocking, policy enforcement, audit logging — done.
 ```
 
-**One `pip install`. One YAML file. Works across LangChain, CrewAI, OpenAI, Anthropic, and MCP.** Full audit trail, human approval gates, and regulatory compliance — without deploying a single server.
+**YAML config** — full control when you need it:
 
-## How It Works
+```yaml
+# aegis.yaml
+guardrails:
+  pii: { enabled: true, action: mask }
+  injection: { enabled: true, action: block, sensitivity: medium }
 
-### Core Concepts
+policy:
+  rules:
+    - name: block_deletes
+      match: { type: "delete*" }
+      approval: block
+    - name: bulk_approval
+      match: { type: "bulk_*" }
+      conditions: { param_gt: { count: 100 } }
+      approval: approve       # asks human via Slack, CLI, Discord, etc.
+    - name: no_after_hours
+      match: { type: "deploy*" }
+      conditions: { time_after: "18:00" }
+      approval: block
+```
 
-Aegis has 3 key components. You need to understand these to use it:
+**One `pip install`. One `aegis.init()`. Works across LangChain, CrewAI, OpenAI, Anthropic, and MCP.** Runtime guardrails, policy engine, human approval gates, and full audit trail — without deploying a single server.
 
-| Concept | What it is | Your responsibility |
-|---------|-----------|-------------------|
-| **Policy** | YAML rules that define what's allowed, what needs approval, and what's blocked. | Write the rules. |
-| **Executor** | The adapter that actually does things (calls APIs, clicks buttons, runs queries). | Provide one, or use a built-in adapter. |
-| **Runtime** | The engine that connects Policy + Executor. Evaluates rules, gates approval, executes, logs. | Create it. Call `run_one()` or `plan()` + `execute()`. |
+## Three Pillars
+
+Aegis is built on three pillars. Together they make a complete AI governance framework — not just a policy checker.
+
+### Pillar 1: Runtime Guardrails
+
+Content-level protection that runs on every input and output automatically.
+
+| Capability | Detail |
+|------------|--------|
+| **PII detection & masking** | 12 categories (email, credit card, SSN, Korean RRN, API keys, etc.) with Luhn validation |
+| **Prompt injection blocking** | 10 attack categories, 85+ patterns, multi-language (English, Korean, Chinese, Japanese) |
+| **Rule pack ecosystem** | Extensible via community YAML packs (`@aegis/pii-detection`, `@aegis/prompt-injection`) |
+| **Configurable actions** | `mask`, `block`, `warn`, `log` — per deployment, per category |
+
+### Pillar 2: Policy Engine
+
+Declarative YAML rules with the full governance pipeline (EVALUATE --> APPROVE --> EXECUTE --> VERIFY --> AUDIT).
+
+| Capability | Detail |
+|------------|--------|
+| **Glob matching** | First-match-wins, wildcard patterns (`delete*`, `bulk_*`) |
+| **Smart conditions** | `time_after`, `weekdays`, `param_gt`, `param_contains`, regex, semantic |
+| **4-tier risk model** | `low` / `medium` / `high` / `critical` with per-rule overrides |
+| **Approval gates** | CLI, Slack, Discord, Telegram, email, webhook, or custom handler |
+| **Audit trail** | Automatic SQLite logging. Export: JSONL, webhook, or query via CLI/API |
+
+### Pillar 3: Open Standards
+
+Specifications that make Aegis a platform, not just a tool.
+
+| Standard | What it does |
+|----------|-------------|
+| **AGEF** (Agent Governance Event Format) | Standardized JSON schema for governance events — 7 event types, hash-linked evidence chain. The SARIF of AI governance. |
+| **AGP** (Agent Governance Protocol) | Communication protocol between agents and governance systems. MCP standardizes what agents CAN do; AGP standardizes what agents MUST NOT do. |
+| **Rule Packs** | Community-driven guardrail rules. Install with `aegis install <pack>`. |
 
 ### The Pipeline
 
-Every action goes through 5 stages. This happens automatically -- you just call `runtime.run_one(action)`:
+Every action goes through 5 stages. This happens automatically — you just call `aegis.init()` or `runtime.run_one(action)`:
 
 ```
 1. EVALUATE    Your action is matched against policy rules (glob patterns).
-               → PolicyDecision: risk level + approval requirement + matched rule
+               --> PolicyDecision: risk level + approval requirement + matched rule
 
 2. APPROVE     Based on the decision:
                - auto:    proceed immediately (low-risk actions)
@@ -181,26 +212,30 @@ aegis audit --format jsonl -o export.jsonl  # Export
 
 ## Quick Start
 
+### Step 1: Install
+
 ```bash
 pip install agent-aegis
 ```
 
-### One-line activation
+### Step 2: Activate (choose your level)
+
+**Simplest — two lines, zero config:**
 
 ```python
 import aegis
-aegis.init()  # That's it. PII masking, injection blocking, policy, audit, cost tracking — all active.
+aegis.init()
+# That's it. All OpenAI/Anthropic calls are now governed.
+# PII masking, injection blocking, policy enforcement, audit logging — all active.
 ```
 
 `aegis.init()` auto-discovers your `aegis.yaml` (or uses sensible defaults) and activates the full governance stack: runtime guardrails, policy engine, audit logging, and cost tracking.
 
-### Zero-code integration
-
-Govern existing LLM calls without changing your application logic:
+**Zero-code integration — govern existing LLM calls without changing your app:**
 
 ```python
 import aegis
-aegis.patch_openai()   # All OpenAI calls now governed
+aegis.patch_openai()    # All OpenAI calls now governed
 aegis.patch_anthropic() # All Anthropic calls now governed
 
 # Or use the decorator for custom functions
@@ -211,39 +246,41 @@ def my_agent_function():
     ...
 ```
 
-### 1. Generate a policy
+**YAML config — full control when you need it:**
 
 ```bash
-aegis init  # Creates policy.yaml with sensible defaults
+aegis init  # Creates aegis.yaml with sensible defaults
 ```
 
 ```yaml
-# policy.yaml
-version: "1"
-defaults:
-  risk_level: medium
-  approval: approve
+# aegis.yaml
+guardrails:
+  pii: { enabled: true, action: mask }
+  injection: { enabled: true, action: block, sensitivity: medium }
 
-rules:
-  - name: read_safe
-    match: { type: "read*" }
-    risk_level: low
-    approval: auto
-
-  - name: bulk_ops_need_approval
-    match: { type: "bulk_*" }
-    conditions:
-      param_gt: { count: 100 }  # Only when count > 100
-    risk_level: high
+policy:
+  version: "1"
+  defaults:
+    risk_level: medium
     approval: approve
-
-  - name: no_deletes
-    match: { type: "delete*" }
-    risk_level: critical
-    approval: block
+  rules:
+    - name: read_safe
+      match: { type: "read*" }
+      risk_level: low
+      approval: auto
+    - name: bulk_ops_need_approval
+      match: { type: "bulk_*" }
+      conditions:
+        param_gt: { count: 100 }
+      risk_level: high
+      approval: approve
+    - name: no_deletes
+      match: { type: "delete*" }
+      risk_level: critical
+      approval: block
 ```
 
-### 2. Add to your agent
+**Advanced — full Runtime() control for custom executors:**
 
 ```python
 import asyncio
@@ -272,7 +309,7 @@ async def main():
 asyncio.run(main())
 ```
 
-### 3. See what happened
+### Step 3: See what happened
 
 ```bash
 aegis audit
@@ -1202,7 +1239,8 @@ aegis probe policy.yaml                            # Adversarial policy testing
 | **0.1.9** | **Released** | Web governance dashboard (7 pages, 11 API endpoints), `aegis serve` with dashboard, natural language autopolicy, adversarial probe |
 | **0.2** | **Released** | LangChain AgentMiddleware, CrewAI GuardrailProvider, OpenAI Agents native guardrails, OWASP Agentic Top 10, HTML compliance reports, interactive playground + challenge |
 | **0.3** | **Released** | MCP supply chain security (poisoning/rug pull/SBOM/vuln DB), cost circuit breaker (17 models), cross-framework cost tracking (LangChain/OpenAI/Anthropic/Google), A2A communication governance, session replay with retroactive scanning, OpenTelemetry export, policy Git integration |
-| **0.4** | Q3 2026 | Centralized policy server, cross-agent audit correlation |
+| **0.4** | **Released** | `aegis.init()` one-line activation, runtime guardrails (PII detection/masking, prompt injection blocking), rule pack ecosystem, zero-code integration (`patch_openai`/`patch_anthropic`, `@guard`), AGEF/AGP open governance specs, Redis/PostgreSQL audit backends |
+| **0.5** | Q3 2026 | Centralized policy server, rule pack registry (npm-like install/publish), cross-agent audit correlation |
 | **1.0** | 2027 | Distributed governance, hosted SaaS, SSO/SCIM |
 
 ## Contributing
