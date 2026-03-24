@@ -1,0 +1,156 @@
+name: "@aegis/pii-detection"
+version: "1.0.0"
+description: "Comprehensive PII detection and masking rules"
+author: "Aegis Project"
+license: "MIT"
+categories:
+  - security
+  - privacy
+  - compliance
+
+rules:
+  # -- Email addresses --------------------------------------------------------
+  - name: email_detection
+    type: pattern
+    pattern: '[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}'
+    action: mask
+    severity: high
+    description: "Detects email addresses (RFC 5322 simplified)"
+
+  # -- URLs with embedded credentials ----------------------------------------
+  - name: url_credentials_detection
+    type: pattern
+    pattern: 'https?://[^\s:]+:[^\s@]+@[^\s/]+'
+    action: mask
+    severity: critical
+    description: "Detects URLs with embedded user:pass credentials"
+
+  # -- Credit card numbers ----------------------------------------------------
+  - name: credit_card_detection
+    type: pattern
+    pattern: '(?<!\d)(?:4[0-9]{3}|5[1-5][0-9]{2}|2(?:2[2-9][1-9]|[3-6][0-9]{2}|7[01][0-9]|720)|3[47][0-9]{2}|6(?:011|5[0-9]{2}|4[4-9][0-9]))(?:[\s\-]?[0-9]{4}){2}[\s\-]?[0-9]{1,4}(?!\d)'
+    action: mask
+    severity: critical
+    description: "Detects credit card numbers (Visa, MasterCard, Amex, Discover)"
+    options:
+      luhn_validate: true
+
+  # -- US Social Security Number ----------------------------------------------
+  - name: ssn_detection
+    type: pattern
+    pattern: '(?<!\d)(?!000|666|9\d{2})[0-9]{3}-(?!00)[0-9]{2}-(?!0000)[0-9]{4}(?!\d)'
+    action: mask
+    severity: critical
+    description: "Detects US Social Security Numbers (AAA-GG-SSSS format)"
+
+  # -- Korean Resident Registration Number ------------------------------------
+  - name: korean_rrn_detection
+    type: pattern
+    pattern: '(?<!\d)(?:[0-9]{2})(?:0[1-9]|1[0-2])(?:0[1-9]|[12][0-9]|3[01])-[1-8][0-9]{6}(?!\d)'
+    action: mask
+    severity: critical
+    description: "Detects Korean Resident Registration Numbers (주민등록번호, YYMMDD-GNNNNNN)"
+
+  # -- Korean mobile phone numbers --------------------------------------------
+  - name: korean_phone_detection
+    type: pattern
+    pattern: '(?<!\d)(?:(?:\+82[\s\-]?(?:10|1[1-9]))|01[016789])[\s\-]?[0-9]{3,4}[\s\-]?[0-9]{4}(?!\d)'
+    action: mask
+    severity: high
+    description: "Detects Korean mobile phone numbers (010/011/016/017/018/019, +82 prefix)"
+
+  # -- Korean landline numbers ------------------------------------------------
+  - name: korean_landline_detection
+    type: pattern
+    pattern: '(?<!\d)(?:(?:\+82[\s\-]?2)|0(?:2|[3-6][1-4]|70))[\s\-]?[0-9]{3,4}[\s\-]?[0-9]{4}(?!\d)'
+    action: mask
+    severity: high
+    description: "Detects Korean landline numbers (02 Seoul, 031-064 regional, 070 VoIP)"
+
+  # -- International phone numbers (general) ----------------------------------
+  - name: international_phone_detection
+    type: pattern
+    pattern: '(?<!\d)\+[1-9][0-9]{0,2}[\s\-.]?(?:\(?[0-9]{1,4}\)?[\s\-.]?)?[0-9]{2,4}[\s\-.]?[0-9]{2,4}[\s\-.]?[0-9]{2,4}(?!\d)'
+    action: mask
+    severity: high
+    description: "Detects international phone numbers (+CC format)"
+
+  # -- US phone numbers -------------------------------------------------------
+  - name: us_phone_detection
+    type: pattern
+    pattern: '(?<!\d)(?:\([2-9][0-9]{2}\)[\s\-.]?[0-9]{3}[\s\-.]?[0-9]{4}|[2-9][0-9]{2}[\s\-.][0-9]{3}[\s\-.][0-9]{4})(?!\d)'
+    action: mask
+    severity: high
+    description: "Detects US phone numbers ((xxx) xxx-xxxx, xxx-xxx-xxxx)"
+
+  # -- IPv4 addresses ---------------------------------------------------------
+  - name: ipv4_detection
+    type: pattern
+    pattern: '(?<!\d)(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?!\d)'
+    action: mask
+    severity: medium
+    description: "Detects IPv4 addresses with strict octet validation (0-255)"
+
+  # -- API keys: OpenAI -------------------------------------------------------
+  - name: openai_key_detection
+    type: pattern
+    pattern: 'sk-(?:proj-)?[A-Za-z0-9_\-]{20,}'
+    action: mask
+    severity: critical
+    description: "Detects OpenAI API keys (sk-... / sk-proj-...)"
+
+  # -- API keys: AWS Access Key ID --------------------------------------------
+  - name: aws_access_key_detection
+    type: pattern
+    pattern: '(?<![A-Z0-9])AKIA[0-9A-Z]{16}(?![A-Z0-9])'
+    action: mask
+    severity: critical
+    description: "Detects AWS Access Key IDs (AKIA...)"
+
+  # -- API keys: AWS Secret Access Key ----------------------------------------
+  - name: aws_secret_key_detection
+    type: pattern
+    pattern: '(?i)(?:aws_secret_access_key|aws_secret)\s*[=:]\s*[A-Za-z0-9/+=]{40}'
+    action: mask
+    severity: critical
+    description: "Detects AWS Secret Access Keys in config assignments"
+
+  # -- API keys: GitHub PAT ---------------------------------------------------
+  - name: github_token_detection
+    type: pattern
+    pattern: '(?:ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9_]{36,}'
+    action: mask
+    severity: critical
+    description: "Detects GitHub personal access tokens (ghp_, gho_, ghu_, ghs_, ghr_)"
+
+  # -- API keys: Slack --------------------------------------------------------
+  - name: slack_token_detection
+    type: pattern
+    pattern: 'xox[bpsar]-[A-Za-z0-9\-]{10,}'
+    action: mask
+    severity: critical
+    description: "Detects Slack API tokens (xoxb-, xoxp-, xoxs-, xoxa-, xoxr-)"
+
+  # -- API keys: Bearer/Authorization ----------------------------------------
+  - name: bearer_token_detection
+    type: pattern
+    pattern: '(?i)(?:bearer|authorization)\s+[A-Za-z0-9\-._~+/]+=*'
+    action: mask
+    severity: high
+    description: "Detects Bearer/Authorization tokens in headers"
+
+  # -- API keys: Generic secret assignment ------------------------------------
+  - name: generic_secret_detection
+    type: pattern
+    pattern: '(?i)(?:api[_\-]?key|api[_\-]?secret|secret[_\-]?key|access[_\-]?token|auth[_\-]?token|private[_\-]?key)\s*[=:]\s*[\"''][A-Za-z0-9\-._~+/=]{8,}[\"'']'
+    action: mask
+    severity: high
+    description: "Detects generic API key/secret assignments (api_key='...', secret_key='...')"
+
+  # -- Passport numbers -------------------------------------------------------
+  - name: passport_detection
+    type: pattern
+    pattern: '(?i)(?:passport\s*(?:no|number|#|num)?[\s:]*)[A-Z]{1,2}[0-9]{6,9}'
+    action: mask
+    severity: critical
+    description: "Detects passport numbers with keyword context"

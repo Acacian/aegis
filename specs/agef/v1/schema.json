@@ -1,0 +1,459 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aegis-framework.dev/agef/v1/schema.json",
+  "title": "Agent Governance Event Format (AGEF) v1",
+  "description": "Standard format for AI agent governance events. AGEF provides a structured, interoperable schema for recording policy decisions, guardrail activations, approval workflows, cost tracking, and audit evidence across any AI agent framework.",
+  "type": "object",
+  "required": ["agef_version", "event_id", "timestamp", "event_type"],
+  "properties": {
+    "agef_version": {
+      "const": "1.0.0",
+      "description": "AGEF specification version. Fixed to '1.0.0' for all events conforming to this schema revision."
+    },
+    "event_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Globally unique identifier for this event. MUST be a UUID v4 or v7."
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of when the event was created. MUST include timezone offset or use UTC (Z suffix)."
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "policy_decision",
+        "guardrail_trigger",
+        "approval_request",
+        "approval_response",
+        "cost_alert",
+        "rate_limit",
+        "audit_entry"
+      ],
+      "description": "Categorizes the governance event. Determines which optional sections are expected to be populated."
+    },
+    "agent": {
+      "type": "object",
+      "description": "Identity and lineage of the agent that triggered or is subject to this event.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the agent instance. Opaque string assigned by the host system."
+        },
+        "name": {
+          "type": "string",
+          "description": "Human-readable display name of the agent."
+        },
+        "framework": {
+          "type": "string",
+          "description": "Name of the AI agent framework powering this agent.",
+          "examples": ["langchain", "crewai", "openai", "anthropic", "autogen", "custom"]
+        },
+        "model": {
+          "type": "string",
+          "description": "Identifier of the LLM model used by this agent.",
+          "examples": ["gpt-4o", "claude-sonnet-4-20250514", "gemini-1.5-pro"]
+        },
+        "parent_agent_id": {
+          "type": ["string", "null"],
+          "description": "Identifier of the agent that delegated work to this agent. Null or absent for root agents."
+        },
+        "chain_id": {
+          "type": "string",
+          "description": "Shared identifier linking all agents in a single delegation chain. Enables tracing from root orchestrator to leaf worker."
+        },
+        "chain_depth": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Zero-based depth of this agent in the delegation chain. Root agent is 0, its direct delegate is 1, and so on."
+        }
+      },
+      "additionalProperties": false
+    },
+    "action": {
+      "type": "object",
+      "description": "The operation the agent intends to perform or has performed. Present on policy_decision and audit_entry events.",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Category of the operation. Should use a consistent vocabulary within a deployment.",
+          "examples": ["api_call", "file_write", "file_read", "db_query", "db_write", "shell_exec", "http_request", "email_send", "tool_call", "code_execution"]
+        },
+        "target": {
+          "type": "string",
+          "description": "The system, resource, or endpoint the action is directed at.",
+          "examples": ["salesforce", "stripe", "postgres://prod", "/etc/passwd", "https://api.example.com/v1/users"]
+        },
+        "params": {
+          "type": "object",
+          "description": "Arbitrary key-value parameters of the action. Contents are domain-specific. Sensitive values SHOULD be redacted before recording.",
+          "additionalProperties": true
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable summary of what the action does and why."
+        }
+      },
+      "additionalProperties": false
+    },
+    "decision": {
+      "type": "object",
+      "description": "The governance decision rendered for an action. Present on policy_decision events.",
+      "required": ["outcome"],
+      "properties": {
+        "outcome": {
+          "type": "string",
+          "enum": ["allowed", "blocked", "masked", "warned", "escalated"],
+          "description": "The disposition of the governance evaluation. 'allowed' permits execution, 'blocked' prevents it, 'masked' permits with redacted data, 'warned' permits with advisory logged, 'escalated' defers to human approval."
+        },
+        "risk_level": {
+          "type": "string",
+          "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"],
+          "description": "Assessed risk level of the action. Maps to RiskLevel enum in the Aegis reference implementation."
+        },
+        "rule": {
+          "type": "string",
+          "description": "Name or identifier of the policy rule that matched. Empty string if no rule matched and defaults were applied."
+        },
+        "reason": {
+          "type": "string",
+          "description": "Human-readable explanation of why this decision was made."
+        },
+        "approval_required": {
+          "type": "boolean",
+          "description": "Whether the action requires explicit human approval before execution."
+        }
+      },
+      "additionalProperties": false
+    },
+    "guardrail": {
+      "type": "object",
+      "description": "Details of a guardrail activation. Present on guardrail_trigger events.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Identifier of the guardrail that triggered."
+        },
+        "type": {
+          "type": "string",
+          "enum": ["pii_detection", "injection_detection", "toxicity_detection", "topic_restriction", "regex_pattern", "semantic_similarity", "custom"],
+          "description": "Category of the guardrail. Determines interpretation of the details and matches fields."
+        },
+        "action": {
+          "type": "string",
+          "enum": ["blocked", "masked", "warned", "allowed"],
+          "description": "The disposition applied by this guardrail."
+        },
+        "details": {
+          "type": "string",
+          "description": "Human-readable summary of what was detected and what action was taken."
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["low", "medium", "high", "critical"],
+          "description": "Severity of the guardrail finding."
+        },
+        "input_content_hash": {
+          "type": "string",
+          "description": "SHA-256 hash of the original input content. Enables correlation without storing sensitive data."
+        },
+        "masked_content": {
+          "type": ["string", "null"],
+          "description": "The content after masking transformations, when action is 'masked'. Null if no masking was applied."
+        },
+        "matches": {
+          "type": "array",
+          "description": "Individual findings detected by this guardrail.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "description": "Category of the match.",
+                "examples": ["email", "phone", "ssn", "credit_card", "api_key", "sql_injection", "prompt_injection"]
+              },
+              "value_hash": {
+                "type": "string",
+                "description": "SHA-256 hash of the matched value. Actual value MUST NOT be stored for PII matches."
+              },
+              "location": {
+                "type": "object",
+                "description": "Position of the match within the content.",
+                "properties": {
+                  "start": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Start character offset (inclusive)."
+                  },
+                  "end": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "End character offset (exclusive)."
+                  }
+                },
+                "additionalProperties": false
+              },
+              "confidence": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0,
+                "description": "Confidence score of the detection, from 0.0 (lowest) to 1.0 (highest)."
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "approval": {
+      "type": "object",
+      "description": "Human approval workflow data. Present on approval_request and approval_response events.",
+      "properties": {
+        "request_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique identifier linking an approval request to its response."
+        },
+        "requested_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when approval was requested."
+        },
+        "responded_at": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "description": "Timestamp when the human responded. Null on approval_request events."
+        },
+        "approver": {
+          "type": ["string", "null"],
+          "description": "Identity of the human approver. Null on approval_request events."
+        },
+        "decision": {
+          "type": ["string", "null"],
+          "enum": ["approved", "denied", "timeout", null],
+          "description": "The human's decision. Null on approval_request events."
+        },
+        "reason": {
+          "type": ["string", "null"],
+          "description": "Optional reason provided by the approver."
+        },
+        "timeout_seconds": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Maximum time (in seconds) allowed for the human to respond before auto-deny."
+        }
+      },
+      "additionalProperties": false
+    },
+    "cost": {
+      "type": "object",
+      "description": "Token usage and cost tracking data. Present on cost_alert events and optionally on any event involving LLM calls.",
+      "properties": {
+        "model": {
+          "type": "string",
+          "description": "Identifier of the LLM model that generated the cost.",
+          "examples": ["gpt-4o", "claude-sonnet-4-20250514", "gpt-4o-mini"]
+        },
+        "input_tokens": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of input (prompt) tokens consumed."
+        },
+        "output_tokens": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of output (completion) tokens generated."
+        },
+        "total_tokens": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total tokens consumed (input + output). Provided for convenience."
+        },
+        "estimated_cost_usd": {
+          "type": "number",
+          "minimum": 0.0,
+          "description": "Estimated cost in USD for this specific LLM call."
+        },
+        "cumulative_cost_usd": {
+          "type": "number",
+          "minimum": 0.0,
+          "description": "Cumulative cost in USD for the current session or chain."
+        },
+        "budget_remaining_usd": {
+          "type": ["number", "null"],
+          "minimum": 0.0,
+          "description": "Remaining budget in USD after this cost. Null if no budget is configured."
+        },
+        "budget_limit_usd": {
+          "type": ["number", "null"],
+          "minimum": 0.0,
+          "description": "Total budget limit in USD for the agent or session. Null if no budget is configured."
+        },
+        "budget_utilization_pct": {
+          "type": ["number", "null"],
+          "minimum": 0.0,
+          "maximum": 100.0,
+          "description": "Percentage of budget consumed (0-100). Null if no budget is configured."
+        }
+      },
+      "additionalProperties": false
+    },
+    "rate_limit": {
+      "type": "object",
+      "description": "Rate limiting details. Present on rate_limit events.",
+      "properties": {
+        "limit_type": {
+          "type": "string",
+          "enum": ["requests_per_minute", "requests_per_hour", "tokens_per_minute", "tokens_per_hour", "cost_per_hour", "custom"],
+          "description": "The type of rate limit that was hit or is being tracked."
+        },
+        "limit_value": {
+          "type": "number",
+          "description": "The configured limit threshold."
+        },
+        "current_value": {
+          "type": "number",
+          "description": "The current usage value at the time of the event."
+        },
+        "window_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Duration of the rate limit window in seconds."
+        },
+        "action_taken": {
+          "type": "string",
+          "enum": ["throttled", "queued", "blocked", "warned"],
+          "description": "What action was taken in response to the rate limit."
+        },
+        "retry_after_seconds": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "Recommended wait time in seconds before retrying. Null if not applicable."
+        }
+      },
+      "additionalProperties": false
+    },
+    "evidence": {
+      "type": "object",
+      "description": "Tamper-evidence fields that establish integrity and ordering of the event stream. Enables hash-chain verification of the audit trail.",
+      "properties": {
+        "hash": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$",
+          "description": "SHA-256 hash of the canonical form of this event (excluding the evidence.hash field itself). Format: 'sha256:<hex>'."
+        },
+        "previous_hash": {
+          "type": ["string", "null"],
+          "pattern": "^sha256:[a-f0-9]{64}$",
+          "description": "SHA-256 hash of the immediately preceding event in this session's chain. Null for the first event in a session. Format: 'sha256:<hex>'."
+        },
+        "session_id": {
+          "type": "string",
+          "description": "Identifier for the governance session. All events in one agent execution session share this ID."
+        },
+        "sequence_number": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Monotonically increasing counter within a session. Starts at 0 for the first event."
+        },
+        "signature": {
+          "type": ["string", "null"],
+          "description": "Optional cryptographic signature of the event hash. Format is implementation-defined (e.g., 'ed25519:<base64>')."
+        }
+      },
+      "additionalProperties": false
+    },
+    "context": {
+      "type": "object",
+      "description": "Deployment and environment context for the event.",
+      "properties": {
+        "environment": {
+          "type": "string",
+          "description": "Deployment environment identifier.",
+          "examples": ["production", "staging", "development", "testing"]
+        },
+        "service": {
+          "type": "string",
+          "description": "Name of the service or application hosting the agent."
+        },
+        "deployment_id": {
+          "type": "string",
+          "description": "Identifier for the specific deployment or release."
+        },
+        "trace_id": {
+          "type": "string",
+          "description": "OpenTelemetry-compatible trace ID for correlation with distributed tracing."
+        },
+        "span_id": {
+          "type": "string",
+          "description": "OpenTelemetry-compatible span ID for correlation with distributed tracing."
+        }
+      },
+      "additionalProperties": true
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Arbitrary key-value pairs for implementation-specific data. No schema constraints are imposed on the contents.",
+      "additionalProperties": true
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "event_type": { "const": "policy_decision" } }
+      },
+      "then": {
+        "required": ["action", "decision"],
+        "description": "Policy decision events MUST include both the action that was evaluated and the decision rendered."
+      }
+    },
+    {
+      "if": {
+        "properties": { "event_type": { "const": "guardrail_trigger" } }
+      },
+      "then": {
+        "required": ["guardrail"],
+        "description": "Guardrail trigger events MUST include the guardrail details."
+      }
+    },
+    {
+      "if": {
+        "properties": { "event_type": { "const": "approval_request" } }
+      },
+      "then": {
+        "required": ["action", "approval"],
+        "description": "Approval request events MUST include the action requiring approval and the approval workflow data."
+      }
+    },
+    {
+      "if": {
+        "properties": { "event_type": { "const": "approval_response" } }
+      },
+      "then": {
+        "required": ["approval"],
+        "description": "Approval response events MUST include the approval workflow data with the human's decision."
+      }
+    },
+    {
+      "if": {
+        "properties": { "event_type": { "const": "cost_alert" } }
+      },
+      "then": {
+        "required": ["cost"],
+        "description": "Cost alert events MUST include the cost tracking data."
+      }
+    },
+    {
+      "if": {
+        "properties": { "event_type": { "const": "rate_limit" } }
+      },
+      "then": {
+        "required": ["rate_limit"],
+        "description": "Rate limit events MUST include the rate limiting details."
+      }
+    }
+  ],
+  "additionalProperties": false
+}
