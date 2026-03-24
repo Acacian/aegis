@@ -4076,3 +4076,30 @@ footer code {
   width: 16px;
   height: 16px;
 }
+
+/* PII Scanner & Injection Detector preset buttons */
+.pii-sample-btn.active,
+.injection-preset-btn.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.pii-sample-btn:hover,
+.injection-preset-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.pii-sample-btn.active:hover,
+.injection-preset-btn.active:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+/* Responsive: PII toggles single column on mobile */
+@media (max-width: 768px) {
+  #pii-toggles {
+    grid-template-columns: 1fr !important;
+  }
+}

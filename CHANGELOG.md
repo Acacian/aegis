@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-03-24
+
+### Added
+
+- **`aegis.init()` unified entry point** — single function call activates all governance (guardrails, policy, audit, cost tracking, auto-patching)
+- **Runtime Guardrails Engine** — pluggable guardrail pipeline with block/mask/warn/log actions
+- **PII Detection & Masking** — 12 categories (email, credit card, SSN, Korean RRN, phone numbers, API keys, IP addresses, passport, URL credentials)
+- **Prompt Injection Detection** — 10 attack categories, 85+ compiled patterns, multi-language support (Korean, Chinese, Japanese)
+- **Rule Pack Ecosystem** — YAML-based community-extensible rule packs with built-in @aegis/pii-detection and @aegis/prompt-injection
+- **Zero-Code Integration** — `aegis.patch_openai()`, `aegis.patch_anthropic()` monkey-patching and `@guard` decorator
+- **AGEF v1** (Agent Governance Event Format) — JSON Schema standard for AI governance events
+- **AGP v1** (Agent Governance Protocol) — protocol specification complementing MCP for AI governance
+- **Unified YAML configuration** — `aegis.yaml` single config file for all features
+- **Redis audit backend** — production audit logging via Redis
+- **PostgreSQL audit backend** — production audit logging via asyncpg
+- **Redis rate limiter** — distributed rate limiting via Redis
+
 ## [0.3.0] - 2026-03-24
 
 ### Added
@@ -142,7 +159,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial public release on PyPI
 
-[Unreleased]: https://github.com/Acacian/aegis/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/Acacian/aegis/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/Acacian/aegis/compare/v0.3.0...v0.4.0
+[0.3.0]: https://github.com/Acacian/aegis/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/Acacian/aegis/compare/v0.1.6...v0.2.0
 [0.1.6]: https://github.com/Acacian/aegis/compare/v0.1.4...v0.1.6
 [0.1.4]: https://github.com/Acacian/aegis/compare/v0.1.3...v0.1.4
