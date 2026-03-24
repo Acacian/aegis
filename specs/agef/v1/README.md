@@ -216,4 +216,4 @@ Implementations SHOULD validate events against this schema before emitting or pe
 
 ## Reference Implementation
 
-[Aegis](https://github.com/Acacian/aegis) is the reference implementation of AGEF. Aegis emits AGEF-compliant events from its policy engine, guardrail pipeline, approval workflows, and cost tracker.
+[Aegis](https://github.com/Acacian/aegis) is the reference implementation of AGEF. Aegis can emit AGEF-formatted events from its policy engine, guardrail pipeline, approval workflows, and cost tracker via the `aegis.export.agef` module.

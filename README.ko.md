@@ -16,8 +16,6 @@
   <a href="https://pypi.org/project/agent-aegis/"><img src="https://img.shields.io/pypi/pyversions/agent-aegis?cacheSeconds=3600" alt="Python"></a>
   <a href="https://github.com/Acacian/aegis/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License"></a>
   <a href="https://acacian.github.io/aegis/"><img src="https://img.shields.io/badge/docs-acacian.github.io%2Faegis-blue" alt="Docs"></a>
-  <a href="https://pypi.org/project/agent-aegis/"><img src="https://img.shields.io/pypi/dm/agent-aegis?label=downloads&color=brightgreen" alt="Downloads"></a>
-  <a href="https://github.com/Acacian/aegis"><img src="https://img.shields.io/github/stars/Acacian/aegis?style=social" alt="GitHub stars"></a>
   <br/>
   <a href="https://pypi.org/project/langchain-aegis/"><img src="https://img.shields.io/pypi/v/langchain-aegis?label=langchain-aegis&color=blue&cacheSeconds=3600" alt="langchain-aegis"></a>
   <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-2540%2B_passed-brightgreen" alt="Tests"></a>
@@ -322,43 +320,80 @@ aegis audit
 
 ## 주요 기능
 
-| 기능 | 설명 |
-|------|------|
+**핵심** — 바로 사용 가능:
+
+| | |
+|---|---|
 | **한 줄 활성화** | `aegis.init()` — PII 마스킹, 인젝션 차단, 정책, 감사, 비용 추적 일괄 활성화 |
 | **제로-코드 통합** | `aegis.patch_openai()`, `aegis.patch_anthropic()`, `@guard` 데코레이터 |
 | **런타임 가드레일** | PII 탐지 (12개 카테고리) + 프롬프트 인젝션 차단 (10개 카테고리, 85+ 패턴, 다국어) |
-| **YAML 정책** | 글로브 매칭, 첫 매치 우선, JSON Schema 검증 |
-| **스마트 조건** | `time_after`, `time_before`, `weekdays`, `param_gt/lt/eq/contains/matches` |
-| **시맨틱 조건** | 2단계 아키텍처: 내장 키워드 매칭 + 플러그형 LLM 평가기 프로토콜 |
+| **YAML 정책** | 글로브 매칭, 첫 매치 우선, 스마트 조건 (`time_after`, `param_gt`, `weekdays` 등) |
 | **4단계 위험 모델** | `low` / `medium` / `high` / `critical` (규칙별 오버라이드) |
 | **승인 게이트** | CLI, Slack, Discord, Telegram, 이메일, 웹훅, 또는 커스텀 |
-| **감사 추적** | SQLite, JSONL 내보내기, Python `logging`, 또는 외부 SIEM 웹훅 |
-| **행동 이상 탐지** | 에이전트별 행동 프로필 학습, 속도 급증/버스트/새로운 액션/비정상 타겟 감지 |
-| **컴플라이언스 리포트** | 감사 로그에서 SOC2/GDPR/거버넌스 보고서 생성, 점수화 |
-| **정책 비교 & 영향 분석** | 정책 비교, 액션 리플레이, 규칙 변경 영향도 분석 |
-| **에이전트 신뢰 체인** | 계층적 에이전트 ID, 위임(교집합 의미론), 연쇄 폐기 |
-| **`aegis scan`** | AST 기반 정적 분석 -- 코드베이스에서 거버넌스 미적용 AI 도구 호출 탐지 |
-| **`aegis score`** | 거버넌스 점수 (0-100) + shields.io 배지 생성 |
-| **REST API 서버** | `aegis serve policy.yaml` -- 모든 언어에서 HTTP로 거버넌스 |
-| **MCP 어댑터** | Model Context Protocol 도구 호출 거버넌스 |
-| **MCP 공급망 보안** | 툴 포이즈닝 탐지 (10 패턴), 러그풀 감지 (SHA-256), 인자 새니타이징, 신뢰 점수 (L0-L4) |
-| **MCP 취약점 DB** | 8개 빌트인 CVE, 버전 매칭, 자동 차단 권고 |
-| **MCP SBOM 생성** | CycloneDX-inspired BOM, 도구 해시, 취약점 오버레이, JSON 내보내기 |
+| **감사 추적** | SQLite 자동 로깅. 내보내기: JSONL, 웹훅, CLI/API 쿼리 |
+| **7개 어댑터** | LangChain, CrewAI, OpenAI Agents, Anthropic, MCP, Playwright, httpx |
+| **REST API + 대시보드** | `aegis serve policy.yaml` — 웹 UI + KPI, 감사 로그, 컴플라이언스 리포트 |
+
+<details>
+<summary><strong>엔터프라이즈</strong> — 프로덕션급 거버넌스</summary>
+
+| | |
+|---|---|
+| **암호화 감사 체인** | SHA-256/SHA3-256 해시 연결 변조 방지 추적 (EU AI Act Art.12, SOC2 CC7.2 증거 요건 대응) |
+| **규제 매퍼** | EU AI Act, NIST AI RMF, SOC2, ISO 42001 — 갭 분석 + 증거 |
+| **행동 이상 탐지** | 에이전트별 프로파일링, 관측 행동 기반 자동 정책 생성 |
+| **RBAC** | 12개 권한, 5단계 역할, 스레드 안전 AccessController |
+| **멀티 테넌트 격리** | TenantContext, 쿼터 강제, 데이터 분리 |
+| **정책 버전 관리** | Git 스타일 commit, diff, rollback, tagging |
+| **AGEF 사양** | AI 거버넌스를 위한 표준 JSON 이벤트 포맷 (7개 이벤트 타입, 해시 연결 증거 체인) |
+| **AGP 사양** | MCP를 보완하는 거버넌스 프로토콜 — 7개 메시지 타입, 3단계 적합성 레벨 |
+
+</details>
+
+<details>
+<summary><strong>MCP 공급망 보안</strong></summary>
+
+| | |
+|---|---|
+| **툴 포이즈닝 탐지** | 10개 정규식 패턴, 유니코드 정규화, 스키마 재귀 검사 |
+| **러그풀 감지** | SHA-256 해시 고정, 정의 변경 알림 |
+| **인자 새니타이징** | 경로 탐색, 명령 인젝션, 널 바이트 감지 |
+| **신뢰 점수 (L0-L4)** | 스캔 + 고정 + 감사 상태 기반 자동 신뢰 레벨 |
+| **취약점 DB** | 8개 빌트인 CVE, 버전 매칭, 자동 차단 |
+| **SBOM 생성** | CycloneDX 스타일 BOM, 취약점 오버레이 |
+| **세션 리플레이** | 에이전트 세션 녹화/재생 + 20개 패턴 소급 스캔 |
+
+</details>
+
+<details>
+<summary><strong>멀티 에이전트 거버넌스</strong></summary>
+
+| | |
+|---|---|
 | **비용 차단기** | 17개 모델 가격표, 루프 탐지, 계층적 예산, 스레드 안전 |
 | **크로스-프레임워크 비용 추적** | LangChain + OpenAI + Anthropic + Google → 통합 CostTracker |
 | **멀티에이전트 비용 귀속** | 위임 트리, 서브트리 비용 롤업, 귀속 리포트 |
-| **A2A 통신 거버넌스** | 케이퍼빌리티 기반 메시징, PII/크레덴셜 자동 삭제, 레이트 리밋, 감사 로그 |
+| **A2A 통신 거버넌스** | 케이퍼빌리티 기반 메시징, PII/크레덴셜 자동 삭제, 레이트 리밋 |
 | **정책 Git 통합** | Diff 포맷팅, 영향 분석, 드리프트 감지, YAML 내보내기 |
 | **OpenTelemetry 내보내기** | 정책/비용/이상/MCP 이벤트 → OTel 스팬, 인메모리 폴백 |
-| **AGEF 사양** | AI 거버넌스를 위한 표준 JSON 이벤트 포맷 (7개 이벤트 타입, 해시 연결 증거 체인) |
-| **AGP 사양** | MCP를 보완하는 거버넌스 프로토콜 — 7개 메시지 타입, 3단계 적합성 레벨 |
-| **세션 리플레이** | 에이전트 세션 녹화/재생 + 20개 패턴 소급 보안 스캔 |
-| **재시도 & 롤백** | 지수 백오프, 에러 필터, 실패 시 자동 롤백 |
-| **드라이런 & 시뮬레이션** | 실행 없이 정책 테스트: `aegis simulate policy.yaml read:crm` |
-| **핫 리로드** | `runtime.update_policy(...)` -- 재시작 없이 정책 교체 |
-| **정책 병합** | `Policy.from_yaml_files("base.yaml", "prod.yaml")` -- 설정 레이어링 |
-| **런타임 훅** | `on_decision`, `on_approval`, `on_execute` 비동기 콜백 |
-| **타입 안전** | `mypy --strict` 완전 통과, `py.typed` 마커 |
+
+</details>
+
+<details>
+<summary><strong>개발자 경험</strong></summary>
+
+| | |
+|---|---|
+| **`aegis scan`** | AST 기반 미거버넌스 AI 호출 탐지 |
+| **`aegis probe`** | 정책 적대적 테스트 — 글로브 우회, 커버리지 누락, 에스컬레이션 |
+| **`aegis autopolicy`** | 자연어 → YAML (`"삭제 차단, 읽기 허용"`) |
+| **`aegis score`** | 거버넌스 점수 (0-100) + shields.io 배지 |
+| **정책 SDK** | 플루언트 `PolicyBuilder` API |
+| **GitHub Action** | CI/CD 파이프라인 거버넌스 게이트 |
+| **9개 정책 템플릿** | CRM, 금융, DevOps, 의료 등 사전 제작 |
+| **[인터랙티브 플레이그라운드](https://acacian.github.io/aegis/playground/)** | 브라우저에서 바로 체험 |
+
+</details>
 
 ## 런타임 가드레일
 

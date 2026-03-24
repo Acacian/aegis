@@ -18,8 +18,6 @@
   <a href="https://pypi.org/project/agent-aegis/"><img src="https://img.shields.io/pypi/pyversions/agent-aegis?cacheSeconds=3600" alt="Python"></a>
   <a href="https://github.com/Acacian/aegis/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License"></a>
   <a href="https://acacian.github.io/aegis/"><img src="https://img.shields.io/badge/docs-acacian.github.io%2Faegis-blue" alt="Docs"></a>
-  <a href="https://pypi.org/project/agent-aegis/"><img src="https://img.shields.io/pypi/dm/agent-aegis?label=downloads&color=brightgreen" alt="Downloads"></a>
-  <a href="https://github.com/Acacian/aegis"><img src="https://img.shields.io/github/stars/Acacian/aegis?style=social" alt="GitHub stars"></a>
   <br/>
   <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-2540%2B_passed-brightgreen" alt="Tests"></a>
   <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/coverage-92%25-brightgreen" alt="Coverage"></a>
@@ -337,11 +335,12 @@ aegis audit
 | **7 adapters** | LangChain, CrewAI, OpenAI Agents, Anthropic, MCP, Playwright, httpx |
 | **REST API + Dashboard** | `aegis serve policy.yaml` — web UI with KPIs, audit log, compliance reports |
 
-**Enterprise** — production-grade governance:
+<details>
+<summary><strong>Enterprise</strong> — production-grade governance</summary>
 
 | | |
 |---|---|
-| **Cryptographic audit chain** | SHA-256/SHA3-256 hash-linked tamper-evident trail (EU AI Act Art.12, SOC2 CC7.2) |
+| **Cryptographic audit chain** | SHA-256/SHA3-256 hash-linked tamper-evident trail (maps to EU AI Act Art.12, SOC2 CC7.2 evidence requirements) |
 | **Regulatory mapper** | EU AI Act, NIST AI RMF, SOC2, ISO 42001, OWASP Agentic Top 10 — gap analysis + evidence |
 | **Behavioral anomaly detection** | Per-agent profiling, auto-policy generation from observed behavior |
 | **RBAC** | 12 permissions, 5 hierarchical roles, thread-safe AccessController |
@@ -350,7 +349,10 @@ aegis audit
 | **AGEF spec** | Standardized JSON event format for AI governance (7 event types, hash-linked evidence chain) |
 | **AGP spec** | Governance protocol complementing MCP — 7 message types, 3 conformance levels |
 
-**MCP Supply Chain Security** — defense-in-depth for MCP tool calls:
+</details>
+
+<details>
+<summary><strong>MCP Supply Chain Security</strong> — defense-in-depth for MCP tool calls</summary>
 
 | | |
 |---|---|
@@ -362,7 +364,10 @@ aegis audit
 | **SBOM generation** | CycloneDX-inspired bill of materials with vulnerability overlay |
 | **Session replay** | Record/replay agent sessions with retroactive security scanning (20 patterns) |
 
-**Multi-Agent Governance:**
+</details>
+
+<details>
+<summary><strong>Multi-Agent Governance</strong></summary>
 
 | | |
 |---|---|
@@ -373,7 +378,10 @@ aegis audit
 | **Policy-as-code Git integration** | Diff formatting, impact analysis, drift detection, YAML export |
 | **OpenTelemetry export** | Policy/cost/anomaly/MCP events → OTel spans, in-memory fallback |
 
-**Developer experience:**
+</details>
+
+<details>
+<summary><strong>Developer Experience</strong></summary>
 
 | | |
 |---|---|
@@ -385,6 +393,8 @@ aegis audit
 | **GitHub Action** | CI/CD governance gates in your pipeline |
 | **9 policy templates** | Pre-built for CRM, finance, DevOps, healthcare, and more |
 | **[Interactive playground](https://acacian.github.io/aegis/playground/)** | Try in browser — no install needed |
+
+</details>
 
 ## Runtime Guardrails
 
@@ -1006,7 +1016,7 @@ with TenantContext("acme-corp"):
 
 ### Cryptographic Audit Chain
 
-Tamper-evident audit trail with hash-linked entries. Meets EU AI Act Article 12 and SOC2 CC7.2 requirements.
+Tamper-evident audit trail with hash-linked entries. Provides evidence for EU AI Act Article 12 logging obligations and SOC2 CC7.2 monitoring controls.
 
 ```bash
 aegis audit --verify              # Verify chain integrity
