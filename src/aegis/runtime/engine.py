@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import uuid
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
@@ -129,55 +130,80 @@ class Runtime:
         """
         self.policy = policy
 
-    async def execute(self, plan: ExecutionPlan, *, dry_run: bool = False) -> list[Result]:
+    async def execute(
+        self,
+        plan: ExecutionPlan,
+        *,
+        dry_run: bool = False,
+        parallel: bool = False,
+    ) -> list[Result]:
         """Execute a plan through the full governance pipeline.
-
-        Actions are executed sequentially. If an action fails,
-        all remaining actions are marked as skipped (fail-fast).
 
         Args:
             plan: The execution plan to run.
             dry_run: If True, evaluate policy and approval requirements
                 but do not actually execute actions. Returns results with
                 predicted statuses. Useful for testing policies.
+            parallel: If True, execute all actions concurrently via
+                ``asyncio.gather``.  Actions are assumed independent;
+                fail-fast is disabled in parallel mode.
         """
-        results: list[Result] = []
-
         if not dry_run:
             await self.executor.setup()
         try:
-            for idx, decision in enumerate(plan.decisions):
-                result = await self._execute_one(decision, dry_run=dry_run)
-                results.append(result)
-
-                if self.hooks.on_execute:
-                    await self.hooks.on_execute(result)
-
-                # Fail-fast: skip remaining on non-skip failure
-                if (
-                    not dry_run
-                    and not result.ok
-                    and result.status
-                    not in (
-                        ResultStatus.BLOCKED,
-                        ResultStatus.SKIPPED,
-                    )
-                ):
-                    for remaining in plan.decisions[idx + 1 :]:
-                        skip = Result(
-                            action=remaining.action,
-                            status=ResultStatus.SKIPPED,
-                            error="Skipped due to prior failure",
-                            completed_at=datetime.now(UTC),
-                        )
-                        results.append(skip)
-                        self.audit.log(self.session_id, remaining, result=skip)
-                    break
+            if parallel:
+                return await self._execute_parallel(plan, dry_run=dry_run)
+            return await self._execute_sequential(plan, dry_run=dry_run)
         finally:
             if not dry_run:
                 await self.executor.teardown()
 
+    async def _execute_sequential(
+        self, plan: ExecutionPlan, *, dry_run: bool = False
+    ) -> list[Result]:
+        """Execute actions one by one with fail-fast semantics."""
+        results: list[Result] = []
+        for idx, decision in enumerate(plan.decisions):
+            result = await self._execute_one(decision, dry_run=dry_run)
+            results.append(result)
+
+            if self.hooks.on_execute:
+                await self.hooks.on_execute(result)
+
+            # Fail-fast: skip remaining on non-skip failure
+            if (
+                not dry_run
+                and not result.ok
+                and result.status
+                not in (
+                    ResultStatus.BLOCKED,
+                    ResultStatus.SKIPPED,
+                )
+            ):
+                for remaining in plan.decisions[idx + 1 :]:
+                    skip = Result(
+                        action=remaining.action,
+                        status=ResultStatus.SKIPPED,
+                        error="Skipped due to prior failure",
+                        completed_at=datetime.now(UTC),
+                    )
+                    results.append(skip)
+                    self.audit.log(self.session_id, remaining, result=skip)
+                break
         return results
+
+    async def _execute_parallel(
+        self, plan: ExecutionPlan, *, dry_run: bool = False
+    ) -> list[Result]:
+        """Execute all actions concurrently via ``asyncio.gather``."""
+
+        async def _run(decision: PolicyDecision) -> Result:
+            result = await self._execute_one(decision, dry_run=dry_run)
+            if self.hooks.on_execute:
+                await self.hooks.on_execute(result)
+            return result
+
+        return list(await asyncio.gather(*[_run(d) for d in plan.decisions]))
 
     async def run_one(self, action: Action, *, dry_run: bool = False) -> Result:
         """Convenience: evaluate + execute a single action.

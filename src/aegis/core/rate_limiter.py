@@ -9,12 +9,27 @@ Thread-safe: all bucket mutations are guarded by per-key locks.
 
 from __future__ import annotations
 
+import bisect
 import fnmatch
+import re as _re
 import threading
 import time
 from dataclasses import dataclass
 
 from aegis.core.action import Action
+
+# Module-level glob → regex cache to avoid recompilation on every matches() call.
+_GLOB_RE_CACHE: dict[str, _re.Pattern[str]] = {}
+
+
+def _glob_to_re(pattern: str) -> _re.Pattern[str]:
+    """Return a compiled regex for *pattern*, caching the result."""
+    compiled = _GLOB_RE_CACHE.get(pattern)
+    if compiled is None:
+        compiled = _re.compile(fnmatch.translate(pattern))
+        _GLOB_RE_CACHE[pattern] = compiled
+    return compiled
+
 
 # ---------------------------------------------------------------------------
 # Data models
@@ -62,8 +77,9 @@ class RateLimitRule:
 
     def matches(self, action: Action) -> bool:
         """Return ``True`` when *action* matches this rule's patterns."""
-        return fnmatch.fnmatch(action.type, self.match_type) and fnmatch.fnmatch(
-            action.target, self.match_target
+        return bool(
+            _glob_to_re(self.match_type).match(action.type)
+            and _glob_to_re(self.match_target).match(action.target)
         )
 
 
@@ -132,7 +148,9 @@ class RateLimiter:
     @staticmethod
     def _prune(timestamps: list[float], window: float, now: float) -> list[float]:
         cutoff = now - window
-        return [t for t in timestamps if t > cutoff]
+        # Timestamps are appended in order; use bisect for O(log n) pruning.
+        idx = bisect.bisect_right(timestamps, cutoff)
+        return timestamps[idx:]
 
     def _matching_rule(self, action: Action) -> RateLimitRule | None:
         for rule in self._rules:
@@ -295,6 +313,8 @@ class RateLimiter:
                 lock = self._get_lock(key)
                 with lock:
                     self._buckets.pop(key, None)
+                # Clean up stale lock to prevent memory leak.
+                self._locks.pop(key, None)
         else:
             with self._global_lock:
                 self._buckets.clear()

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import fnmatch
 import re as _re
+from collections import OrderedDict
 from dataclasses import dataclass, field
 from enum import StrEnum
 from pathlib import Path
@@ -142,7 +143,7 @@ class Policy:
 
     def __post_init__(self) -> None:
         """Initialize evaluation cache (disabled by default)."""
-        self._cache: dict[tuple[str, ...], PolicyDecision] = {}
+        self._cache: OrderedDict[tuple[str, ...], PolicyDecision] = OrderedDict()
         self._cache_maxsize: int = 0
 
     def with_cache(self, maxsize: int = 256) -> Policy:
@@ -157,7 +158,7 @@ class Policy:
             maxsize: Maximum number of cached entries. Default 256.
         """
         self._cache_maxsize = maxsize
-        self._cache = {}
+        self._cache = OrderedDict()
         return self
 
     def clear_cache(self) -> None:
@@ -174,6 +175,7 @@ class Policy:
             key = (action.type, action.target, action.agent_id)
             cached = self._cache.get(key)
             if cached is not None:
+                self._cache.move_to_end(key)  # LRU: mark as recently used
                 return PolicyDecision(
                     action=action,
                     risk_level=cached.risk_level,
@@ -181,11 +183,9 @@ class Policy:
                     matched_rule=cached.matched_rule,
                 )
             decision = self._evaluate_uncached(action)
-            if self._should_cache(decision):
+            if self._is_cacheable(action):
                 if len(self._cache) >= self._cache_maxsize:
-                    # Evict oldest entry (FIFO)
-                    oldest = next(iter(self._cache))
-                    del self._cache[oldest]
+                    self._cache.popitem(last=False)  # LRU: evict least-recently-used
                 self._cache[key] = decision
             return decision
 
@@ -209,19 +209,23 @@ class Policy:
             matched_rule="<default>",
         )
 
-    def _should_cache(self, decision: PolicyDecision) -> bool:
-        """Determine whether a decision is safe to cache.
+    def _is_cacheable(self, action: Action) -> bool:
+        """Determine whether evaluation results for *action* are safe to cache.
 
-        Only caches results from rules without conditions, since
-        time-based or param-based conditions make results
-        non-deterministic for the same cache key.
+        Returns ``False`` if **any** rule with conditions has glob patterns
+        that match this action.  This prevents the scenario where a cached
+        unconditional match shadows a conditional rule that would match
+        with different params or at a different time.
         """
         for rule in self.rules:
-            rule_name = rule.name or f"{rule.match_type}@{rule.match_target}"
-            if rule_name == decision.matched_rule:
-                return not rule.conditions
-        # Default rule has no conditions
-        return decision.matched_rule == "<default>"
+            if (
+                rule.conditions
+                and rule._re_type.match(action.type)
+                and rule._re_target.match(action.target)
+                and (rule._re_agent is None or rule._re_agent.match(action.agent_id or "*"))
+            ):
+                return False
+        return True
 
     def merge(self, other: Policy) -> Policy:
         """Merge another policy into this one.
