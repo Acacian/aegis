@@ -280,13 +280,20 @@ class TestAegisInit:
     """Aegis singleton init / get / shutdown lifecycle."""
 
     def test_init_with_no_config_works(self, monkeypatch, tmp_path: Path):
-        """init() with no arguments uses defaults when no config file is found."""
+        """init() with no arguments uses sensible defaults when no config file is found."""
         # Point CWD to an empty dir so auto-discovery finds nothing.
         monkeypatch.chdir(tmp_path)
         instance = Aegis.init()
         assert instance is not None
         assert isinstance(instance, Aegis)
-        assert instance.config.guardrails is None
+        # Sensible defaults: guardrails enabled (PII mask + injection block)
+        assert instance.config.guardrails is not None
+        assert instance.config.guardrails.pii is not None
+        assert instance.config.guardrails.pii.enabled is True
+        assert instance.config.guardrails.pii.action == "mask"
+        assert instance.config.guardrails.injection is not None
+        assert instance.config.guardrails.injection.enabled is True
+        assert instance.config.guardrails.injection.action == "block"
 
     def test_init_with_config_path(self, tmp_path: Path):
         yaml_content = """\
@@ -495,15 +502,18 @@ guardrails:
         monkeypatch.chdir(tmp_path)
 
         instance = Aegis.init(auto_discover=False)
-        # Should have default config, not the yaml content.
-        assert instance.config.guardrails is None
+        # Should use sensible defaults, not the yaml content.
+        assert instance.config.guardrails is not None
+        assert instance.config.guardrails.pii.action == "mask"  # from defaults, not yaml
 
     def test_no_config_file_uses_defaults(self, tmp_path: Path, monkeypatch):
-        """When no config file exists, defaults are used."""
+        """When no config file exists, sensible defaults are used."""
         monkeypatch.chdir(tmp_path)
         instance = Aegis.init()
-        assert instance.config.guardrails is None
-        assert instance.config.audit is None
+        # Sensible defaults enable basic protections
+        assert instance.config.guardrails is not None
+        assert instance.config.audit is not None
+        assert instance.config.audit.enabled is True
 
 
 class TestAegisConfigPriority:

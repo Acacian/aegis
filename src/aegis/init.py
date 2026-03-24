@@ -152,9 +152,12 @@ class Aegis:
             if discovered is not None:
                 logger.debug("Auto-discovered config at: %s", discovered)
                 return AegisConfig.from_yaml(discovered)
-            logger.debug("No config file discovered; using defaults")
+            logger.info(
+                "No config file discovered; using sensible defaults "
+                "(PII masking + injection blocking + audit + auto-patch)"
+            )
 
-        return AegisConfig()
+        return AegisConfig.sensible_defaults()
 
     @classmethod
     def _discover_config(cls) -> Path | None:
