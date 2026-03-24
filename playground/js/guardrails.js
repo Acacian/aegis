@@ -482,6 +482,7 @@ function injectionDetect(text, sensitivity) {
       if (m) {
         matches.push({
           category,
+          category_label: INJECTION_CATEGORY_LABELS[category] || category,
           pattern_name: pat.name,
           matched_text: m[0],
           start: m.index,
@@ -778,7 +779,7 @@ function runInitCheck() {
       html += '<div style="margin-bottom:12px"><span class="init-result-badge blocked">BLOCKED</span> <span style="font-size:12px;color:var(--text-secondary)">' + injMatches.length + ' injection pattern(s)</span></div>';
       html += '<div style="font-size:12px;margin-bottom:8px">';
       for (const m of injMatches) {
-        html += '<div style="padding:3px 0;color:#f85149">&#x26A0; <strong>' + _escapeHtml(m.category_label || m.category) + '</strong>: ' + _escapeHtml(m.name) + ' <span style="color:var(--text-muted)">(' + m.confidence + ')</span></div>';
+        html += '<div style="padding:3px 0;color:#f85149">&#x26A0; <strong>' + _escapeHtml(m.category_label || m.category) + '</strong>: ' + _escapeHtml(m.pattern_name || m.name || '') + ' <span style="color:var(--text-muted)">(' + m.confidence + ')</span></div>';
       }
       html += '</div>';
     }
@@ -835,7 +836,17 @@ function initInitDemo() {
       if (INIT_SAMPLES[key]) {
         textarea.value = INIT_SAMPLES[key];
         document.querySelectorAll('.init-sample-btn').forEach(b => b.classList.toggle('active', b === btn));
-        if (initActivated) runInitCheck();
+        if (initActivated) {
+          runInitCheck();
+        } else {
+          // Boot not done yet — wait for it, then check
+          const waitForBoot = setInterval(() => {
+            if (initActivated) {
+              clearInterval(waitForBoot);
+              runInitCheck();
+            }
+          }, 100);
+        }
       }
     });
   });
