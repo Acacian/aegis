@@ -222,6 +222,7 @@
   <link rel="preload" href="https://cdn.jsdelivr.net/pyodide/v0.27.5/full/pyodide.js" as="script" crossorigin>
   <link rel="preload" href="js/presets.js" as="script">
   <link rel="preload" href="js/app.js" as="script">
+  <link rel="preload" href="js/demos.js" as="script">
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
   <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
@@ -293,6 +294,18 @@
       </button>
     </div>
   </header>
+
+  <!-- Demo Tab Bar -->
+  <nav class="demo-tab-bar" aria-label="Demo tabs">
+    <button class="demo-tab-btn active" data-tab="policy">Policy Evaluator</button>
+    <button class="demo-tab-btn" data-tab="mcp">MCP Security Scanner</button>
+    <button class="demo-tab-btn" data-tab="cost">Cost Circuit Breaker</button>
+    <button class="demo-tab-btn" data-tab="audit-chain">Audit Chain Visualizer</button>
+    <button class="demo-tab-btn" data-tab="regulatory">Regulatory Compliance</button>
+  </nav>
+
+  <!-- Tab Panel: Policy Evaluator (existing content) -->
+  <div id="panel-policy" class="demo-tab-panel active">
 
   <!-- Stats Bar -->
   <div class="stats-bar">
@@ -523,6 +536,180 @@ result = await runtime.run_one(Action("delete", "crm", params={"id": "all"}))
       </div>
     </div>
   </main>
+
+  </div><!-- /panel-policy -->
+
+  <!-- Tab Panel: MCP Security Scanner -->
+  <div id="panel-mcp" class="demo-tab-panel">
+    <div class="demo-panel-inner">
+      <div class="demo-header">
+        <h2>MCP Security Scanner</h2>
+        <p class="demo-desc">Scan MCP tool definitions for poisoning patterns. Ported from Aegis <code>ToolDescriptionScanner</code> with 10 regex detection patterns and Unicode normalization.</p>
+      </div>
+      <div class="demo-layout-split">
+        <div class="demo-col">
+          <div class="demo-card">
+            <div class="demo-card-header">
+              <h3>Tool Definition (JSON)</h3>
+              <div class="mcp-presets" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
+                <button class="mcp-preset-btn active" data-preset="clean">Clean Tool</button>
+                <button class="mcp-preset-btn" data-preset="injection">Hidden Injection</button>
+                <button class="mcp-preset-btn" data-preset="path_traversal">Path Traversal</button>
+                <button class="mcp-preset-btn" data-preset="exfiltration">Data Exfiltration</button>
+                <button class="mcp-preset-btn" data-preset="unicode">Unicode Evasion</button>
+                <button class="mcp-preset-btn" data-preset="cross_tool">Cross-Tool Attack</button>
+              </div>
+            </div>
+            <textarea id="mcp-input" class="demo-textarea" rows="14" spellcheck="false"></textarea>
+            <button id="mcp-scan-btn" class="demo-btn demo-btn-primary" style="margin-top:8px;width:100%">Scan for Poisoning Patterns</button>
+          </div>
+        </div>
+        <div class="demo-col">
+          <div class="demo-card">
+            <div class="demo-card-header"><h3>Scan Results</h3></div>
+            <div id="mcp-output" class="demo-output"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab Panel: Cost Circuit Breaker -->
+  <div id="panel-cost" class="demo-tab-panel">
+    <div class="demo-panel-inner">
+      <div class="demo-header">
+        <h2>Cost Circuit Breaker</h2>
+        <p class="demo-desc">Simulate LLM cost tracking with budget limits and threshold transitions. Ported from Aegis <code>CostTracker</code> with real model pricing data.</p>
+      </div>
+      <div class="demo-layout-split">
+        <div class="demo-col">
+          <div class="demo-card">
+            <div class="demo-card-header"><h3>Configuration</h3></div>
+            <div class="demo-form-group">
+              <label class="demo-label">Budget <span id="cost-budget-val" style="float:right;color:var(--accent)">$10.00</span></label>
+              <input type="range" id="cost-budget" min="0.50" max="50" step="0.50" value="10" class="demo-slider">
+            </div>
+            <div class="demo-form-group">
+              <label class="demo-label">Warn Threshold <span id="cost-warn-val" style="float:right;color:#d29922">80%</span></label>
+              <input type="range" id="cost-warn" min="0.1" max="0.95" step="0.05" value="0.8" class="demo-slider">
+            </div>
+            <div class="demo-form-group">
+              <label class="demo-label">Soft Limit <span id="cost-soft-val" style="float:right;color:#f0883e">90%</span></label>
+              <input type="range" id="cost-soft" min="0.1" max="0.99" step="0.01" value="0.9" class="demo-slider">
+            </div>
+            <div class="demo-form-group">
+              <label class="demo-label">Model</label>
+              <select id="cost-model" class="demo-select"></select>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <div class="demo-form-group">
+                <label class="demo-label">Input Tokens</label>
+                <input type="number" id="cost-input-tokens" value="2000" min="0" class="demo-input">
+              </div>
+              <div class="demo-form-group">
+                <label class="demo-label">Output Tokens</label>
+                <input type="number" id="cost-output-tokens" value="500" min="0" class="demo-input">
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px">
+              <button id="cost-send-btn" class="demo-btn demo-btn-primary">Send Request</button>
+              <button id="cost-rapid-btn" class="demo-btn demo-btn-warn">Rapid Fire (20x)</button>
+              <button id="cost-reset-btn" class="demo-btn demo-btn-secondary">Reset</button>
+            </div>
+          </div>
+        </div>
+        <div class="demo-col">
+          <div class="demo-card">
+            <div class="demo-card-header"><h3>Budget Gauge</h3></div>
+            <div id="cost-gauge"></div>
+            <div id="cost-threshold-bar" style="margin-top:12px"></div>
+          </div>
+          <div class="demo-card" style="margin-top:12px">
+            <div class="demo-card-header"><h3>Request Log</h3></div>
+            <div id="cost-log" class="demo-output" style="max-height:200px;overflow-y:auto"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab Panel: Audit Chain Visualizer -->
+  <div id="panel-audit-chain" class="demo-tab-panel">
+    <div class="demo-panel-inner">
+      <div class="demo-header">
+        <h2>Audit Chain Visualizer</h2>
+        <p class="demo-desc">Interactive hash-chain audit log using Web Crypto SHA-256. Ported from Aegis <code>CryptoAuditChain</code> for tamper-evident logging.</p>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px">
+        <button id="audit-add-btn" class="demo-btn demo-btn-primary">Add Entry</button>
+        <button id="audit-verify-btn" class="demo-btn demo-btn-secondary">Verify Chain</button>
+        <button id="audit-tamper-btn" class="demo-btn demo-btn-danger">Tamper with Entry</button>
+        <button id="audit-reset-btn" class="demo-btn demo-btn-secondary">Reset</button>
+      </div>
+      <div class="demo-layout-split">
+        <div class="demo-col">
+          <div class="demo-card">
+            <div class="demo-card-header"><h3>Audit Chain</h3></div>
+            <div id="audit-chain-blocks" class="demo-output" style="max-height:500px;overflow-y:auto"></div>
+          </div>
+        </div>
+        <div class="demo-col">
+          <div class="demo-card">
+            <div class="demo-card-header"><h3>Verification Results</h3></div>
+            <div id="audit-chain-results" class="demo-output"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab Panel: Regulatory Compliance -->
+  <div id="panel-regulatory" class="demo-tab-panel">
+    <div class="demo-panel-inner">
+      <div class="demo-header">
+        <h2>Regulatory Compliance Mapper</h2>
+        <p class="demo-desc">Map Aegis features to regulatory requirements across 5 frameworks. Ported from Aegis <code>ComplianceMapper</code>.</p>
+      </div>
+      <div class="demo-layout-split">
+        <div class="demo-col" style="max-width:320px">
+          <div class="demo-card">
+            <div class="demo-card-header"><h3>Framework</h3></div>
+            <div style="display:flex;flex-direction:column;gap:8px;padding:4px 0">
+              <label class="demo-radio-label"><input type="radio" name="reg-framework" value="eu_ai_act" checked> EU AI Act</label>
+              <label class="demo-radio-label"><input type="radio" name="reg-framework" value="nist_ai_rmf"> NIST AI RMF</label>
+              <label class="demo-radio-label"><input type="radio" name="reg-framework" value="soc2"> SOC2</label>
+              <label class="demo-radio-label"><input type="radio" name="reg-framework" value="iso_42001"> ISO 42001</label>
+              <label class="demo-radio-label"><input type="radio" name="reg-framework" value="owasp_agentic"> OWASP Agentic Top 10</label>
+            </div>
+          </div>
+          <div class="demo-card" style="margin-top:12px">
+            <div class="demo-card-header">
+              <h3>Aegis Features</h3>
+              <div style="display:flex;gap:8px;margin-top:4px">
+                <button id="reg-enable-all" class="demo-btn-sm">Enable All</button>
+                <button id="reg-disable-all" class="demo-btn-sm">Disable All</button>
+              </div>
+            </div>
+            <div id="reg-features"></div>
+          </div>
+        </div>
+        <div class="demo-col">
+          <div class="demo-card">
+            <div class="demo-card-header"><h3>Coverage Score</h3></div>
+            <div id="reg-score"></div>
+          </div>
+          <div class="demo-card" style="margin-top:12px">
+            <div class="demo-card-header"><h3>Requirements</h3></div>
+            <div id="reg-table" style="max-height:350px;overflow-y:auto"></div>
+          </div>
+          <div class="demo-card" style="margin-top:12px">
+            <div class="demo-card-header"><h3>Gaps</h3></div>
+            <div id="reg-gaps"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- How It Works Section -->
   <section class="how-it-works">
@@ -902,6 +1089,7 @@ policy = Policy.from_yaml(<span class="s">"policy.yaml"</span>)
   <!-- App -->
   <script src="js/presets.js" defer></script>
   <script src="js/app.js" defer></script>
+  <script src="js/demos.js" defer></script>
   <script>
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("sw.js").catch(() => {});
