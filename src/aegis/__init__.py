@@ -1,5 +1,15 @@
 """Aegis: Policy & approval runtime for AI agents."""
 
+from aegis.config import (
+    AegisConfig,
+    AuditConfig,
+    CostConfig,
+    GuardrailsConfig,
+    InjectionConfig,
+    IntegrationsConfig,
+    PIIConfig,
+    PolicyConfig,
+)
 from aegis.core.action import Action
 from aegis.core.agent_identity import AgentIdentity, AgentRegistry, DelegationEvent
 from aegis.core.anomaly import AnomalyDetector, AnomalyResult, BehaviorProfile
@@ -17,6 +27,7 @@ from aegis.core.retry import RetryPolicy
 from aegis.core.risk import RiskLevel
 from aegis.core.versioning import PolicyStore, PolicyVersion
 from aegis.core.webhooks import WebhookManager
+from aegis.init import Aegis
 from aegis.integrations.decorators import guard
 from aegis.integrations.errors import AegisBlockedError, AegisGuardrailError
 from aegis.integrations.patch_anthropic import patch_anthropic, unpatch_anthropic
@@ -25,7 +36,29 @@ from aegis.runtime.batch_audit import BatchAuditLogger
 from aegis.runtime.engine import Runtime, RuntimeHooks
 from aegis.runtime.watcher import PolicyWatcher
 
+# ---- Unified entry point ------------------------------------------------
+# These top-level functions delegate to the Aegis singleton so that
+# ``import aegis; aegis.init()`` works.
+
+init = Aegis.init
+shutdown = Aegis.shutdown
+get = Aegis.get
+
 __all__ = [
+    # Unified init API
+    "Aegis",
+    "AegisConfig",
+    "AuditConfig",
+    "CostConfig",
+    "get",
+    "GuardrailsConfig",
+    "init",
+    "InjectionConfig",
+    "IntegrationsConfig",
+    "PIIConfig",
+    "PolicyConfig",
+    "shutdown",
+    # Core
     "Action",
     "AegisBlockedError",
     "AegisGuardrailError",
