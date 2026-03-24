@@ -1,27 +1,51 @@
 # Aegis
 
-**The simplest way to govern AI agent actions. No infra. No lock-in. Just Python.**
+**OpenTelemetry for AI safety. Auto-instrument any AI framework with guardrails -- zero code changes.**
 
-`pip install agent-aegis` → YAML policy → governance in 5 minutes. Works with LangChain, CrewAI, OpenAI, Anthropic, MCP, and more.
+`pip install agent-aegis` and add one line. Aegis monkey-patches LangChain, CrewAI, OpenAI Agents SDK, OpenAI, and Anthropic at runtime -- every LLM call and tool invocation passes through prompt-injection detection, PII masking, toxicity filtering, and a full audit trail.
 
-[**Try it live in your browser**](playground/){ .md-button .md-button--primary } — no install needed.
+[**Try it live in your browser**](playground/){ .md-button .md-button--primary } -- no install needed.
 
 ---
 
-## The Problem
+## The Fastest Way to Add AI Safety
 
-AI agents are getting real-world access — calling APIs, modifying databases, running shell commands, browsing the web. Without governance, a single hallucination can:
+```python
+import aegis
+aegis.auto_instrument()
 
-- **Bulk-delete** your CRM contacts
-- **Submit wrong forms** to government portals
-- **Trigger irreversible API calls** at 3am
-- **Run up cloud bills** with infinite loops
+# That's it. Every AI call in your app is now governed.
+# Prompt injection detection, PII masking, toxicity filtering, audit trail -- all active.
+```
 
-There's no `sudo` for AI agents. **Until now.**
+Or zero code changes -- just set an environment variable:
 
-## What is Aegis?
+```bash
+AEGIS_INSTRUMENT=1 python my_agent.py
+```
 
-Aegis is a **Python library** (not a platform, not a server) that wraps every AI agent action with policy checks, approval gates, and audit logging:
+Aegis detects which AI frameworks are installed and monkey-patches them at runtime, the same approach used by OpenTelemetry for observability and Sentry for error tracking. Your existing code stays untouched.
+
+## Supported Frameworks
+
+| Framework | What gets patched | Status |
+|-----------|------------------|--------|
+| **LangChain** | `BaseChatModel.invoke/ainvoke`, `BaseTool.invoke/ainvoke` | Stable |
+| **CrewAI** | `Crew.kickoff/kickoff_async`, global `BeforeToolCallHook` | Stable |
+| **OpenAI Agents SDK** | `Runner.run`, `Runner.run_sync` | Stable |
+| **OpenAI API** | `Completions.create` (chat & completions) | Stable |
+| **Anthropic API** | `Messages.create` | Stable |
+
+Default guardrails (all deterministic, no LLM calls, sub-millisecond):
+
+- **Prompt injection detection** -- 10 attack categories, 85+ patterns, multi-language (block)
+- **Toxicity detection** -- harmful/abusive content (block)
+- **PII detection** -- 12 categories including credit cards, SSN, API keys (warn)
+- **Prompt leak detection** -- system prompt extraction attempts (warn)
+
+## Beyond Auto-Instrumentation
+
+Aegis is also a full governance framework with YAML policy engine, approval gates, audit trail, and compliance reporting:
 
 ```
 Action      Policy        Approval       Execute     Audit
@@ -31,46 +55,19 @@ bulk edit --> approve (high) --> human y/n -> run ------> logged
 delete *  --> block (critical) ------------> X --------> logged
 ```
 
-**Copy, paste, run — zero config needed:**
-
-```python
-from aegis import Action, Policy
-
-policy = Policy.from_dict({
-    "version": "1",
-    "defaults": {"risk_level": "low", "approval": "auto"},
-    "rules": [{"name": "block_delete", "match": {"type": "delete_*"},
-               "risk_level": "critical", "approval": "block"}]
-})
-
-safe = policy.evaluate(Action(type="read_users", target="db"))
-print(safe.approval)   # Approval.AUTO  ✅
-
-danger = policy.evaluate(Action(type="delete_users", target="db"))
-print(danger.approval)  # Approval.BLOCK 🚫
-```
-
-Or with a YAML file — **3 lines:**
-
-```python
-from aegis import Action, Policy, Runtime
-
-runtime = Runtime(executor=your_executor, policy=Policy.from_yaml("policy.yaml"))
-result = await runtime.run_one(Action("delete", "crm", params={"id": "all"}))
-# Policy checked. Approval gated. Audit logged. Done.
-```
-
 ## Key Features
 
 | Feature | Description |
 |---------|-------------|
+| **Auto-instrumentation** | `aegis.auto_instrument()` -- one line governs LangChain, CrewAI, OpenAI, Anthropic |
+| **Runtime guardrails** | PII detection (12 categories), prompt injection (85+ patterns), toxicity, prompt leak |
 | **YAML policies** | Glob matching, first-match-wins, JSON Schema for validation |
 | **Smart conditions** | `time_after`, `time_before`, `weekdays`, `param_gt/lt/eq/contains/matches` |
 | **4-tier risk model** | `low` / `medium` / `high` / `critical` with per-rule overrides |
 | **7 approval handlers** | CLI, Slack, Discord, Telegram, email, webhook, or custom |
-| **Audit trail** | SQLite + JSONL + webhook + Python `logging` — auditor-ready evidence export |
+| **Audit trail** | SQLite + JSONL + webhook + Python `logging` -- auditor-ready evidence export |
 | **7 framework adapters** | LangChain, CrewAI, OpenAI Agents SDK, Anthropic Claude, Playwright, httpx, MCP |
-| **REST API server** | `aegis serve policy.yaml` — govern from any language |
+| **REST API server** | `aegis serve policy.yaml` -- govern from any language |
 | **Web dashboard** | Real-time governance dashboard with compliance reports and anomaly detection |
 | **CLI tools** | `aegis init`, `validate`, `simulate`, `audit`, `serve`, `scan`, `score`, `probe` |
 | **Type-safe** | Full `mypy --strict`, `py.typed` marker |
@@ -91,10 +88,16 @@ result = await runtime.run_one(Action("delete", "crm", params={"id": "all"}))
 
 ```bash
 pip install agent-aegis
-aegis init  # Generate a starter policy
 ```
 
-With integrations:
+The fastest path -- auto-instrument everything:
+
+```python
+import aegis
+aegis.auto_instrument()
+```
+
+For manual control, install specific integrations:
 
 ```bash
 pip install 'agent-aegis[langchain]'      # LangChain
@@ -133,12 +136,12 @@ async with Runtime(
 
 | Aspect | Detail |
 |--------|--------|
-| **1,776+ tests** | Every adapter, handler, and edge case tested |
+| **2,500+ tests** | Every adapter, handler, and edge case tested |
 | **Type-safe** | `mypy --strict` with zero errors |
 | **< 1ms evaluation** | Policy check adds negligible overhead |
 | **Fail-safe** | Blocked actions never execute, period |
 | **Audit immutability** | Results are frozen; audit writes happen before returning |
-| **Zero external deps** | Core has no required infrastructure |
+| **Clean patching** | Auto-instrumentation is fully reversible via `reset()`, idempotent, skip-if-missing |
 
 ## Roadmap
 
@@ -149,14 +152,16 @@ async with Runtime(
 | **0.1.7** | **Released** | Crypto audit chain, RBAC, rate limiter, regulatory mapper, anomaly detection, policy versioning |
 | **0.1.9** | **Released** | Web dashboard, autopolicy (NL to YAML), adversarial probe, multi-tenant isolation |
 | **0.2** | **Released** | WebSocket real-time streaming, interactive playground, policy editor, shields.io badge |
-| **0.3** | Q3 2026 | Centralized policy server, cross-agent audit correlation |
+| **0.4** | **Released** | `aegis.init()`, runtime guardrails, AGEF/AGP open governance specs |
+| **0.4.2** | **Released** | **Auto-instrumentation** -- `aegis.auto_instrument()` for LangChain, CrewAI, OpenAI Agents SDK, OpenAI, Anthropic |
+| **0.5** | Q3 2026 | Auto-instrumentation for LiteLLM, Google GenAI, Pydantic AI, LlamaIndex. Centralized policy server |
 | **1.0** | 2027 | Distributed governance, hosted SaaS, SSO/SCIM |
 
 ## Links
 
-- [GitHub](https://github.com/Acacian/aegis) — source code, issues, discussions
-- [PyPI](https://pypi.org/project/agent-aegis/) — package page
-- [Playground](playground/) — try Aegis in your browser
-- [Contributing](https://github.com/Acacian/aegis/blob/main/CONTRIBUTING.md) — get involved
-- [Changelog](https://github.com/Acacian/aegis/blob/main/CHANGELOG.md) — release history
-- [Architecture](https://github.com/Acacian/aegis/blob/main/ARCHITECTURE.md) — design decisions
+- [GitHub](https://github.com/Acacian/aegis) -- source code, issues, discussions
+- [PyPI](https://pypi.org/project/agent-aegis/) -- package page
+- [Playground](playground/) -- try Aegis in your browser
+- [Contributing](https://github.com/Acacian/aegis/blob/main/CONTRIBUTING.md) -- get involved
+- [Changelog](https://github.com/Acacian/aegis/blob/main/CHANGELOG.md) -- release history
+- [Architecture](https://github.com/Acacian/aegis/blob/main/ARCHITECTURE.md) -- design decisions

@@ -5,13 +5,14 @@ build-backend = "hatchling.build"
 [project]
 name = "agent-aegis"
 version = "0.4.1"
-description = "The simplest way to add governance to AI agents. YAML policy + approval gates + audit trail. No infra required."
+description = "Auto-instrument AI frameworks with safety guardrails. One line to govern LangChain, CrewAI, OpenAI, Anthropic — injection blocking, PII masking, audit trail. Zero code changes."
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.11"
 authors = [{ name = "Acacian" }]
 keywords = [
     "ai", "agent", "governance", "policy", "approval", "audit",
+    "auto-instrumentation", "guardrails", "prompt-injection", "pii-detection",
     "langchain", "crewai", "openai", "anthropic", "safety",
     "mcp", "cost-management", "supply-chain-security", "a2a", "observability",
 ]

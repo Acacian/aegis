@@ -1,8 +1,70 @@
 # Quick Start
 
-This guide walks you through a complete Aegis workflow in under 5 minutes.
+This guide walks you through adding AI safety to your project in under 2 minutes.
 
-## 1. Create a Policy
+## Option A: Auto-Instrument (Recommended)
+
+The fastest way. One line governs all AI framework calls in your application.
+
+### 1. Install
+
+```bash
+pip install agent-aegis
+```
+
+### 2. Add One Line
+
+```python
+import aegis
+aegis.auto_instrument()
+
+# Every LangChain, CrewAI, OpenAI Agents SDK, OpenAI API, and Anthropic API
+# call in your application now passes through guardrails automatically.
+```
+
+Or use an environment variable (zero code changes):
+
+```bash
+AEGIS_INSTRUMENT=1 python my_agent.py
+```
+
+### 3. What Happens
+
+Every AI call is now checked on both input and output:
+
+- **Prompt injection** -- blocked (10 attack categories, 85+ patterns)
+- **Toxicity** -- blocked (harmful/abusive content)
+- **PII** -- warned (12 categories: email, credit card, SSN, API keys, etc.)
+- **Prompt leak** -- warned (system prompt extraction attempts)
+
+If a guardrail blocks, `AegisGuardrailError` is raised. You can change this:
+
+```python
+# Warn instead of raising
+aegis.auto_instrument(on_block="warn")
+
+# Only log, don't interrupt
+aegis.auto_instrument(on_block="log")
+
+# Audit only, no guardrails
+aegis.auto_instrument(guardrails="none")
+```
+
+### 4. Check What's Instrumented
+
+```python
+from aegis.instrument import status
+print(status())
+# {"active": True, "frameworks": {"langchain": {"patched": True, ...}}, "guardrails": 4}
+```
+
+---
+
+## Option B: Policy Engine (Full Control)
+
+For when you need YAML-based rules, approval gates, and custom executors.
+
+### 1. Create a Policy
 
 Generate a starter policy with the CLI:
 
@@ -32,7 +94,7 @@ rules:
     approval: block
 ```
 
-## 2. Write Your Agent Code
+### 2. Write Your Agent Code
 
 ```python
 import asyncio
@@ -66,7 +128,7 @@ async def main():
 asyncio.run(main())
 ```
 
-## 3. Run It
+### 3. Run It
 
 ```bash
 python my_agent.py
@@ -78,7 +140,7 @@ You'll see:
 - **write** prompts for approval (medium risk, matches default)
 - **delete** is blocked (critical risk, matches `delete_blocked` rule)
 
-## 4. Check the Audit Log
+### 4. Check the Audit Log
 
 ```bash
 aegis audit
@@ -88,6 +150,6 @@ Every action, decision, and result is recorded in `aegis_audit.db`.
 
 ## Next Steps
 
-- [Writing Policies](../guides/policies.md) — learn the full policy syntax
-- [Integrations](../guides/integrations.md) — connect to LangChain, CrewAI, or OpenAI
-- [Custom Adapters](../guides/custom-adapters.md) — build your own executor
+- [Writing Policies](../guides/policies.md) -- learn the full policy syntax
+- [Integrations](../guides/integrations.md) -- connect to LangChain, CrewAI, or OpenAI
+- [Custom Adapters](../guides/custom-adapters.md) -- build your own executor

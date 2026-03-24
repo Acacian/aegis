@@ -13,6 +13,14 @@ This document describes the high-level design of Aegis.
 
 ```
 src/aegis/
+├── instrument/     # Auto-instrumentation (monkey-patching layer)
+│   ├── __init__.py      # auto_instrument(), status(), reset()
+│   ├── _langchain.py    # Patches BaseChatModel, BaseTool
+│   ├── _crewai.py       # Patches Crew.kickoff, BeforeToolCallHook
+│   ├── _openai_agents.py # Patches Runner.run, Runner.run_sync
+│   ├── _defaults.py     # Default guardrail engine builder
+│   └── _state.py        # Thread-safe global instrumentation state
+│
 ├── core/           # Pure data models and policy engine (no I/O)
 │   ├── action.py       # Action dataclass
 │   ├── risk.py         # RiskLevel enum
@@ -21,6 +29,18 @@ src/aegis/
 │   ├── result.py       # Result and status types
 │   ├── plan.py         # ExecutionPlan model
 │   └── schema.py       # Policy JSON Schema
+│
+├── guardrails/     # Runtime content guardrails
+│   ├── engine.py       # GuardrailEngine pipeline
+│   ├── injection.py    # Prompt injection detection
+│   ├── pii.py          # PII detection & masking
+│   ├── toxicity.py     # Toxicity detection
+│   └── prompt_leak.py  # Prompt leak detection
+│
+├── integrations/   # Zero-code API patching
+│   ├── patch_openai.py    # Monkey-patches OpenAI API
+│   ├── patch_anthropic.py # Monkey-patches Anthropic API
+│   └── decorators.py     # @guard decorator
 │
 ├── adapters/       # Pluggable executors (each with optional deps)
 │   ├── base.py         # BaseExecutor ABC
@@ -32,7 +52,7 @@ src/aegis/
 │   └── anthropic.py    # Anthropic Claude
 │
 ├── runtime/        # Orchestration and side effects
-│   ├── engine.py       # Runtime: plan → approve → execute → verify → audit
+│   ├── engine.py       # Runtime: plan -> approve -> execute -> verify -> audit
 │   ├── approval.py     # Approval handlers (CLI, auto)
 │   ├── approval_callback.py  # Callback-based approval
 │   ├── audit.py        # SQLite audit logger
@@ -43,6 +63,31 @@ src/aegis/
 ```
 
 ## Data Flow
+
+### Auto-Instrumentation Path (zero-code)
+
+```mermaid
+graph TD
+    AI["aegis.auto_instrument()"] --> DETECT[Detect installed frameworks]
+    DETECT --> PATCH["Monkey-patch LangChain / CrewAI / OpenAI Agents / OpenAI / Anthropic"]
+    PATCH --> GUARD["Build default guardrail engine"]
+
+    APP["Your existing code (unchanged)"] --> FW["framework.invoke() / Runner.run() / etc."]
+    FW --> IN["Input guardrails (injection, toxicity, PII, leak)"]
+    IN -->|blocked| ERR["AegisGuardrailError / warn / log"]
+    IN -->|passed| ORIG["Original framework method"]
+    ORIG --> OUT["Output guardrails"]
+    OUT -->|blocked| ERR
+    OUT -->|passed| RES["Return response to your code"]
+
+    style AI fill:#4a90d9,color:#fff
+    style GUARD fill:#f5a623,color:#fff
+    style IN fill:#7ed321,color:#fff
+    style OUT fill:#7ed321,color:#fff
+    style ERR fill:#d0021b,color:#fff
+```
+
+### Policy Engine Path (full control)
 
 ```mermaid
 graph TD
@@ -123,6 +168,9 @@ Globs are familiar, readable, and sufficient for action type/target matching. Re
 
 ### Why SQLite for audit?
 Zero configuration, works everywhere, queryable. For production log aggregation, use `LoggingAuditLogger` to pipe to existing infrastructure.
+
+### Why monkey-patching for auto-instrumentation?
+The same pattern used by OpenTelemetry (tracing), Sentry (error tracking), and datadog-trace (APM). It provides zero-code governance -- users add one line and all existing AI calls are governed without refactoring. All patches are reversible via `reset()`, idempotent, and skip cleanly if a framework is not installed.
 
 ### Why lazy imports for adapters?
 Each adapter has heavy optional dependencies (playwright, langchain-core, etc.). Lazy imports ensure `import aegis` is fast and the core has no heavy deps.
