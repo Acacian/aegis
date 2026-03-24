@@ -7,6 +7,7 @@ sequentially so that downstream guardrails see already-masked content.
 
 from __future__ import annotations
 
+import asyncio
 from pathlib import Path
 
 from aegis.guardrails.base import Guardrail, GuardrailResult
@@ -100,6 +101,38 @@ class GuardrailEngine:
                 break
 
         return results, current
+
+    # ------------------------------------------------------------------
+    # Async variants (non-blocking for async-first runtimes)
+    # ------------------------------------------------------------------
+
+    async def acheck(
+        self,
+        content: str,
+        *,
+        context: dict[str, object] | None = None,
+    ) -> list[GuardrailResult]:
+        """Async version of :meth:`check`.
+
+        Runs the synchronous guardrail pipeline in a thread-pool executor
+        so it does not block the event loop.  When guardrails that natively
+        support ``async`` are added in the future, this method will call
+        them directly.
+        """
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(None, lambda: self.check(content, context=context))
+
+    async def acheck_and_transform(
+        self,
+        content: str,
+        *,
+        context: dict[str, object] | None = None,
+    ) -> tuple[list[GuardrailResult], str]:
+        """Async version of :meth:`check_and_transform`."""
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(
+            None, lambda: self.check_and_transform(content, context=context)
+        )
 
     # ------------------------------------------------------------------
     # Factory

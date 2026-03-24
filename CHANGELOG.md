@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.1] — 2026-03-24
+
+### Changed
+
+- **Policy cache: FIFO → LRU** — `OrderedDict` with `move_to_end()` for O(1) LRU eviction, improving cache hit rates for frequently-evaluated actions
+- **Policy cache correctness** — `_is_cacheable()` now checks all conditional rules' patterns against the action, preventing unconditional cache entries from shadowing conditional rules with different params
+- **Rate limiter: pre-compiled glob patterns** — module-level `_glob_to_re()` cache eliminates redundant `fnmatch` compilation on every `matches()` call
+- **O(n) → O(log n) timestamp pruning** — `bisect.bisect_left/right` replaces list comprehension in rate limiter and anomaly detector hot paths
+- **SQLite WAL mode** — `PRAGMA journal_mode=WAL` for concurrent read/write performance
+- **SQLite indexes** — 4 indexes on `session_id`, `timestamp`, `agent_id`, `action_type` for query performance
+- **Lock memory leak fix** — `reset(agent_id)` now cleans up stale `_locks` entries in rate limiter and anomaly detector
+- **Batch audit flush race fix** — buffer swap moved inside lock to prevent double-flush when concurrent threads both see `should_flush=True`
+- **Anomaly detection: time-bounded rate calculation** — `_compute_rate_per_minute(window=60.0)` uses fixed window instead of last-N-events span for statistically accurate rate spike detection
+
+### Added
+
+- **`AnomalyDetector.check_all()`** — returns all detected anomalies at once (rate spike + high block rate simultaneously); `check()` now returns the most severe
+- **`GuardrailEngine.acheck()` / `acheck_and_transform()`** — async wrappers via `run_in_executor` so guardrails don't block the event loop
+- **`Runtime.execute(parallel=True)`** — concurrent action execution via `asyncio.gather()` for independent actions
+
 ## [0.4.0] — 2026-03-24
 
 ### Added
@@ -159,7 +179,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial public release on PyPI
 
-[Unreleased]: https://github.com/Acacian/aegis/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/Acacian/aegis/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/Acacian/aegis/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/Acacian/aegis/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/Acacian/aegis/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/Acacian/aegis/compare/v0.1.6...v0.2.0

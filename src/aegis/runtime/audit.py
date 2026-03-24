@@ -38,6 +38,10 @@ CREATE TABLE IF NOT EXISTS audit_log (
     chain_id        TEXT,
     chain_depth     INTEGER DEFAULT 0
 );
+CREATE INDEX IF NOT EXISTS idx_audit_session ON audit_log(session_id);
+CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON audit_log(timestamp);
+CREATE INDEX IF NOT EXISTS idx_audit_agent ON audit_log(agent_id);
+CREATE INDEX IF NOT EXISTS idx_audit_action_type ON audit_log(action_type);
 """
 
 _MIGRATE_AGENT_COLUMNS = [
@@ -61,7 +65,8 @@ class AuditLogger:
     def __init__(self, db_path: str | Path = "aegis_audit.db") -> None:
         self._db_path = Path(db_path)
         self._conn = sqlite3.connect(str(self._db_path), check_same_thread=False)
-        self._conn.execute(_SCHEMA)
+        self._conn.execute("PRAGMA journal_mode=WAL")
+        self._conn.executescript(_SCHEMA)
         self._conn.commit()
         self._migrate()
         self._subscribers: list[Callable[[dict[str, Any]], Any]] = []

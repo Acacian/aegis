@@ -10,6 +10,7 @@ Thread-safe: all profile mutations are guarded by a per-profile lock.
 
 from __future__ import annotations
 
+import bisect
 import threading
 import time
 from collections import defaultdict
@@ -149,15 +150,29 @@ class AnomalyDetector:
     def _prune_timestamps(timestamps: list[float], window: float, now: float) -> list[float]:
         """Remove timestamps older than *window* seconds from *now*."""
         cutoff = now - window
-        # Timestamps are appended in order so we can bisect, but a simple
-        # filter is fast enough for bounded lists.
-        return [t for t in timestamps if t >= cutoff]
+        # Timestamps are appended in sorted order; bisect gives O(log n).
+        idx = bisect.bisect_left(timestamps, cutoff)
+        return timestamps[idx:]
 
     @staticmethod
-    def _compute_rate_per_minute(timestamps: list[float]) -> float:
-        """Compute actions-per-minute from a list of epoch timestamps."""
+    def _compute_rate_per_minute(timestamps: list[float], *, window: float = 0.0) -> float:
+        """Compute actions-per-minute from a list of epoch timestamps.
+
+        When *window* is positive the rate is calculated over a fixed
+        time window anchored at the most-recent timestamp.  This avoids
+        under-counting when the list spans a longer period than intended.
+        When *window* is ``0`` (default), the full span is used for
+        backward compatibility.
+        """
         if len(timestamps) < 2:
             return 0.0
+        if window > 0:
+            cutoff = timestamps[-1] - window
+            idx = bisect.bisect_left(timestamps, cutoff)
+            recent = timestamps[idx:]
+            if len(recent) < 2:
+                return 0.0
+            return len(recent) / (window / 60.0)
         span = timestamps[-1] - timestamps[0]
         if span <= 0:
             return 0.0
@@ -206,26 +221,42 @@ class AnomalyDetector:
     def check(self, action: Action, agent_id: str = "default") -> AnomalyResult:
         """Check whether *action* is anomalous for the given agent.
 
-        Returns :class:`AnomalyResult` with ``is_anomalous=True`` when a
-        problem is detected.  The result includes a severity score, anomaly
-        classification, and a human-readable recommendation.
+        Returns the **most severe** :class:`AnomalyResult` found, or a
+        non-anomalous result when nothing is detected.  Use :meth:`check_all`
+        to receive every detected anomaly at once.
+        """
+        results = self.check_all(action, agent_id)
+        if not results:
+            return _OK
+        return max(results, key=lambda r: r.severity)
 
-        When no profile exists yet (first-ever action) the check always
-        returns OK -- you cannot detect anomalies without history.
+    def check_all(self, action: Action, agent_id: str = "default") -> list[AnomalyResult]:
+        """Check for **all** anomalies for the given agent and action.
+
+        Unlike :meth:`check`, which returns only the most severe hit,
+        this method returns every detected anomaly so operators can see
+        the full picture (e.g. a rate spike *and* a high block rate
+        happening simultaneously).
+
+        Returns an empty list when no anomalies are detected.
         """
         agent_id = agent_id or action.agent_id or "default"
-
         lock = self._get_lock(agent_id)
         with lock:
-            profile = self._profiles.get(agent_id)
-            if profile is None:
-                return _OK
-            if profile.total_actions == 0:
-                return _OK
+            return self._check_all_inner(action, agent_id)
 
-            # --- 1. New action type ------------------------------------------
-            if self._new_action_alert and action.type not in profile.action_counts:
-                return AnomalyResult(
+    def _check_all_inner(self, action: Action, agent_id: str) -> list[AnomalyResult]:
+        """Lock-free inner implementation for anomaly checks."""
+        profile = self._profiles.get(agent_id)
+        if profile is None or profile.total_actions == 0:
+            return []
+
+        anomalies: list[AnomalyResult] = []
+
+        # --- 1. New action type ------------------------------------------
+        if self._new_action_alert and action.type not in profile.action_counts:
+            anomalies.append(
+                AnomalyResult(
                     is_anomalous=True,
                     anomaly_type="new_action",
                     severity=0.6,
@@ -234,25 +265,30 @@ class AnomalyDetector:
                     ),
                     recommendation=(f"Consider adding a rule for action type '{action.type}'."),
                 )
+            )
 
-            # --- 2. Unusual target -------------------------------------------
-            if action.target not in profile.target_counts:
-                return AnomalyResult(
+        # --- 2. Unusual target -------------------------------------------
+        if action.target not in profile.target_counts:
+            anomalies.append(
+                AnomalyResult(
                     is_anomalous=True,
                     anomaly_type="unusual_target",
                     severity=0.5,
                     message=(f"Agent '{agent_id}' has never targeted '{action.target}' before."),
                     recommendation=(f"Consider adding a rule for target '{action.target}'."),
                 )
+            )
 
-            # --- 3. Rate spike -----------------------------------------------
-            avg = profile.avg_rate_per_minute.get(action.type, 0.0)
-            ts_list = profile.action_rate.get(action.type, [])
-            if avg > 0 and len(ts_list) >= 3:
-                recent_rate = self._compute_rate_per_minute(ts_list[-10:])
-                if recent_rate > avg * self._rate_threshold:
-                    severity = min(1.0, recent_rate / (avg * self._rate_threshold * 2))
-                    return AnomalyResult(
+        # --- 3. Rate spike -----------------------------------------------
+        avg = profile.avg_rate_per_minute.get(action.type, 0.0)
+        ts_list = profile.action_rate.get(action.type, [])
+        if avg > 0 and len(ts_list) >= 3:
+            # Use time-bounded window (60s) for statistically accurate rate.
+            recent_rate = self._compute_rate_per_minute(ts_list, window=60.0)
+            if recent_rate > avg * self._rate_threshold:
+                severity = min(1.0, recent_rate / (avg * self._rate_threshold * 2))
+                anomalies.append(
+                    AnomalyResult(
                         is_anomalous=True,
                         anomaly_type="rate_spike",
                         severity=severity,
@@ -262,14 +298,16 @@ class AnomalyDetector:
                         ),
                         recommendation=(f"Consider adding a rate-limit rule for '{action.type}'."),
                     )
+                )
 
-            # --- 4. Burst detection ------------------------------------------
-            now = time.monotonic()
-            if ts_list:
-                recent = self._prune_timestamps(ts_list, self._burst_window, now)
-                if len(recent) >= self._burst_limit:
-                    severity = min(1.0, len(recent) / (self._burst_limit * 2))
-                    return AnomalyResult(
+        # --- 4. Burst detection ------------------------------------------
+        now = time.monotonic()
+        if ts_list:
+            recent = self._prune_timestamps(ts_list, self._burst_window, now)
+            if len(recent) >= self._burst_limit:
+                severity = min(1.0, len(recent) / (self._burst_limit * 2))
+                anomalies.append(
+                    AnomalyResult(
                         is_anomalous=True,
                         anomaly_type="burst",
                         severity=severity,
@@ -282,12 +320,14 @@ class AnomalyDetector:
                             f"Consider adding a burst-limit rule for '{action.type}'."
                         ),
                     )
+                )
 
-            # --- 5. High block rate ------------------------------------------
-            if profile.total_actions >= 5:
-                block_ratio = profile.blocked_count / profile.total_actions
-                if block_ratio > self._block_rate_threshold:
-                    return AnomalyResult(
+        # --- 5. High block rate ------------------------------------------
+        if profile.total_actions >= 5:
+            block_ratio = profile.blocked_count / profile.total_actions
+            if block_ratio > self._block_rate_threshold:
+                anomalies.append(
+                    AnomalyResult(
                         is_anomalous=True,
                         anomaly_type="high_block_rate",
                         severity=min(1.0, block_ratio),
@@ -301,8 +341,9 @@ class AnomalyDetector:
                             f"-- possible misconfiguration or attack."
                         ),
                     )
+                )
 
-        return _OK
+        return anomalies
 
     def get_profile(self, agent_id: str) -> BehaviorProfile | None:
         """Return a snapshot of the profile for *agent_id*, or ``None``."""
@@ -395,6 +436,8 @@ class AnomalyDetector:
             lock = self._get_lock(agent_id)
             with lock:
                 self._profiles.pop(agent_id, None)
+            # Clean up stale lock to prevent memory leak.
+            self._locks.pop(agent_id, None)
         else:
             with self._global_lock:
                 self._profiles.clear()
