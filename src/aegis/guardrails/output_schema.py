@@ -33,6 +33,7 @@ Usage::
 
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
 from dataclasses import dataclass, field
@@ -199,12 +200,10 @@ class OutputSchemaGuardrail:
         # Step 3: Validate against schema
         violations = self._validate_schema(data)
 
-        if not violations:
-            # Also validate via Pydantic if model was provided
-            if self._pydantic_model is not None:
-                pydantic_violations = self._validate_pydantic(data)
-                if pydantic_violations:
-                    violations = pydantic_violations
+        if not violations and self._pydantic_model is not None:
+            pydantic_violations = self._validate_pydantic(data)
+            if pydantic_violations:
+                violations = pydantic_violations
 
         if not violations:
             return OutputSchemaResult(
@@ -315,15 +314,11 @@ class OutputSchemaGuardrail:
             value = data[key]
 
             if expected_type == "integer" and isinstance(value, str):
-                try:
+                with contextlib.suppress(ValueError):
                     data[key] = int(value)
-                except ValueError:
-                    pass
             elif expected_type == "number" and isinstance(value, str):
-                try:
+                with contextlib.suppress(ValueError):
                     data[key] = float(value)
-                except ValueError:
-                    pass
             elif expected_type == "boolean" and isinstance(value, str):
                 if value.lower() in ("true", "1", "yes"):
                     data[key] = True

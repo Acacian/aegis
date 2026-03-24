@@ -6,9 +6,7 @@ from aegis.guardrails.hallucination import (
     GroundingChecker,
     HallucinationGuardrail,
     HallucinationMatch,
-    HallucinationResult,
 )
-
 
 # -- Fabricated citations ------------------------------------------------------
 
@@ -112,7 +110,11 @@ class TestHallucinationTemporal:
         g = HallucinationGuardrail()
         result = g.check("in 2023, researchers published their findings")
         # 2023 is the past, should not trigger
-        assert all(m.category != "temporal_inconsistency" for m in result.matches) if result.matches else True
+        assert (
+            all(m.category != "temporal_inconsistency" for m in result.matches)
+            if result.matches
+            else True
+        )
 
 
 # -- Hedging contradiction -----------------------------------------------------
@@ -290,7 +292,10 @@ class TestGroundingChecker:
     def test_partial_grounding(self):
         gc = GroundingChecker(min_grounding_score=0.5)
         context = "AI governance frameworks help organizations manage risk."
-        output = "AI governance frameworks are important for managing organizational risk and compliance."
+        output = (
+            "AI governance frameworks are important for"
+            " managing organizational risk and compliance."
+        )
         result = gc.check(output, context)
         assert result.grounding_score is not None
         # Score should be decent since many terms overlap

@@ -2,8 +2,7 @@
 
 import pytest
 
-from aegis.guardrails.prompt_leak import PromptLeakGuardrail, PromptLeakResult
-
+from aegis.guardrails.prompt_leak import PromptLeakGuardrail
 
 # -- Instruction leakage -------------------------------------------------------
 
