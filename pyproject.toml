@@ -118,5 +118,9 @@ module = ["playwright.*", "langchain_core.*", "crewai.*", "agents.*", "httpx.*",
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-module = ["aegis.mcp_server"]
+module = ["aegis.mcp_server", "aegis.adapters.openai_agents"]
 disallow_untyped_decorators = false
+
+[[tool.mypy.overrides]]
+module = ["aegis.runtime.audit_redis", "aegis.core.rate_limiter_redis"]
+warn_unused_ignores = false
