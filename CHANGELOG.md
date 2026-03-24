@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-03-24
+
+### Added
+
+- **MCP supply chain security**: Tool poisoning detection (10 patterns), rug-pull detection (SHA-256 manifest pinning), argument sanitization, trust scoring (L0-L4)
+- **MCP SBOM generation**: Software Bill of Materials for MCP tool inventories
+- **MCP vulnerability database**: Known-vulnerability lookup for MCP tools
+- **Cost circuit breaker**: 17-model price table, loop detection, hierarchical budgets, thread-safe enforcement
+- **Cross-framework cost tracking**: Unified CostTracker across LangChain, OpenAI, Anthropic, and Google
+- **Multi-agent cost attribution**: Delegation tree tracking, subtree cost rollup, attribution reports
+- **A2A communication governance**: Capability-based messaging, PII/credential auto-scrubbing, rate limiting, audit logging
+- **Session replay & retroactive scan**: Replay historical sessions against new policies for what-if analysis
+- **OpenTelemetry export**: Policy, cost, anomaly, and MCP events exported as OTel spans with in-memory fallback
+- **Policy git integration**: Git-like versioning with commit, diff, rollback semantics
+
+### Changed
+
+- Development status upgraded from Alpha to Beta
+- PyPI keywords expanded with MCP, cost-management, supply-chain-security, A2A, observability
+
+### Stats
+
+- 2,238+ tests passing
+- 92% code coverage
+
 ## [0.2.0] - 2026-03-23
 
 ### Added
