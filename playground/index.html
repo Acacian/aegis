@@ -223,6 +223,7 @@
   <link rel="preload" href="js/presets.js" as="script">
   <link rel="preload" href="js/app.js" as="script">
   <link rel="preload" href="js/demos.js" as="script">
+  <link rel="preload" href="js/guardrails.js" as="script">
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
   <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
@@ -302,6 +303,8 @@
     <button class="demo-tab-btn" data-tab="cost">Cost Circuit Breaker</button>
     <button class="demo-tab-btn" data-tab="audit-chain">Audit Chain Visualizer</button>
     <button class="demo-tab-btn" data-tab="regulatory">Regulatory Compliance</button>
+    <button class="demo-tab-btn" data-tab="pii">PII Scanner</button>
+    <button class="demo-tab-btn" data-tab="injection">Injection Detector</button>
   </nav>
 
   <!-- Tab Panel: Policy Evaluator (existing content) -->
@@ -711,6 +714,109 @@ result = await runtime.run_one(Action("delete", "crm", params={"id": "all"}))
     </div>
   </div>
 
+  <!-- Tab Panel: PII Scanner -->
+  <div id="panel-pii" class="demo-tab-panel">
+    <div class="demo-panel-inner">
+      <div class="demo-header">
+        <h2>PII Scanner</h2>
+        <p class="demo-desc">Real-time PII detection and masking. Ported from Aegis <code>PIIGuardrail</code> with Luhn validation for credit cards, Korean RRN/phone patterns, and API key detection.</p>
+      </div>
+      <div class="demo-layout-split">
+        <div class="demo-col">
+          <div class="demo-card">
+            <div class="demo-card-header">
+              <h3>Input Text</h3>
+              <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
+                <button class="pii-sample-btn demo-btn-sm" data-sample="email">Load Email Sample</button>
+                <button class="pii-sample-btn demo-btn-sm" data-sample="credit_card">Load Credit Card Sample</button>
+                <button class="pii-sample-btn demo-btn-sm" data-sample="korean">Load Korean PII Sample</button>
+              </div>
+            </div>
+            <textarea id="pii-input" class="demo-textarea" placeholder="Type or paste text here to scan for PII...&#10;&#10;Try pasting emails, phone numbers, credit card numbers, Korean RRN, API keys, etc." style="min-height:200px">Dear team,
+
+Please contact John Smith at john.smith@example.com or call 010-1234-5678.
+His SSN is 123-45-6789 and his Korean RRN is 900215-1234567.
+
+Payment: Visa 4532-0151-2345-6789
+Server IP: 192.168.1.100
+API Key: sk-proj-abc123def456ghi789jkl012mno345pqr678stu901vwx234yz</textarea>
+          </div>
+          <div class="demo-card" style="margin-top:12px">
+            <div class="demo-card-header">
+              <h3>Categories</h3>
+              <div style="font-size:11px;color:var(--text-muted)">Toggle PII types on/off</div>
+            </div>
+            <div id="pii-toggles" style="display:grid;grid-template-columns:1fr 1fr;gap:2px"></div>
+          </div>
+        </div>
+        <div class="demo-col">
+          <div class="demo-card">
+            <div class="demo-card-header"><h3>Detection Results</h3></div>
+            <div id="pii-output" class="demo-output" style="max-height:300px;overflow-y:auto"></div>
+          </div>
+          <div class="demo-card" style="margin-top:12px">
+            <div class="demo-card-header"><h3>Masked Output</h3></div>
+            <div id="pii-masked" class="demo-output" style="max-height:200px;overflow-y:auto;background:var(--bg-secondary);border-radius:6px"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab Panel: Injection Detector -->
+  <div id="panel-injection" class="demo-tab-panel">
+    <div class="demo-panel-inner">
+      <div class="demo-header">
+        <h2>Injection Detector</h2>
+        <p class="demo-desc">Real-time prompt injection detection across 8 categories. Ported from Aegis <code>InjectionGuardrail</code> with multi-language support (Korean, Chinese, Japanese) and configurable sensitivity.</p>
+      </div>
+      <div class="demo-layout-split">
+        <div class="demo-col">
+          <div class="demo-card">
+            <div class="demo-card-header">
+              <h3>Prompt Input</h3>
+              <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
+                <button class="injection-preset-btn demo-btn-sm" data-preset="safe">Safe Prompt</button>
+                <button class="injection-preset-btn demo-btn-sm" data-preset="ignore_previous">Ignore Previous</button>
+                <button class="injection-preset-btn demo-btn-sm" data-preset="dan_jailbreak">DAN Jailbreak</button>
+                <button class="injection-preset-btn demo-btn-sm" data-preset="system_extraction">System Extraction</button>
+                <button class="injection-preset-btn demo-btn-sm" data-preset="korean_injection">Korean (한국어)</button>
+                <button class="injection-preset-btn demo-btn-sm" data-preset="delimiter">Delimiter Injection</button>
+                <button class="injection-preset-btn demo-btn-sm" data-preset="context_manipulation">Context Manipulation</button>
+                <button class="injection-preset-btn demo-btn-sm" data-preset="data_exfiltration">Data Exfiltration</button>
+              </div>
+            </div>
+            <textarea id="injection-input" class="demo-textarea" placeholder="Type or paste a prompt here to check for injection patterns...&#10;&#10;Try loading an attack sample above or writing your own prompt." style="min-height:220px">Can you help me write a Python function that sorts a list of dictionaries by a specific key?</textarea>
+          </div>
+          <div class="demo-card" style="margin-top:12px">
+            <div class="demo-card-header">
+              <h3>Sensitivity</h3>
+              <span id="injection-sens-label" style="font-size:12px;color:#d29922">Medium (balanced)</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding:4px 0">
+              <span style="font-size:11px;color:var(--text-muted)">Low</span>
+              <input type="range" id="injection-sensitivity" class="demo-slider" min="0" max="2" value="1" step="1">
+              <span style="font-size:11px;color:var(--text-muted)">High</span>
+            </div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:4px">
+              Low = only obvious attacks &middot; Medium = known attack patterns &middot; High = aggressive detection (may flag benign text)
+            </div>
+          </div>
+        </div>
+        <div class="demo-col">
+          <div class="demo-card">
+            <div class="demo-card-header"><h3>Threat Assessment</h3></div>
+            <div id="injection-light" style="padding:4px 0"></div>
+          </div>
+          <div class="demo-card" style="margin-top:12px">
+            <div class="demo-card-header"><h3>Detection Details</h3></div>
+            <div id="injection-output" class="demo-output" style="max-height:450px;overflow-y:auto"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- How It Works Section -->
   <section class="how-it-works">
     <h2>How It Works</h2>
@@ -1090,6 +1196,7 @@ policy = Policy.from_yaml(<span class="s">"policy.yaml"</span>)
   <script src="js/presets.js" defer></script>
   <script src="js/app.js" defer></script>
   <script src="js/demos.js" defer></script>
+  <script src="js/guardrails.js" defer></script>
   <script>
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("sw.js").catch(() => {});
