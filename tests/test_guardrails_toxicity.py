@@ -2,8 +2,7 @@
 
 import pytest
 
-from aegis.guardrails.toxicity import ToxicityGuardrail, ToxicityResult, ToxicityMatch
-
+from aegis.guardrails.toxicity import ToxicityGuardrail, ToxicityMatch
 
 # -- Violence threats ----------------------------------------------------------
 
@@ -364,9 +363,7 @@ class TestToxicityDetect:
 
     def test_detect_multiple_categories(self):
         g = ToxicityGuardrail()
-        text = (
-            "I will kill you and here is how to make a bomb"
-        )
+        text = "I will kill you and here is how to make a bomb"
         matches = g.detect(text)
         cats = {m.category for m in matches}
         assert len(cats) >= 2

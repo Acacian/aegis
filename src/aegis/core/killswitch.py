@@ -39,7 +39,7 @@ import logging
 import threading
 import time
 from collections import deque
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 logger = logging.getLogger("aegis.killswitch")
 
@@ -185,10 +185,7 @@ class KillSwitch:
                 )
 
             # 3. Error rate
-            if (
-                self._max_error_rate is not None
-                and len(self._error_history) >= self._error_window
-            ):
+            if self._max_error_rate is not None and len(self._error_history) >= self._error_window:
                 error_rate = sum(self._error_history) / len(self._error_history)
                 if error_rate > self._max_error_rate:
                     self._do_trigger(
@@ -196,12 +193,14 @@ class KillSwitch:
                     )
 
             # 4. Actions per minute
-            if self._max_actions_per_minute is not None:
-                if len(self._action_timestamps) > self._max_actions_per_minute:
-                    self._do_trigger(
-                        f"Rate exceeded: {len(self._action_timestamps)}/min "
-                        f"> {self._max_actions_per_minute}/min"
-                    )
+            if (
+                self._max_actions_per_minute is not None
+                and len(self._action_timestamps) > self._max_actions_per_minute
+            ):
+                self._do_trigger(
+                    f"Rate exceeded: {len(self._action_timestamps)}/min "
+                    f"> {self._max_actions_per_minute}/min"
+                )
 
             # 5. Auto-shutdown timeout
             if self._auto_shutdown_after is not None:

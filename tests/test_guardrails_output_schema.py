@@ -6,11 +6,9 @@ import pytest
 
 from aegis.guardrails.output_schema import (
     OutputSchemaGuardrail,
-    OutputSchemaResult,
     SchemaViolation,
     _extract_json,
 )
-
 
 # -- Fixtures ------------------------------------------------------------------
 
@@ -181,9 +179,7 @@ class TestOutputSchemaActions:
 
 class TestOutputSchemaCoercion:
     def test_coerce_string_to_int(self):
-        g = OutputSchemaGuardrail(
-            schema=_PERSON_SCHEMA, coerce_types=True
-        )
+        g = OutputSchemaGuardrail(schema=_PERSON_SCHEMA, coerce_types=True)
         result = g.check('{"name": "Alice", "age": "30"}')
         assert result.passed is True
         assert result.parsed_output["age"] == 30
