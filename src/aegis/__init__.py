@@ -28,6 +28,7 @@ from aegis.core.risk import RiskLevel
 from aegis.core.versioning import PolicyStore, PolicyVersion
 from aegis.core.webhooks import WebhookManager
 from aegis.init import Aegis
+from aegis.instrument import auto_instrument
 from aegis.integrations.decorators import guard
 from aegis.integrations.errors import AegisBlockedError, AegisGuardrailError
 from aegis.integrations.patch_anthropic import patch_anthropic, unpatch_anthropic
@@ -60,6 +61,7 @@ __all__ = [
     "shutdown",
     # Core
     "Action",
+    "auto_instrument",
     "AegisBlockedError",
     "AegisGuardrailError",
     "AgentIdentity",
