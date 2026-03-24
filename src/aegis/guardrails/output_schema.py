@@ -138,7 +138,7 @@ class OutputSchemaGuardrail:
             self._pydantic_model = None
         else:
             self._pydantic_model = pydantic_model
-            self._schema = self._schema_from_pydantic(pydantic_model)
+            self._schema = self._schema_from_pydantic(pydantic_model)  # type: ignore[arg-type]
 
     @staticmethod
     def _schema_from_pydantic(model_cls: type) -> dict[str, Any]:
@@ -146,10 +146,10 @@ class OutputSchemaGuardrail:
         try:
             # Pydantic v2
             if hasattr(model_cls, "model_json_schema"):
-                return model_cls.model_json_schema()  # type: ignore[union-attr]
+                return model_cls.model_json_schema()  # type: ignore[no-any-return]
             # Pydantic v1
             if hasattr(model_cls, "schema"):
-                return model_cls.schema()  # type: ignore[union-attr]
+                return model_cls.schema()  # type: ignore[no-any-return]
         except Exception as exc:
             raise ValueError(f"Failed to extract schema from {model_cls}: {exc}") from exc
 
@@ -255,13 +255,21 @@ class OutputSchemaGuardrail:
 
         violations: list[SchemaViolation] = []
         for error in sorted(validator.iter_errors(data), key=lambda e: list(e.path)):
-            json_path = "$." + ".".join(str(p) for p in error.absolute_path) if error.absolute_path else "$"
-            schema_path = ".".join(str(p) for p in error.absolute_schema_path) if error.absolute_schema_path else "$"
+            json_path = (
+                "$." + ".".join(str(p) for p in error.absolute_path)
+                if error.absolute_path
+                else "$"
+            )
+            schema_path = (
+                ".".join(str(p) for p in error.absolute_schema_path)
+                if error.absolute_schema_path
+                else "$"
+            )
             violations.append(
                 SchemaViolation(
                     path=json_path,
                     message=error.message,
-                    validator=error.validator,  # type: ignore[arg-type]
+                    validator=error.validator,
                     schema_path=schema_path,
                 )
             )
@@ -276,11 +284,11 @@ class OutputSchemaGuardrail:
         try:
             # Pydantic v2
             if hasattr(self._pydantic_model, "model_validate"):
-                self._pydantic_model.model_validate(data)  # type: ignore[union-attr]
+                self._pydantic_model.model_validate(data)
                 return []
             # Pydantic v1
             if hasattr(self._pydantic_model, "parse_obj"):
-                self._pydantic_model.parse_obj(data)  # type: ignore[union-attr]
+                self._pydantic_model.parse_obj(data)
                 return []
         except Exception as exc:
             return [

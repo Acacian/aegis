@@ -10,11 +10,11 @@
 pip install agent-aegis
 ```
 
-This installs the core runtime with YAML policy engine, CLI approval gate, and SQLite audit logger.
+This installs the core library including auto-instrumentation, runtime guardrails, YAML policy engine, CLI approval gate, and SQLite audit logger. Auto-instrumentation (`aegis.auto_instrument()`) works out of the box for any installed framework -- no extra dependencies needed.
 
 ## With Integrations
 
-Install only the integrations you need:
+For adapter-based integrations (beyond auto-instrumentation), install the extras you need:
 
 ```bash
 pip install 'agent-aegis[httpx]'           # REST API adapter
