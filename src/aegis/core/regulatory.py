@@ -1756,7 +1756,7 @@ class ComplianceMapper:
         if framework == RegulatoryFramework.EU_AI_ACT:
             recs.append(
                 "Ensure technical documentation (Art 11) is maintained alongside "
-                "Aegis audit logs for complete EU AI Act compliance."
+                "Aegis audit logs to support EU AI Act evidence requirements."
             )
         elif framework == RegulatoryFramework.NIST_AI_RMF:
             recs.append(

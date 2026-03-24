@@ -27,5 +27,13 @@ Aegis is a governance layer — it is security-critical by nature. The following
 
 | Version | Supported |
 |---------|-----------|
-| 0.1.x   | Yes       |
-| < 0.1   | No        |
+| 0.4.x   | Yes       |
+| 0.3.x   | Yes       |
+| 0.2.x   | Security fixes only |
+| < 0.2   | No        |
+
+## Security Documentation
+
+- [Threat Model](docs/security/threat-model.md) — 8 threat categories with mitigations
+- [OWASP Agentic Mapping](docs/security/owasp-agentic-mapping.md) — Coverage of OWASP Top 10 for Agentic Applications
+- [Audit Readiness](docs/security/audit-readiness.md) — Independent audit preparation
