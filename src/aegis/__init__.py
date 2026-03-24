@@ -17,12 +17,18 @@ from aegis.core.retry import RetryPolicy
 from aegis.core.risk import RiskLevel
 from aegis.core.versioning import PolicyStore, PolicyVersion
 from aegis.core.webhooks import WebhookManager
+from aegis.integrations.decorators import guard
+from aegis.integrations.errors import AegisBlockedError, AegisGuardrailError
+from aegis.integrations.patch_anthropic import patch_anthropic, unpatch_anthropic
+from aegis.integrations.patch_openai import patch_openai, unpatch_openai
 from aegis.runtime.batch_audit import BatchAuditLogger
 from aegis.runtime.engine import Runtime, RuntimeHooks
 from aegis.runtime.watcher import PolicyWatcher
 
 __all__ = [
     "Action",
+    "AegisBlockedError",
+    "AegisGuardrailError",
     "AgentIdentity",
     "AgentRegistry",
     "AnomalyDetector",
@@ -35,6 +41,9 @@ __all__ = [
     "CryptoAuditChain",
     "DelegationEvent",
     "ExecutionPlan",
+    "guard",
+    "patch_anthropic",
+    "patch_openai",
     "Permission",
     "Policy",
     "PolicyBuilder",
@@ -54,6 +63,8 @@ __all__ = [
     "Role",
     "Runtime",
     "RuntimeHooks",
+    "unpatch_anthropic",
+    "unpatch_openai",
     "User",
     "WebhookManager",
 ]
