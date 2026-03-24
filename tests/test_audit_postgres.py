@@ -9,6 +9,8 @@ from typing import Any
 
 import pytest
 
+pytest.importorskip("asyncpg", reason="asyncpg not installed")
+
 from aegis.core.action import Action
 from aegis.core.policy import Approval, PolicyDecision
 from aegis.core.result import Result, ResultStatus
