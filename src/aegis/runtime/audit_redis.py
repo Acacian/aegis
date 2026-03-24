@@ -51,7 +51,7 @@ class RedisAuditLogger:
     def __init__(self, redis_url: str = "redis://localhost:6379/0") -> None:
         import redis
 
-        self._client: redis.Redis[str] = redis.Redis.from_url(redis_url, decode_responses=True)
+        self._client: redis.Redis = redis.Redis.from_url(redis_url, decode_responses=True)
         self._subscribers: list[Callable[[dict[str, Any]], Any]] = []
         self._pubsub: Any | None = None
         self._pubsub_thread: Thread | None = None
@@ -69,7 +69,7 @@ class RedisAuditLogger:
         human_decision: str | None = None,
     ) -> int:
         """Write one audit entry. Returns the integer entry ID."""
-        row_id = int(self._client.incr(_ID_SEQ))
+        row_id = int(self._client.incr(_ID_SEQ))  # type: ignore[arg-type]
         now = datetime.now(UTC)
         ts_iso = now.isoformat()
         ts_epoch = now.timestamp()
@@ -143,7 +143,10 @@ class RedisAuditLogger:
         if not entry_ids:
             return []
 
-        raw_entries = self._client.hmget(_ENTRY_HASH, *entry_ids)
+        raw_entries: list[Any] = self._client.hmget(  # type: ignore[assignment]
+            _ENTRY_HASH,
+            *entry_ids,  # type: ignore[arg-type]
+        )
         entries: list[dict[str, object]] = []
 
         for raw in raw_entries:
@@ -164,7 +167,7 @@ class RedisAuditLogger:
             entries.append(entry)
 
         # Sort by ID for consistent ordering
-        entries.sort(key=lambda e: int(e.get("id", 0)))
+        entries.sort(key=lambda e: int(str(e.get("id", 0))))
 
         if limit is not None:
             entries = entries[:limit]
@@ -219,11 +222,11 @@ class RedisAuditLogger:
         until: datetime | None,
     ) -> list[str]:
         """Gather entry IDs from Sorted Sets, optionally filtered by time."""
-        min_score = since.timestamp() if since else "-inf"
-        max_score = until.timestamp() if until else "+inf"
+        min_score: float | str = since.timestamp() if since else "-inf"
+        max_score: float | str = until.timestamp() if until else "+inf"
 
         if session_id:
-            ids: list[str] = self._client.zrangebyscore(
+            ids: list[str] = self._client.zrangebyscore(  # type: ignore[assignment]
                 _session_key(session_id), min_score, max_score
             )
             return ids
@@ -232,11 +235,13 @@ class RedisAuditLogger:
         all_ids: list[str] = []
         cursor: int = 0
         while True:
-            cursor, keys = self._client.scan(
+            cursor, keys = self._client.scan(  # type: ignore[misc]
                 cursor=cursor, match=_all_sessions_pattern(), count=100
             )
             for key in keys:
-                members: list[str] = self._client.zrangebyscore(key, min_score, max_score)
+                members: list[str] = self._client.zrangebyscore(  # type: ignore[assignment]
+                    key, min_score, max_score
+                )
                 all_ids.extend(members)
             if cursor == 0:
                 break
