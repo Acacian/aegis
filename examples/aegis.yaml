@@ -1,0 +1,101 @@
+# =============================================================================
+# aegis.yaml — Aegis unified configuration
+# =============================================================================
+# Place this file in your project root.  Aegis auto-discovers it when you
+# call ``aegis.init()`` with no arguments.
+#
+# Every section is OPTIONAL.  Omit a section to disable that feature.
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# Guardrails — content inspection for prompts and responses
+# ---------------------------------------------------------------------------
+guardrails:
+  # PII (Personally Identifiable Information) detection and masking
+  pii:
+    enabled: true
+    # Action when PII is found:
+    #   mask  — replace PII with masked text (e.g. j***@example.com)
+    #   block — reject the entire content
+    #   warn  — allow but flag the content
+    #   log   — allow silently, record in audit
+    action: mask
+    # Minimum severity threshold (only PII at or above this level is caught):
+    #   low, medium, high, critical
+    severity: high
+    # Restrict to specific PII categories (null = detect all):
+    # categories:
+    #   - email
+    #   - credit_card
+    #   - ssn
+    #   - korean_rrn
+    #   - phone
+    #   - api_key
+
+  # Prompt injection detection
+  injection:
+    enabled: true
+    # Action when injection is found:
+    #   block — reject the content (recommended)
+    #   warn  — allow but flag
+    #   log   — allow silently, record in audit
+    action: block
+    # Detection sensitivity:
+    #   low    — only obvious, high-confidence attacks
+    #   medium — known attack patterns (recommended)
+    #   high   — aggressive / fuzzy matching (more false positives)
+    sensitivity: medium
+    severity: critical
+
+  # Load additional guardrail packs from YAML files:
+  # custom_packs:
+  #   - ./my_custom_pack.yaml
+  #   - /absolute/path/to/another_pack.yaml
+
+# ---------------------------------------------------------------------------
+# Cost tracking — budget limits for LLM calls
+# ---------------------------------------------------------------------------
+cost:
+  # Maximum spend in USD.  Null or 0 = unlimited.
+  budget_usd: 10.00
+  # Alert when this fraction of budget is used (0.0 – 1.0).
+  alert_threshold: 0.8
+  # Per-call limit (future):
+  # per_call_limit_usd: 0.50
+
+# ---------------------------------------------------------------------------
+# Audit logging — record every governed interaction
+# ---------------------------------------------------------------------------
+audit:
+  enabled: true
+  # Backend: sqlite (default), redis, postgres
+  backend: sqlite
+  # Path for the SQLite database (relative to CWD):
+  path: ./aegis_audit.db
+  # Connection string for redis/postgres (used when backend != sqlite):
+  # dsn: redis://localhost:6379/0
+
+# ---------------------------------------------------------------------------
+# Integrations — auto-patch LLM client libraries
+# ---------------------------------------------------------------------------
+integrations:
+  # Which clients to monkey-patch on aegis.init():
+  auto_patch:
+    - openai
+    - anthropic
+  # What to do when a guardrail blocks a call:
+  #   raise       — raise AegisGuardrailError (default, safest)
+  #   return_none — silently return None
+  #   log         — log a warning but let the call proceed
+  on_block: raise
+
+# ---------------------------------------------------------------------------
+# Policy engine (optional — for action-level governance rules)
+# ---------------------------------------------------------------------------
+# policy:
+#   rules_path: ./policy.yaml
+#   # Or define rules inline:
+#   # rules:
+#   #   - action: "write"
+#   #     target: "database"
+#   #     approval: "human"
