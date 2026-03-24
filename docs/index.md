@@ -68,7 +68,7 @@ result = await runtime.run_one(Action("delete", "crm", params={"id": "all"}))
 | **Smart conditions** | `time_after`, `time_before`, `weekdays`, `param_gt/lt/eq/contains/matches` |
 | **4-tier risk model** | `low` / `medium` / `high` / `critical` with per-rule overrides |
 | **7 approval handlers** | CLI, Slack, Discord, Telegram, email, webhook, or custom |
-| **Audit trail** | SQLite + JSONL + webhook + Python `logging` — compliance-ready |
+| **Audit trail** | SQLite + JSONL + webhook + Python `logging` — auditor-ready evidence export |
 | **7 framework adapters** | LangChain, CrewAI, OpenAI Agents SDK, Anthropic Claude, Playwright, httpx, MCP |
 | **REST API server** | `aegis serve policy.yaml` — govern from any language |
 | **Web dashboard** | Real-time governance dashboard with compliance reports and anomaly detection |

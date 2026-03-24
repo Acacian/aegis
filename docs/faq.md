@@ -141,13 +141,13 @@ Aegis is a library — it relies on the developer routing all agent actions thro
 ## Compliance
 
 ### Does Aegis help with SOC2 compliance?
-Yes. Aegis provides an immutable audit trail of every agent action, decision, and approval — which maps directly to SOC2 Change Management and Access Control evidence requirements. Export audit logs as JSONL for your auditor.
+Aegis provides tooling that supports SOC2 evidence collection — immutable audit trails, approval gates, and access control logs map to Trust Services Criteria (CC6.1, CC7.2, CC8.1). Export audit logs as JSONL for your auditor. Aegis is not itself SOC2-certified; it generates evidence that your compliance team can include in their audit packages.
 
 ### Does Aegis help with GDPR?
-Aegis logs which system accessed what data and when, providing data access documentation for GDPR Article 30 records. Combine with your data classification to track PII access.
+Aegis logs which system accessed what data and when, providing data access documentation that supports GDPR Article 30 record-keeping. Combine with your data classification to track PII access. Consult your DPO for jurisdiction-specific obligations.
 
 ### Can I use Aegis for HIPAA audit trails?
-Yes. The audit log captures PHI access patterns with full action context and approval chains. See the [compliance demo](https://github.com/Acacian/aegis/blob/main/examples/compliance_demo.py) for a worked example.
+The audit log captures access patterns with full action context and approval chains, which can support HIPAA audit trail requirements. See the [compliance demo](https://github.com/Acacian/aegis/blob/main/examples/compliance_demo.py) for a worked example. Aegis provides tooling, not certification — consult qualified counsel for your specific compliance obligations.
 
 ## Community
 
