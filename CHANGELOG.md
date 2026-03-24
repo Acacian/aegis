@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.2] — 2026-03-25
+
+### Added
+
+- **Auto-Instrumentation** (`aegis.auto_instrument()`) — zero-code monkey-patching that adds governance to any installed AI framework at runtime
+  - **LangChain** — patches `BaseChatModel.invoke/ainvoke`, `BaseTool.invoke/ainvoke`
+  - **CrewAI** — patches `Crew.kickoff/kickoff_async`, registers global `BeforeToolCallHook`
+  - **OpenAI Agents SDK** — patches `Runner.run`, `Runner.run_sync`
+  - **OpenAI API** — patches `Completions.create` via existing `patch_openai`
+  - **Anthropic API** — patches `Messages.create` via existing `patch_anthropic`
+- **`AEGIS_INSTRUMENT=1` environment variable** — activate auto-instrumentation with zero code changes
+- **Default guardrail engine** — built-in guardrails (injection block, toxicity block, PII warn, prompt leak warn) that require no configuration
+- **Per-framework patching** — `patch_langchain()`, `patch_crewai()`, `patch_openai_agents()` for selective instrumentation
+- **Instrumentation status API** — `status()` returns current patch state, `reset()` cleanly unpatches everything
+- **`InstrumentationReport`** — structured summary of what was patched, skipped, or errored
+
 ## [0.4.1] — 2026-03-24
 
 ### Changed
