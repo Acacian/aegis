@@ -5,7 +5,7 @@ All tests are synchronous — no async/await needed.
 
 import pytest
 
-from aegis.core.killswitch import KillSwitch, KillSwitchTriggered, KillSwitchStatus
+from aegis.core.killswitch import KillSwitch, KillSwitchStatus, KillSwitchTriggered
 
 # Force sync mode: this module has no async tests.
 # pytest-asyncio auto mode can cause hangs with threading + sync fixtures.

@@ -104,7 +104,8 @@ _JSON_PROMPT_TEMPLATE = (
     '   "defaults": {{"risk_level": "medium", "approval": "approve"}},\n'
     '   "rules": [{{"name": "rule_name", "match": {{"type": "glob*", "target": "glob*"}},\n'
     '              "risk_level": "low", "approval": "auto", "conditions": {{}}}}]}}\n\n'
-    "Risk levels: low (safe reads), medium (writes), high (bulk/sensitive), critical (destructive).\n"
+    "Risk levels: low (safe reads), medium (writes), "
+    "high (bulk/sensitive), critical (destructive).\n"
     "Approval: auto (no human), approve (human required), block (never allowed).\n"
     'Match type uses glob patterns: "read*", "write*", "delete*", "send*", "deploy*", "*".\n'
     "Conditions are optional: param_gt, time_after, time_before, weekdays.\n\n"

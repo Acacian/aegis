@@ -16,7 +16,6 @@ from aegis.core.autopolicy_llm import (
     _validate_policy_dict,
 )
 
-
 # -- Validation ----------------------------------------------------------------
 
 
@@ -165,9 +164,7 @@ class TestOpenAIPolicyGenerator:
     @patch("aegis.core.autopolicy_llm.OpenAIPolicyGenerator._get_client")
     def test_invalid_json_raises(self, mock_get_client):
         client = MagicMock()
-        client.chat.completions.create.return_value = _mock_openai_response(
-            "not json"
-        )
+        client.chat.completions.create.return_value = _mock_openai_response("not json")
         mock_get_client.return_value = client
 
         gen = OpenAIPolicyGenerator(api_key="sk-test")
@@ -191,9 +188,11 @@ class TestOpenAIPolicyGenerator:
     def test_import_error_without_openai(self):
         gen = OpenAIPolicyGenerator(api_key="sk-test")
         gen._client = None  # Force re-import
-        with patch.dict("sys.modules", {"openai": None}):
-            with pytest.raises(ImportError, match="openai"):
-                gen._get_client()
+        with (
+            patch.dict("sys.modules", {"openai": None}),
+            pytest.raises(ImportError, match="openai"),
+        ):
+            gen._get_client()
 
 
 # -- Anthropic generator -------------------------------------------------------
@@ -203,9 +202,7 @@ class TestAnthropicPolicyGenerator:
     @patch("aegis.core.autopolicy_llm.AnthropicPolicyGenerator._get_client")
     def test_generates_policy_via_tool(self, mock_get_client):
         client = MagicMock()
-        client.messages.create.return_value = _mock_anthropic_tool_response(
-            _VALID_POLICY
-        )
+        client.messages.create.return_value = _mock_anthropic_tool_response(_VALID_POLICY)
         mock_get_client.return_value = client
 
         gen = AnthropicPolicyGenerator(api_key="sk-ant-test")
@@ -217,9 +214,7 @@ class TestAnthropicPolicyGenerator:
     @patch("aegis.core.autopolicy_llm.AnthropicPolicyGenerator._get_client")
     def test_uses_tool_choice(self, mock_get_client):
         client = MagicMock()
-        client.messages.create.return_value = _mock_anthropic_tool_response(
-            _VALID_POLICY
-        )
+        client.messages.create.return_value = _mock_anthropic_tool_response(_VALID_POLICY)
         mock_get_client.return_value = client
 
         gen = AnthropicPolicyGenerator()
@@ -258,9 +253,11 @@ class TestAnthropicPolicyGenerator:
     def test_import_error_without_anthropic(self):
         gen = AnthropicPolicyGenerator(api_key="sk-ant-test")
         gen._client = None
-        with patch.dict("sys.modules", {"anthropic": None}):
-            with pytest.raises(ImportError, match="anthropic"):
-                gen._get_client()
+        with (
+            patch.dict("sys.modules", {"anthropic": None}),
+            pytest.raises(ImportError, match="anthropic"),
+        ):
+            gen._get_client()
 
 
 # -- YAML fallback generator ---------------------------------------------------
@@ -342,9 +339,7 @@ class TestAutopolicyIntegration:
         from aegis.core.autopolicy import generate_policy_yaml
 
         client = MagicMock()
-        client.messages.create.return_value = _mock_anthropic_tool_response(
-            _VALID_POLICY
-        )
+        client.messages.create.return_value = _mock_anthropic_tool_response(_VALID_POLICY)
         mock_get_client.return_value = client
 
         gen = AnthropicPolicyGenerator(api_key="sk-ant-test")

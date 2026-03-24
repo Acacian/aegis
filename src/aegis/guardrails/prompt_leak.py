@@ -345,7 +345,7 @@ class PromptLeakGuardrail:
                     return PromptLeakMatch(
                         category="prompt_echo",
                         pattern_name="exact_prompt_echo",
-                        matched_text=content[idx:idx + len(prompt)],
+                        matched_text=content[idx : idx + len(prompt)],
                         start=idx,
                         end=idx + len(prompt),
                         confidence="high",
@@ -354,13 +354,13 @@ class PromptLeakGuardrail:
                 # Long prompts: check for significant substrings
                 # Use sliding window of min_echo_length
                 for i in range(0, len(normalized_prompt) - self.min_echo_length + 1, 10):
-                    chunk = normalized_prompt[i:i + self.min_echo_length]
+                    chunk = normalized_prompt[i : i + self.min_echo_length]
                     if chunk in normalized_content:
                         idx = normalized_content.index(chunk)
                         return PromptLeakMatch(
                             category="prompt_echo",
                             pattern_name="substring_prompt_echo",
-                            matched_text=content[idx:idx + self.min_echo_length],
+                            matched_text=content[idx : idx + self.min_echo_length],
                             start=idx,
                             end=idx + self.min_echo_length,
                             confidence="high",
@@ -390,8 +390,7 @@ class PromptLeakGuardrail:
 
         categories_found = sorted({m.category for m in matches})
         details = (
-            f"Prompt leakage detected: {', '.join(categories_found)} "
-            f"({len(matches)} pattern(s))"
+            f"Prompt leakage detected: {', '.join(categories_found)} ({len(matches)} pattern(s))"
         )
 
         action_str = self.action + "ed" if self.action != "log" else "allowed"
