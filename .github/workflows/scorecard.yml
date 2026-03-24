@@ -1,5 +1,6 @@
 name: Scorecard
 on:
+  workflow_dispatch:
   branch_protection_rule:
   schedule:
     - cron: '0 6 * * 1'  # Weekly on Monday
