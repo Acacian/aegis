@@ -23,8 +23,10 @@ jobs:
           python-version: "3.12"
       - run: pip install mkdocs-material
       - run: mkdocs build
-      - name: Copy playground into site
-        run: cp -r playground/ site/playground/
+      - name: Copy standalone playground into site
+        run: |
+          rm -rf site/playground
+          cp -r playground/ site/playground/
       - name: Deploy to GitHub Pages
         run: |
           git config user.name "github-actions[bot]"

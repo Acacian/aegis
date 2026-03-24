@@ -350,7 +350,7 @@ policy = Policy.from_yaml("policies/crm-agent.yaml")
 
 | Aspect | Detail |
 |--------|--------|
-| **1,950+ tests, 92% coverage** | Every adapter, handler, and edge case tested |
+| **2,200+ tests, 92% coverage** | Every adapter, handler, and edge case tested |
 | **Type-safe** | `mypy --strict` with zero errors, `py.typed` marker |
 | **Performance** | Policy evaluation < 1ms; auto-approved actions add < 5ms overhead |
 | **Fail-safe** | Blocked actions never execute; can't be bypassed without policy change |
