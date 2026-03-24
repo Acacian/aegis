@@ -1,0 +1,141 @@
+name: "@aegis/prompt-injection"
+version: "1.0.0"
+description: "Prompt injection detection rules"
+
+rules:
+  # ── System Prompt Extraction ──────────────────────────────────────────
+  - name: system_prompt_extraction
+    type: pattern
+    patterns:
+      - 'ignore\s+(?:all\s+)?(?:previous|prior|above|preceding)\s+(?:instructions|prompts?|rules|directives|guidelines)'
+      - '(?:show|display|reveal|print|output|tell\s+me|give\s+me|repeat)\s+(?:your|the)\s+(?:system\s+)?(?:prompt|instructions|rules|guidelines|directives)'
+      - 'what\s+(?:is|are|was|were)\s+(?:your|the)\s+(?:system\s+)?(?:prompt|instructions|rules|guidelines|initial\s+instructions)'
+      - 'repeat\s+(?:your|the|all)?\s*(?:above|previous|initial|original|system)?\s*(?:instructions|prompt|rules|text|message)'
+      - '(?:print|output|echo|type)\s+(?:everything|all|the\s+text)\s+(?:above|before|preceding)'
+      - '(?:read|access|retrieve|extract)\s+(?:the\s+)?(?:first|initial|original)\s+(?:message|prompt|instruction|input)'
+    action: block
+    severity: critical
+
+  # ── Role Hijacking ───────────────────────────────────────────────────
+  - name: role_hijacking
+    type: pattern
+    patterns:
+      - '(?:you\s+are\s+now|from\s+now\s+on\s+you\s+are|you\s+have\s+become|you\s+will\s+now\s+(?:be|act\s+as))'
+      - 'pretend\s+(?:that\s+)?you\s+(?:are|were|have\s+no)'
+      - '(?:new\s+role|your\s+new\s+(?:role|identity|persona|character)|role\s*:\s*\w|assume\s+the\s+(?:role|identity|persona))'
+      - 'your\s+new\s+(?:instructions|directives|rules|guidelines|orders)\s+are'
+      - '(?:switch|change|enter|activate|enable)\s+(?:to\s+)?(?:your\s+)?(?:developer|debug|admin|unrestricted|uncensored|jailbreak|god)\s*(?:mode)?'
+      - '(?:forget|discard|abandon)\s+(?:your\s+)?(?:previous\s+)?(?:personality|character|role|identity|persona)'
+    action: block
+    severity: critical
+
+  # ── Instruction Override ─────────────────────────────────────────────
+  - name: instruction_override
+    type: pattern
+    patterns:
+      - 'ignore\s+(?:all\s+)?(?:previous|prior|above|earlier|preceding)'
+      - '(?:disregard|forget|dismiss|drop)\s+(?:all\s+)?(?:above|previous|prior|earlier|preceding|the\s+above)\s*(?:instructions|text|context|messages|rules|prompts?)?'
+      - 'forget\s+everything\s+(?:you\s+(?:know|were\s+told|learned)|above|before|prior)'
+      - '(?:override|overwrite|replace|supersede)\s*:?\s*(?:all\s+)?(?:previous\s+)?(?:instructions|rules|directives|constraints|guidelines)'
+      - '(?:new\s+directive|new\s+instruction|updated?\s+instruction|revised\s+rules)\s*:'
+      - '(?:do\s+not|don''t|never)\s+follow\s+(?:the\s+)?(?:previous|above|original|initial|prior)\s+(?:instructions|rules|guidelines)'
+    action: block
+    severity: critical
+
+  # ── Delimiter Injection ──────────────────────────────────────────────
+  - name: delimiter_injection
+    type: pattern
+    patterns:
+      - '<\|endoftext\|>'
+      - '<\|im_(?:end|start|sep)\|>'
+      - '\[/?INST\]|\[/?SYS\]'
+      - '</s>|</?s>'
+      - '<\|(?:system|user|assistant|human|ai)\|>'
+      - '<\|(?:im_start|im_end)\|>\s*(?:system|user|assistant)'
+      - '<\|(?:sep|pad|eos|bos|mask|cls)\|>'
+    action: block
+    severity: critical
+
+  # ── Encoding Evasion ─────────────────────────────────────────────────
+  - name: encoding_evasion
+    type: pattern
+    patterns:
+      - '(?:decode|execute|run|follow|interpret)\s+(?:this\s+)?(?:base64|b64|encoded)'
+      - '(?:decode|apply|use)\s+(?:this\s+)?rot13'
+      - '(?:decode|interpret|execute)\s+(?:this\s+)?(?:hex|hexadecimal|0x)'
+      - '(?:\\u[0-9a-f]{4}){3,}'
+      - '(?:reverse|backwards?|read\s+(?:from\s+)?right\s+to\s+left)\s+(?:the\s+following|this|these\s+instructions)'
+    action: block
+    severity: critical
+
+  # ── Multi-Language Injection ─────────────────────────────────────────
+  - name: multi_language_injection
+    type: pattern
+    patterns:
+      # Korean
+      - '(?:이전|위의|앞의|기존)\s*(?:지시|명령|지침|규칙|프롬프트)(?:를|을|사항을)?\s*(?:무시|잊어|삭제|취소|버려)'
+      - '(?:너는|당신은|넌)\s*(?:이제부터|지금부터|앞으로)'
+      - '(?:시스템|원래)\s*(?:프롬프트|지시|명령|지침)(?:를|을)?\s*(?:보여|알려|출력|말해)'
+      # Chinese
+      - '(?:忽略|无视|忘记|丢弃|放弃)\s*(?:之前|以上|上面|先前|以前)?\s*(?:的)?\s*(?:指令|指示|规则|提示|说明|命令)'
+      - '(?:你现在是|从现在起你是|你的新角色是|你将扮演|假装你是)'
+      # Japanese
+      - '(?:以前|前|上記|これまで)の\s*(?:指示|命令|ルール|プロンプト|指令)(?:を|は)\s*(?:無視|忘れ|削除|取り消)'
+      - '(?:あなたは(?:今から|これから)|今から(?:あなたは|お前は)|新しい役割)'
+      # Spanish
+      - '(?:ignora|olvida|descarta)\s+(?:todas?\s+)?(?:las?\s+)?(?:anteriores?|previas?)\s+(?:instrucciones|reglas|directivas)'
+      # German
+      - '(?:ignoriere|vergiss)\s+(?:alle\s+)?(?:vorherigen?|bisherigen?|obigen?)\s+(?:Anweisungen|Regeln|Instruktionen)'
+      # French
+      - '(?:ignore[rz]?|oublie[rz]?)\s+(?:toutes?\s+)?(?:les?\s+)?(?:instructions?|règles?|directives?)\s+(?:précédentes?|antérieures?)'
+    action: block
+    severity: critical
+
+  # ── Indirect Injection ───────────────────────────────────────────────
+  - name: indirect_injection
+    type: pattern
+    patterns:
+      - '(?:when|if|once|after)\s+(?:you\s+)?(?:see|read|encounter|find|process)\s+(?:this|these|the\s+following)'
+      - 'if\s+(?:someone|anyone|a\s+user|the\s+user|they)\s+(?:asks?|tells?|requests?|instructs?)\s+(?:you\s+)?(?:to|about)'
+      - '(?:hidden|secret|embedded|invisible)\s+(?:instruction|command|directive|message)'
+      - '(?:automatically|silently|quietly|covertly)\s+(?:execute|run|perform|do|carry\s+out|apply)'
+      - '(?:inject|insert|embed|include|add)\s+(?:this|the\s+following)\s+(?:into|in|to)\s+(?:your|the|every|all)\s+(?:response|output|reply|answer)'
+    action: block
+    severity: critical
+
+  # ── Data Exfiltration ────────────────────────────────────────────────
+  - name: data_exfiltration
+    type: pattern
+    patterns:
+      - '(?:send|post|upload|transmit|forward|exfiltrate|export)\s+(?:[\w\s]{0,30}?)(?:to|at)\s+(?:https?://|www\.|[a-z0-9.-]+\.\w{2,})'
+      - '(?:make|send|issue|create)\s+(?:a\s+)?(?:GET|POST|PUT|DELETE|HTTP|API|web)?\s*(?:request|call)\s+to\s+(?:https?://|www\.|[a-z0-9.-]+\.\w{2,})'
+      - '(?:fetch|retrieve|download|get|load|import)\s+(?:data\s+)?from\s+(?:https?://|www\.|[a-z0-9.-]+\.\w{2,})'
+      - '(?:encode|encrypt|compress|base64)\s+(?:and\s+)?(?:send|transmit|upload|post)'
+      - '(?:include|embed|append|put)\s+(?:it|this|the\s+data|the\s+response)\s+(?:in|into|as\s+part\s+of)\s+(?:the\s+)?(?:url|link|request|query)'
+    action: block
+    severity: critical
+
+  # ── Jailbreak Patterns ───────────────────────────────────────────────
+  - name: jailbreak_patterns
+    type: pattern
+    patterns:
+      - '\bDAN\b\s*(?:mode|prompt|jailbreak)?|\bdo\s+anything\s+now\b'
+      - '(?:enable|activate|enter|turn\s+on|switch\s+to)\s+(?:developer|dev|debug|maintenance|testing|god)\s*(?:mode)'
+      - '(?:no|without|remove\s+(?:all)?|disable\s+(?:all)?|bypass(?:ing)?)\s*(?:restrictions|limitations|constraints|filters|safety|guardrails|guidelines|rules|censorship)'
+      - '(?:unrestricted|uncensored|unfiltered|unmoderated|unlocked|unleashed|unchained)\s*(?:mode|version|AI|model|assistant)?'
+      - '\b(?:DUDE|AIM|STAN|KEVIN|OMEGA|JAILBREAK|ABLITERATED)\b'
+    action: block
+    severity: critical
+
+  # ── Context Manipulation ─────────────────────────────────────────────
+  - name: context_manipulation
+    type: pattern
+    patterns:
+      - '(?:the\s+(?:real\s+)?user|the\s+(?:actual\s+)?human|the\s+admin(?:istrator)?|the\s+(?:system\s+)?operator)\s+(?:said|told\s+(?:you|me)|wants|requested|instructed|ordered|asked)'
+      - '(?:authorized?|official|legitimate|valid|approved|verified)\s+(?:override|update|change|modification|instruction|command)'
+      - '(?:\[system\]|\[admin\]|\[operator\]|\[override\])\s*:?\s*'
+      - '(?:priority|urgent|emergency|critical|important)\s*(?::\s*|\s+)(?:instruction|directive|override|command|message|update)'
+      - '(?:admin|root|superuser|sudo|operator|maintainer)\s+(?:access|privilege|mode|override|command|level)'
+      - '(?:trust\s+me|I\s+(?:am|''m)\s+(?:the|a|an|your)\s+(?:developer|admin|creator|owner|operator|maintainer|author))'
+    action: block
+    severity: critical
