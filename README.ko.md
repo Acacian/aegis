@@ -1,10 +1,11 @@
 <p align="center">
   <h1 align="center">Aegis</h1>
   <p align="center">
-    <strong>AI 에이전트 거버넌스를 가장 단순하게. 인프라 불필요. 벤더 종속 없음. 순수 Python.</strong>
+    <strong>오픈소스 AI 거버넌스 프레임워크.<br/>가드레일 + 정책 + 프로토콜 — <code>aegis.init()</code> 하나로 에이전트를 보호합니다.</strong>
   </p>
   <p align="center">
-    <code>pip install agent-aegis</code> &#8594; YAML 정책 &#8594; 5분 만에 거버넌스 적용.<br/>
+    런타임 가드레일 (PII, 인젝션) + 정책 엔진 (YAML 규칙, 승인 게이트) + 개방형 표준 (AGEF/AGP).<br/>
+    <code>pip install agent-aegis</code> &#8594; <code>aegis.init()</code> &#8594; 모든 AI 호출에 거버넌스 적용.<br/>
     <strong>LangChain, CrewAI, OpenAI, Anthropic, MCP 등 7개 프레임워크 지원.</strong>
   </p>
 </p>
@@ -27,7 +28,7 @@
 <p align="center">
   <a href="https://acacian.github.io/aegis/playground/"><strong>브라우저에서 바로 체험하기</strong></a> &bull;
   <a href="#빠른-시작">빠른 시작</a> &bull;
-  <a href="#작동-방식">작동 방식</a> &bull;
+  <a href="#3대-핵심-축">3대 핵심 축</a> &bull;
   <a href="#런타임-가드레일">가드레일</a> &bull;
   <a href="https://acacian.github.io/aegis/">문서</a> &bull;
   <a href="#통합">통합</a> &bull;
@@ -61,84 +62,84 @@ async def handle_agent_action(tool_name, args):
     return result
 ```
 
-**Aegis로** — YAML 파일 하나로 전체 거버넌스, 감사 추적과 승인 게이트 내장:
+**Aegis로** — 제로 설정 활성화 또는 YAML로 완전한 제어. PII 마스킹, 인젝션 차단, 정책 적용, 감사 로깅이 모두 내장:
+
+**제로 설정** — 두 줄로 모든 AI 호출에 거버넌스 적용:
+
+```python
+import aegis
+aegis.init()  # PII 마스킹, 인젝션 차단, 정책 적용, 감사 로깅 — 끝.
+```
+
+**YAML 설정** — 세밀한 제어가 필요할 때:
 
 ```yaml
-# policy.yaml
-rules:
-  - name: block_deletes
-    match: { type: "delete*" }
-    approval: block
+# aegis.yaml
+guardrails:
+  pii: { enabled: true, action: mask }
+  injection: { enabled: true, action: block, sensitivity: medium }
 
-  - name: bulk_approval
-    match: { type: "bulk_*" }
-    conditions: { param_gt: { count: 100 } }
-    approval: approve          # Slack, CLI, Discord 등으로 사람에게 물어봄
-
-  - name: no_after_hours
-    match: { type: "deploy*" }
-    conditions: { time_after: "18:00" }
-    approval: block
+policy:
+  rules:
+    - name: block_deletes
+      match: { type: "delete*" }
+      approval: block
+    - name: bulk_approval
+      match: { type: "bulk_*" }
+      conditions: { param_gt: { count: 100 } }
+      approval: approve       # Slack, CLI, Discord 등으로 사람에게 물어봄
+    - name: no_after_hours
+      match: { type: "deploy*" }
+      conditions: { time_after: "18:00" }
+      approval: block
 ```
 
-```python
-from aegis import Policy, Runtime
+**`pip install` 하나. `aegis.init()` 하나. LangChain, CrewAI, OpenAI, Anthropic, MCP 전부 지원.** 런타임 가드레일, 정책 엔진, 사람 승인 게이트, 완전한 감사 추적까지 — 서버 배포 없이.
 
-runtime = Runtime(executor=my_executor, policy=Policy.from_yaml("policy.yaml"))
-result = await runtime.run_one(action)  # 정책 체크 + 승인 + 감사 — 끝.
-```
+## 3대 핵심 축
 
-**`pip install` 하나. YAML 파일 하나. LangChain, CrewAI, OpenAI, Anthropic, MCP 전부 지원.** 감사 추적, 사람 승인 게이트, 규제 컴플라이언스까지 — 서버 배포 없이.
+Aegis는 세 개의 축으로 구성됩니다. 세 축이 합쳐져 완전한 AI 거버넌스 프레임워크를 이룹니다 — 단순한 정책 체커가 아닙니다.
 
-**복사 → 붙여넣기 → 실행 — 설정 파일 없이 바로 동작:**
+### 축 1: 런타임 가드레일
 
-```python
-from aegis import Action, Policy
+모든 입출력에 대해 자동으로 실행되는 콘텐츠 수준 보호.
 
-policy = Policy.from_dict({
-    "version": "1",
-    "defaults": {"risk_level": "low", "approval": "auto"},
-    "rules": [{"name": "block_delete", "match": {"type": "delete_*"},
-               "risk_level": "critical", "approval": "block"}]
-})
+| 기능 | 상세 |
+|------|------|
+| **PII 탐지 & 마스킹** | 12개 카테고리 (이메일, 신용카드, SSN, 주민등록번호, API 키 등) + Luhn 검증 |
+| **프롬프트 인젝션 차단** | 10개 공격 카테고리, 85+ 패턴, 다국어 (영어, 한국어, 중국어, 일본어) |
+| **룰 팩 생태계** | 커뮤니티 YAML 팩으로 확장 (`@aegis/pii-detection`, `@aegis/prompt-injection`) |
+| **설정 가능한 액션** | `mask`, `block`, `warn`, `log` — 배포 환경별, 카테고리별 설정 |
 
-safe = policy.evaluate(Action(type="read_users", target="db"))
-print(safe.approval)   # Approval.AUTO  ✅
+### 축 2: 정책 엔진
 
-danger = policy.evaluate(Action(type="delete_users", target="db"))
-print(danger.approval)  # Approval.BLOCK 🚫
-```
+전체 거버넌스 파이프라인을 갖춘 선언적 YAML 규칙 (평가 --> 승인 --> 실행 --> 검증 --> 감사).
 
-YAML 파일 사용 시 — **3줄:**
+| 기능 | 상세 |
+|------|------|
+| **글로브 매칭** | 첫 매치 우선, 와일드카드 패턴 (`delete*`, `bulk_*`) |
+| **스마트 조건** | `time_after`, `weekdays`, `param_gt`, `param_contains`, 정규식, 시맨틱 |
+| **4단계 위험 모델** | `low` / `medium` / `high` / `critical` + 규칙별 오버라이드 |
+| **승인 게이트** | CLI, Slack, Discord, Telegram, 이메일, 웹훅, 또는 커스텀 핸들러 |
+| **감사 추적** | SQLite 자동 로깅. 내보내기: JSONL, 웹훅, CLI/API 조회 |
 
-```python
-from aegis import Action, Policy, Runtime
+### 축 3: 개방형 표준
 
-runtime = Runtime(executor=your_executor, policy=Policy.from_yaml("policy.yaml"))
-results = await runtime.run_one(Action("write", "salesforce", params={...}))
-```
+Aegis를 단순한 도구가 아닌 플랫폼으로 만드는 사양들.
 
-**서버 배포 불필요. 쿠버네티스 불필요. 벤더 종속 없음.** `pip install` 하나, YAML 파일 하나면 정책 체크 + 사람 승인 게이트 + 완전한 감사 추적이 모든 AI 프로바이더에 걸쳐 동작합니다.
-
-## 작동 방식
-
-### 핵심 개념
-
-Aegis는 3가지 핵심 요소로 구성됩니다:
-
-| 개념 | 역할 | 사용자가 할 일 |
-|------|------|-------------|
-| **Policy** | 어떤 액션을 허용/승인/차단할지 정의하는 YAML 규칙 | 규칙 작성 |
-| **Executor** | 실제로 무언가를 수행하는 어댑터 (API 호출, 버튼 클릭, 쿼리 실행 등) | 기본 제공 어댑터 사용 또는 직접 구현 |
-| **Runtime** | Policy + Executor를 연결하는 엔진. 규칙 평가, 승인 게이트, 실행, 로깅을 처리 | 생성 후 `run_one()` 또는 `plan()` + `execute()` 호출 |
+| 표준 | 역할 |
+|------|------|
+| **AGEF** (Agent Governance Event Format) | 거버넌스 이벤트를 위한 표준 JSON 스키마 — 7개 이벤트 타입, 해시 연결 증거 체인. AI 거버넌스의 SARIF. |
+| **AGP** (Agent Governance Protocol) | 에이전트와 거버넌스 시스템 간 통신 프로토콜. MCP는 에이전트가 할 수 있는 것(CAN do)을, AGP는 하면 안 되는 것(MUST NOT do)을 표준화. |
+| **룰 팩** | 커뮤니티 기반 가드레일 규칙. `aegis install <pack>`으로 설치. |
 
 ### 파이프라인
 
-모든 액션은 5단계를 거칩니다. `runtime.run_one(action)` 한 번이면 자동 처리:
+모든 액션은 5단계를 거칩니다. `aegis.init()` 또는 `runtime.run_one(action)` 한 번이면 자동 처리:
 
 ```
 1. 평가(EVALUATE)    정책 규칙과 대조 (글로브 패턴 매칭)
-                     → PolicyDecision: 위험 수준 + 승인 요구 사항 + 매칭된 규칙
+                     --> PolicyDecision: 위험 수준 + 승인 요구 사항 + 매칭된 규칙
 
 2. 승인(APPROVE)     결정에 따라:
                      - auto:    즉시 진행 (저위험 액션)
@@ -210,26 +211,30 @@ aegis audit --format jsonl -o export.jsonl  # 내보내기
 
 ## 빠른 시작
 
+### 1단계: 설치
+
 ```bash
 pip install agent-aegis
 ```
 
-### 한 줄 활성화
+### 2단계: 활성화 (레벨 선택)
+
+**가장 간단하게 — 두 줄, 설정 제로:**
 
 ```python
 import aegis
-aegis.init()  # 이것만으로 PII 마스킹, 인젝션 차단, 정책, 감사, 비용 추적 — 전부 활성화.
+aegis.init()
+# 이것만으로 끝. 모든 OpenAI/Anthropic 호출에 거버넌스가 적용됩니다.
+# PII 마스킹, 인젝션 차단, 정책 적용, 감사 로깅 — 전부 활성화.
 ```
 
 `aegis.init()`은 `aegis.yaml`을 자동 탐색하고 (없으면 합리적인 기본값 사용), 전체 거버넌스 스택을 활성화합니다: 런타임 가드레일, 정책 엔진, 감사 로깅, 비용 추적.
 
-### 제로-코드 통합
-
-기존 LLM 호출을 애플리케이션 로직 변경 없이 거버넌스 적용:
+**제로-코드 통합 — 기존 LLM 호출을 코드 변경 없이 거버넌스 적용:**
 
 ```python
 import aegis
-aegis.patch_openai()   # 모든 OpenAI 호출에 거버넌스 적용
+aegis.patch_openai()    # 모든 OpenAI 호출에 거버넌스 적용
 aegis.patch_anthropic() # 모든 Anthropic 호출에 거버넌스 적용
 
 # 또는 커스텀 함수에 데코레이터 사용
@@ -240,39 +245,41 @@ def my_agent_function():
     ...
 ```
 
-### 1. 정책 생성
+**YAML 설정 — 세밀한 제어가 필요할 때:**
 
 ```bash
-aegis init  # 기본 정책 파일 policy.yaml 생성
+aegis init  # 기본 설정 파일 aegis.yaml 생성
 ```
 
 ```yaml
-# policy.yaml
-version: "1"
-defaults:
-  risk_level: medium
-  approval: approve
+# aegis.yaml
+guardrails:
+  pii: { enabled: true, action: mask }
+  injection: { enabled: true, action: block, sensitivity: medium }
 
-rules:
-  - name: read_safe
-    match: { type: "read*" }
-    risk_level: low
-    approval: auto
-
-  - name: bulk_ops_need_approval
-    match: { type: "bulk_*" }
-    conditions:
-      param_gt: { count: 100 }  # count > 100일 때만
-    risk_level: high
+policy:
+  version: "1"
+  defaults:
+    risk_level: medium
     approval: approve
-
-  - name: no_deletes
-    match: { type: "delete*" }
-    risk_level: critical
-    approval: block
+  rules:
+    - name: read_safe
+      match: { type: "read*" }
+      risk_level: low
+      approval: auto
+    - name: bulk_ops_need_approval
+      match: { type: "bulk_*" }
+      conditions:
+        param_gt: { count: 100 }
+      risk_level: high
+      approval: approve
+    - name: no_deletes
+      match: { type: "delete*" }
+      risk_level: critical
+      approval: block
 ```
 
-### 2. 에이전트에 추가
+**고급 — 커스텀 Executor를 위한 전체 Runtime() 제어:**
 
 ```python
 import asyncio
@@ -301,7 +308,7 @@ async def main():
 asyncio.run(main())
 ```
 
-### 3. 감사 로그 확인
+### 3단계: 감사 로그 확인
 
 ```bash
 aegis audit
@@ -946,9 +953,12 @@ aegis compliance --type soc2 --output report.json  # 컴플라이언스 리포�
 | **0.1.3** | **출시됨** | REST API 서버, 재시도/롤백, 드라이런, 핫 리로드, 정책 병합, Slack/Discord/Telegram/이메일 승인, 시뮬레이션 CLI, 런타임 훅, 통계, 실시간 모니터링 |
 | **0.1.4** | **출시됨** | 멀티 에이전트 기반 (agent_id, PolicyHierarchy, 충돌 감지), 성능 최적화 (컴파일된 글로브, 배치 감사, 평가 캐시), 보안 강화, MCP/LangChain/CrewAI/OpenAI 쿡북 |
 | **0.1.5** | **출시됨** | 행동 이상 탐지, 컴플라이언스 리포트 생성기 (SOC2/GDPR), 정책 비교 & 영향 분석, 시맨틱 조건 엔진, 에이전트 신뢰 체인, `aegis scan` (정적 분석), `aegis score` (거버넌스 점수 + 배지) |
+| **0.1.7** | **출시됨** | 암호화 감사 체인, 레이트 리미터, RBAC, 정책 버전 관리, 멀티테넌트 격리, 규제 매퍼 (EU AI Act/NIST/SOC2/ISO 42001), 웹훅 알림, 액션 리플레이, PolicyBuilder SDK, 정책 테스트 프레임워크, 실시간 모니터, GitHub Action |
+| **0.1.9** | **출시됨** | 웹 거버넌스 대시보드 (7 페이지, 11 API 엔드포인트), `aegis serve` + 대시보드, 자연어 자동 정책 생성, 적대적 탐침 |
 | **0.2** | **출시됨** | LangChain AgentMiddleware, CrewAI GuardrailProvider, OpenAI Agents 네이티브 가드레일, OWASP Agentic Top 10, HTML 컴플라이언스 리포트, 인터랙티브 플레이그라운드 |
 | **0.3** | **출시됨** | MCP 공급망 보안 (포이즈닝/러그풀/SBOM/취약점 DB), 비용 차단기 (17 모델), 크로스-프레임워크 비용 추적 (LangChain/OpenAI/Anthropic/Google), A2A 통신 거버넌스, 세션 리플레이 + 소급 스캔, OpenTelemetry 내보내기, 정책 Git 통합 |
-| **0.4** | 2026 Q3 | 중앙 정책 서버, 크로스 에이전트 감사 추적 |
+| **0.4** | **출시됨** | `aegis.init()` 한 줄 활성화, 런타임 가드레일 (PII 탐지/마스킹, 프롬프트 인젝션 차단), 룰 팩 생태계, 제로-코드 통합 (`patch_openai`/`patch_anthropic`, `@guard`), AGEF/AGP 개방형 거버넌스 사양, Redis/PostgreSQL 감사 백엔드 |
+| **0.5** | 2026 Q3 | 중앙 정책 서버, 룰 팩 레지스트리 (npm 스타일 설치/퍼블리시), 크로스 에이전트 감사 연관 분석 |
 | **1.0** | 2027 | 분산 거버넌스, 호스티드 SaaS, SSO/SCIM |
 
 ## 기여하기
