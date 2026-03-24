@@ -5,7 +5,7 @@
 #
 # Mount your policy.yaml into /app/ to use your own rules.
 
-FROM python:3.12-slim
+FROM python:3.12-slim@sha256:3d5ed973e45820f5ba5e46bd065bd88b3a504ff0724d85980dcd05eab361fcf4 # python:3.12-slim
 
 WORKDIR /app
 
