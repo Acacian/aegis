@@ -43,7 +43,7 @@ class RedisRateLimiter:
     ) -> None:
         import redis
 
-        self._client: redis.Redis[str] = redis.Redis.from_url(redis_url, decode_responses=True)
+        self._client: redis.Redis = redis.Redis.from_url(redis_url, decode_responses=True)
         self._rules: list[RateLimitRule] = list(rules or [])
 
     # ------------------------------------------------------------------
@@ -192,7 +192,7 @@ class RedisRateLimiter:
                 redis_key = _bucket_redis_key(rule.name, bkey)
                 cutoff = now - rule.window_seconds
                 self._client.zremrangebyscore(redis_key, "-inf", cutoff)
-                count = int(self._client.zcard(redis_key))
+                count = int(self._client.zcard(redis_key))  # type: ignore[arg-type]
                 if count == 0 and agent_id is None:
                     continue
 
@@ -223,7 +223,9 @@ class RedisRateLimiter:
             # Delete all aegis rate-limit keys
             cursor: int = 0
             while True:
-                cursor, keys = self._client.scan(cursor=cursor, match=f"{_PREFIX}:*", count=100)
+                cursor, keys = self._client.scan(  # type: ignore[misc]
+                    cursor=cursor, match=f"{_PREFIX}:*", count=100
+                )
                 if keys:
                     self._client.delete(*keys)
                 if cursor == 0:
@@ -249,7 +251,9 @@ class RedisRateLimiter:
 
     def _calc_retry_after(self, redis_key: str, window_seconds: float, now: float) -> float:
         """Calculate seconds until the oldest entry in the window expires."""
-        oldest: list[Any] = self._client.zrange(redis_key, 0, 0, withscores=True)
+        oldest: list[Any] = self._client.zrange(  # type: ignore[assignment]
+            redis_key, 0, 0, withscores=True
+        )
         if oldest:
             oldest_score = float(oldest[0][1])
             retry = oldest_score + window_seconds - now
@@ -262,7 +266,9 @@ class RedisRateLimiter:
         bucket_keys: list[str] = []
         cursor: int = 0
         while True:
-            cursor, keys = self._client.scan(cursor=cursor, match=f"{prefix}*", count=100)
+            cursor, keys = self._client.scan(  # type: ignore[misc]
+                cursor=cursor, match=f"{prefix}*", count=100
+            )
             for key in keys:
                 # Skip sequence keys
                 if key.endswith(":seq"):
