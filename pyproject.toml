@@ -114,7 +114,7 @@ warn_return_any = true
 warn_unused_configs = true
 
 [[tool.mypy.overrides]]
-module = ["playwright.*", "langchain_core.*", "crewai.*", "agents.*", "httpx.*", "mcp.*", "starlette.*", "uvicorn.*", "redis.*", "asyncpg.*", "anthropic.*"]
+module = ["playwright.*", "langchain_core.*", "crewai.*", "agents.*", "httpx.*", "mcp.*", "starlette.*", "uvicorn.*", "redis.*", "asyncpg.*", "anthropic.*", "openai.*"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
