@@ -90,15 +90,29 @@ class BatchAuditLogger(AuditLogger):
             decision.action.chain_id or None,
             decision.action.chain_depth,
         )
+        to_write: list[tuple[object, ...]] | None = None
         with self._lock:
             self._buffer.append(row)
             should_flush = (
                 len(self._buffer) >= self.batch_size
                 or (time.monotonic() - self._last_flush) >= self.flush_interval
             )
-        if should_flush:
-            self.flush()
+            if should_flush:
+                # Swap buffer under lock to prevent double-flush race.
+                to_write = list(self._buffer)
+                self._buffer.clear()
+                self._last_flush = time.monotonic()
+        if to_write:
+            self._write_batch(to_write)
         return 0
+
+    def _write_batch(self, rows: list[tuple[object, ...]]) -> int:
+        """Write a batch of rows to SQLite. Caller owns the data."""
+        if not rows:
+            return 0
+        self._conn.executemany(_INSERT_SQL, rows)
+        self._conn.commit()
+        return len(rows)
 
     def flush(self) -> int:
         """Flush buffered entries to SQLite in a single transaction.
@@ -110,13 +124,7 @@ class BatchAuditLogger(AuditLogger):
             to_write = list(self._buffer)
             self._buffer.clear()
             self._last_flush = time.monotonic()
-
-        if not to_write:
-            return 0
-
-        self._conn.executemany(_INSERT_SQL, to_write)
-        self._conn.commit()
-        return len(to_write)
+        return self._write_batch(to_write)
 
     @property
     def pending(self) -> int:

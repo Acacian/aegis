@@ -21,7 +21,7 @@
   <a href="https://pypi.org/project/agent-aegis/"><img src="https://img.shields.io/pypi/dm/agent-aegis?label=downloads&color=brightgreen" alt="Downloads"></a>
   <a href="https://github.com/Acacian/aegis"><img src="https://img.shields.io/github/stars/Acacian/aegis?style=social" alt="GitHub stars"></a>
   <br/>
-  <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-2500%2B_passed-brightgreen" alt="Tests"></a>
+  <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-2540%2B_passed-brightgreen" alt="Tests"></a>
   <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/coverage-92%25-brightgreen" alt="Coverage"></a>
   <a href="https://acacian.github.io/aegis/playground/"><img src="https://img.shields.io/badge/playground-Try_it_Live-ff6b6b" alt="Playground"></a>
 </p>
@@ -481,7 +481,7 @@ policy = Policy.from_yaml("policies/crm-agent.yaml")
 |--------|--------|
 | **2,500+ tests, 92% coverage** | Every adapter, handler, and edge case tested |
 | **Type-safe** | `mypy --strict` with zero errors, `py.typed` marker |
-| **Performance** | Policy evaluation < 1ms; auto-approved actions add < 5ms overhead |
+| **Performance** | Policy evaluation < 1ms (LRU-cached); O(log n) timestamp pruning; SQLite WAL mode; `execute(parallel=True)` for concurrent actions |
 | **Fail-safe** | Blocked actions never execute; can't be bypassed without policy change |
 | **Audit immutability** | Results are frozen dataclasses; audit writes happen before returning |
 | **No magic** | Pure Python, no monkey-patching, no global state |
@@ -1240,6 +1240,7 @@ aegis probe policy.yaml                            # Adversarial policy testing
 | **0.2** | **Released** | LangChain AgentMiddleware, CrewAI GuardrailProvider, OpenAI Agents native guardrails, OWASP Agentic Top 10, HTML compliance reports, interactive playground + challenge |
 | **0.3** | **Released** | MCP supply chain security (poisoning/rug pull/SBOM/vuln DB), cost circuit breaker (17 models), cross-framework cost tracking (LangChain/OpenAI/Anthropic/Google), A2A communication governance, session replay with retroactive scanning, OpenTelemetry export, policy Git integration |
 | **0.4** | **Released** | `aegis.init()` one-line activation, runtime guardrails (PII detection/masking, prompt injection blocking), rule pack ecosystem, zero-code integration (`patch_openai`/`patch_anthropic`, `@guard`), AGEF/AGP open governance specs, Redis/PostgreSQL audit backends |
+| **0.4.1** | **Released** | 13 performance & correctness fixes: LRU cache, O(log n) bisect pruning, SQLite WAL + indexes, parallel `execute()`, async guardrails, multi-anomaly `check_all()`, cache key correctness, lock leak fix, batch flush race fix |
 | **0.5** | Q3 2026 | Centralized policy server, rule pack registry (npm-like install/publish), cross-agent audit correlation |
 | **1.0** | 2027 | Distributed governance, hosted SaaS, SSO/SCIM |
 

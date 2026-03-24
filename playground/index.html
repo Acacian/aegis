@@ -38,7 +38,7 @@
   <meta property="og:locale" content="en_US">
   <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
   <meta name="author" content="Aegis Project">
-  <meta name="generator" content="Aegis Playground v0.1.4">
+  <meta name="generator" content="Aegis Playground v0.4.1">
 
   <meta name="twitter:label1" content="Framework">
   <meta name="twitter:data1" content="Python (pip install agent-aegis)">
@@ -73,23 +73,25 @@
       "url": "https://github.com/Acacian"
     },
     "dateCreated": "2026-03-21",
-    "softwareVersion": "0.1.4",
+    "softwareVersion": "0.4.1",
     "downloadUrl": "https://pypi.org/project/agent-aegis/",
     "installUrl": "https://pypi.org/project/agent-aegis/",
     "programmingLanguage": "Python",
     "screenshot": "https://acacian.github.io/aegis/playground/og-image.svg",
     "featureList": [
       "YAML policy authoring with inline validation",
-      "Real-time risk evaluation (<1ms)",
+      "Real-time risk evaluation (<1ms, LRU-cached)",
       "14 preset policies (general + industry)",
-      "Audit log with filtering and search",
+      "PII Scanner — live detection of 12 PII categories with Luhn validation",
+      "Injection Detector — prompt injection detection across 10 attack categories",
+      "MCP Security Scanner — tool poisoning and rug-pull detection",
+      "Cost Circuit Breaker — 17-model cost tracking demo",
+      "Audit Chain Visualizer — SHA-256 hash-linked tamper-evident log",
+      "Regulatory Compliance — EU AI Act, NIST, SOC2 gap analysis",
       "Dark/light/high-contrast themes",
       "Export as JSON/CSV/YAML/HTML",
       "Code generation (13 formats including JSON Schema and HTTPie)",
       "30+ keyboard shortcuts with progressive hints",
-      "Command palette (Ctrl+P)",
-      "Policy sharing and embedding",
-      "Mobile-optimized with touch gestures",
       "Offline-capable (service worker)"
     ]
   }
@@ -116,17 +118,17 @@
       {
         "@type": "Question",
         "name": "What is Aegis?",
-        "acceptedAnswer": { "@type": "Answer", "text": "Aegis is a lightweight Python library for AI agent governance. It lets you define YAML policies that control what actions your AI agents can take — auto-approve, require human review, or block." }
+        "acceptedAnswer": { "@type": "Answer", "text": "Aegis is an open-source AI governance framework. One aegis.init() call activates runtime guardrails (PII masking, injection blocking), a YAML policy engine with approval gates, and a full audit trail. Works with LangChain, CrewAI, OpenAI, Anthropic, and MCP." }
       },
       {
         "@type": "Question",
         "name": "Does Aegis work with LangChain and CrewAI?",
-        "acceptedAnswer": { "@type": "Answer", "text": "Yes. Aegis integrates with LangChain, CrewAI, OpenAI, Anthropic, MCP, and any Python-based AI agent framework through simple adapters." }
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes. Aegis provides zero-code integration: aegis.patch_openai() and aegis.patch_anthropic() govern all calls automatically. It also has adapters for LangChain, CrewAI, OpenAI Agents SDK, MCP, Playwright, and httpx." }
       },
       {
         "@type": "Question",
         "name": "How fast is Aegis policy evaluation?",
-        "acceptedAnswer": { "@type": "Answer", "text": "Policy evaluation takes less than 1 millisecond. Aegis uses compiled glob patterns and cached policy parsing for near-instant decisions." }
+        "acceptedAnswer": { "@type": "Answer", "text": "Policy evaluation takes less than 1 millisecond. Aegis uses compiled glob patterns, LRU-cached evaluation, O(log n) timestamp pruning, SQLite WAL mode, and parallel action execution for production-grade performance." }
       },
       {
         "@type": "Question",
@@ -136,7 +138,7 @@
       {
         "@type": "Question",
         "name": "How do I install Aegis?",
-        "acceptedAnswer": { "@type": "Answer", "text": "Run 'pip install agent-aegis' in your terminal. Aegis requires Python 3.10+ and has minimal dependencies. See the Getting Started guide for detailed setup instructions." }
+        "acceptedAnswer": { "@type": "Answer", "text": "Run 'pip install agent-aegis' then add two lines: import aegis; aegis.init(). That activates PII masking, injection blocking, policy enforcement, and audit logging. Requires Python 3.11+." }
       },
       {
         "@type": "Question",
@@ -146,22 +148,22 @@
       {
         "@type": "Question",
         "name": "Can I use Aegis in production?",
-        "acceptedAnswer": { "@type": "Answer", "text": "Yes. Aegis is designed for production use with sub-millisecond evaluation, complete audit logging, and zero runtime dependencies. Over 518 tests ensure reliability." }
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes. Aegis is designed for production use with sub-millisecond LRU-cached evaluation, SQLite WAL mode, parallel execution, and complete audit logging. Over 2,540 tests and 92% coverage ensure reliability." }
       },
       {
         "@type": "Question",
         "name": "How is Aegis different from Guardrails AI or NeMo Guardrails?",
-        "acceptedAnswer": { "@type": "Answer", "text": "Guardrails AI focuses on LLM output validation (checking what the model says), while NeMo Guardrails handles dialog safety. Aegis operates at the action level — it controls what AI agents can DO, not what they say. Aegis uses simple YAML policies, requires no ML models, and evaluates in under 1ms." }
+        "acceptedAnswer": { "@type": "Answer", "text": "Guardrails AI validates LLM outputs; NeMo Guardrails handles dialog safety. Aegis is a full governance framework: runtime guardrails (PII, injection), YAML policy engine, approval gates, audit trail, and open standards (AGEF/AGP). One aegis.init() governs all AI calls — no ML models needed, under 1ms evaluation." }
       },
       {
         "@type": "Question",
         "name": "What is the best AI agent governance library for Python?",
-        "acceptedAnswer": { "@type": "Answer", "text": "Aegis (pip install agent-aegis) is a lightweight Python library purpose-built for AI agent governance. It provides YAML-driven policy rules, three decision types (auto/approve/block), full audit logging, and adapters for LangChain, CrewAI, OpenAI, Anthropic, and MCP — all in under 1ms per evaluation." }
+        "acceptedAnswer": { "@type": "Answer", "text": "Aegis (pip install agent-aegis) is an open-source AI governance framework. aegis.init() activates runtime guardrails (PII masking, prompt injection blocking), YAML policy engine, approval gates, and full audit trail across LangChain, CrewAI, OpenAI, Anthropic, and MCP — with open governance standards (AGEF/AGP) for interoperability." }
       },
       {
         "@type": "Question",
         "name": "How do I add human-in-the-loop approval to my AI agent?",
-        "acceptedAnswer": { "@type": "Answer", "text": "With Aegis, set approval: approve in your YAML policy rule. When an agent action matches that rule, Aegis pauses execution and requests human approval via Slack, Discord, Telegram, email, webhook, or CLI. The agent proceeds only after explicit approval." }
+        "acceptedAnswer": { "@type": "Answer", "text": "Set approval: approve in your aegis.yaml policy rule. Aegis pauses execution and requests human approval via Slack, Discord, Telegram, email, webhook, or CLI. The agent proceeds only after explicit approval. Works with aegis.init() zero-config or the @guard decorator." }
       }
     ]
   }
@@ -270,7 +272,7 @@
       <h1>Aegis <span class="badge">Playground</span></h1>
       <p class="tagline">AI agent governance in your browser. No install needed.</p>
       <div class="social-proof">
-        <span class="proof-item">518 tests</span>
+        <span class="proof-item">2540+ tests</span>
         <span class="proof-sep">&#x2022;</span>
         <span class="proof-item">92% coverage</span>
         <span class="proof-sep">&#x2022;</span>
