@@ -95,7 +95,7 @@ def build_default_engine() -> Any:
             guardrails=[
                 InjectionGuardrail(action="block", sensitivity="medium"),  # type: ignore[list-item]
                 _StandaloneAdapter(  # type: ignore[list-item]
-                    ToxicityGuardrail(action="block", sensitivity="medium"),
+                    ToxicityGuardrail(action="warn", sensitivity="medium"),
                     name="toxicity",
                 ),
                 _StandaloneAdapter(  # type: ignore[list-item]

@@ -77,13 +77,15 @@ def test_plan_to_dict(policy: Policy) -> None:
         ]
     )
     data = plan.to_dict()
-    assert len(data) == 2
-    assert data[0]["action_type"] == "read"
-    assert data[0]["risk_level"] == "low"
-    assert data[0]["approval"] == "auto"
-    assert data[0]["is_allowed"] is True
-    assert data[1]["action_type"] == "delete"
-    assert data[1]["is_allowed"] is False
+    decisions = data["decisions"]
+    assert len(decisions) == 2
+    assert decisions[0]["action_type"] == "read"
+    assert decisions[0]["risk_level"] == "low"
+    assert decisions[0]["approval"] == "auto"
+    assert decisions[0]["is_allowed"] is True
+    assert decisions[1]["action_type"] == "delete"
+    assert decisions[1]["is_allowed"] is False
+    assert data["plan_violations"] == []
 
 
 # -- ExecutionPlan.filter ----------------------------------------------------

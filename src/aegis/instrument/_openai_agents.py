@@ -97,6 +97,10 @@ def patch_openai_agents() -> FrameworkPatch:
             input_text = _extract_input_text(args, kwargs)
             _run_guardrails(engine, input_text, direction="input", on_block=s.on_block)
 
+            # Plan-level evaluation
+            agent = args[0] if args else kwargs.get("agent")
+            _check_agent_plan_violations(agent, input_text, s)
+
             # Original call
             result = await original_run(*args, **kwargs)
 
@@ -121,6 +125,10 @@ def patch_openai_agents() -> FrameworkPatch:
 
                 input_text = _extract_input_text(args, kwargs)
                 _run_guardrails(engine, input_text, direction="input", on_block=s.on_block)
+
+                # Plan-level evaluation
+                agent = args[0] if args else kwargs.get("agent")
+                _check_agent_plan_violations(agent, input_text, s)
 
                 result = original_run_sync(*args, **kwargs)
 
@@ -148,6 +156,59 @@ def patch_openai_agents() -> FrameworkPatch:
 
     InstrumentationState.get().register_patch(patch)
     return patch
+
+
+def _extract_agent_plan(agent: Any, input_text: str) -> list[Any]:
+    """Extract a rough plan from an OpenAI Agent definition."""
+    from aegis.core.action import Action
+
+    actions = []
+    tools = getattr(agent, "tools", []) or []
+    for tool in tools:
+        tool_name = getattr(tool, "name", "") or getattr(tool, "__name__", str(tool))
+        actions.append(
+            Action(
+                type=tool_name,
+                target="openai_agents",
+                description=f"Tool available to agent: {tool_name}",
+            )
+        )
+    if input_text:
+        actions.append(
+            Action(
+                type="agent_input",
+                target="openai_agents",
+                description=input_text[:500],
+            )
+        )
+    return actions
+
+
+def _check_agent_plan_violations(agent: Any, input_text: str, state: InstrumentationState) -> None:
+    """Evaluate OpenAI agent tools as a plan and raise/warn on violations."""
+    policy = state.policy
+    if policy is None or policy.plan_rules is None or agent is None:
+        return
+
+    from aegis.core.plan import ExecutionPlan
+    from aegis.core.policy import Approval
+
+    actions = _extract_agent_plan(agent, input_text)
+    if not actions:
+        return
+
+    decisions = [policy.evaluate(a) for a in actions]
+    exec_plan = ExecutionPlan(decisions=decisions)
+    violations = policy.plan_rules.evaluate(exec_plan)
+
+    blocking = [v for v in violations if v.approval == Approval.BLOCK]
+    if blocking:
+        reason = f"Aegis plan-rule blocked: {blocking[0].rule_name} — {blocking[0].description}"
+        if state.on_block == "raise":
+            from aegis.integrations.errors import AegisGuardrailError
+
+            raise AegisGuardrailError(reason, guardrail_results=[])
+        logger.warning(reason)
 
 
 def unpatch_openai_agents() -> None:

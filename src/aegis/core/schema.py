@@ -30,7 +30,7 @@ POLICY_SCHEMA: dict[str, object] = {
         "version": {
             "type": "string",
             "description": "Policy format version.",
-            "enum": ["1"],
+            "enum": ["1", "2"],
         },
         "defaults": {
             "type": "object",
@@ -103,6 +103,61 @@ POLICY_SCHEMA: dict[str, object] = {
                 },
                 "additionalProperties": False,
             },
+        },
+        "plan_rules": {
+            "type": "object",
+            "description": "Plan-level governance rules for sequence and cumulative risk.",
+            "properties": {
+                "sequence_patterns": {
+                    "type": "array",
+                    "description": "Forbidden or flagged action sequences.",
+                    "items": {
+                        "type": "object",
+                        "required": ["name", "steps"],
+                        "properties": {
+                            "name": {"type": "string"},
+                            "steps": {
+                                "type": "array",
+                                "items": {"type": "string"},
+                                "minItems": 2,
+                                "description": "Ordered glob patterns forming the sequence.",
+                            },
+                            "approval": {
+                                "type": "string",
+                                "enum": ["auto", "approve", "block"],
+                                "default": "block",
+                            },
+                            "risk_level": {
+                                "type": "string",
+                                "enum": ["low", "medium", "high", "critical"],
+                                "default": "critical",
+                            },
+                            "description": {"type": "string"},
+                            "window": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "default": 0,
+                                "description": "Max step distance (0 = unlimited).",
+                            },
+                        },
+                        "additionalProperties": False,
+                    },
+                },
+                "cumulative_risk": {
+                    "type": "object",
+                    "description": "Threshold for total accumulated risk.",
+                    "properties": {
+                        "max_total_risk": {"type": "integer", "minimum": 1},
+                        "on_exceed": {
+                            "type": "string",
+                            "enum": ["auto", "approve", "block"],
+                            "default": "block",
+                        },
+                    },
+                    "additionalProperties": False,
+                },
+            },
+            "additionalProperties": False,
         },
     },
     "additionalProperties": False,

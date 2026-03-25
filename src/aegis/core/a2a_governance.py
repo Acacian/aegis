@@ -40,13 +40,18 @@ Usage::
 
 from __future__ import annotations
 
+import fnmatch
+import hashlib
 import re
 import threading
 import time
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from aegis.core.agent_identity import AgentRegistry, has_capability
+
+if TYPE_CHECKING:
+    from aegis.core.agent_identity import AgentIdentity
 
 # ---------------------------------------------------------------------------
 # Data models
@@ -73,6 +78,7 @@ class A2AMessage:
     payload: dict[str, Any] = field(default_factory=dict)
     correlation_id: str = ""
     timestamp: float = 0.0
+    envelope: GovernanceEnvelope | None = None
 
     def __post_init__(self) -> None:
         if self.timestamp == 0.0:
@@ -97,6 +103,50 @@ class A2ADecision:
     reason: str
     filtered_payload: dict[str, Any] | None = None
     violations: list[str] = field(default_factory=list)
+    envelope: GovernanceEnvelope | None = None
+
+
+@dataclass(frozen=True)
+class GovernanceEnvelope:
+    """Governance metadata attached to A2A messages.
+
+    Analogous to a TLS certificate — carries the sender's governance
+    credentials so the receiver can make informed trust decisions.
+
+    Attributes:
+        sender_ontology: Sender's constitutional role and domain.
+        sender_capabilities: Sender's effective capability set.
+        sender_constraints: Summary of sender's constraint names.
+        trust_level: Sender's trust level (0–100).
+        delegation_depth: Levels of delegation from the root agent.
+        policy_version: Version identifier for the sender's active policy.
+        timestamp: When the envelope was generated (Unix epoch).
+        signature_hash: SHA-256 hash of canonical envelope contents.
+    """
+
+    sender_ontology: dict[str, str]
+    sender_capabilities: frozenset[str]
+    sender_constraints: frozenset[str]
+    trust_level: int
+    delegation_depth: int
+    policy_version: str
+    timestamp: float
+    signature_hash: str
+
+
+@dataclass(frozen=True)
+class HandshakeResult:
+    """Result of a governance handshake between two agents.
+
+    Attributes:
+        compatible: Whether the two agents' constitutions are compatible.
+        reasons: List of compatibility/incompatibility reasons.
+        negotiated_capabilities: Capabilities both agents share.
+    """
+
+    compatible: bool
+    reasons: list[str] = field(default_factory=list)
+    negotiated_capabilities: frozenset[str] = frozenset()
 
 
 @dataclass
@@ -111,6 +161,7 @@ class A2ALogEntry:
         allowed: Whether the message was allowed.
         reason: Decision reason.
         violations: Policy violations found.
+        has_envelope: Whether a governance envelope was attached.
     """
 
     timestamp: float
@@ -120,6 +171,7 @@ class A2ALogEntry:
     allowed: bool
     reason: str
     violations: list[str] = field(default_factory=list)
+    has_envelope: bool = False
 
 
 # ---------------------------------------------------------------------------
@@ -273,6 +325,192 @@ class _RateWindow:
 
 
 # ---------------------------------------------------------------------------
+# Governance envelope builder
+# ---------------------------------------------------------------------------
+
+
+def _build_envelope(
+    sender: AgentIdentity,
+    registry: AgentRegistry,
+    *,
+    policy_version: str = "",
+) -> GovernanceEnvelope:
+    """Build a :class:`GovernanceEnvelope` from the sender's identity."""
+    ontology: dict[str, str] = {"role": "", "domain": ""}
+    constraints: frozenset[str] = frozenset()
+    if sender.constitution is not None:
+        ontology = {
+            "role": sender.constitution.ontology.role,
+            "domain": sender.constitution.ontology.domain,
+        }
+        constraints = frozenset(c.name for c in sender.constitution.constraints)
+
+    try:
+        chain = registry.get_trust_chain(sender.agent_id)
+        delegation_depth = len(chain) - 1
+    except (KeyError, RuntimeError):
+        delegation_depth = 0
+
+    now = time.time()
+    canonical = (
+        f"{sender.agent_id}\0"
+        f"{ontology['role']}\0{ontology['domain']}\0"
+        f"{','.join(sorted(sender.capabilities))}\0"
+        f"{','.join(sorted(constraints))}\0"
+        f"{sender.trust_level}\0"
+        f"{delegation_depth}\0"
+        f"{policy_version}\0"
+        f"{now}"
+    )
+    sig = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+    return GovernanceEnvelope(
+        sender_ontology=ontology,
+        sender_capabilities=sender.capabilities,
+        sender_constraints=constraints,
+        trust_level=sender.trust_level,
+        delegation_depth=delegation_depth,
+        policy_version=policy_version,
+        timestamp=now,
+        signature_hash=sig,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Governance handshake
+# ---------------------------------------------------------------------------
+
+
+class GovernanceHandshake:
+    """Verify constitutional compatibility between two agents.
+
+    Analogous to TLS negotiation — if constitutions conflict, the
+    handshake fails and communication is blocked.
+
+    Args:
+        registry: Agent registry for identity/capability lookups.
+        require_domain_match: If True, agents must share the same domain
+            (or one must have no domain set).
+        min_capability_overlap: Minimum overlapping capabilities required.
+        min_trust_level: Minimum trust level for either party.
+    """
+
+    def __init__(
+        self,
+        registry: AgentRegistry,
+        *,
+        require_domain_match: bool = False,
+        min_capability_overlap: int = 0,
+        min_trust_level: int = 0,
+    ) -> None:
+        self._registry = registry
+        self._require_domain_match = require_domain_match
+        self._min_capability_overlap = min_capability_overlap
+        self._min_trust_level = min_trust_level
+
+    def negotiate(
+        self,
+        sender_id: str,
+        receiver_id: str,
+        *,
+        message_type: str = "",
+    ) -> HandshakeResult:
+        """Negotiate governance compatibility between sender and receiver.
+
+        Checks (in order):
+        1. Both agents registered and retrievable.
+        2. Domain compatibility (when ``require_domain_match`` is set).
+        3. Capability overlap meets minimum.
+        4. No constraint conflicts (forbidden targets/patterns).
+        5. Trust level meets minimum for both parties.
+        """
+        reasons: list[str] = []
+        compatible = True
+
+        sender = self._registry.get(sender_id)
+        receiver = self._registry.get(receiver_id)
+
+        if sender is None:
+            return HandshakeResult(compatible=False, reasons=["Sender not registered"])
+        if receiver is None:
+            return HandshakeResult(compatible=False, reasons=["Receiver not registered"])
+
+        sender_const = sender.constitution
+        receiver_const = receiver.constitution
+
+        # 1. Domain compatibility
+        if self._require_domain_match:
+            s_domain = sender_const.ontology.domain if sender_const else ""
+            r_domain = receiver_const.ontology.domain if receiver_const else ""
+            if s_domain and r_domain and s_domain != r_domain:
+                compatible = False
+                reasons.append(f"Domain mismatch: sender='{s_domain}', receiver='{r_domain}'")
+
+        # 2. Capability overlap (fnmatch-based)
+        effective_overlap: set[str] = set(sender.capabilities & receiver.capabilities)
+        for s_cap in sender.capabilities:
+            for r_cap in receiver.capabilities:
+                if fnmatch.fnmatch(s_cap, r_cap) or fnmatch.fnmatch(r_cap, s_cap):
+                    effective_overlap.add(s_cap)
+                    effective_overlap.add(r_cap)
+
+        if len(effective_overlap) < self._min_capability_overlap:
+            compatible = False
+            reasons.append(
+                f"Insufficient capability overlap: {len(effective_overlap)} "
+                f"< required {self._min_capability_overlap}"
+            )
+
+        # 3. Constraint conflicts
+        if sender_const:
+            for constraint in sender_const.constraints:
+                r_domain = receiver_const.ontology.domain if receiver_const else ""
+                if r_domain:
+                    for pattern in constraint.forbidden_targets:
+                        if fnmatch.fnmatch(r_domain, pattern):
+                            compatible = False
+                            reasons.append(
+                                f"Sender constraint '{constraint.name}' "
+                                f"forbids target domain '{r_domain}'"
+                            )
+                if message_type:
+                    for pattern in constraint.forbidden_patterns:
+                        if fnmatch.fnmatch(message_type, pattern):
+                            compatible = False
+                            reasons.append(
+                                f"Sender constraint '{constraint.name}' "
+                                f"forbids message type '{message_type}'"
+                            )
+
+        if receiver_const:
+            for constraint in receiver_const.constraints:
+                if message_type:
+                    for pattern in constraint.forbidden_patterns:
+                        if fnmatch.fnmatch(message_type, pattern):
+                            compatible = False
+                            reasons.append(
+                                f"Receiver constraint '{constraint.name}' "
+                                f"forbids message type '{message_type}'"
+                            )
+
+        # 4. Trust level
+        if sender.trust_level < self._min_trust_level:
+            compatible = False
+            reasons.append(f"Sender trust {sender.trust_level} < minimum {self._min_trust_level}")
+        if receiver.trust_level < self._min_trust_level:
+            compatible = False
+            reasons.append(
+                f"Receiver trust {receiver.trust_level} < minimum {self._min_trust_level}"
+            )
+
+        return HandshakeResult(
+            compatible=compatible,
+            reasons=reasons,
+            negotiated_capabilities=frozenset(effective_overlap) if compatible else frozenset(),
+        )
+
+
+# ---------------------------------------------------------------------------
 # A2A Governor
 # ---------------------------------------------------------------------------
 
@@ -319,6 +557,9 @@ class A2AGovernor:
         rate_limit_per_pair: int = 50,
         rate_window_seconds: float = 60.0,
         block_on_sensitive: bool = False,
+        attach_envelope: bool = False,
+        policy_version: str = "",
+        handshake: GovernanceHandshake | None = None,
     ) -> None:
         self._registry = registry
         self._capability_map = capability_map or dict(_DEFAULT_CAPABILITY_MAP)
@@ -328,6 +569,9 @@ class A2AGovernor:
         self._rate_per_sender = rate_limit_per_sender
         self._rate_per_pair = rate_limit_per_pair
         self._rate_window = rate_window_seconds
+        self._attach_envelope = attach_envelope
+        self._policy_version = policy_version
+        self._handshake = handshake
         self._sender_windows: dict[str, _RateWindow] = {}
         self._pair_windows: dict[str, _RateWindow] = {}
         self._log: list[A2ALogEntry] = []
@@ -358,6 +602,21 @@ class A2AGovernor:
                 "Self-messaging not allowed",
                 ["self_message"],
             )
+
+        # 3.5 Optional governance handshake
+        if self._handshake is not None:
+            hs_result = self._handshake.negotiate(
+                message.sender_id,
+                message.receiver_id,
+                message_type=message.message_type,
+            )
+            if not hs_result.compatible:
+                return self._decide(
+                    message,
+                    False,
+                    f"Governance handshake failed: {'; '.join(hs_result.reasons)}",
+                    ["handshake_failed"],
+                )
 
         # 4. Capability check
         required_cap = self._capability_map.get(message.message_type)
@@ -419,15 +678,27 @@ class A2AGovernor:
                 # Redact and allow
                 filtered_payload = redact_payload(message.payload)
                 violations_info = [f"redacted:{n}" for n in pattern_names]
+                envelope = self._maybe_build_envelope(sender)
                 return self._decide(
                     message,
                     True,
                     f"Allowed with redaction: {', '.join(pattern_names)}",
                     violations_info,
                     filtered_payload=filtered_payload,
+                    envelope=envelope,
                 )
 
-        return self._decide(message, True, "Allowed")
+        envelope = self._maybe_build_envelope(sender)
+        return self._decide(message, True, "Allowed", envelope=envelope)
+
+    def _maybe_build_envelope(
+        self,
+        sender: AgentIdentity | None,
+    ) -> GovernanceEnvelope | None:
+        """Build envelope if enabled and sender is known."""
+        if not self._attach_envelope or sender is None:
+            return None
+        return _build_envelope(sender, self._registry, policy_version=self._policy_version)
 
     def _decide(
         self,
@@ -437,6 +708,7 @@ class A2AGovernor:
         violations: list[str] | None = None,
         *,
         filtered_payload: dict[str, Any] | None = None,
+        envelope: GovernanceEnvelope | None = None,
     ) -> A2ADecision:
         """Create a decision and log it."""
         violations = violations or []
@@ -446,6 +718,7 @@ class A2AGovernor:
             reason=reason,
             filtered_payload=filtered_payload,
             violations=violations,
+            envelope=envelope,
         )
         entry = A2ALogEntry(
             timestamp=time.time(),
@@ -455,6 +728,7 @@ class A2AGovernor:
             allowed=allowed,
             reason=reason,
             violations=violations,
+            has_envelope=envelope is not None,
         )
         with self._lock:
             self._log.append(entry)
