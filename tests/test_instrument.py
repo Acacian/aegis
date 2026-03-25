@@ -788,11 +788,11 @@ class TestDefaultGuardrailsIntegration:
         blocked = [r for r in results if not r.passed and r.action == "blocked"]
         assert len(blocked) > 0
 
-    def test_toxicity_blocked(self):
+    def test_toxicity_warned(self):
         engine = build_default_engine()
         results = engine.check("I will kill you and your family")
-        blocked = [r for r in results if not r.passed and r.action == "blocked"]
-        assert len(blocked) > 0
+        warned = [r for r in results if not r.passed and r.action == "warned"]
+        assert len(warned) > 0
 
     def test_clean_text_passes(self):
         engine = build_default_engine()

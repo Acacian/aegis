@@ -4,10 +4,13 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from aegis.core.policy import Approval, PolicyDecision
 from aegis.core.risk import RiskLevel
+
+if TYPE_CHECKING:
+    from aegis.core.plan_rules import PlanViolation
 
 
 @dataclass
@@ -24,11 +27,19 @@ class ExecutionPlan:
     """
 
     decisions: list[PolicyDecision] = field(default_factory=list)
+    plan_violations: list[PlanViolation] = field(default_factory=list)
+
+    @property
+    def has_plan_violations(self) -> bool:
+        """Whether any plan-level violations were detected."""
+        return len(self.plan_violations) > 0
 
     @property
     def has_blocked(self) -> bool:
-        """Whether any action in the plan is blocked by policy."""
-        return any(not d.is_allowed for d in self.decisions)
+        """Whether any action in the plan is blocked by policy or plan rules."""
+        return any(not d.is_allowed for d in self.decisions) or any(
+            v.approval == Approval.BLOCK for v in self.plan_violations
+        )
 
     @property
     def requires_approval(self) -> bool:
@@ -53,16 +64,22 @@ class ExecutionPlan:
             lines.append(
                 f"  {i}. [{tag:>7}] {d.action}  (risk={d.risk_level.name}, rule={d.matched_rule})"
             )
+        if self.plan_violations:
+            lines.append("  Plan violations:")
+            for v in self.plan_violations:
+                lines.append(
+                    f"    - [{v.approval.value.upper():>7}] {v.rule_name}: {v.description}"
+                )
         return "\n".join(lines)
 
-    def to_dict(self) -> list[dict[str, Any]]:
+    def to_dict(self) -> dict[str, Any]:
         """Return a structured representation of the plan for programmatic use.
 
-        Each decision becomes a dict with action details, risk, approval, and rule.
+        Returns a dict with ``"decisions"`` and ``"plan_violations"`` keys.
         """
-        result: list[dict[str, Any]] = []
+        decisions_out: list[dict[str, Any]] = []
         for d in self.decisions:
-            result.append(
+            decisions_out.append(
                 {
                     "action_type": d.action.type,
                     "action_target": d.action.target,
@@ -74,7 +91,21 @@ class ExecutionPlan:
                     "is_allowed": d.is_allowed,
                 }
             )
-        return result
+        violations_out: list[dict[str, Any]] = []
+        for v in self.plan_violations:
+            violations_out.append(
+                {
+                    "rule_name": v.rule_name,
+                    "description": v.description,
+                    "approval": v.approval.value,
+                    "risk_level": v.risk_level.name.lower(),
+                    "involved_actions": [a.type for a in v.involved_actions],
+                }
+            )
+        return {
+            "decisions": decisions_out,
+            "plan_violations": violations_out,
+        }
 
     def filter(
         self,

@@ -127,6 +127,9 @@ def patch_crewai() -> FrameworkPatch:
                 if desc:
                     _run_guardrails(engine, desc, direction="crew_task", on_block=s.on_block)
 
+            # Plan-level evaluation
+            _check_plan_violations(tasks, s)
+
             return _originals["Crew.kickoff"](self, *args, **kwargs)
 
         Crew.kickoff = governed_kickoff
@@ -153,6 +156,9 @@ def patch_crewai() -> FrameworkPatch:
                     if desc:
                         _run_guardrails(engine, desc, direction="crew_task", on_block=s.on_block)
 
+                # Plan-level evaluation
+                _check_plan_violations(tasks, s)
+
                 return await _originals["Crew.kickoff_async"](self, *args, **kwargs)
 
             Crew.kickoff_async = governed_kickoff_async
@@ -170,6 +176,53 @@ def patch_crewai() -> FrameworkPatch:
 
     InstrumentationState.get().register_patch(patch)
     return patch
+
+
+def _extract_crew_plan(tasks: list[Any]) -> list[Any]:
+    """Convert CrewAI tasks to Aegis Actions for plan-level evaluation."""
+    from aegis.core.action import Action
+
+    actions = []
+    for task in tasks:
+        action_type = getattr(task, "name", "") or "crew_task"
+        description = getattr(task, "description", "")
+        tools = [getattr(t, "name", str(t)) for t in (getattr(task, "tools", []) or [])]
+        actions.append(
+            Action(
+                type=action_type,
+                target="crewai",
+                params={"tools": tools},
+                description=description,
+            )
+        )
+    return actions
+
+
+def _check_plan_violations(tasks: list[Any], state: InstrumentationState) -> None:
+    """Evaluate CrewAI tasks as a plan and raise/warn on violations."""
+    policy = state.policy
+    if policy is None or policy.plan_rules is None:
+        return
+
+    from aegis.core.plan import ExecutionPlan
+    from aegis.core.policy import Approval
+
+    actions = _extract_crew_plan(tasks)
+    if not actions:
+        return
+
+    decisions = [policy.evaluate(a) for a in actions]
+    exec_plan = ExecutionPlan(decisions=decisions)
+    violations = policy.plan_rules.evaluate(exec_plan)
+
+    blocking = [v for v in violations if v.approval == Approval.BLOCK]
+    if blocking:
+        reason = f"Aegis plan-rule blocked: {blocking[0].rule_name} — {blocking[0].description}"
+        if state.on_block == "raise":
+            from aegis.integrations.errors import AegisGuardrailError
+
+            raise AegisGuardrailError(reason, guardrail_results=[])
+        logger.warning(reason)
 
 
 def unpatch_crewai() -> None:

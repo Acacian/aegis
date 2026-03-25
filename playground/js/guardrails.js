@@ -703,12 +703,14 @@ API Key for the project: sk-proj-abc123def456ghi789jkl012mno345pqr678stu901vwx23
 const INIT_BOOT_LINES = [
   { text: 'Aegis v0.4.1 initializing...', delay: 0 },
   { text: 'Config loaded from aegis.yaml', icon: 'ok', delay: 300 },
-  { text: 'PII guardrail activated (mask: email, credit_card, ssn, korean_rrn, api_key)', icon: 'ok', delay: 600 },
-  { text: 'Injection guardrail activated (block: medium sensitivity)', icon: 'ok', delay: 900 },
-  { text: 'OpenAI client patched', icon: 'ok', delay: 1200 },
-  { text: 'Anthropic client patched', icon: 'ok', delay: 1400 },
-  { text: 'SQLite audit backend ready (WAL mode)', icon: 'ok', delay: 1600 },
-  { text: 'Ready. All LLM calls are now governed.', icon: 'ok', delay: 1900 },
+  { text: 'Injection guardrail activated (block: medium sensitivity)', icon: 'ok', delay: 600 },
+  { text: 'PII guardrail activated (mask: email, credit_card, ssn, korean_rrn, api_key)', icon: 'ok', delay: 900 },
+  { text: 'Prompt leak guardrail activated (warn: medium sensitivity)', icon: 'ok', delay: 1100 },
+  { text: 'Toxicity guardrail activated (warn: opt-in to block)', icon: 'ok', delay: 1300 },
+  { text: 'OpenAI client patched', icon: 'ok', delay: 1500 },
+  { text: 'Anthropic client patched', icon: 'ok', delay: 1700 },
+  { text: 'SQLite audit backend ready (WAL mode)', icon: 'ok', delay: 1900 },
+  { text: 'Ready. All agent actions are now governed.', icon: 'ok', delay: 2200 },
 ];
 
 let initActivated = false;

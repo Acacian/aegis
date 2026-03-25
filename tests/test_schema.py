@@ -33,8 +33,8 @@ def test_schema_approval_modes():
 
 
 def test_schema_version_enum():
-    """Schema should only allow version '1'."""
-    assert POLICY_SCHEMA["properties"]["version"]["enum"] == ["1"]
+    """Schema should allow version '1' and '2'."""
+    assert POLICY_SCHEMA["properties"]["version"]["enum"] == ["1", "2"]
 
 
 def test_cli_schema_command(capsys):

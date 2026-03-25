@@ -140,6 +140,7 @@ class Policy:
     scope_id: str = ""
     version: int = 1
     semantic_evaluator: SemanticEvaluator | None = field(default=None, repr=False)
+    plan_rules: Any = field(default=None, repr=False)  # PlanRules | None
 
     def __post_init__(self) -> None:
         """Initialize evaluation cache (disabled by default)."""
@@ -239,6 +240,7 @@ class Policy:
             prod = Policy.from_yaml("prod.yaml")
             combined = base.merge(prod)
         """
+        merged_plan_rules = _merge_plan_rules(self.plan_rules, other.plan_rules)
         return Policy(
             rules=self.rules + other.rules,
             default_risk_level=self.default_risk_level,
@@ -247,6 +249,7 @@ class Policy:
             scope_id=self.scope_id,
             version=self.version,
             semantic_evaluator=self.semantic_evaluator or other.semantic_evaluator,
+            plan_rules=merged_plan_rules,
         )
 
     @classmethod
@@ -334,6 +337,14 @@ class Policy:
                 )
             )
 
+        # Plan-level rules (optional)
+        plan_rules = None
+        plan_rules_data = data.get("plan_rules")
+        if plan_rules_data:
+            from aegis.core.plan_rules import PlanRules
+
+            plan_rules = PlanRules.from_dict(plan_rules_data)
+
         return cls(
             rules=rules,
             default_risk_level=default_risk,
@@ -342,4 +353,35 @@ class Policy:
             scope_id=data.get("scope_id", ""),
             version=int(data.get("version", 1)),
             semantic_evaluator=semantic_evaluator,
+            plan_rules=plan_rules,
         )
+
+
+def _merge_plan_rules(a: Any, b: Any) -> Any:
+    """Merge two PlanRules (or None) for Policy.merge().
+
+    Combines sequence patterns and picks the more restrictive cumulative risk.
+    """
+    if a is None:
+        return b
+    if b is None:
+        return a
+
+    from aegis.core.plan_rules import PlanRules
+
+    merged_patterns = list(a.sequence_patterns) + list(b.sequence_patterns)
+
+    merged_cumulative = None
+    if a.cumulative_risk and b.cumulative_risk:
+        # More restrictive = lower threshold
+        if a.cumulative_risk.max_total_risk <= b.cumulative_risk.max_total_risk:
+            merged_cumulative = a.cumulative_risk
+        else:
+            merged_cumulative = b.cumulative_risk
+    else:
+        merged_cumulative = a.cumulative_risk or b.cumulative_risk
+
+    return PlanRules(
+        sequence_patterns=merged_patterns,
+        cumulative_risk=merged_cumulative,
+    )
