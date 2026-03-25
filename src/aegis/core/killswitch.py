@@ -110,7 +110,7 @@ class KillSwitch:
         self._on_trigger = on_trigger
 
         # State (all guarded by _lock)
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()
         self._triggered = False
         self._trigger_reason: str | None = None
         self._triggered_at: float | None = None
@@ -205,7 +205,7 @@ class KillSwitch:
             # 5. Auto-shutdown timeout
             if self._auto_shutdown_after is not None:
                 elapsed = now - self._start_time
-                if elapsed > self._auto_shutdown_after:
+                if elapsed >= self._auto_shutdown_after:
                     self._do_trigger(
                         f"Auto-shutdown after {elapsed:.0f}s "
                         f"(limit: {self._auto_shutdown_after:.0f}s)"
