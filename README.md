@@ -2,10 +2,10 @@
 <p align="center">
   <h1 align="center">Aegis</h1>
   <p align="center">
-    <strong>OpenTelemetry for AI safety.<br/>Auto-instrument any AI framework with guardrails — zero code changes.</strong>
+    <strong>OpenTelemetry for AI agent governance.<br/>Auto-instrument any AI framework with operational safety — zero code changes.</strong>
   </p>
   <p align="center">
-    <code>pip install agent-aegis</code> and add <b>one line</b>. Aegis monkey-patches LangChain, CrewAI, OpenAI Agents SDK, OpenAI, and Anthropic at runtime — every LLM call and tool invocation passes through prompt-injection detection, PII masking, toxicity filtering, and a full audit trail. No refactoring. No infra. No LLM-based guardrails (all checks are deterministic and sub-millisecond).
+    <code>pip install agent-aegis</code> and add <b>one line</b>. Aegis monkey-patches LangChain, CrewAI, OpenAI Agents SDK, OpenAI, and Anthropic at runtime — every LLM call and tool invocation passes through prompt-injection detection, PII masking, and a full audit trail. Governs what agents <b>do</b> (actions, tool calls, data access), not what they <b>say</b>. No refactoring. No infra. All checks are deterministic and sub-millisecond.
   </p>
 </p>
 
@@ -17,7 +17,7 @@
   <a href="https://github.com/Acacian/aegis/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License"></a>
   <a href="https://acacian.github.io/aegis/"><img src="https://img.shields.io/badge/docs-acacian.github.io%2Faegis-blue" alt="Docs"></a>
   <br/>
-  <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-2540%2B_passed-brightgreen" alt="Tests"></a>
+  <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-3265%2B_passed-brightgreen" alt="Tests"></a>
   <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/coverage-92%25-brightgreen" alt="Coverage"></a>
   <a href="https://acacian.github.io/aegis/playground/"><img src="https://img.shields.io/badge/playground-Try_it_Live-ff6b6b" alt="Playground"></a>
   <a href="https://www.bestpractices.dev/projects/12253"><img src="https://www.bestpractices.dev/projects/12253/badge" alt="OpenSSF Best Practices"></a>
@@ -52,9 +52,9 @@ aegis.auto_instrument()
 # That's it. Every LangChain, CrewAI, OpenAI Agents SDK, OpenAI API,
 # and Anthropic API call in your application now passes through:
 #   - Prompt injection detection (blocks attacks)
-#   - Toxicity detection (blocks harmful content)
 #   - PII detection (warns on personal data exposure)
 #   - Prompt leak detection (warns on system prompt extraction)
+#   - Toxicity detection (warns — opt-in to block)
 #   - Full audit trail (every call logged)
 ```
 
@@ -88,12 +88,12 @@ Every call is checked on both input and output. Blocked content raises `AegisGua
 | **OpenAI Agents SDK** | `Runner.run`, `Runner.run_sync` | Stable |
 | **OpenAI API** | `Completions.create` (chat & completions) | Stable |
 | **Anthropic API** | `Messages.create` | Stable |
-| **LiteLLM** | `completion`, `acompletion` | Coming soon |
-| **Google GenAI (Gemini)** | `GenerativeModel.generate_content` | Coming soon |
-| **Pydantic AI** | Agent run methods | Coming soon |
-| **LlamaIndex** | LLM and tool calls | Coming soon |
-| **Instructor** | Patched completions | Coming soon |
-| **DSPy** | LM calls | Coming soon |
+| **LiteLLM** | `completion`, `acompletion` | Stable |
+| **Google GenAI (Gemini)** | `Models.generate_content` (new) + `GenerativeModel.generate_content` (legacy) | Stable |
+| **Pydantic AI** | `Agent.run`, `Agent.run_sync` | Stable |
+| **LlamaIndex** | `LLM.chat/achat/complete/acomplete`, `BaseQueryEngine.query/aquery` | Stable |
+| **Instructor** | `Instructor.create`, `AsyncInstructor.create` | Stable |
+| **DSPy** | `Module.__call__`, `LM.forward/aforward` | Stable |
 
 ### Default Guardrails
 
@@ -102,9 +102,9 @@ All guardrails are deterministic (no LLM calls), sub-millisecond, and require ze
 | Guardrail | Default action | What it catches |
 |-----------|---------------|-----------------|
 | **Prompt injection** | Block | 10 attack categories, 85+ patterns, multi-language (EN/KO/ZH/JA) |
-| **Toxicity** | Block | Harmful, violent, or abusive content |
 | **PII detection** | Warn | 12 categories (email, credit card, SSN, API keys, etc.) |
 | **Prompt leak** | Warn | System prompt extraction attempts |
+| **Toxicity** | Warn (opt-in to block) | Harmful, violent, or abusive content |
 
 ### Fine-Grained Control
 
@@ -402,7 +402,8 @@ aegis audit --format jsonl -o export.jsonl  # Export
 | **Trust scoring (L0-L4)** | Automated trust levels from scan + pin + audit status |
 | **Vulnerability database** | 8 built-in CVEs for popular MCP servers, version-range matching, auto-block |
 | **SBOM generation** | CycloneDX-inspired bill of materials with vulnerability overlay |
-| **Session replay** | Record/replay agent sessions with retroactive security scanning (20 patterns) |
+| **Session replay** | Record/replay agent sessions with retroactive security scanning (16 patterns) |
+| **Cross-session leakage detection** | Detects shared MCP servers correlating requests across tenants (5 detectors: cross-tenant overlap, session fingerprinting, correlation probing, exfiltration via args, profile accumulation) |
 
 </details>
 
@@ -415,6 +416,9 @@ aegis audit --format jsonl -o export.jsonl  # Export
 | **Cross-framework cost tracking** | LangChain + OpenAI + Anthropic + Google → unified CostTracker |
 | **Multi-agent cost attribution** | Delegation trees, subtree rollup, formatted attribution reports |
 | **A2A communication governance** | Capability-gated messaging, PII/credential redaction, rate limiting, audit log |
+| **Constitutional Protocol** | Agent constitutions (ontology + obligations + constraints), constitutional inheritance via delegation, plan-level governance (sequence patterns, cumulative risk) |
+| **Governance Envelope** | A2A messages carry sender's governance credentials (SHA-256 signed) — like TLS certificates for agents |
+| **Governance Handshake** | Constitutional compatibility verification before agent communication (domain, capability, constraint, trust checks) |
 | **Policy-as-code Git integration** | Diff formatting, impact analysis, drift detection, YAML export |
 | **OpenTelemetry export** | Policy/cost/anomaly/MCP events → OTel spans, in-memory fallback |
 
@@ -529,23 +533,26 @@ policy = Policy.from_yaml("policies/crm-agent.yaml")
 
 | Aspect | Detail |
 |--------|--------|
-| **2,500+ tests, 92% coverage** | Every adapter, handler, and edge case tested |
+| **3,200+ tests, 92% coverage** | Every adapter, handler, and edge case tested |
 | **Type-safe** | `mypy --strict` with zero errors, `py.typed` marker |
-| **Performance** | Policy evaluation < 1ms (LRU-cached); O(log n) timestamp pruning; SQLite WAL mode; `execute(parallel=True)` for concurrent actions |
+| **Performance** | Lazy imports — `import aegis` loads 20 modules (not 67); policy evaluation < 1ms (LRU-cached); O(log n) timestamp pruning; SQLite WAL mode; `execute(parallel=True)` for concurrent actions |
 | **Fail-safe** | Blocked actions never execute; can't be bypassed without policy change |
 | **Audit immutability** | Results are frozen dataclasses; audit writes happen before returning |
 | **Clean patching** | Controlled monkey-patching with `auto_instrument()` — fully reversible via `reset()`, idempotent, skip-if-missing |
 
 ## Compliance & Audit
 
-Aegis audit trails provide evidence for regulatory and internal compliance:
+One policy config, multiple compliance regimes. Aegis maps your governance posture to both mandatory regulations (EU) and voluntary frameworks (US):
 
 | Standard | What Aegis provides |
 |----------|-------------------|
+| **EU AI Act** | Art.12 logging, risk classification, human oversight evidence — mandatory Aug 2026 |
+| **NIST AI RMF** | Govern/Map/Measure/Manage functions mapped to Aegis policy + audit + anomaly detection |
 | **SOC2** | Immutable audit log of every agent action, decision, and approval |
-| **GDPR** | Data access documentation -- who/what accessed which system and when |
+| **ISO 42001** | AI management system evidence — policy lifecycle, risk assessment, continuous monitoring |
+| **GDPR** | Data access documentation — who/what accessed which system and when |
 | **HIPAA** | PHI access trail with full action context and approval chain |
-| **Internal** | Change management evidence, risk assessment per action |
+| **OWASP Agentic Top 10** | ASI01-ASI10 threat coverage with built-in detection and mitigation |
 
 Export as JSONL, query via CLI/API, or stream to external SIEM via webhook. For defense-in-depth with container isolation, see the [Security Model](https://acacian.github.io/aegis/guides/security-model/) guide.
 
