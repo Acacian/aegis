@@ -180,4 +180,4 @@ class TestKillSwitchThreadSafety:
         import threading
 
         ks = KillSwitch()
-        assert isinstance(ks._lock, type(threading.Lock()))
+        assert isinstance(ks._lock, type(threading.RLock()))
