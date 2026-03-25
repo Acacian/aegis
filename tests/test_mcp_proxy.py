@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -18,6 +19,9 @@ from aegis.mcp_proxy import (
     _infer_server_name,
     main,
 )
+
+_has_mcp = importlib.util.find_spec("mcp") is not None
+_skip_no_mcp = pytest.mark.skipif(not _has_mcp, reason="mcp package not installed")
 
 # ---------------------------------------------------------------------------
 # Fake MCP types for testing (avoid importing mcp package)
@@ -139,9 +143,7 @@ def proxy_with_policy(
     return p
 
 
-def _make_tool_entry(
-    tool_name: str, server_name: str = "filesystem"
-) -> ToolEntry:
+def _make_tool_entry(tool_name: str, server_name: str = "filesystem") -> ToolEntry:
     return ToolEntry(
         server_name=server_name,
         tool=FakeTool(
@@ -201,15 +203,11 @@ class TestToolEntry:
 
 class TestInferServerName:
     def test_server_dash_pattern(self) -> None:
-        name = _infer_server_name(
-            "npx", ["-y", "@modelcontextprotocol/server-filesystem"]
-        )
+        name = _infer_server_name("npx", ["-y", "@modelcontextprotocol/server-filesystem"])
         assert name == "filesystem"
 
     def test_server_dash_with_path(self) -> None:
-        name = _infer_server_name(
-            "npx", ["-y", "@modelcontextprotocol/server-github", "/home"]
-        )
+        name = _infer_server_name("npx", ["-y", "@modelcontextprotocol/server-github", "/home"])
         assert name == "github"
 
     def test_scoped_package(self) -> None:
@@ -243,13 +241,9 @@ class TestGovernancePipeline:
         assert score is not None
         assert not proxy_with_policy._security_gate.should_block(score)
 
-    def test_evaluate_security_path_traversal(
-        self, proxy_with_policy: AegisMCPProxy
-    ) -> None:
+    def test_evaluate_security_path_traversal(self, proxy_with_policy: AegisMCPProxy) -> None:
         entry = _make_tool_entry("read_file")
-        score = proxy_with_policy._evaluate_security(
-            entry, {"path": "../../../etc/passwd"}
-        )
+        score = proxy_with_policy._evaluate_security(entry, {"path": "../../../etc/passwd"})
         assert score is not None
         assert len(score.findings) > 0
 
@@ -277,6 +271,7 @@ class TestGovernancePipeline:
 # ---------------------------------------------------------------------------
 
 
+@_skip_no_mcp
 class TestHandleCallTool:
     async def test_unknown_tool(self, proxy_with_policy: AegisMCPProxy) -> None:
         # No tools registered
@@ -284,9 +279,7 @@ class TestHandleCallTool:
         assert len(result) == 1
         assert "Unknown tool" in result[0].text
 
-    async def test_allowed_tool_forwarded(
-        self, proxy_with_policy: AegisMCPProxy
-    ) -> None:
+    async def test_allowed_tool_forwarded(self, proxy_with_policy: AegisMCPProxy) -> None:
         fake_session = FakeTargetSession(
             tools=[FakeTool(name="read_file", description="Read a file")]
         )
@@ -301,17 +294,13 @@ class TestHandleCallTool:
         )
         proxy_with_policy._connections.append(conn)
 
-        result = await proxy_with_policy.handle_call_tool(
-            "read_file", {"path": "/data.csv"}
-        )
+        result = await proxy_with_policy.handle_call_tool("read_file", {"path": "/data.csv"})
         assert len(result) == 1
         assert "result:read_file" in result[0].text
         assert len(fake_session.calls) == 1
         assert fake_session.calls[0] == ("read_file", {"path": "/data.csv"})
 
-    async def test_policy_blocked_tool(
-        self, proxy_with_policy: AegisMCPProxy
-    ) -> None:
+    async def test_policy_blocked_tool(self, proxy_with_policy: AegisMCPProxy) -> None:
         entry = _make_tool_entry("delete_file")
         proxy_with_policy._tool_registry["delete_file"] = entry
 
@@ -321,9 +310,7 @@ class TestHandleCallTool:
         assert len(result) == 1
         assert "blocked" in result[0].text.lower()
 
-    async def test_target_server_error(
-        self, proxy_with_policy: AegisMCPProxy
-    ) -> None:
+    async def test_target_server_error(self, proxy_with_policy: AegisMCPProxy) -> None:
         entry = _make_tool_entry("read_file")
         proxy_with_policy._tool_registry["read_file"] = entry
 
@@ -337,9 +324,7 @@ class TestHandleCallTool:
         )
         proxy_with_policy._connections.append(conn)
 
-        result = await proxy_with_policy.handle_call_tool(
-            "read_file", {"path": "/data.csv"}
-        )
+        result = await proxy_with_policy.handle_call_tool("read_file", {"path": "/data.csv"})
         assert len(result) == 1
         assert "Error" in result[0].text
 
@@ -347,9 +332,7 @@ class TestHandleCallTool:
         entry = _make_tool_entry("read_file", server_name="missing_server")
         proxy_with_policy._tool_registry["read_file"] = entry
 
-        result = await proxy_with_policy.handle_call_tool(
-            "read_file", {"path": "/data.csv"}
-        )
+        result = await proxy_with_policy.handle_call_tool("read_file", {"path": "/data.csv"})
         assert len(result) == 1
         assert "not connected" in result[0].text
 
@@ -359,14 +342,13 @@ class TestHandleCallTool:
 # ---------------------------------------------------------------------------
 
 
+@_skip_no_mcp
 class TestHandleListTools:
     async def test_empty_registry(self, proxy_with_policy: AegisMCPProxy) -> None:
         tools = await proxy_with_policy.handle_list_tools()
         assert tools == []
 
-    async def test_lists_registered_tools(
-        self, proxy_with_policy: AegisMCPProxy
-    ) -> None:
+    async def test_lists_registered_tools(self, proxy_with_policy: AegisMCPProxy) -> None:
         proxy_with_policy._tool_registry["read_file"] = _make_tool_entry("read_file")
         proxy_with_policy._tool_registry["write_file"] = _make_tool_entry("write_file")
 
@@ -435,12 +417,8 @@ class TestToolDiscovery:
         )
         proxy._init_governance()
 
-        fake_session_fs = FakeTargetSession(
-            tools=[FakeTool(name="read_file")]
-        )
-        fake_session_gh = FakeTargetSession(
-            tools=[FakeTool(name="create_pr")]
-        )
+        fake_session_fs = FakeTargetSession(tools=[FakeTool(name="read_file")])
+        fake_session_gh = FakeTargetSession(tools=[FakeTool(name="create_pr")])
         from aegis.mcp_proxy import _TargetConnection
 
         conn_fs = _TargetConnection(
@@ -464,6 +442,7 @@ class TestToolDiscovery:
 # ---------------------------------------------------------------------------
 
 
+@_skip_no_mcp
 class TestGuardrailsIntegration:
     async def test_guardrails_block_injection(self, tmp_path: Path) -> None:
         proxy = AegisMCPProxy(
@@ -472,14 +451,16 @@ class TestGuardrailsIntegration:
             guardrails="default",  # Enable default guardrails
         )
         proxy._init_governance()
-        proxy._policy = Policy(rules=[
-            PolicyRule(
-                match_type="*",
-                risk_level=RiskLevel.LOW,
-                approval=Approval.AUTO,
-                name="allow_all",
-            ),
-        ])
+        proxy._policy = Policy(
+            rules=[
+                PolicyRule(
+                    match_type="*",
+                    risk_level=RiskLevel.LOW,
+                    approval=Approval.AUTO,
+                    name="allow_all",
+                ),
+            ]
+        )
 
         # Register a tool
         entry = _make_tool_entry("execute_query")
@@ -511,9 +492,7 @@ class TestGuardrailsIntegration:
 
 class TestCLIParsing:
     def test_wrap_mode_inference(self) -> None:
-        name = _infer_server_name(
-            "npx", ["-y", "@modelcontextprotocol/server-filesystem"]
-        )
+        name = _infer_server_name("npx", ["-y", "@modelcontextprotocol/server-filesystem"])
         assert name == "filesystem"
 
     def test_missing_args(self) -> None:

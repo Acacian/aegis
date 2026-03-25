@@ -33,3 +33,13 @@ site/
 
 # Aegis runtime artifacts
 aegis_audit.db
+
+# Draft / temp / scratch files (prevent accidental commits)
+_*.md
+*.draft.*
+*.tmp.*
+*.bak
+scratch_*
+notes_*
+draft_*
+temp_*
