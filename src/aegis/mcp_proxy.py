@@ -240,9 +240,7 @@ class AegisMCPProxy:
         )
 
         assert self._exit_stack is not None
-        streams = await self._exit_stack.enter_async_context(
-            stdio_client(server_params)
-        )
+        streams = await self._exit_stack.enter_async_context(stdio_client(server_params))
         read_stream, write_stream = streams
         session: ClientSession = await self._exit_stack.enter_async_context(
             ClientSession(read_stream, write_stream)
@@ -256,11 +254,7 @@ class AegisMCPProxy:
         result = await conn.session.list_tools()
         for tool in result.tools:
             conn.tools[tool.name] = tool
-            proxy_name = (
-                f"{conn.config.name}___{tool.name}"
-                if self._multi_server
-                else tool.name
-            )
+            proxy_name = f"{conn.config.name}___{tool.name}" if self._multi_server else tool.name
             self._tool_registry[proxy_name] = ToolEntry(
                 server_name=conn.config.name,
                 tool=tool,
@@ -268,11 +262,7 @@ class AegisMCPProxy:
             )
             # Pin tool for rug-pull detection
             if self._security_gate:
-                schema = (
-                    tool.inputSchema
-                    if hasattr(tool, "inputSchema")
-                    else {}
-                )
+                schema = tool.inputSchema if hasattr(tool, "inputSchema") else {}
                 self._security_gate.pin_tool(
                     conn.config.name,
                     tool.name,
@@ -300,9 +290,7 @@ class AegisMCPProxy:
             for prompt in result.prompts:
                 conn.prompts.append(prompt)
                 proxy_name = (
-                    f"{conn.config.name}___{prompt.name}"
-                    if self._multi_server
-                    else prompt.name
+                    f"{conn.config.name}___{prompt.name}" if self._multi_server else prompt.name
                 )
                 self._prompt_registry[proxy_name] = PromptEntry(
                     server_name=conn.config.name, prompt=prompt
@@ -325,17 +313,11 @@ class AegisMCPProxy:
     # Governance pipeline
     # ------------------------------------------------------------------
 
-    def _evaluate_security(
-        self, entry: ToolEntry, arguments: dict[str, Any]
-    ) -> Any:
+    def _evaluate_security(self, entry: ToolEntry, arguments: dict[str, Any]) -> Any:
         """Run MCPSecurityGate on the tool call."""
         if not self._security_gate:
             return None
-        schema = (
-            entry.tool.inputSchema
-            if hasattr(entry.tool, "inputSchema")
-            else {}
-        )
+        schema = entry.tool.inputSchema if hasattr(entry.tool, "inputSchema") else {}
         return self._security_gate.evaluate(
             server=entry.server_name,
             tool=entry.tool.name,
@@ -344,9 +326,7 @@ class AegisMCPProxy:
             arguments=arguments,
         )
 
-    def _evaluate_policy(
-        self, entry: ToolEntry, arguments: dict[str, Any]
-    ) -> Any:
+    def _evaluate_policy(self, entry: ToolEntry, arguments: dict[str, Any]) -> Any:
         """Evaluate the tool call against Aegis policy."""
         from aegis.core.action import Action
 
@@ -364,7 +344,7 @@ class AegisMCPProxy:
             return []
         # Serialize arguments to check for injection/PII in values
         content = json.dumps(arguments, default=str, ensure_ascii=False)
-        return self._guardrail_engine.check(content)
+        return self._guardrail_engine.check(content)  # type: ignore[no-any-return]
 
     def _audit_decision(
         self,
@@ -411,11 +391,7 @@ class AegisMCPProxy:
         for entry in self._tool_registry.values():
             # Create tool with proxy name but original schema
             tool = entry.tool
-            schema = (
-                tool.inputSchema
-                if hasattr(tool, "inputSchema")
-                else {}
-            )
+            schema = tool.inputSchema if hasattr(tool, "inputSchema") else {}
             tools.append(
                 types.Tool(
                     name=entry.proxy_name,
@@ -469,8 +445,7 @@ class AegisMCPProxy:
 
         if decision.approval == Approval.BLOCK:
             reason = (
-                f"Policy blocked (rule={decision.matched_rule},"
-                f" risk={decision.risk_level.value})"
+                f"Policy blocked (rule={decision.matched_rule}, risk={decision.risk_level.value})"
             )
             self._audit_decision(entry, arguments, decision, blocked_reason=reason)
             logger.warning("[aegis] BLOCKED %s: %s", name, reason)
@@ -485,9 +460,7 @@ class AegisMCPProxy:
         guardrail_results = self._run_guardrails(arguments)
         blocked = [r for r in guardrail_results if getattr(r, "action", "") == "blocked"]
         if blocked:
-            details = "; ".join(
-                getattr(r, "guardrail_name", "unknown") for r in blocked
-            )
+            details = "; ".join(getattr(r, "guardrail_name", "unknown") for r in blocked)
             reason = f"Guardrail blocked ({details})"
             self._audit_decision(entry, arguments, decision, blocked_reason=reason)
             logger.warning("[aegis] BLOCKED %s: %s", name, reason)
@@ -513,7 +486,7 @@ class AegisMCPProxy:
             # Audit success
             self._audit_decision(entry, arguments, decision)
             logger.debug("[aegis] ALLOWED %s → forwarded", name)
-            return result.content
+            return result.content  # type: ignore[no-any-return]
         except Exception as exc:
             reason = f"Target server error: {exc}"
             self._audit_decision(entry, arguments, decision, blocked_reason=reason)
@@ -555,9 +528,7 @@ class AegisMCPProxy:
             )
         return prompts
 
-    async def handle_get_prompt(
-        self, name: str, arguments: dict[str, str] | None = None
-    ) -> Any:
+    async def handle_get_prompt(self, name: str, arguments: dict[str, str] | None = None) -> Any:
         """Forward prompt get to the appropriate target."""
         entry = self._prompt_registry.get(name)
         if not entry:
@@ -578,27 +549,27 @@ class AegisMCPProxy:
         server = Server("aegis-proxy")
         proxy = self
 
-        @server.list_tools()
+        @server.list_tools()  # type: ignore[no-untyped-call]
         async def _list_tools() -> list[Any]:
             return await proxy.handle_list_tools()
 
-        @server.call_tool()
+        @server.call_tool()  # type: ignore[no-untyped-call]
         async def _call_tool(name: str, arguments: dict[str, Any] | None = None) -> list[Any]:
             return await proxy.handle_call_tool(name, arguments)
 
-        @server.list_resources()
+        @server.list_resources()  # type: ignore[no-untyped-call]
         async def _list_resources() -> list[Any]:
             return await proxy.handle_list_resources()
 
-        @server.read_resource()
+        @server.read_resource()  # type: ignore[no-untyped-call]
         async def _read_resource(uri: Any) -> Any:
             return await proxy.handle_read_resource(uri)
 
-        @server.list_prompts()
+        @server.list_prompts()  # type: ignore[no-untyped-call]
         async def _list_prompts() -> list[Any]:
             return await proxy.handle_list_prompts()
 
-        @server.get_prompt()
+        @server.get_prompt()  # type: ignore[no-untyped-call]
         async def _get_prompt(name: str, arguments: dict[str, str] | None = None) -> Any:
             return await proxy.handle_get_prompt(name, arguments)
 
