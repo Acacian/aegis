@@ -3,151 +3,383 @@
 Import from the top-level ``aegis`` package for convenience::
 
     from aegis import Action, Policy, Runtime
+
+All public symbols are lazy-loaded on first access so that
+``import aegis`` stays fast regardless of how many modules exist here.
 """
 
-from aegis.core.a2a_governance import (
-    A2ADecision,
-    A2AGovernor,
-    A2AMessage,
-)
-from aegis.core.action import Action
-from aegis.core.agent_identity import AgentIdentity, AgentRegistry, DelegationEvent
-from aegis.core.anomaly import AnomalyDetector, AnomalyResult, BehaviorProfile
-from aegis.core.budget import (
-    BudgetAction,
-    BudgetExhausted,
-    CostRecord,
-    CostTracker,
-    ModelPricing,
-    TokenUsage,
-)
-from aegis.core.builder import PolicyBuilder, RuleBuilder
-from aegis.core.compliance import ComplianceFinding, ComplianceReport, ReportGenerator
-from aegis.core.cost_attribution import AgentCostNode, CostAttributionTree
-from aegis.core.cost_callbacks import (
-    AnthropicCostExtractor,
-    GoogleCostExtractor,
-    LangChainCostCallback,
-    OpenAICostExtractor,
-)
-from aegis.core.crypto_audit import (
-    AuditEntry,
-    CryptoAuditChain,
-    EvidencePackage,
-    VerificationResult,
-)
-from aegis.core.mcp_sbom import (
-    SBOM,
-    MCPServerInfo,
-    MCPToolInfo,
-    SBOMGenerator,
-)
-from aegis.core.mcp_security import (
-    ArgumentSanitizer,
-    MCPFinding,
-    MCPSecurityGate,
-    RugPullDetector,
-    ToolDescriptionScanner,
-    ToolTrustScorer,
-    TrustLevel,
-    TrustScore,
-)
-from aegis.core.mcp_vuln_db import MCPVulnDB, VulnEntry, VulnFinding
-from aegis.core.otel_export import AegisEvent, AegisOTelExporter
-from aegis.core.plan import ExecutionPlan
-from aegis.core.policy import Approval, Policy, PolicyDecision, PolicyRule
-from aegis.core.policy_git import (
-    PolicyDiffFormatter,
-    PolicyDriftDetector,
-    PolicyImpactAnalyzer,
-    export_policy_yaml,
-)
-from aegis.core.rate_limiter import RateLimiter, RateLimitResult, RateLimitRule
-from aegis.core.result import Result, ResultStatus
-from aegis.core.retry import RetryPolicy
-from aegis.core.risk import RiskLevel
-from aegis.core.semantic import (
-    SEMANTIC_CATEGORIES,
-    KeywordSemanticEvaluator,
-    SemanticEvaluator,
-    evaluate_semantic_condition,
-)
-from aegis.core.session_replay import (
-    ReplayReport,
-    SessionRecorder,
-    SessionReplayer,
-)
+from __future__ import annotations
 
-__all__ = [
-    "A2ADecision",
-    "A2AGovernor",
-    "A2AMessage",
-    "Action",
-    "AegisEvent",
-    "AegisOTelExporter",
-    "AgentCostNode",
-    "AgentIdentity",
-    "AgentRegistry",
-    "AnomalyDetector",
-    "AnomalyResult",
-    "Approval",
-    "ArgumentSanitizer",
-    "AnthropicCostExtractor",
-    "AuditEntry",
-    "BehaviorProfile",
-    "BudgetAction",
-    "BudgetExhausted",
-    "ComplianceFinding",
-    "ComplianceReport",
-    "CostAttributionTree",
-    "CostRecord",
-    "CostTracker",
-    "CryptoAuditChain",
-    "DelegationEvent",
-    "EvidencePackage",
-    "ExecutionPlan",
-    "GoogleCostExtractor",
-    "KeywordSemanticEvaluator",
-    "LangChainCostCallback",
-    "MCPFinding",
-    "MCPSecurityGate",
-    "MCPServerInfo",
-    "MCPToolInfo",
-    "MCPVulnDB",
-    "ModelPricing",
-    "OpenAICostExtractor",
-    "Policy",
-    "PolicyBuilder",
-    "PolicyDecision",
-    "PolicyDiffFormatter",
-    "PolicyDriftDetector",
-    "PolicyImpactAnalyzer",
-    "PolicyRule",
-    "ReplayReport",
-    "RateLimitResult",
-    "RateLimitRule",
-    "RateLimiter",
-    "ReportGenerator",
-    "Result",
-    "ResultStatus",
-    "RugPullDetector",
-    "RuleBuilder",
-    "RetryPolicy",
-    "RiskLevel",
-    "SBOM",
-    "SBOMGenerator",
-    "SEMANTIC_CATEGORIES",
-    "SemanticEvaluator",
-    "SessionRecorder",
-    "SessionReplayer",
-    "TokenUsage",
-    "ToolDescriptionScanner",
-    "ToolTrustScorer",
-    "TrustLevel",
-    "TrustScore",
-    "VerificationResult",
-    "VulnEntry",
-    "VulnFinding",
-    "evaluate_semantic_condition",
-    "export_policy_yaml",
-]
+import importlib
+from typing import TYPE_CHECKING
+
+_LAZY_IMPORTS: dict[str, str] = {
+    # a2a_governance
+    "A2ADecision": "aegis.core.a2a_governance",
+    "A2AGovernor": "aegis.core.a2a_governance",
+    "A2AMessage": "aegis.core.a2a_governance",
+    "GovernanceEnvelope": "aegis.core.a2a_governance",
+    "GovernanceHandshake": "aegis.core.a2a_governance",
+    "HandshakeResult": "aegis.core.a2a_governance",
+    # action
+    "Action": "aegis.core.action",
+    # agent_identity
+    "AgentIdentity": "aegis.core.agent_identity",
+    "AgentRegistry": "aegis.core.agent_identity",
+    "DelegationEvent": "aegis.core.agent_identity",
+    # constitution
+    "AgentConstitution": "aegis.core.constitution",
+    "AgentOntology": "aegis.core.constitution",
+    "Constraint": "aegis.core.constitution",
+    "Obligation": "aegis.core.constitution",
+    # anomaly
+    "AnomalyDetector": "aegis.core.anomaly",
+    "AnomalyResult": "aegis.core.anomaly",
+    "BehaviorProfile": "aegis.core.anomaly",
+    # budget
+    "BudgetAction": "aegis.core.budget",
+    "BudgetExhausted": "aegis.core.budget",
+    "CostRecord": "aegis.core.budget",
+    "CostTracker": "aegis.core.budget",
+    "ModelPricing": "aegis.core.budget",
+    "TokenUsage": "aegis.core.budget",
+    # builder
+    "PolicyBuilder": "aegis.core.builder",
+    "RuleBuilder": "aegis.core.builder",
+    # compliance
+    "ComplianceFinding": "aegis.core.compliance",
+    "ComplianceReport": "aegis.core.compliance",
+    "ReportGenerator": "aegis.core.compliance",
+    # cost_attribution
+    "AgentCostNode": "aegis.core.cost_attribution",
+    "CostAttributionTree": "aegis.core.cost_attribution",
+    # cost_callbacks
+    "AnthropicCostExtractor": "aegis.core.cost_callbacks",
+    "GoogleCostExtractor": "aegis.core.cost_callbacks",
+    "LangChainCostCallback": "aegis.core.cost_callbacks",
+    "OpenAICostExtractor": "aegis.core.cost_callbacks",
+    # crypto_audit
+    "AuditEntry": "aegis.core.crypto_audit",
+    "CryptoAuditChain": "aegis.core.crypto_audit",
+    "EvidencePackage": "aegis.core.crypto_audit",
+    "VerificationResult": "aegis.core.crypto_audit",
+    # leakage_detector
+    "LeakageDetector": "aegis.core.leakage_detector",
+    "LeakageFinding": "aegis.core.leakage_detector",
+    "LeakageReport": "aegis.core.leakage_detector",
+    # mcp_sbom
+    "MCPServerInfo": "aegis.core.mcp_sbom",
+    "MCPToolInfo": "aegis.core.mcp_sbom",
+    "SBOM": "aegis.core.mcp_sbom",
+    "SBOMGenerator": "aegis.core.mcp_sbom",
+    # mcp_security
+    "ArgumentSanitizer": "aegis.core.mcp_security",
+    "MCPFinding": "aegis.core.mcp_security",
+    "MCPSecurityGate": "aegis.core.mcp_security",
+    "RugPullDetector": "aegis.core.mcp_security",
+    "ToolDescriptionScanner": "aegis.core.mcp_security",
+    "ToolTrustScorer": "aegis.core.mcp_security",
+    "TrustLevel": "aegis.core.mcp_security",
+    "TrustScore": "aegis.core.mcp_security",
+    # mcp_vuln_db
+    "MCPVulnDB": "aegis.core.mcp_vuln_db",
+    "VulnEntry": "aegis.core.mcp_vuln_db",
+    "VulnFinding": "aegis.core.mcp_vuln_db",
+    # otel_export
+    "AegisEvent": "aegis.core.otel_export",
+    "AegisOTelExporter": "aegis.core.otel_export",
+    # plan
+    "ExecutionPlan": "aegis.core.plan",
+    # plan_rules
+    "CumulativeRiskThreshold": "aegis.core.plan_rules",
+    "PlanRules": "aegis.core.plan_rules",
+    "PlanViolation": "aegis.core.plan_rules",
+    "SequencePattern": "aegis.core.plan_rules",
+    # policy
+    "Approval": "aegis.core.policy",
+    "Policy": "aegis.core.policy",
+    "PolicyDecision": "aegis.core.policy",
+    "PolicyRule": "aegis.core.policy",
+    # policy_git
+    "PolicyDiffFormatter": "aegis.core.policy_git",
+    "PolicyDriftDetector": "aegis.core.policy_git",
+    "PolicyImpactAnalyzer": "aegis.core.policy_git",
+    "export_policy_yaml": "aegis.core.policy_git",
+    # rate_limiter
+    "RateLimiter": "aegis.core.rate_limiter",
+    "RateLimitResult": "aegis.core.rate_limiter",
+    "RateLimitRule": "aegis.core.rate_limiter",
+    # result
+    "Result": "aegis.core.result",
+    "ResultStatus": "aegis.core.result",
+    # retry
+    "RetryPolicy": "aegis.core.retry",
+    # risk
+    "RiskLevel": "aegis.core.risk",
+    # semantic
+    "KeywordSemanticEvaluator": "aegis.core.semantic",
+    "SEMANTIC_CATEGORIES": "aegis.core.semantic",
+    "SemanticEvaluator": "aegis.core.semantic",
+    "evaluate_semantic_condition": "aegis.core.semantic",
+    # session_replay
+    "ReplayReport": "aegis.core.session_replay",
+    "SessionRecorder": "aegis.core.session_replay",
+    "SessionReplayer": "aegis.core.session_replay",
+}
+
+__all__ = list(_LAZY_IMPORTS.keys())
+
+
+def __getattr__(name: str) -> object:
+    if name in _LAZY_IMPORTS:
+        module = importlib.import_module(_LAZY_IMPORTS[name])
+        value = getattr(module, name)
+        globals()[name] = value
+        return value
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+if TYPE_CHECKING:
+    from aegis.core.a2a_governance import (
+        A2ADecision as A2ADecision,
+    )
+    from aegis.core.a2a_governance import (
+        A2AGovernor as A2AGovernor,
+    )
+    from aegis.core.a2a_governance import (
+        A2AMessage as A2AMessage,
+    )
+    from aegis.core.a2a_governance import (
+        GovernanceEnvelope as GovernanceEnvelope,
+    )
+    from aegis.core.a2a_governance import (
+        GovernanceHandshake as GovernanceHandshake,
+    )
+    from aegis.core.a2a_governance import (
+        HandshakeResult as HandshakeResult,
+    )
+    from aegis.core.action import Action as Action
+    from aegis.core.agent_identity import (
+        AgentIdentity as AgentIdentity,
+    )
+    from aegis.core.agent_identity import (
+        AgentRegistry as AgentRegistry,
+    )
+    from aegis.core.agent_identity import (
+        DelegationEvent as DelegationEvent,
+    )
+    from aegis.core.anomaly import (
+        AnomalyDetector as AnomalyDetector,
+    )
+    from aegis.core.anomaly import (
+        AnomalyResult as AnomalyResult,
+    )
+    from aegis.core.anomaly import (
+        BehaviorProfile as BehaviorProfile,
+    )
+    from aegis.core.budget import (
+        BudgetAction as BudgetAction,
+    )
+    from aegis.core.budget import (
+        BudgetExhausted as BudgetExhausted,
+    )
+    from aegis.core.budget import (
+        CostRecord as CostRecord,
+    )
+    from aegis.core.budget import (
+        CostTracker as CostTracker,
+    )
+    from aegis.core.budget import (
+        ModelPricing as ModelPricing,
+    )
+    from aegis.core.budget import (
+        TokenUsage as TokenUsage,
+    )
+    from aegis.core.builder import (
+        PolicyBuilder as PolicyBuilder,
+    )
+    from aegis.core.builder import (
+        RuleBuilder as RuleBuilder,
+    )
+    from aegis.core.compliance import (
+        ComplianceFinding as ComplianceFinding,
+    )
+    from aegis.core.compliance import (
+        ComplianceReport as ComplianceReport,
+    )
+    from aegis.core.compliance import (
+        ReportGenerator as ReportGenerator,
+    )
+    from aegis.core.constitution import (
+        AgentConstitution as AgentConstitution,
+    )
+    from aegis.core.constitution import (
+        AgentOntology as AgentOntology,
+    )
+    from aegis.core.constitution import (
+        Constraint as Constraint,
+    )
+    from aegis.core.constitution import (
+        Obligation as Obligation,
+    )
+    from aegis.core.cost_attribution import (
+        AgentCostNode as AgentCostNode,
+    )
+    from aegis.core.cost_attribution import (
+        CostAttributionTree as CostAttributionTree,
+    )
+    from aegis.core.cost_callbacks import (
+        AnthropicCostExtractor as AnthropicCostExtractor,
+    )
+    from aegis.core.cost_callbacks import (
+        GoogleCostExtractor as GoogleCostExtractor,
+    )
+    from aegis.core.cost_callbacks import (
+        LangChainCostCallback as LangChainCostCallback,
+    )
+    from aegis.core.cost_callbacks import (
+        OpenAICostExtractor as OpenAICostExtractor,
+    )
+    from aegis.core.crypto_audit import (
+        AuditEntry as AuditEntry,
+    )
+    from aegis.core.crypto_audit import (
+        CryptoAuditChain as CryptoAuditChain,
+    )
+    from aegis.core.crypto_audit import (
+        EvidencePackage as EvidencePackage,
+    )
+    from aegis.core.crypto_audit import (
+        VerificationResult as VerificationResult,
+    )
+    from aegis.core.leakage_detector import (
+        LeakageDetector as LeakageDetector,
+    )
+    from aegis.core.leakage_detector import (
+        LeakageFinding as LeakageFinding,
+    )
+    from aegis.core.leakage_detector import (
+        LeakageReport as LeakageReport,
+    )
+    from aegis.core.mcp_sbom import (
+        SBOM as SBOM,
+    )
+    from aegis.core.mcp_sbom import (
+        MCPServerInfo as MCPServerInfo,
+    )
+    from aegis.core.mcp_sbom import (
+        MCPToolInfo as MCPToolInfo,
+    )
+    from aegis.core.mcp_sbom import (
+        SBOMGenerator as SBOMGenerator,
+    )
+    from aegis.core.mcp_security import (
+        ArgumentSanitizer as ArgumentSanitizer,
+    )
+    from aegis.core.mcp_security import (
+        MCPFinding as MCPFinding,
+    )
+    from aegis.core.mcp_security import (
+        MCPSecurityGate as MCPSecurityGate,
+    )
+    from aegis.core.mcp_security import (
+        RugPullDetector as RugPullDetector,
+    )
+    from aegis.core.mcp_security import (
+        ToolDescriptionScanner as ToolDescriptionScanner,
+    )
+    from aegis.core.mcp_security import (
+        ToolTrustScorer as ToolTrustScorer,
+    )
+    from aegis.core.mcp_security import (
+        TrustLevel as TrustLevel,
+    )
+    from aegis.core.mcp_security import (
+        TrustScore as TrustScore,
+    )
+    from aegis.core.mcp_vuln_db import (
+        MCPVulnDB as MCPVulnDB,
+    )
+    from aegis.core.mcp_vuln_db import (
+        VulnEntry as VulnEntry,
+    )
+    from aegis.core.mcp_vuln_db import (
+        VulnFinding as VulnFinding,
+    )
+    from aegis.core.otel_export import (
+        AegisEvent as AegisEvent,
+    )
+    from aegis.core.otel_export import (
+        AegisOTelExporter as AegisOTelExporter,
+    )
+    from aegis.core.plan import ExecutionPlan as ExecutionPlan
+    from aegis.core.plan_rules import (
+        CumulativeRiskThreshold as CumulativeRiskThreshold,
+    )
+    from aegis.core.plan_rules import (
+        PlanRules as PlanRules,
+    )
+    from aegis.core.plan_rules import (
+        PlanViolation as PlanViolation,
+    )
+    from aegis.core.plan_rules import (
+        SequencePattern as SequencePattern,
+    )
+    from aegis.core.policy import (
+        Approval as Approval,
+    )
+    from aegis.core.policy import (
+        Policy as Policy,
+    )
+    from aegis.core.policy import (
+        PolicyDecision as PolicyDecision,
+    )
+    from aegis.core.policy import (
+        PolicyRule as PolicyRule,
+    )
+    from aegis.core.policy_git import (
+        PolicyDiffFormatter as PolicyDiffFormatter,
+    )
+    from aegis.core.policy_git import (
+        PolicyDriftDetector as PolicyDriftDetector,
+    )
+    from aegis.core.policy_git import (
+        PolicyImpactAnalyzer as PolicyImpactAnalyzer,
+    )
+    from aegis.core.policy_git import (
+        export_policy_yaml as export_policy_yaml,
+    )
+    from aegis.core.rate_limiter import (
+        RateLimiter as RateLimiter,
+    )
+    from aegis.core.rate_limiter import (
+        RateLimitResult as RateLimitResult,
+    )
+    from aegis.core.rate_limiter import (
+        RateLimitRule as RateLimitRule,
+    )
+    from aegis.core.result import Result as Result
+    from aegis.core.result import ResultStatus as ResultStatus
+    from aegis.core.retry import RetryPolicy as RetryPolicy
+    from aegis.core.risk import RiskLevel as RiskLevel
+    from aegis.core.semantic import (
+        SEMANTIC_CATEGORIES as SEMANTIC_CATEGORIES,
+    )
+    from aegis.core.semantic import (
+        KeywordSemanticEvaluator as KeywordSemanticEvaluator,
+    )
+    from aegis.core.semantic import (
+        SemanticEvaluator as SemanticEvaluator,
+    )
+    from aegis.core.semantic import (
+        evaluate_semantic_condition as evaluate_semantic_condition,
+    )
+    from aegis.core.session_replay import (
+        ReplayReport as ReplayReport,
+    )
+    from aegis.core.session_replay import (
+        SessionRecorder as SessionRecorder,
+    )
+    from aegis.core.session_replay import (
+        SessionReplayer as SessionReplayer,
+    )

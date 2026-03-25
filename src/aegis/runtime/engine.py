@@ -104,10 +104,21 @@ class Runtime:
         self.audit.close()
 
     def plan(self, actions: list[Action]) -> ExecutionPlan:
-        """Evaluate actions against the policy and produce an execution plan."""
+        """Evaluate actions against the policy and produce an execution plan.
+
+        If the policy has ``plan_rules``, the plan is also evaluated for
+        sequence violations and cumulative risk after individual action
+        evaluation.
+        """
         resolved = [self._with_agent_context(a) for a in actions]
         decisions = [self.policy.evaluate(action) for action in resolved]
-        return ExecutionPlan(decisions=decisions)
+        exec_plan = ExecutionPlan(decisions=decisions)
+
+        # Plan-level evaluation
+        if self.policy.plan_rules is not None:
+            exec_plan.plan_violations = self.policy.plan_rules.evaluate(exec_plan)
+
+        return exec_plan
 
     def _with_agent_context(self, action: Action) -> Action:
         """Return the action with agent_id populated if not already set."""
@@ -148,6 +159,20 @@ class Runtime:
                 ``asyncio.gather``.  Actions are assumed independent;
                 fail-fast is disabled in parallel mode.
         """
+        # Block entire plan if plan-level violations require it
+        blocking_violations = [v for v in plan.plan_violations if v.approval == Approval.BLOCK]
+        if blocking_violations:
+            reason = blocking_violations[0].description
+            return [
+                Result(
+                    action=d.action,
+                    status=ResultStatus.BLOCKED,
+                    error=f"Blocked by plan rule: {reason}",
+                    completed_at=datetime.now(UTC),
+                )
+                for d in plan.decisions
+            ]
+
         if not dry_run:
             await self.executor.setup()
         try:

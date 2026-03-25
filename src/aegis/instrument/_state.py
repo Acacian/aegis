@@ -33,6 +33,7 @@ class InstrumentationState:
     def __init__(self) -> None:
         self._patches: dict[str, FrameworkPatch] = {}
         self._guardrail_engine: Any = None
+        self._policy: Any = None  # Policy | None
         self._on_block: str = "raise"
         self._audit: bool = True
         self._active = False
@@ -58,11 +59,13 @@ class InstrumentationState:
         self,
         *,
         guardrail_engine: Any = None,
+        policy: Any = None,
         on_block: str = "raise",
         audit: bool = True,
     ) -> None:
         """Set shared configuration for all patches."""
         self._guardrail_engine = guardrail_engine
+        self._policy = policy
         self._on_block = on_block
         self._audit = audit
         self._active = True
@@ -70,6 +73,11 @@ class InstrumentationState:
     @property
     def guardrail_engine(self) -> Any:
         return self._guardrail_engine
+
+    @property
+    def policy(self) -> Any:
+        """Policy with plan_rules for plan-level governance."""
+        return self._policy
 
     @property
     def on_block(self) -> str:

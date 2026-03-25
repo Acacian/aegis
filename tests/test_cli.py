@@ -155,12 +155,13 @@ def test_simulate_json(tmp_path: Path, capsys):
     )
     out = capsys.readouterr().out
     data = __import__("json").loads(out)
-    assert len(data) == 2
-    assert data[0]["action_type"] == "read"
-    assert data[0]["approval"] == "auto"
-    assert data[0]["is_allowed"] is True
-    assert data[1]["action_type"] == "write"
-    assert data[1]["approval"] == "approve"
+    decisions = data["decisions"]
+    assert len(decisions) == 2
+    assert decisions[0]["action_type"] == "read"
+    assert decisions[0]["approval"] == "auto"
+    assert decisions[0]["is_allowed"] is True
+    assert decisions[1]["action_type"] == "write"
+    assert decisions[1]["approval"] == "approve"
 
 
 def test_simulate_without_target(tmp_path: Path, capsys):

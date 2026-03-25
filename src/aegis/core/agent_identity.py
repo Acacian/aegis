@@ -39,6 +39,10 @@ import fnmatch
 import threading
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from aegis.core.constitution import AgentConstitution
 
 # ── helpers ─────────────────────────────────────────────────────────────
 
@@ -107,6 +111,7 @@ class AgentIdentity:
     trust_level: int = 0
     parent_id: str | None = None
     metadata: dict[str, str] = field(default_factory=dict)
+    constitution: AgentConstitution | None = None
 
     def __post_init__(self) -> None:
         if not self.agent_id:
@@ -208,6 +213,17 @@ class AgentRegistry:
 
             effective_trust = min(parent.trust_level, child.trust_level)
 
+            # Constitutional inheritance
+            effective_constitution: AgentConstitution | None = None
+            if parent.constitution is not None or child.constitution is not None:
+                from aegis.core.constitution import AgentConstitution as _AC
+
+                effective_constitution = _AC.merge_inherited(
+                    parent=parent.constitution,
+                    child=child.constitution,
+                    intersect_capabilities=effective_caps,
+                )
+
             delegated = AgentIdentity(
                 agent_id=child.agent_id,
                 name=child.name,
@@ -215,6 +231,7 @@ class AgentRegistry:
                 trust_level=effective_trust,
                 parent_id=parent_id,
                 metadata=child.metadata,
+                constitution=effective_constitution,
             )
 
             self._agents[delegated.agent_id] = delegated
