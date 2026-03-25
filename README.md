@@ -307,7 +307,7 @@ Every action goes through 5 stages. This happens automatically — you just call
                Export: JSONL, webhook, or query via CLI/API.
 ```
 
-### Two Ways to Use
+### Three Ways to Use
 
 **Option A: Python library (most common)** -- no server needed.
 
@@ -318,7 +318,38 @@ runtime = Runtime(executor=MyExecutor(), policy=Policy.from_yaml("policy.yaml"))
 result = await runtime.run_one(Action("read", "crm"))
 ```
 
-**Option B: REST API server** -- for non-Python agents (Go, TypeScript, etc.).
+**Option B: MCP Proxy** -- govern any MCP server with zero code changes.
+
+Wrap any MCP server with Aegis governance. Every tool call passes through security scanning, policy checks, and audit logging — transparently. Works with Claude Desktop, Cursor, Windsurf, or any MCP client.
+
+```json
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "uvx",
+      "args": ["--from", "agent-aegis[mcp]", "aegis-mcp-proxy",
+               "--wrap", "npx", "-y",
+               "@modelcontextprotocol/server-filesystem", "/home"]
+    }
+  }
+}
+```
+
+What happens on every tool call:
+- **Tool description scanning** — detects poisoned tool descriptions (10 attack patterns)
+- **Rug-pull detection** — alerts if tool definitions change unexpectedly (SHA-256 pinning)
+- **Argument sanitization** — blocks path traversal, command injection
+- **Policy evaluation** — risk level + approval rules from your aegis.yaml
+- **Full audit trail** — every call logged to SQLite
+
+```bash
+# Or from the command line:
+pip install 'agent-aegis[mcp]'
+aegis-mcp-proxy --policy policy.yaml \
+    --wrap npx -y @modelcontextprotocol/server-filesystem /home
+```
+
+**Option C: REST API server** -- for non-Python agents (Go, TypeScript, etc.).
 
 ```bash
 pip install 'agent-aegis[server]'

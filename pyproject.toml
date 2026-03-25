@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "agent-aegis"
-version = "0.4.2"
+version = "0.5.0"
 description = "Auto-instrument AI agent frameworks with operational governance. One line to govern LangChain, CrewAI, OpenAI, Anthropic — injection blocking, PII masking, action policy, audit trail. Zero code changes."
 readme = "README.md"
 license = "MIT"
@@ -82,6 +82,7 @@ dev = [
 [project.scripts]
 aegis = "aegis.cli.main:main"
 aegis-mcp-server = "aegis.mcp_server:main"
+aegis-mcp-proxy = "aegis.mcp_proxy:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/aegis"]
@@ -120,7 +121,7 @@ module = ["playwright.*", "langchain_core.*", "crewai.*", "agents.*", "httpx.*",
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-module = ["aegis.mcp_server", "aegis.adapters.openai_agents"]
+module = ["aegis.mcp_server", "aegis.mcp_proxy", "aegis.adapters.openai_agents"]
 disallow_untyped_decorators = false
 
 [[tool.mypy.overrides]]
