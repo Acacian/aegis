@@ -642,29 +642,52 @@ curl -X PUT http://localhost:8000/api/v1/policy \
 </details>
 
 <details>
-<summary><b>MCP 서버</b> -- Claude, Cursor, VS Code, Windsurf 원클릭 거버넌스</summary>
+<summary><b>MCP 프록시</b> -- 모든 MCP 서버를 투명하게 거버닝 (코드 변경 제로)</summary>
+
+기존 MCP 서버를 Aegis로 감싸면 모든 tool call이 보안 검사, 정책 평가, 감사 로깅을 거칩니다.
+
+**Claude Desktop** — `claude_desktop_config.json`:
+```json
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "uvx",
+      "args": ["--from", "agent-aegis[mcp]", "aegis-mcp-proxy",
+               "--wrap", "npx", "-y",
+               "@modelcontextprotocol/server-filesystem", "/home"]
+    }
+  }
+}
+```
+
+매 tool call마다:
+- **도구 설명 스캐닝** — 포이즈닝된 도구 설명 탐지 (10가지 공격 패턴)
+- **러그풀 감지** — 도구 정의 변경 시 알림 (SHA-256 해시 핀)
+- **인자 살균** — 경로 탐색, 명령어 인젝션 차단
+- **정책 평가** — aegis.yaml 기반 리스크 레벨 + 승인 규칙
+- **전체 감사 추적** — 모든 호출을 SQLite에 기록
+
+```bash
+pip install 'agent-aegis[mcp]'
+aegis-mcp-proxy --policy policy.yaml \
+    --wrap npx -y @modelcontextprotocol/server-filesystem /home
+```
+</details>
+
+<details>
+<summary><b>MCP 거버넌스 API 서버</b> -- 정책 평가 MCP 도구 노출</summary>
 
 ```bash
 pip install 'agent-aegis[mcp]'
 aegis-mcp-server --policy policy.yaml
 ```
 
-**Claude Desktop** — `~/Library/Application Support/Claude/claude_desktop_config.json`에 추가:
+**Claude Desktop** — `claude_desktop_config.json`에 추가:
 ```json
 { "mcpServers": { "aegis": { "command": "uvx", "args": ["--from", "agent-aegis[mcp]", "aegis-mcp-server"] }}}
 ```
 
 **Cursor** — `.cursor/mcp.json`에 추가:
-```json
-{ "mcpServers": { "aegis": { "command": "uvx", "args": ["--from", "agent-aegis[mcp]", "aegis-mcp-server"] }}}
-```
-
-**VS Code Copilot** — `.vscode/mcp.json`에 추가:
-```json
-{ "servers": { "aegis": { "command": "uvx", "args": ["--from", "agent-aegis[mcp]", "aegis-mcp-server"] }}}
-```
-
-**Windsurf** — `~/.codeium/windsurf/mcp_config.json`에 추가:
 ```json
 { "mcpServers": { "aegis": { "command": "uvx", "args": ["--from", "agent-aegis[mcp]", "aegis-mcp-server"] }}}
 ```
