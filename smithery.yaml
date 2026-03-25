@@ -3,13 +3,39 @@ startCommand:
   configSchema:
     type: object
     properties:
+      mode:
+        type: string
+        enum: ["server", "proxy"]
+        default: "server"
+        description: "Run as governance API server or transparent proxy"
       policyPath:
         type: string
         description: "Path to YAML policy file"
+      wrapCommand:
+        type: string
+        description: "Command to wrap with proxy (proxy mode only)"
+      wrapArgs:
+        type: array
+        items:
+          type: string
+        description: "Arguments for the wrapped command (proxy mode only)"
     required: []
   commandFunction: |
-    (config) => ({
-      command: "aegis-mcp-server",
-      args: config.policyPath ? ["--policy", config.policyPath] : [],
-      env: config.policyPath ? { AEGIS_POLICY_PATH: config.policyPath } : {}
-    })
+    (config) => {
+      if (config.mode === "proxy" && config.wrapCommand) {
+        return {
+          command: "aegis-mcp-proxy",
+          args: [
+            ...(config.policyPath ? ["--policy", config.policyPath] : []),
+            "--wrap", config.wrapCommand,
+            ...(config.wrapArgs || [])
+          ],
+          env: config.policyPath ? { AEGIS_POLICY_PATH: config.policyPath } : {}
+        };
+      }
+      return {
+        command: "aegis-mcp-server",
+        args: config.policyPath ? ["--policy", config.policyPath] : [],
+        env: config.policyPath ? { AEGIS_POLICY_PATH: config.policyPath } : {}
+      };
+    }
