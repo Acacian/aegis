@@ -68,9 +68,7 @@ class FakeRedis:
         results.sort(key=lambda x: x[1])
         return [m for m, _ in results]
 
-    def scan(
-        self, cursor: int = 0, match: str = "*", count: int = 100
-    ) -> tuple[int, list[str]]:
+    def scan(self, cursor: int = 0, match: str = "*", count: int = 100) -> tuple[int, list[str]]:
         all_keys: list[str] = []
         for k in self._zsets:
             if fnmatch.fnmatch(k, match):
@@ -631,18 +629,14 @@ class TestRedisAuditSubscription:
         logger.log("s2", decision)
         assert len(received) == 1
 
-    def test_unsubscribe_nonexistent_callback_is_safe(
-        self, logger: RedisAuditLogger
-    ) -> None:
+    def test_unsubscribe_nonexistent_callback_is_safe(self, logger: RedisAuditLogger) -> None:
         def some_cb(entry: dict[str, Any]) -> None:
             pass
 
         # Should not raise even though never subscribed
         logger.unsubscribe(some_cb)
 
-    def test_subscriber_exception_does_not_break_log(
-        self, logger: RedisAuditLogger
-    ) -> None:
+    def test_subscriber_exception_does_not_break_log(self, logger: RedisAuditLogger) -> None:
         def bad_cb(entry: dict[str, Any]) -> None:
             raise RuntimeError("boom")
 
