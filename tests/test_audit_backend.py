@@ -2,21 +2,20 @@
 
 from __future__ import annotations
 
-import asyncio
+from collections.abc import Callable
 from datetime import datetime
 from typing import Any
-from collections.abc import Callable
 
 import pytest
 
 from aegis.core.policy import PolicyDecision
 from aegis.core.result import Result
-from aegis.runtime.audit_backend import AuditBackend, AsyncAuditBackend
-
+from aegis.runtime.audit_backend import AsyncAuditBackend, AuditBackend
 
 # ---------------------------------------------------------------------------
 # Concrete implementations for isinstance checks
 # ---------------------------------------------------------------------------
+
 
 class ConformingSyncBackend:
     """Sync backend that satisfies AuditBackend protocol."""
@@ -143,6 +142,7 @@ class EmptyClass:
 # Tests: AuditBackend (sync)
 # ---------------------------------------------------------------------------
 
+
 class TestAuditBackendProtocol:
     """Tests for the synchronous AuditBackend protocol."""
 
@@ -201,6 +201,7 @@ class TestAuditBackendProtocol:
 # Tests: AsyncAuditBackend
 # ---------------------------------------------------------------------------
 
+
 class TestAsyncAuditBackendProtocol:
     """Tests for the asynchronous AsyncAuditBackend protocol."""
 
@@ -256,6 +257,7 @@ class TestAsyncAuditBackendProtocol:
 # Tests: Conforming backend method behavior
 # ---------------------------------------------------------------------------
 
+
 class TestConformingSyncBackendBehavior:
     """Verify the conforming sync backend actually works."""
 
@@ -264,6 +266,7 @@ class TestConformingSyncBackendBehavior:
         decision = PolicyDecision.__new__(PolicyDecision)
         # Use a mock decision instead
         from unittest.mock import MagicMock
+
         decision = MagicMock(spec=PolicyDecision)
         result = backend.log("sess-1", decision)
         assert result == 1
@@ -283,12 +286,14 @@ class TestConformingSyncBackendBehavior:
 
     def test_subscribe_accepts_callback(self):
         backend = ConformingSyncBackend()
-        cb = lambda entry: None
+        def cb(entry):
+            pass
         backend.subscribe(cb)  # Should not raise
 
     def test_unsubscribe_accepts_callback(self):
         backend = ConformingSyncBackend()
-        cb = lambda entry: None
+        def cb(entry):
+            pass
         backend.unsubscribe(cb)  # Should not raise
 
     def test_close(self):
@@ -302,6 +307,7 @@ class TestConformingAsyncBackendBehavior:
     @pytest.mark.asyncio
     async def test_log_returns_int(self):
         from unittest.mock import MagicMock
+
         backend = ConformingAsyncBackend()
         decision = MagicMock(spec=PolicyDecision)
         result = await backend.log("sess-1", decision)
@@ -321,12 +327,14 @@ class TestConformingAsyncBackendBehavior:
 
     def test_subscribe_accepts_callback(self):
         backend = ConformingAsyncBackend()
-        cb = lambda entry: None
+        def cb(entry):
+            pass
         backend.subscribe(cb)
 
     def test_unsubscribe_accepts_callback(self):
         backend = ConformingAsyncBackend()
-        cb = lambda entry: None
+        def cb(entry):
+            pass
         backend.unsubscribe(cb)
 
     @pytest.mark.asyncio
@@ -339,22 +347,27 @@ class TestConformingAsyncBackendBehavior:
 # Tests: Import and module-level
 # ---------------------------------------------------------------------------
 
+
 class TestModuleImports:
     """Verify the module and its exports are importable."""
 
     def test_import_audit_backend_module(self):
         import aegis.runtime.audit_backend as mod
+
         assert mod is not None
 
     def test_audit_backend_is_protocol(self):
         from typing import Protocol
+
         assert issubclass(AuditBackend, Protocol)
 
     def test_async_audit_backend_is_protocol(self):
         from typing import Protocol
+
         assert issubclass(AsyncAuditBackend, Protocol)
 
     def test_module_exports_both_protocols(self):
         import aegis.runtime.audit_backend as mod
+
         assert hasattr(mod, "AuditBackend")
         assert hasattr(mod, "AsyncAuditBackend")

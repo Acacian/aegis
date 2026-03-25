@@ -9,10 +9,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 import yaml
 
-from aegis.core.action import Action
 from aegis.core.policy import Approval, Policy, PolicyRule
 from aegis.core.risk import RiskLevel
-
 
 # ---------------------------------------------------------------------------
 # _load_policy
@@ -138,12 +136,15 @@ class TestCreateServer:
             def run(self, **kwargs):
                 pass
 
-        with patch.dict("sys.modules", {"mcp": MagicMock(), "mcp.server": MagicMock(), "mcp.server.fastmcp": MagicMock()}):
+        with patch.dict(
+            "sys.modules",
+            {"mcp": MagicMock(), "mcp.server": MagicMock(), "mcp.server.fastmcp": MagicMock()},
+        ):
             # Replace FastMCP with our fake
             sys.modules["mcp.server.fastmcp"] = type(sys)("mcp.server.fastmcp")
             sys.modules["mcp.server.fastmcp"].FastMCP = FakeMCP
 
-            server = self._mod._create_server()
+            self._mod._create_server()
             return registered_tools
 
     def test_server_creates_successfully(self, server_and_tools: dict) -> None:
@@ -288,7 +289,9 @@ class TestCreateServerImportError:
     def test_exits_on_missing_mcp(self) -> None:
         import aegis.mcp_server as mod
 
-        with patch.dict("sys.modules", {"mcp": None, "mcp.server": None, "mcp.server.fastmcp": None}):
+        with patch.dict(
+            "sys.modules", {"mcp": None, "mcp.server": None, "mcp.server.fastmcp": None}
+        ):
             # Clear cached imports so the ImportError path triggers
             with pytest.raises(SystemExit) as exc_info:
                 mod._create_server()
@@ -317,9 +320,11 @@ class TestMain:
 
         mock_server = MagicMock()
 
-        with patch.object(mod, "_create_server", return_value=mock_server):
-            with patch.object(mod, "_load_policy", return_value=Policy(rules=[])):
-                mod.main(["--transport", "stdio"])
+        with (
+            patch.object(mod, "_create_server", return_value=mock_server),
+            patch.object(mod, "_load_policy", return_value=Policy(rules=[])),
+        ):
+            mod.main(["--transport", "stdio"])
 
         mock_server.run.assert_called_once_with(transport="stdio")
 
@@ -328,9 +333,11 @@ class TestMain:
 
         mock_server = MagicMock()
 
-        with patch.object(mod, "_create_server", return_value=mock_server) as create_mock:
-            with patch.object(mod, "_load_policy", return_value=Policy(rules=[])):
-                mod.main(["--transport", "sse", "--port", "9090", "--host", "127.0.0.1"])
+        with (
+            patch.object(mod, "_create_server", return_value=mock_server) as create_mock,
+            patch.object(mod, "_load_policy", return_value=Policy(rules=[])),
+        ):
+            mod.main(["--transport", "sse", "--port", "9090", "--host", "127.0.0.1"])
 
         create_mock.assert_called_once_with(host="127.0.0.1", port=9090)
         mock_server.run.assert_called_once_with(transport="sse")
@@ -340,9 +347,11 @@ class TestMain:
 
         mock_server = MagicMock()
 
-        with patch.object(mod, "_create_server", return_value=mock_server):
-            with patch.object(mod, "_load_policy", return_value=Policy(rules=[])):
-                mod.main(["--transport", "streamable-http", "--port", "7070"])
+        with (
+            patch.object(mod, "_create_server", return_value=mock_server),
+            patch.object(mod, "_load_policy", return_value=Policy(rules=[])),
+        ):
+            mod.main(["--transport", "streamable-http", "--port", "7070"])
 
         mock_server.run.assert_called_once_with(transport="streamable-http")
 
@@ -364,9 +373,11 @@ class TestMain:
 
         mock_server = MagicMock()
 
-        with patch.object(mod, "_create_server", return_value=mock_server) as create_mock:
-            with patch.object(mod, "_load_policy", return_value=Policy(rules=[])):
-                mod.main([])
+        with (
+            patch.object(mod, "_create_server", return_value=mock_server) as create_mock,
+            patch.object(mod, "_load_policy", return_value=Policy(rules=[])),
+        ):
+            mod.main([])
 
         create_mock.assert_called_once_with(host="0.0.0.0", port=8080)
         mock_server.run.assert_called_once_with(transport="stdio")
@@ -398,9 +409,11 @@ class TestMain:
         import aegis.mcp_server as mod
 
         mock_server = MagicMock()
-        with patch.object(mod, "_create_server", return_value=mock_server):
-            with patch.object(mod, "_load_policy", return_value=Policy(rules=[])):
-                mod.main([])
+        with (
+            patch.object(mod, "_create_server", return_value=mock_server),
+            patch.object(mod, "_load_policy", return_value=Policy(rules=[])),
+        ):
+            mod.main([])
 
         captured = capsys.readouterr()
         assert "Aegis MCP server starting" in captured.err
@@ -411,9 +424,11 @@ class TestMain:
         import aegis.mcp_server as mod
 
         mock_server = MagicMock()
-        with patch.object(mod, "_create_server", return_value=mock_server):
-            with patch.object(mod, "_load_policy", return_value=Policy(rules=[])):
-                mod.main(["--transport", "sse", "--host", "localhost", "--port", "3000"])
+        with (
+            patch.object(mod, "_create_server", return_value=mock_server),
+            patch.object(mod, "_load_policy", return_value=Policy(rules=[])),
+        ):
+            mod.main(["--transport", "sse", "--host", "localhost", "--port", "3000"])
 
         captured = capsys.readouterr()
         assert "Aegis MCP server starting" in captured.err

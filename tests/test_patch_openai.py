@@ -19,7 +19,6 @@ import pytest
 
 from aegis.integrations.errors import AegisGuardrailError
 
-
 # ====================================================================== #
 # Helpers
 # ====================================================================== #
@@ -200,9 +199,7 @@ class TestExtractMessagesText:
 class TestExtractResponseText:
     def test_normal_response(self):
         mod = _get_module()
-        response = MagicMock(
-            choices=[MagicMock(message=MagicMock(content="Hello response"))]
-        )
+        response = MagicMock(choices=[MagicMock(message=MagicMock(content="Hello response"))])
         assert mod._extract_response_text(response) == "Hello response"
 
     def test_multiple_choices(self):
@@ -235,9 +232,7 @@ class TestExtractResponseText:
 
     def test_non_string_content(self):
         mod = _get_module()
-        response = MagicMock(
-            choices=[MagicMock(message=MagicMock(content=None))]
-        )
+        response = MagicMock(choices=[MagicMock(message=MagicMock(content=None))])
         assert mod._extract_response_text(response) == ""
 
     def test_exception_returns_empty(self):
@@ -530,7 +525,6 @@ class TestPatchOpenAI:
     def test_sync_wrapper_calls_original(self, fake_openai):
         mod = _get_module()
         completions_mod = fake_openai["openai.resources.chat.completions"]
-        original_create = completions_mod.Completions.create
 
         mod.patch_openai(audit=False)
 
