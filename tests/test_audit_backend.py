@@ -286,14 +286,18 @@ class TestConformingSyncBackendBehavior:
 
     def test_subscribe_accepts_callback(self):
         backend = ConformingSyncBackend()
+
         def cb(entry):
             pass
+
         backend.subscribe(cb)  # Should not raise
 
     def test_unsubscribe_accepts_callback(self):
         backend = ConformingSyncBackend()
+
         def cb(entry):
             pass
+
         backend.unsubscribe(cb)  # Should not raise
 
     def test_close(self):
@@ -327,14 +331,18 @@ class TestConformingAsyncBackendBehavior:
 
     def test_subscribe_accepts_callback(self):
         backend = ConformingAsyncBackend()
+
         def cb(entry):
             pass
+
         backend.subscribe(cb)
 
     def test_unsubscribe_accepts_callback(self):
         backend = ConformingAsyncBackend()
+
         def cb(entry):
             pass
+
         backend.unsubscribe(cb)
 
     @pytest.mark.asyncio
