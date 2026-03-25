@@ -1,18 +1,18 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.Acacian/aegis",
-  "title": "Aegis — AI Agent Governance",
-  "description": "Policy-based governance for AI agent tool calls. YAML policy, approval gates, audit logging.",
+  "title": "Aegis — AI Agent Governance Runtime",
+  "description": "Auto-instrument AI agent frameworks with operational governance. Injection blocking, PII masking, action policy, audit trail. Includes governance API server and transparent MCP proxy.",
   "repository": {
     "url": "https://github.com/Acacian/aegis",
     "source": "github"
   },
-  "version": "0.1.7",
+  "version": "0.5.0",
   "packages": [
     {
       "registryType": "pypi",
       "identifier": "agent-aegis",
-      "version": "0.1.6",
+      "version": "0.5.0",
       "transport": {
         "type": "stdio"
       },
