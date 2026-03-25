@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "agent-aegis"
-version = "0.4.1"
-description = "Auto-instrument AI frameworks with safety guardrails. One line to govern LangChain, CrewAI, OpenAI, Anthropic — injection blocking, PII masking, audit trail. Zero code changes."
+version = "0.4.2"
+description = "Auto-instrument AI agent frameworks with operational governance. One line to govern LangChain, CrewAI, OpenAI, Anthropic — injection blocking, PII masking, action policy, audit trail. Zero code changes."
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.11"
