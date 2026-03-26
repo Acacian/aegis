@@ -1518,9 +1518,7 @@ def _cmd_uninstall_impact(args: argparse.Namespace) -> None:
     ).fetchone()
     unique_agents = agent_row[0] if agent_row else 0
 
-    date_row = conn.execute(
-        "SELECT MIN(timestamp), MAX(timestamp) FROM audit_log"
-    ).fetchone()
+    date_row = conn.execute("SELECT MIN(timestamp), MAX(timestamp) FROM audit_log").fetchone()
     first_date = date_row[0] if date_row else None
 
     blocked_count = conn.execute(
@@ -1534,9 +1532,7 @@ def _cmd_uninstall_impact(args: argparse.Namespace) -> None:
         cursor = conn.execute("PRAGMA table_info(governance_tenure)")
         has_tenure = cursor.fetchall()
         if has_tenure:
-            conn.execute(
-                "SELECT first_activated FROM governance_tenure"
-            ).fetchone()
+            conn.execute("SELECT first_activated FROM governance_tenure").fetchone()
     except sqlite3.OperationalError:
         pass
 
