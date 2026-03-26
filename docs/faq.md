@@ -18,7 +18,7 @@ Yes. Run `aegis serve policy.yaml` to start the REST API server, then call it fr
 Aegis is an **application-level middleware**, not an OS-level sandbox. It only governs actions that go through `runtime.run_one()` or `runtime.execute()`. If agent code calls `os.system()` or accesses APIs directly without going through Aegis, those actions are not governed. It's the developer's responsibility to route all agent actions through Aegis. Think of it as a team rule ("always go through sudo") rather than a kernel-enforced permission.
 
 ### Is Aegis production-ready?
-Aegis is in alpha (v0.1.x). The core API is stable, but breaking changes may occur before v1.0. We follow semantic versioning.
+Aegis is in beta (v0.5.x). The core API is stable, but breaking changes may occur before v1.0. We follow semantic versioning.
 
 ## Policy
 
@@ -133,7 +133,7 @@ Minimal. Aegis keeps the policy rules in memory (typically < 1KB for 100 rules) 
 Policies are loaded from trusted YAML files, not user input. The YAML parser rejects custom tags and constructors. If you load policies from external sources, validate them with `aegis validate` first.
 
 ### Can Aegis prevent prompt injection?
-Aegis governs **actions** (API calls, database queries, file operations), not **prompts**. It can block a hallucinating agent from executing a dangerous action, but it doesn't inspect or filter LLM prompts themselves. Combine Aegis with prompt-level guardrails for defense in depth.
+Yes. Since v0.4, Aegis includes built-in runtime guardrails that inspect and filter LLM prompts and responses. Prompt injection detection (10 attack categories, 85+ patterns, multi-language), PII detection and masking (12 categories), and toxicity filtering all run automatically on every input and output when auto-instrumentation is active. Aegis also governs **actions** (API calls, database queries, file operations), so it provides defense in depth at both the prompt level and the action level.
 
 ### Is there a way to enforce Aegis in production?
 Aegis is a library — it relies on the developer routing all agent actions through `runtime.run_one()`. For stronger enforcement in containerized environments, see the [Security Model guide](guides/security-model.md) which covers Docker defense-in-depth patterns.

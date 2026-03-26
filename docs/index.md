@@ -1,6 +1,6 @@
 # Aegis
 
-**OpenTelemetry for AI safety. Auto-instrument any AI framework with guardrails -- zero code changes.**
+**OpenTelemetry for AI agent security. Auto-instrument any AI framework with guardrails -- zero code changes.**
 
 `pip install agent-aegis` and add one line. Aegis monkey-patches LangChain, CrewAI, OpenAI Agents SDK, OpenAI, and Anthropic at runtime -- every LLM call and tool invocation passes through prompt-injection detection, PII masking, toxicity filtering, and a full audit trail.
 
@@ -8,7 +8,7 @@
 
 ---
 
-## The Fastest Way to Add AI Safety
+## The Fastest Way to Add AI Agent Security
 
 ```python
 import aegis
@@ -45,7 +45,7 @@ Default guardrails (all deterministic, no LLM calls, sub-millisecond):
 
 ## Beyond Auto-Instrumentation
 
-Aegis is also a full governance framework with YAML policy engine, approval gates, audit trail, and compliance reporting:
+Aegis is also a full security framework with YAML policy engine, approval gates, audit trail, and compliance reporting:
 
 ```
 Action      Policy        Approval       Execute     Audit
@@ -68,7 +68,7 @@ delete *  --> block (critical) ------------> X --------> logged
 | **Audit trail** | SQLite + JSONL + webhook + Python `logging` -- auditor-ready evidence export |
 | **7 framework adapters** | LangChain, CrewAI, OpenAI Agents SDK, Anthropic Claude, Playwright, httpx, MCP |
 | **REST API server** | `aegis serve policy.yaml` -- govern from any language |
-| **Web dashboard** | Real-time governance dashboard with compliance reports and anomaly detection |
+| **Web dashboard** | Real-time security dashboard with compliance reports and anomaly detection |
 | **CLI tools** | `aegis init`, `validate`, `simulate`, `audit`, `serve`, `scan`, `score`, `probe` |
 | **Type-safe** | Full `mypy --strict`, `py.typed` marker |
 | **< 1ms overhead** | Policy evaluation adds minimal latency to your agent |
@@ -136,7 +136,7 @@ async with Runtime(
 
 | Aspect | Detail |
 |--------|--------|
-| **2,500+ tests** | Every adapter, handler, and edge case tested |
+| **3,265+ tests** | Every adapter, handler, and edge case tested |
 | **Type-safe** | `mypy --strict` with zero errors |
 | **< 1ms evaluation** | Policy check adds negligible overhead |
 | **Fail-safe** | Blocked actions never execute, period |
@@ -154,8 +154,8 @@ async with Runtime(
 | **0.2** | **Released** | WebSocket real-time streaming, interactive playground, policy editor, shields.io badge |
 | **0.4** | **Released** | `aegis.init()`, runtime guardrails, AGEF/AGP open governance specs |
 | **0.4.2** | **Released** | **Auto-instrumentation** -- `aegis.auto_instrument()` for LangChain, CrewAI, OpenAI Agents SDK, OpenAI, Anthropic |
-| **0.5** | Q3 2026 | Auto-instrumentation for LiteLLM, Google GenAI, Pydantic AI, LlamaIndex. Centralized policy server |
-| **1.0** | 2027 | Distributed governance, hosted SaaS, SSO/SCIM |
+| **0.5** | **Released** | Auto-instrumentation for LiteLLM, Google GenAI, Pydantic AI, LlamaIndex. Centralized policy server |
+| **1.0** | 2027 | Distributed security, hosted SaaS, SSO/SCIM |
 
 ## Links
 

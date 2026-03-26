@@ -69,6 +69,7 @@ class AuditLogger:
         self._conn.executescript(_SCHEMA)
         self._conn.commit()
         self._migrate()
+        self._init_tenure()
         self._subscribers: list[Callable[[dict[str, Any]], Any]] = []
 
     def _migrate(self) -> None:
@@ -79,6 +80,63 @@ class AuditLogger:
             if col_name not in existing:
                 self._conn.execute(f"ALTER TABLE audit_log ADD COLUMN {col_name} {col_type}")
         self._conn.commit()
+
+    def _init_tenure(self) -> None:
+        """Create governance_tenure table if missing and seed the first row."""
+        self._conn.execute(
+            """\
+            CREATE TABLE IF NOT EXISTS governance_tenure (
+                first_activated  TEXT,
+                total_actions    INTEGER DEFAULT 0,
+                threats_blocked  INTEGER DEFAULT 0
+            )"""
+        )
+        row = self._conn.execute("SELECT COUNT(*) FROM governance_tenure").fetchone()
+        if row[0] == 0:
+            self._conn.execute(
+                "INSERT INTO governance_tenure (first_activated, total_actions, threats_blocked) "
+                "VALUES (?, 0, 0)",
+                (datetime.now(UTC).isoformat(),),
+            )
+        self._conn.commit()
+
+    def _update_tenure(self, decision: PolicyDecision, result: Result | None) -> None:
+        """Increment tenure counters after each log() call."""
+        is_blocked = (
+            decision.approval.value in ("block",)
+            or (result is not None and result.status.value in ("blocked", "denied"))
+        )
+        if is_blocked:
+            self._conn.execute(
+                "UPDATE governance_tenure "
+                "SET total_actions = total_actions + 1, threats_blocked = threats_blocked + 1"
+            )
+        else:
+            self._conn.execute(
+                "UPDATE governance_tenure SET total_actions = total_actions + 1"
+            )
+
+    def get_tenure_summary(self) -> dict[str, object]:
+        """Return governance tenure statistics."""
+        row = self._conn.execute(
+            "SELECT first_activated, total_actions, threats_blocked FROM governance_tenure"
+        ).fetchone()
+        if row is None:
+            return {
+                "first_activated": None,
+                "days_active": 0,
+                "total_actions": 0,
+                "threats_blocked": 0,
+            }
+        first_activated = row[0]
+        activated_dt = datetime.fromisoformat(first_activated)
+        days_active = (datetime.now(UTC) - activated_dt).days
+        return {
+            "first_activated": first_activated,
+            "days_active": days_active,
+            "total_actions": row[1],
+            "threats_blocked": row[2],
+        }
 
     def log(
         self,
@@ -122,6 +180,7 @@ class AuditLogger:
                 decision.action.chain_depth,
             ),
         )
+        self._update_tenure(decision, result)
         self._conn.commit()
         row_id: int = cursor.lastrowid  # type: ignore[assignment]
 

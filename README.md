@@ -2,7 +2,7 @@
 <p align="center">
   <h1 align="center">Aegis</h1>
   <p align="center">
-    <strong>OpenTelemetry for AI agent governance.<br/>Auto-instrument any AI framework with operational safety — zero code changes.</strong>
+    <strong>OpenTelemetry for AI agent security.<br/>Auto-instrument any AI framework with runtime security — zero code changes.</strong>
   </p>
   <p align="center">
     <code>pip install agent-aegis</code> and add <b>one line</b>. Aegis monkey-patches LangChain, CrewAI, OpenAI Agents SDK, OpenAI, and Anthropic at runtime — every LLM call and tool invocation passes through prompt-injection detection, PII masking, and a full audit trail. Governs what agents <b>do</b> (actions, tool calls, data access), not what they <b>say</b>. No refactoring. No infra. All checks are deterministic and sub-millisecond.
@@ -152,7 +152,7 @@ aegis.auto_instrument()
 # Every LangChain/CrewAI/OpenAI/Anthropic call is now governed.
 ```
 
-**Level 2: Init with full governance stack** -- guardrails + policy engine + audit:
+**Level 2: Init with full security stack** -- guardrails + policy engine + audit:
 
 ```python
 import aegis
@@ -249,7 +249,7 @@ aegis audit
 
 ## Three Pillars
 
-Aegis is built on three pillars. Together they make a complete AI governance framework — not just a policy checker.
+Aegis is built on three pillars. Together they make a complete AI security framework — not just a policy checker.
 
 ### Pillar 1: Runtime Guardrails
 
@@ -402,12 +402,12 @@ aegis audit --format jsonl -o export.jsonl  # Export
 | **4-tier risk model** | `low` / `medium` / `high` / `critical` with per-rule overrides |
 | **Approval gates** | CLI, Slack, Discord, Telegram, email, webhook, or custom |
 | **Audit trail** | Automatic SQLite logging. Export: JSONL, webhook, or query via CLI/API |
-| **Env var activation** | `AEGIS_INSTRUMENT=1` — add governance via environment variable, no code changes at all |
+| **Env var activation** | `AEGIS_INSTRUMENT=1` — add security via environment variable, no code changes at all |
 | **7 adapters** | LangChain, CrewAI, OpenAI Agents, Anthropic, MCP, Playwright, httpx |
 | **REST API + Dashboard** | `aegis serve policy.yaml` — web UI with KPIs, audit log, compliance reports |
 
 <details>
-<summary><strong>Enterprise</strong> — production-grade governance</summary>
+<summary><strong>Enterprise</strong> — production-grade security</summary>
 
 | | |
 |---|---|
@@ -564,7 +564,7 @@ policy = Policy.from_yaml("policies/crm-agent.yaml")
 
 | Aspect | Detail |
 |--------|--------|
-| **3,200+ tests, 92% coverage** | Every adapter, handler, and edge case tested |
+| **3,265+ tests, 92% coverage** | Every adapter, handler, and edge case tested |
 | **Type-safe** | `mypy --strict` with zero errors, `py.typed` marker |
 | **Performance** | Lazy imports — `import aegis` loads 20 modules (not 67); policy evaluation < 1ms (LRU-cached); O(log n) timestamp pruning; SQLite WAL mode; `execute(parallel=True)` for concurrent actions |
 | **Fail-safe** | Blocked actions never execute; can't be bypassed without policy change |
@@ -573,7 +573,7 @@ policy = Policy.from_yaml("policies/crm-agent.yaml")
 
 ## Compliance & Audit
 
-One policy config, multiple compliance regimes. Aegis maps your governance posture to both mandatory regulations (EU) and voluntary frameworks (US):
+One policy config, multiple compliance regimes. Aegis maps your security posture to both mandatory regulations (EU) and voluntary frameworks (US):
 
 | Standard | What Aegis provides |
 |----------|-------------------|
@@ -644,7 +644,7 @@ runtime = Runtime(executor=executor, policy=Policy.from_yaml("policy.yaml"))
 </details>
 
 <details>
-<summary><b>OpenAI Agents SDK</b> -- native guardrails + decorator governance</summary>
+<summary><b>OpenAI Agents SDK</b> -- native guardrails + decorator security</summary>
 
 **Option A: Native guardrails (recommended)** — uses SDK's `@tool_input_guardrail` / `@tool_output_guardrail`
 
@@ -682,7 +682,7 @@ async def update_contact(name: str, email: str) -> str:
 </details>
 
 <details>
-<summary><b>CrewAI</b> -- global guardrail hook + per-tool governance</summary>
+<summary><b>CrewAI</b> -- global guardrail hook + per-tool security</summary>
 
 **Option A: Global guardrail (recommended)** — governs ALL tool calls across all Crews
 
@@ -784,7 +784,7 @@ curl -X PUT http://localhost:8000/api/v1/policy \
 </details>
 
 <details>
-<summary><b>MCP Server</b> -- one-click governance for Claude, Cursor, VS Code, Windsurf</summary>
+<summary><b>MCP Server</b> -- one-click security for Claude, Cursor, VS Code, Windsurf</summary>
 
 ```bash
 pip install 'agent-aegis[mcp]'
@@ -879,9 +879,9 @@ rules:
 
 Tier 1 uses fast built-in keyword matching. Tier 2 plugs in any LLM evaluator via the `SemanticEvaluator` protocol -- bring your own model for nuanced content analysis.
 
-## Governance Dashboard
+## Security Dashboard
 
-Built-in web dashboard for real-time agent governance monitoring. No separate frontend build needed.
+Built-in web dashboard for real-time agent security monitoring. No separate frontend build needed.
 
 ```bash
 # Quick start
@@ -919,7 +919,7 @@ app = create_app(
 
 ## Deep Features
 
-Advanced capabilities for production-grade agent governance.
+Advanced capabilities for production-grade agent security.
 
 ### Behavioral Anomaly Detection
 
@@ -1116,7 +1116,7 @@ assert logger.verify_chain()  # True if untampered
 
 ### Regulatory Compliance Mapper
 
-Maps your governance posture against EU AI Act, NIST AI RMF, SOC2, and ISO 42001. Identifies gaps and generates evidence.
+Maps your security posture against EU AI Act, NIST AI RMF, SOC2, and ISO 42001. Identifies gaps and generates evidence.
 
 ```bash
 aegis regulatory --framework eu-ai-act    # Gap analysis
@@ -1154,7 +1154,7 @@ Tier 2 (LLM-backed): implement the `PolicyGenerator` protocol with your preferre
 
 ### Adversarial Policy Probe
 
-Automated testing for governance gaps. Probes for glob bypasses, missing coverage, escalation patterns, and overly permissive defaults.
+Automated testing for security gaps. Probes for glob bypasses, missing coverage, escalation patterns, and overly permissive defaults.
 
 ```bash
 aegis probe policy.yaml
@@ -1213,7 +1213,7 @@ Add the badge to your repo:
 
 ## AGEF & AGP — Open Governance Standards
 
-Aegis is the reference implementation of two open specifications that bring interoperability to AI governance:
+Aegis is the reference implementation of two open specifications that bring interoperability to AI security:
 
 ### AGEF (Agent Governance Event Format)
 
@@ -1335,8 +1335,8 @@ aegis probe policy.yaml                            # Adversarial policy testing
 | **0.4** | **Released** | `aegis.init()` one-line activation, runtime guardrails (PII detection/masking, prompt injection blocking), rule pack ecosystem, zero-code integration (`patch_openai`/`patch_anthropic`, `@guard`), AGEF/AGP open governance specs, Redis/PostgreSQL audit backends |
 | **0.4.1** | **Released** | 13 performance & correctness fixes: LRU cache, O(log n) bisect pruning, SQLite WAL + indexes, parallel `execute()`, async guardrails, multi-anomaly `check_all()`, cache key correctness, lock leak fix, batch flush race fix |
 | **0.4.2** | **Released** | **Auto-instrumentation** (`aegis.auto_instrument()`) — zero-code monkey-patching for LangChain, CrewAI, OpenAI Agents SDK, OpenAI API, Anthropic API. `AEGIS_INSTRUMENT=1` env var. Default guardrails (injection/toxicity/PII/prompt leak). Per-framework `patch_`/`unpatch_` + `status()`/`reset()` |
-| **0.5** | Q3 2026 | Auto-instrumentation for LiteLLM, Google GenAI, Pydantic AI, LlamaIndex, Instructor, DSPy. Centralized policy server, rule pack registry, cross-agent audit correlation |
-| **1.0** | 2027 | Distributed governance, hosted SaaS, SSO/SCIM |
+| **0.5** | **Released** | Auto-instrumentation for LiteLLM, Google GenAI, Pydantic AI, LlamaIndex, Instructor, DSPy. Centralized policy server, rule pack registry, cross-agent audit correlation |
+| **1.0** | 2027 | Distributed security, hosted SaaS, SSO/SCIM |
 
 ## Contributing
 

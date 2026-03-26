@@ -6,8 +6,10 @@ a letter grade, and a shields.io badge URL.
 
 from __future__ import annotations
 
+import json
 import urllib.parse
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -241,4 +243,51 @@ def calculate_score(policy_path: str | Path) -> ScoreResult:
         grade=grade,
         breakdown=breakdown,
         rule_count=rule_count,
+    )
+
+
+_BASELINE_FILE = ".aegis-baseline.json"
+
+
+def save_baseline(result: ScoreResult) -> Path:
+    """Save current score as a baseline file in the current directory."""
+    data = {
+        "score": result.total,
+        "grade": result.grade,
+        "saved_at": datetime.now(UTC).isoformat(),
+        "breakdown": {
+            b.label: {"points": b.points, "max_points": b.max_points, "passed": b.passed}
+            for b in result.breakdown
+        },
+    }
+    path = Path(_BASELINE_FILE)
+    path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+    return path
+
+
+def check_regression(result: ScoreResult) -> tuple[bool, str]:
+    """Compare current score against saved baseline.
+
+    Returns:
+        A tuple of (regressed, message).  *regressed* is True when the
+        current score is lower than the baseline.
+    """
+    path = Path(_BASELINE_FILE)
+    if not path.exists():
+        return False, f"No baseline found ({_BASELINE_FILE}). Run with --save-baseline first."
+
+    baseline = json.loads(path.read_text(encoding="utf-8"))
+    baseline_score: int = baseline["score"]
+    baseline_grade: str = baseline["grade"]
+    saved_at: str = baseline.get("saved_at", "unknown")
+
+    if result.total < baseline_score:
+        return True, (
+            f"REGRESSION DETECTED: score dropped from {baseline_score} ({baseline_grade}) "
+            f"to {result.total} ({result.grade}).  Baseline saved at {saved_at}."
+        )
+
+    return False, (
+        f"OK: score {result.total} ({result.grade}) >= baseline "
+        f"{baseline_score} ({baseline_grade})."
     )
