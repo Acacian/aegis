@@ -125,6 +125,11 @@ class AegisMCPProxy:
         min_trust_level: str = "L1_SCANNED",
         pin_store: str | None = None,
         log_level: str = "INFO",
+        # Extended security modules
+        response_scanning: bool = True,
+        escalation_detection: bool = True,
+        shadow_detection: bool = True,
+        rate_limit_config: dict[str, Any] | None = None,
     ) -> None:
         self._targets = targets
         self._policy_path = policy_path or os.environ.get("AEGIS_POLICY_PATH")
@@ -133,6 +138,12 @@ class AegisMCPProxy:
         self._min_trust_str = min_trust_level
         self._pin_store = pin_store
         self._log_level = log_level
+
+        # Extended security module flags
+        self._response_scanning = response_scanning
+        self._escalation_detection = escalation_detection
+        self._shadow_detection = shadow_detection
+        self._rate_limit_config = rate_limit_config
 
         # Populated at start()
         self._connections: list[_TargetConnection] = []
@@ -163,6 +174,48 @@ class AegisMCPProxy:
         else:
             self._policy = Policy(rules=[])
 
+        # Build extended security modules (lazy-create only when enabled)
+        response_scanner = None
+        escalation_detector = None
+        shadow_detector = None
+        rate_limiter = None
+
+        if self._response_scanning:
+            try:
+                from aegis.core.mcp_response_scanner import MCPResponseScanner
+
+                response_scanner = MCPResponseScanner()
+            except ImportError:
+                logger.warning("[aegis] Response scanner module not available")
+
+        if self._escalation_detection:
+            try:
+                from aegis.core.mcp_escalation import EscalationDetector
+
+                escalation_detector = EscalationDetector()
+            except ImportError:
+                logger.warning("[aegis] Escalation detector module not available")
+
+        if self._shadow_detection:
+            try:
+                from aegis.core.mcp_shadow import ToolShadowDetector
+
+                shadow_detector = ToolShadowDetector()
+            except ImportError:
+                logger.warning("[aegis] Shadow detector module not available")
+
+        if self._rate_limit_config is not None:
+            try:
+                from aegis.core.mcp_rate_limiter import MCPRateLimiter, RateLimitConfig
+
+                cfg = RateLimitConfig(
+                    requests_per_minute=self._rate_limit_config.get("rpm", 60),
+                    burst_limit=self._rate_limit_config.get("burst", 10),
+                )
+                rate_limiter = MCPRateLimiter(default_config=cfg)
+            except ImportError:
+                logger.warning("[aegis] Rate limiter module not available")
+
         # Security gate
         from aegis.core.mcp_security import MCPSecurityGate, TrustLevel
 
@@ -171,6 +224,10 @@ class AegisMCPProxy:
         self._security_gate = MCPSecurityGate(
             pin_store_path=self._pin_store,
             min_trust_level=min_trust,
+            response_scanner=response_scanner,
+            escalation_detector=escalation_detector,
+            shadow_detector=shadow_detector,
+            rate_limiter=rate_limiter,
         )
 
         # Guardrails
@@ -269,6 +326,38 @@ class AegisMCPProxy:
                     tool.description or "",
                     schema,
                 )
+
+        # Shadow detection — register all tools from this server at once
+        if self._security_gate:
+            tool_dicts = [
+                {
+                    "name": t.name,
+                    "description": t.description or "",
+                    "inputSchema": t.inputSchema if hasattr(t, "inputSchema") else {},
+                }
+                for t in result.tools
+            ]
+            shadow_findings = self._security_gate.register_tools(
+                conn.config.name, tool_dicts
+            )
+            for sf in shadow_findings:
+                severity = getattr(sf, "severity", "medium")
+                if severity in ("critical",):
+                    logger.error(
+                        "[aegis] SHADOW %s: %s", conn.config.name, sf.detail
+                    )
+                elif severity in ("high",):
+                    logger.warning(
+                        "[aegis] SHADOW %s: %s", conn.config.name, sf.detail
+                    )
+                elif severity in ("medium",):
+                    logger.info(
+                        "[aegis] SHADOW %s: %s", conn.config.name, sf.detail
+                    )
+                else:
+                    logger.debug(
+                        "[aegis] SHADOW %s: %s", conn.config.name, sf.detail
+                    )
 
     async def _discover_resources(self, conn: _TargetConnection) -> None:
         """List resources from a connected target."""
@@ -419,6 +508,23 @@ class AegisMCPProxy:
                 )
             ]
 
+        # 1b. Rate limiting (BEFORE all other checks)
+        if self._security_gate:
+            rl_result = self._security_gate.check_rate_limit(
+                entry.tool.name,
+                entry.server_name,
+                session_id=self._session_id,
+            )
+            if rl_result is not None and not rl_result.allowed:
+                reason = f"Rate limited: {rl_result.reason}"
+                logger.warning("[aegis] BLOCKED %s: %s", name, reason)
+                return [
+                    types.TextContent(
+                        type="text",
+                        text=f"[aegis] Tool call blocked: {reason}",
+                    )
+                ]
+
         # 2. Security gate
         trust_score = self._evaluate_security(entry, arguments)
         if trust_score and self._security_gate.should_block(trust_score):
@@ -471,6 +577,26 @@ class AegisMCPProxy:
                 )
             ]
 
+        # 4b. Escalation detection (record call for pattern tracking)
+        if self._security_gate:
+            esc_findings = self._security_gate.record_call(
+                entry.tool.name,
+                entry.server_name,
+                arguments,
+                session_id=self._session_id,
+            )
+            for ef in esc_findings:
+                severity = getattr(ef.rule, "severity", "medium")
+                detail = getattr(ef, "detail", str(ef))
+                if severity in ("critical",):
+                    logger.error("[aegis] ESCALATION %s: %s", name, detail)
+                elif severity in ("high",):
+                    logger.warning("[aegis] ESCALATION %s: %s", name, detail)
+                elif severity in ("medium",):
+                    logger.info("[aegis] ESCALATION %s: %s", name, detail)
+                else:
+                    logger.debug("[aegis] ESCALATION %s: %s", name, detail)
+
         # 5. Forward to target server
         conn = self._get_connection(entry.server_name)
         if not conn:
@@ -483,6 +609,55 @@ class AegisMCPProxy:
 
         try:
             result = await conn.session.call_tool(entry.tool.name, arguments)
+
+            # 5b. Response scanning (AFTER getting response from target)
+            if self._security_gate and result.content:
+                response_text = " ".join(
+                    getattr(c, "text", "") for c in result.content if hasattr(c, "text")
+                )
+                if response_text:
+                    resp_findings = self._security_gate.check_response(
+                        entry.tool.name,
+                        response_text,
+                        server_name=entry.server_name,
+                    )
+                    has_critical = False
+                    for rf in resp_findings:
+                        severity = getattr(rf, "severity", "medium")
+                        detail = getattr(rf, "detail", str(rf))
+                        if severity in ("critical",):
+                            logger.error(
+                                "[aegis] RESPONSE %s: %s", name, detail
+                            )
+                            has_critical = True
+                        elif severity in ("high",):
+                            logger.warning(
+                                "[aegis] RESPONSE %s: %s", name, detail
+                            )
+                        elif severity in ("medium",):
+                            logger.info(
+                                "[aegis] RESPONSE %s: %s", name, detail
+                            )
+                        else:
+                            logger.debug(
+                                "[aegis] RESPONSE %s: %s", name, detail
+                            )
+
+                    if has_critical:
+                        reason = (
+                            "Response blocked: critical security findings in tool output"
+                        )
+                        self._audit_decision(
+                            entry, arguments, decision, blocked_reason=reason
+                        )
+                        logger.warning("[aegis] BLOCKED response %s: %s", name, reason)
+                        return [
+                            types.TextContent(
+                                type="text",
+                                text=f"[aegis] {reason}",
+                            )
+                        ]
+
             # Audit success
             self._audit_decision(entry, arguments, decision)
             logger.debug("[aegis] ALLOWED %s → forwarded", name)
@@ -713,6 +888,38 @@ def main(argv: list[str] | None = None) -> None:
         choices=["DEBUG", "INFO", "WARNING", "ERROR"],
         help="Log level (default: INFO).",
     )
+    parser.add_argument(
+        "--no-response-scan",
+        action="store_true",
+        default=False,
+        help="Disable response scanning.",
+    )
+    parser.add_argument(
+        "--no-escalation",
+        action="store_true",
+        default=False,
+        help="Disable escalation detection.",
+    )
+    parser.add_argument(
+        "--no-shadow",
+        action="store_true",
+        default=False,
+        help="Disable shadow detection.",
+    )
+    parser.add_argument(
+        "--rate-limit-rpm",
+        type=int,
+        default=None,
+        metavar="N",
+        help="Set requests per minute per tool (default: 60). Enables rate limiting.",
+    )
+    parser.add_argument(
+        "--rate-limit-burst",
+        type=int,
+        default=None,
+        metavar="N",
+        help="Set burst limit (default: 10). Enables rate limiting.",
+    )
     args = parser.parse_args(argv)
 
     # Configure logging to stderr
@@ -749,6 +956,14 @@ def main(argv: list[str] | None = None) -> None:
     target_names = ", ".join(t.name for t in targets)
     print(f"[aegis] Starting proxy for: {target_names}", file=sys.stderr)
 
+    # Build rate limit config dict if any rate limit flags are set
+    rate_limit_config: dict[str, Any] | None = None
+    if args.rate_limit_rpm is not None or args.rate_limit_burst is not None:
+        rate_limit_config = {
+            "rpm": args.rate_limit_rpm if args.rate_limit_rpm is not None else 60,
+            "burst": args.rate_limit_burst if args.rate_limit_burst is not None else 10,
+        }
+
     proxy = AegisMCPProxy(
         targets=targets,
         policy_path=args.policy,
@@ -757,6 +972,10 @@ def main(argv: list[str] | None = None) -> None:
         min_trust_level=args.trust_level,
         pin_store=args.pin_store,
         log_level=args.log_level,
+        response_scanning=not args.no_response_scan,
+        escalation_detection=not args.no_escalation,
+        shadow_detection=not args.no_shadow,
+        rate_limit_config=rate_limit_config,
     )
 
     import anyio
