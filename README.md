@@ -41,10 +41,6 @@
 
 ---
 
-<p align="center">
-  <img src="docs/assets/demo.svg" alt="Aegis demo — injection blocking, PII detection, MCP rug-pull detection" width="720">
-</p>
-
 ## Auto-Instrumentation
 
 Add AI safety to any project in 30 seconds. No refactoring, no wrappers, no config files.
