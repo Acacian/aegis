@@ -136,7 +136,7 @@ async with Runtime(
 
 | Aspect | Detail |
 |--------|--------|
-| **3,265+ tests** | Every adapter, handler, and edge case tested |
+| **3,860+ tests** | Every adapter, handler, and edge case tested |
 | **Type-safe** | `mypy --strict` with zero errors |
 | **< 1ms evaluation** | Policy check adds negligible overhead |
 | **Fail-safe** | Blocked actions never execute, period |
