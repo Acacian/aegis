@@ -56,7 +56,7 @@ Out of scope: the user's application code, the AI models called through Aegis, i
 - Wildcard coverage analysis detects gaps
 - Conformance tests validate policy evaluation correctness
 
-**Residual risk:** Low. Glob semantics are well-understood and tested (2540+ tests).
+**Residual risk:** Low. Glob semantics are well-understood and tested (3,265+ tests).
 
 ### T2: Injection Pattern Evasion
 

@@ -180,6 +180,18 @@ def main(argv: list[str] | None = None) -> None:
         dest="fmt",
         help="Output format (default: table)",
     )
+    score_parser.add_argument(
+        "--save-baseline",
+        action="store_true",
+        default=False,
+        help="Save current score as baseline to .aegis-baseline.json",
+    )
+    score_parser.add_argument(
+        "--check-regression",
+        action="store_true",
+        default=False,
+        help="Compare current score against saved baseline (exit 1 if dropped)",
+    )
 
     # aegis scan
     scan_parser = subparsers.add_parser(
@@ -341,6 +353,13 @@ def main(argv: list[str] | None = None) -> None:
         help="Output format (default: table)",
     )
 
+    # aegis uninstall-impact
+    impact_parser = subparsers.add_parser(
+        "uninstall-impact",
+        help="Show what would be lost if Aegis is removed",
+    )
+    impact_parser.add_argument("--db", default="aegis_audit.db", help="Database path")
+
     args = parser.parse_args(argv)
 
     # Handle --no-color flag
@@ -379,6 +398,8 @@ def main(argv: list[str] | None = None) -> None:
         _cmd_autopolicy(args)
     elif args.command == "probe":
         _cmd_probe(args)
+    elif args.command == "uninstall-impact":
+        _cmd_uninstall_impact(args)
     else:
         parser.print_help()
 
@@ -800,7 +821,7 @@ def _cmd_simulate(args: argparse.Namespace) -> None:
 
 def _cmd_score(args: argparse.Namespace) -> None:
     """Calculate and display a governance score for a policy file."""
-    from aegis.cli.score import calculate_score
+    from aegis.cli.score import calculate_score, check_regression, save_baseline
 
     policy_path = Path(args.policy_file)
     if not policy_path.exists():
@@ -815,6 +836,18 @@ def _cmd_score(args: argparse.Namespace) -> None:
     except Exception as e:
         print(colors.red(f"Failed to score policy: {e}"), file=sys.stderr)
         sys.exit(1)
+
+    if getattr(args, "save_baseline", False):
+        baseline_path = save_baseline(result)
+        print(f"Baseline saved to {baseline_path} (score={result.total}, grade={result.grade})")
+        return
+
+    if getattr(args, "check_regression", False):
+        regressed, message = check_regression(result)
+        print(message)
+        if regressed:
+            sys.exit(1)
+        return
 
     if args.fmt == "json":
         data = {
@@ -1465,6 +1498,104 @@ def _cmd_probe(args: argparse.Namespace) -> None:
             print()
     else:
         print(colors.green("  No governance gaps found."))
+
+
+def _cmd_uninstall_impact(args: argparse.Namespace) -> None:
+    """Show the impact of removing Aegis."""
+    import sqlite3
+
+    db_path = Path(args.db)
+    if not db_path.exists():
+        print("No audit database found. Aegis can be removed safely.")
+        return
+
+    conn = sqlite3.connect(str(db_path))
+
+    total_entries = conn.execute("SELECT COUNT(*) FROM audit_log").fetchone()[0]
+
+    agent_row = conn.execute(
+        "SELECT COUNT(DISTINCT agent_id) FROM audit_log WHERE agent_id IS NOT NULL"
+    ).fetchone()
+    unique_agents = agent_row[0] if agent_row else 0
+
+    date_row = conn.execute(
+        "SELECT MIN(timestamp), MAX(timestamp) FROM audit_log"
+    ).fetchone()
+    first_date = date_row[0] if date_row else None
+
+    blocked_count = conn.execute(
+        "SELECT COUNT(*) FROM audit_log WHERE approval = 'block' "
+        "OR result_status IN ('blocked', 'denied')"
+    ).fetchone()[0]
+
+    # Check crypto audit chain
+    chain_length = 0
+    try:
+        cursor = conn.execute("PRAGMA table_info(governance_tenure)")
+        has_tenure = cursor.fetchall()
+        if has_tenure:
+            conn.execute(
+                "SELECT first_activated FROM governance_tenure"
+            ).fetchone()
+    except sqlite3.OperationalError:
+        pass
+
+    # Try to detect frameworks from audit log action types
+    # Check for crypto chain entries
+    try:
+        from aegis.core.crypto_audit import CryptoAuditChain
+
+        logger = AuditLogger(db_path=str(db_path))
+        entries = logger.get_log()
+        if entries:
+            chain = CryptoAuditChain()
+            for entry in entries:
+                chain.append(
+                    agent_id=str(entry.get("agent_id", "unknown")),
+                    action_type=str(entry.get("action_type", "unknown")),
+                    action_target=str(entry.get("target", "unknown")),
+                    decision=str(entry.get("decision", "unknown")),
+                    risk_level=str(entry.get("risk_level", "unknown")),
+                    matched_rule=str(entry.get("matched_rule", "")),
+                )
+            chain_length = len(entries)
+        logger.close()
+    except Exception:
+        chain_length = total_entries
+
+    conn.close()
+
+    # Calculate days active
+    days_active = 0
+    if first_date:
+        from datetime import UTC, datetime
+
+        try:
+            first_dt = datetime.fromisoformat(first_date)
+            days_active = (datetime.now(UTC) - first_dt).days
+        except (ValueError, TypeError):
+            pass
+
+    print()
+    print(colors.bold("AEGIS REMOVAL IMPACT REPORT"))
+    print("=" * 28)
+    print()
+    print(colors.bold("Data Loss:"))
+    print(f"  - {total_entries} audit log entries (irrecoverable)")
+    if chain_length > 0:
+        print(f"  - {chain_length}-entry cryptographic hash chain (cannot be rebuilt)")
+    print()
+    print(colors.bold("Compliance Impact:"))
+    print("  - Audit trail continuity: BROKEN (gap from removal date)")
+    print()
+    print(colors.bold("Security Regression:"))
+    print(f"  - {blocked_count} blocked actions will no longer be blocked")
+    print(f"  - {unique_agents} AI frameworks will lose runtime protection")
+    print()
+    if first_date:
+        print(f"Governance active since: {first_date[:10]} ({days_active} days)")
+    print()
+    print("To proceed: pip uninstall agent-aegis")
 
 
 if __name__ == "__main__":

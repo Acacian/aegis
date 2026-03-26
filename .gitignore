@@ -1,13 +1,12 @@
-# Claude Code — synced via private repo (aegis-context)
+# Claude Code
 .claude/
 CLAUDE.md
 
-.github/SOCIAL.md
-.github/DEVTO_ARTICLE.md
+# IDE / tooling
 .idea/
 .mypy_cache/
-.mcpregistry_*
 .ruff_cache/
+.mcpregistry_*
 
 # Python
 __pycache__/
@@ -31,15 +30,11 @@ htmlcov/
 # Docs build
 site/
 
-# Aegis runtime artifacts
-aegis_audit.db
+# Runtime artifacts
+*.db
 
-# Draft / temp / scratch files (prevent accidental commits)
+# Temp / scratch
 _*.md
 *.draft.*
 *.tmp.*
 *.bak
-scratch_*
-notes_*
-draft_*
-temp_*
