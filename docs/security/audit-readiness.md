@@ -57,7 +57,7 @@ This document prepares Aegis for an independent security audit. It describes wha
 
 ## Test Suite
 
-- **3,265+ tests** across all modules
+- **3,860+ tests** across all modules
 - **92% code coverage**
 - Run: `python -m pytest tests/ -x -v`
 - Coverage: `python -m pytest --cov=src/aegis --cov-report=html tests/`

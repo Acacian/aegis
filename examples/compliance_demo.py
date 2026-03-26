@@ -76,17 +76,13 @@ async def main() -> None:
     print("=" * 60)
 
     # Create policy from YAML string
-    with tempfile.NamedTemporaryFile(
-        mode="w", suffix=".yaml", delete=False
-    ) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
         f.write(POLICY_YAML)
         policy_path = f.name
 
     policy = Policy.from_yaml(policy_path)
 
-    async with Runtime(
-        executor=ComplianceExecutor(), policy=policy
-    ) as runtime:
+    async with Runtime(executor=ComplianceExecutor(), policy=policy) as runtime:
         # Simulate a series of agent actions
         actions = [
             Action("view", "patient_records", description="View patient list"),
@@ -116,12 +112,11 @@ async def main() -> None:
             plan = runtime.plan([action])
             results = await runtime.execute(plan)
             r = results[0]
+            decision = plan.decisions[0] if plan.decisions else None
             status = "ALLOWED" if r.status == ResultStatus.SUCCESS else "BLOCKED"
             print(f"  [{status}] {action.type}:{action.target}")
-            print(f"    Risk: {r.decision.risk_level if r.decision else 'N/A'}")
-            print(
-                f"    Rule: {r.decision.matched_rule if r.decision else 'N/A'}"
-            )
+            print(f"    Risk: {decision.risk_level if decision else 'N/A'}")
+            print(f"    Rule: {decision.matched_rule if decision else 'N/A'}")
             print()
 
         # Export audit trail
@@ -139,10 +134,7 @@ async def main() -> None:
             print(f"  {json.dumps(record)}")
 
         print(f"\n  Total entries: {len(audit_entries)}")
-        print(
-            "  Export format: JSONL (one JSON object per line, "
-            "immutable after write)"
-        )
+        print("  Export format: JSONL (one JSON object per line, immutable after write)")
         print(
             "\n  Compliance evidence: every action is traced with "
             "risk level, decision, and matched rule."

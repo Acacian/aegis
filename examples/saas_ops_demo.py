@@ -91,17 +91,13 @@ async def main() -> None:
     print("  AI Support Agent with Governance")
     print("=" * 60)
 
-    with tempfile.NamedTemporaryFile(
-        mode="w", suffix=".yaml", delete=False
-    ) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
         f.write(POLICY)
         policy_path = f.name
 
     policy = Policy.from_yaml(policy_path)
 
-    async with Runtime(
-        executor=SaaSExecutor(), policy=policy
-    ) as runtime:
+    async with Runtime(executor=SaaSExecutor(), policy=policy) as runtime:
         # Simulate a support agent workflow
         ticket_flow = [
             (
@@ -172,24 +168,16 @@ async def main() -> None:
             plan = runtime.plan([action])
             results = await runtime.execute(plan)
             r = results[0]
-            status = (
-                "ALLOWED"
-                if r.status == ResultStatus.SUCCESS
-                else "BLOCKED"
-            )
-            risk = r.decision.risk_level if r.decision else "N/A"
-            rule = r.decision.matched_rule if r.decision else "N/A"
+            decision = plan.decisions[0] if plan.decisions else None
+            status = "ALLOWED" if r.status == ResultStatus.SUCCESS else "BLOCKED"
+            risk = decision.risk_level if decision else "N/A"
+            rule = decision.matched_rule if decision else "N/A"
             print(f"    Result: {status} | Risk: {risk} | Rule: {rule}")
             print()
 
         print("---")
-        print(
-            f"  Audit trail: {len(runtime.audit_log.entries)} entries logged"
-        )
-        print(
-            "  The support agent handled the ticket safely — dangerous"
-            " actions were blocked."
-        )
+        print(f"  Audit trail: {len(runtime.audit_log.entries)} entries logged")
+        print("  The support agent handled the ticket safely — dangerous actions were blocked.")
 
     Path(policy_path).unlink(missing_ok=True)
 
