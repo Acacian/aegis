@@ -265,7 +265,7 @@ def test_score_table_output(tmp_path: Path, capsys: pytest.CaptureFixture[str]) 
     assert "Aegis Governance Score:" in out
     assert "Badge:" in out
     assert "Markdown:" in out
-    assert "img.shields.io" in out
+    assert "https://img.shields.io/badge/" in out
 
 
 def test_score_json_output(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
