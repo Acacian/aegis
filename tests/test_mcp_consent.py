@@ -330,17 +330,13 @@ class TestRiskLevelThreshold:
 class TestCheckConsent:
     def test_auto_approve_when_no_rule(self):
         manager = MCPConsentManager()
-        decision = _run(
-            manager.check_consent("read_file", "filesystem", {"path": "/tmp/x"})
-        )
+        decision = _run(manager.check_consent("read_file", "filesystem", {"path": "/tmp/x"}))
         assert decision.approved is True
         assert decision.decided_by == "system"
 
     def test_auto_deny_default_handler(self):
         manager = MCPConsentManager()
-        decision = _run(
-            manager.check_consent("delete_table", "postgres", {"table": "users"})
-        )
+        decision = _run(manager.check_consent("delete_table", "postgres", {"table": "users"}))
         assert decision.approved is False
         assert decision.decided_by == "auto_deny"
 
@@ -357,9 +353,7 @@ class TestCheckConsent:
 
         handler = CallbackConsentHandler(approve_all)
         manager = MCPConsentManager(handler=handler)
-        decision = _run(
-            manager.check_consent("delete_user", "db", {"user_id": 42})
-        )
+        decision = _run(manager.check_consent("delete_user", "db", {"user_id": 42}))
         assert decision.approved is True
         assert decision.decided_by == "admin"
 
@@ -445,9 +439,7 @@ class TestTimeout:
         )
         handler = CallbackConsentHandler(slow_handler)
         manager = MCPConsentManager(rules=[rule], handler=handler)
-        decision = _run(
-            manager.check_consent("delete_x", "srv", {}, risk_level="critical")
-        )
+        decision = _run(manager.check_consent("delete_x", "srv", {}, risk_level="critical"))
         assert decision.approved is False
         assert decision.decided_by == "timeout"
 
@@ -476,9 +468,7 @@ class TestTimeout:
         )
         handler = CallbackConsentHandler(slow_handler)
         manager = MCPConsentManager(rules=[rule], handler=handler)
-        decision = _run(
-            manager.check_consent("delete_x", "srv", {}, risk_level="critical")
-        )
+        decision = _run(manager.check_consent("delete_x", "srv", {}, risk_level="critical"))
         assert decision.approved is True
         assert decision.decided_by == "timeout"
 
@@ -499,9 +489,7 @@ class TestTimeout:
         )
         handler = CallbackConsentHandler(crashing_handler)
         manager = MCPConsentManager(rules=[rule], handler=handler)
-        decision = _run(
-            manager.check_consent("delete_y", "srv", {}, risk_level="high")
-        )
+        decision = _run(manager.check_consent("delete_y", "srv", {}, risk_level="high"))
         assert decision.approved is False
         assert decision.decided_by == "timeout"
 
@@ -559,9 +547,7 @@ class TestHistory:
             loop = asyncio.new_event_loop()
             try:
                 for _ in range(50):
-                    loop.run_until_complete(
-                        manager.check_consent("read_file", "fs", {})
-                    )
+                    loop.run_until_complete(manager.check_consent("read_file", "fs", {}))
             except Exception as exc:
                 errors.append(exc)
             finally:

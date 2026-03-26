@@ -337,27 +337,17 @@ class AegisMCPProxy:
                 }
                 for t in result.tools
             ]
-            shadow_findings = self._security_gate.register_tools(
-                conn.config.name, tool_dicts
-            )
+            shadow_findings = self._security_gate.register_tools(conn.config.name, tool_dicts)
             for sf in shadow_findings:
                 severity = getattr(sf, "severity", "medium")
                 if severity in ("critical",):
-                    logger.error(
-                        "[aegis] SHADOW %s: %s", conn.config.name, sf.detail
-                    )
+                    logger.error("[aegis] SHADOW %s: %s", conn.config.name, sf.detail)
                 elif severity in ("high",):
-                    logger.warning(
-                        "[aegis] SHADOW %s: %s", conn.config.name, sf.detail
-                    )
+                    logger.warning("[aegis] SHADOW %s: %s", conn.config.name, sf.detail)
                 elif severity in ("medium",):
-                    logger.info(
-                        "[aegis] SHADOW %s: %s", conn.config.name, sf.detail
-                    )
+                    logger.info("[aegis] SHADOW %s: %s", conn.config.name, sf.detail)
                 else:
-                    logger.debug(
-                        "[aegis] SHADOW %s: %s", conn.config.name, sf.detail
-                    )
+                    logger.debug("[aegis] SHADOW %s: %s", conn.config.name, sf.detail)
 
     async def _discover_resources(self, conn: _TargetConnection) -> None:
         """List resources from a connected target."""
@@ -626,30 +616,18 @@ class AegisMCPProxy:
                         severity = getattr(rf, "severity", "medium")
                         detail = getattr(rf, "detail", str(rf))
                         if severity in ("critical",):
-                            logger.error(
-                                "[aegis] RESPONSE %s: %s", name, detail
-                            )
+                            logger.error("[aegis] RESPONSE %s: %s", name, detail)
                             has_critical = True
                         elif severity in ("high",):
-                            logger.warning(
-                                "[aegis] RESPONSE %s: %s", name, detail
-                            )
+                            logger.warning("[aegis] RESPONSE %s: %s", name, detail)
                         elif severity in ("medium",):
-                            logger.info(
-                                "[aegis] RESPONSE %s: %s", name, detail
-                            )
+                            logger.info("[aegis] RESPONSE %s: %s", name, detail)
                         else:
-                            logger.debug(
-                                "[aegis] RESPONSE %s: %s", name, detail
-                            )
+                            logger.debug("[aegis] RESPONSE %s: %s", name, detail)
 
                     if has_critical:
-                        reason = (
-                            "Response blocked: critical security findings in tool output"
-                        )
-                        self._audit_decision(
-                            entry, arguments, decision, blocked_reason=reason
-                        )
+                        reason = "Response blocked: critical security findings in tool output"
+                        self._audit_decision(entry, arguments, decision, blocked_reason=reason)
                         logger.warning("[aegis] BLOCKED response %s: %s", name, reason)
                         return [
                             types.TextContent(

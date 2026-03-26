@@ -177,7 +177,8 @@ class TestStdioDangerousCommands:
         )
         # Should not have a HIGH finding from dangerous commands
         dangerous = [
-            f for f in profile.findings
+            f
+            for f in profile.findings
             if f.severity == Severity.HIGH and "Dangerous command" in f.detail
         ]
         assert len(dangerous) == 0
@@ -374,7 +375,8 @@ class TestNetworkHttpWithoutTLS:
             server_name="test",
         )
         insecure = [
-            f for f in profile.findings
+            f
+            for f in profile.findings
             if f.category == "insecure_transport" and f.severity == Severity.CRITICAL
         ]
         assert len(insecure) == 0
@@ -506,7 +508,8 @@ class TestNetworkTimeout:
             server_name="test",
         )
         short = [
-            f for f in profile.findings
+            f
+            for f in profile.findings
             if f.category == "timeout" and f.severity == Severity.MEDIUM
         ]
         assert len(short) == 0
@@ -518,8 +521,7 @@ class TestNetworkTimeout:
             server_name="test",
         )
         long = [
-            f for f in profile.findings
-            if f.category == "timeout" and f.severity == Severity.LOW
+            f for f in profile.findings if f.category == "timeout" and f.severity == Severity.LOW
         ]
         assert len(long) == 0
 
@@ -613,7 +615,8 @@ class TestNetworkDefaultPort:
             server_name="test",
         )
         port_findings = [
-            f for f in profile.findings
+            f
+            for f in profile.findings
             if f.category == "insecure_transport" and "port" in f.detail.lower()
         ]
         assert len(port_findings) == 0

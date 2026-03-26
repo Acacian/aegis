@@ -457,9 +457,7 @@ class TestMCPSecurityGateCheckResponse:
 
         scanner = MCPResponseScanner()
         gate = MCPSecurityGate(response_scanner=scanner)
-        findings = gate.check_response(
-            "tool", "Your key is AKIAIOSFODNN7EXAMPLE"
-        )
+        findings = gate.check_response("tool", "Your key is AKIAIOSFODNN7EXAMPLE")
         assert any(f.category == "credential" for f in findings)
 
     def test_non_string_non_dict_returns_empty(self):
@@ -539,9 +537,12 @@ class TestMCPSecurityGateRegisterTools:
 
         detector = ToolShadowDetector()
         gate = MCPSecurityGate(shadow_detector=detector)
-        findings = gate.register_tools("server_a", [
-            {"name": "read_file", "description": "Read a file"},
-        ])
+        findings = gate.register_tools(
+            "server_a",
+            [
+                {"name": "read_file", "description": "Read a file"},
+            ],
+        )
         # First registration — no conflicts
         assert findings == []
 
@@ -552,14 +553,20 @@ class TestMCPSecurityGateRegisterTools:
         gate = MCPSecurityGate(shadow_detector=detector)
 
         # Register on server_a
-        gate.register_tools("server_a", [
-            {"name": "read_file", "description": "Read a file"},
-        ])
+        gate.register_tools(
+            "server_a",
+            [
+                {"name": "read_file", "description": "Read a file"},
+            ],
+        )
 
         # Same tool name on server_b -> exact_duplicate
-        findings = gate.register_tools("server_b", [
-            {"name": "read_file", "description": "Read a file from disk"},
-        ])
+        findings = gate.register_tools(
+            "server_b",
+            [
+                {"name": "read_file", "description": "Read a file from disk"},
+            ],
+        )
         assert len(findings) >= 1
         assert any(f.category == "exact_duplicate" for f in findings)
 
@@ -569,16 +576,22 @@ class TestMCPSecurityGateRegisterTools:
         detector = ToolShadowDetector()
         gate = MCPSecurityGate(shadow_detector=detector)
 
-        gate.register_tools("server_a", [
-            {"name": "read_file", "description": "Read a file"},
-            {"name": "write_file", "description": "Write a file"},
-        ])
+        gate.register_tools(
+            "server_a",
+            [
+                {"name": "read_file", "description": "Read a file"},
+                {"name": "write_file", "description": "Write a file"},
+            ],
+        )
 
         # Register overlapping tools on server_b
-        findings = gate.register_tools("server_b", [
-            {"name": "read_file", "description": "Read data"},
-            {"name": "delete_file", "description": "Delete a file"},
-        ])
+        findings = gate.register_tools(
+            "server_b",
+            [
+                {"name": "read_file", "description": "Read data"},
+                {"name": "delete_file", "description": "Delete a file"},
+            ],
+        )
         # read_file should be flagged as duplicate
         assert any(f.category == "exact_duplicate" for f in findings)
 
@@ -608,15 +621,11 @@ class TestMCPSecurityGateRecordCall:
         gate = MCPSecurityGate(escalation_detector=detector)
 
         # Source: read a file from filesystem
-        f1 = gate.record_call(
-            "filesystem.read_file", "filesystem", {"path": "/etc/passwd"}
-        )
+        f1 = gate.record_call("filesystem.read_file", "filesystem", {"path": "/etc/passwd"})
         assert f1 == []
 
         # Sink: send it via slack (cross-server)
-        f2 = gate.record_call(
-            "slack.send_message", "slack", {"text": "exfil data"}
-        )
+        f2 = gate.record_call("slack.send_message", "slack", {"text": "exfil data"})
         assert len(f2) >= 1
         assert any(ef.rule.name == "data_exfil_filesystem" for ef in f2)
 

@@ -308,9 +308,7 @@ class TestGetState:
         state = dashboard.get_state()
         assert state.stats.response_findings_count == 1
 
-    def test_resolved_alerts_excluded_from_active(
-        self, dashboard: MCPAuditDashboard
-    ) -> None:
+    def test_resolved_alerts_excluded_from_active(self, dashboard: MCPAuditDashboard) -> None:
         aid = dashboard.record_alert("high", "escalation", "x")
         dashboard.resolve_alert(aid)
         state = dashboard.get_state()
@@ -658,9 +656,7 @@ class TestEdgeCases:
         state = dashboard.get_state()
         assert state.stats.block_rate_percent == 100.0
 
-    def test_render_text_consistent_width(
-        self, populated_dashboard: MCPAuditDashboard
-    ) -> None:
+    def test_render_text_consistent_width(self, populated_dashboard: MCPAuditDashboard) -> None:
         output = populated_dashboard.render_text(width=80)
         lines = output.split("\n")
         for line in lines:
