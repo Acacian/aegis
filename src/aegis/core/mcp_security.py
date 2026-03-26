@@ -775,9 +775,7 @@ class MCPSecurityGate:
         if isinstance(response, str):
             return list(self._response_scanner.scan(response, tool_name=tool_name))
         elif isinstance(response, (dict, list)):
-            return list(self._response_scanner.scan_structured(
-                response, tool_name=tool_name
-            ))
+            return list(self._response_scanner.scan_structured(response, tool_name=tool_name))
         return []
 
     def check_rate_limit(
@@ -804,9 +802,7 @@ class MCPSecurityGate:
         if self._rate_limiter is None:
             return None
 
-        return self._rate_limiter.check(
-            tool_name, server_name, session_id=session_id
-        )
+        return self._rate_limiter.check(tool_name, server_name, session_id=session_id)
 
     def register_tools(
         self,
@@ -858,6 +854,8 @@ class MCPSecurityGate:
         if self._escalation_detector is None:
             return []
 
-        return list(self._escalation_detector.record_and_check(
-            tool_name, server_name, arguments, session_id=session_id
-        ))
+        return list(
+            self._escalation_detector.record_and_check(
+                tool_name, server_name, arguments, session_id=session_id
+            )
+        )

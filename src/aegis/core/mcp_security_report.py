@@ -184,15 +184,11 @@ class MCPSecurityReport:
 
         for server in self.servers:
             lines.append("")
-            lines.append(
-                f"\u2500\u2500\u2500 Server: {server.server_name} \u2500\u2500\u2500"
-            )
+            lines.append(f"\u2500\u2500\u2500 Server: {server.server_name} \u2500\u2500\u2500")
             # Determine representative trust level
             trust_label = _server_trust_label(server)
             lines.append(
-                f"Tools: {server.tool_count} | "
-                f"Risk: {server.overall_risk} | "
-                f"Trust: {trust_label}"
+                f"Tools: {server.tool_count} | Risk: {server.overall_risk} | Trust: {trust_label}"
             )
             for finding in server.findings:
                 lines.append(
@@ -208,9 +204,7 @@ class MCPSecurityReport:
 
         if self.recommendations:
             lines.append("")
-            lines.append(
-                "\u2500\u2500\u2500 Recommendations \u2500\u2500\u2500"
-            )
+            lines.append("\u2500\u2500\u2500 Recommendations \u2500\u2500\u2500")
             for rec in self.recommendations:
                 lines.append(f"  - {rec}")
 
@@ -226,9 +220,8 @@ class MCPSecurityReport:
 # Grading
 # ---------------------------------------------------------------------------
 
-def _compute_grade(
-    critical: int, high: int, medium: int
-) -> str:
+
+def _compute_grade(critical: int, high: int, medium: int) -> str:
     """Compute letter grade from severity counts.
 
     Grading rules:
@@ -253,6 +246,7 @@ def _compute_grade(
 # Risk assessment
 # ---------------------------------------------------------------------------
 
+
 def _compute_server_risk(findings: list[MCPFinding], vuln_findings: list[VulnFinding]) -> str:
     """Determine overall risk for a server based on findings."""
     severities: list[str] = [f.severity for f in findings]
@@ -273,6 +267,7 @@ def _compute_server_risk(findings: list[MCPFinding], vuln_findings: list[VulnFin
 # ---------------------------------------------------------------------------
 # Recommendations engine
 # ---------------------------------------------------------------------------
+
 
 def _generate_recommendations(
     servers: list[ServerSecurityProfile],
@@ -314,10 +309,7 @@ def _generate_recommendations(
                 key = f"vuln-critical:{vf.entry.cve_id}"
                 if key not in seen:
                     seen.add(key)
-                    recs.append(
-                        f"IMMEDIATE: {vf.entry.recommendation} "
-                        f"({vf.entry.cve_id})"
-                    )
+                    recs.append(f"IMMEDIATE: {vf.entry.recommendation} ({vf.entry.cve_id})")
 
     # High findings
     for server in servers:
@@ -336,10 +328,7 @@ def _generate_recommendations(
                 key = f"vuln-high:{vf.entry.cve_id}"
                 if key not in seen:
                     seen.add(key)
-                    recs.append(
-                        f"HIGH PRIORITY: {vf.entry.recommendation} "
-                        f"({vf.entry.cve_id})"
-                    )
+                    recs.append(f"HIGH PRIORITY: {vf.entry.recommendation} ({vf.entry.cve_id})")
 
     # Shadow conflict recommendations
     for server in servers:
@@ -348,32 +337,23 @@ def _generate_recommendations(
             if key not in seen:
                 seen.add(key)
                 recs.append(
-                    f"RESOLVE: Remove duplicate tool registrations "
-                    f"on '{server.server_name}'"
+                    f"RESOLVE: Remove duplicate tool registrations on '{server.server_name}'"
                 )
 
     # Low trust score recommendations
     for server in servers:
         low_trust_tools = [
-            name
-            for name, ts in server.trust_scores.items()
-            if ts.level <= TrustLevel.L0_UNTRUSTED
+            name for name, ts in server.trust_scores.items() if ts.level <= TrustLevel.L0_UNTRUSTED
         ]
         if low_trust_tools:
             key = f"trust:{server.server_name}"
             if key not in seen:
                 seen.add(key)
-                recs.append(
-                    f"IMPROVE: Review and audit tools from '{server.server_name}'"
-                )
+                recs.append(f"IMPROVE: Review and audit tools from '{server.server_name}'")
 
     # Unpinned tool recommendations
     for server in servers:
-        unpinned = [
-            name
-            for name, ts in server.trust_scores.items()
-            if not ts.pinned
-        ]
+        unpinned = [name for name, ts in server.trust_scores.items() if not ts.pinned]
         if unpinned and server.tool_count > 0:
             key = f"pin:{server.server_name}"
             if key not in seen:
@@ -389,6 +369,7 @@ def _generate_recommendations(
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _iso_now() -> str:
     """Return current UTC time in ISO 8601 format."""
@@ -487,9 +468,7 @@ def _render_html(report: MCPSecurityReport) -> str:
             findings_table = (
                 '<table class="findings">'
                 "<tr><th>Severity</th><th>Tool</th>"
-                "<th>Pattern/CVE</th><th>Detail</th></tr>"
-                + "\n".join(finding_rows)
-                + "</table>"
+                "<th>Pattern/CVE</th><th>Detail</th></tr>" + "\n".join(finding_rows) + "</table>"
             )
         else:
             findings_table = '<p class="clean">No findings. Clean.</p>'
@@ -498,7 +477,7 @@ def _render_html(report: MCPSecurityReport) -> str:
         server_sections.append(
             f'<div class="server">'
             f"<h2>{e(server.server_name)}</h2>"
-            f'<p>Tools: {server.tool_count} | Risk: '
+            f"<p>Tools: {server.tool_count} | Risk: "
             f'<span style="color:{risk_color};font-weight:bold">'
             f"{e(server.overall_risk)}</span></p>"
             f"{findings_table}"
@@ -563,19 +542,19 @@ table.findings th{{background:#f1f5f9;font-weight:600}}
     <div class="label">Findings</div>
   </div>
   <div class="card">
-    <div class="value" style="color:{_SEVERITY_COLORS['critical']}">{report.critical_count}</div>
+    <div class="value" style="color:{_SEVERITY_COLORS["critical"]}">{report.critical_count}</div>
     <div class="label">Critical</div>
   </div>
   <div class="card">
-    <div class="value" style="color:{_SEVERITY_COLORS['high']}">{report.high_count}</div>
+    <div class="value" style="color:{_SEVERITY_COLORS["high"]}">{report.high_count}</div>
     <div class="label">High</div>
   </div>
   <div class="card">
-    <div class="value" style="color:{_SEVERITY_COLORS['medium']}">{report.medium_count}</div>
+    <div class="value" style="color:{_SEVERITY_COLORS["medium"]}">{report.medium_count}</div>
     <div class="label">Medium</div>
   </div>
   <div class="card">
-    <div class="value" style="color:{_SEVERITY_COLORS['low']}">{report.low_count}</div>
+    <div class="value" style="color:{_SEVERITY_COLORS["low"]}">{report.low_count}</div>
     <div class="label">Low</div>
   </div>
 </div>
@@ -693,7 +672,9 @@ class MCPSecurityReportGenerator:
         for server_name, tools in servers.items():
             version = versions.get(server_name, "unknown")
             profile = self.analyze_server(
-                server_name, tools, version=version,
+                server_name,
+                tools,
+                version=version,
             )
             profiles.append(profile)
 
@@ -706,7 +687,8 @@ class MCPSecurityReportGenerator:
             all_vuln_findings.extend(p.vuln_findings)
 
         critical, high, medium, low = _severity_counts(
-            all_findings, all_vuln_findings,
+            all_findings,
+            all_vuln_findings,
         )
         total_findings = critical + high + medium + low
 
@@ -720,9 +702,7 @@ class MCPSecurityReportGenerator:
                     name=t.get("name", ""),
                     description=t.get("description", ""),
                     schema=t.get("inputSchema"),
-                    trust_level=_trust_level_name(
-                        profiles[i].trust_scores.get(t.get("name", ""))
-                    ),
+                    trust_level=_trust_level_name(profiles[i].trust_scores.get(t.get("name", ""))),
                 )
                 for i, (sn, _) in enumerate(servers.items())
                 if sn == server_name

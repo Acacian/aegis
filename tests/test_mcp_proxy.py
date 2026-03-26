@@ -639,6 +639,7 @@ class TestShadowDetectionOnDiscovery:
         assert proxy._security_gate._shadow_detector is None
 
 
+@_skip_no_mcp
 class TestRateLimiting:
     """Rate limiting blocks excessive calls."""
 
@@ -678,9 +679,9 @@ class TestRateLimiting:
         # First 3 calls should succeed
         for _ in range(3):
             result = await proxy.handle_call_tool("read_file", {"path": "/data.csv"})
-            assert not any(
-                "Rate limited" in getattr(r, "text", "") for r in result
-            ), "Call should be allowed"
+            assert not any("Rate limited" in getattr(r, "text", "") for r in result), (
+                "Call should be allowed"
+            )
 
         # 4th call should be rate limited
         result = await proxy.handle_call_tool("read_file", {"path": "/data.csv"})
@@ -800,6 +801,7 @@ class TestResponseScanning:
         assert proxy._security_gate._response_scanner is None
 
 
+@_skip_no_mcp
 class TestEscalationDetection:
     """Escalation detection records calls and detects patterns."""
 
@@ -867,7 +869,6 @@ class TestCLINewFlags:
     def test_no_response_scan_flag(self) -> None:
         """--no-response-scan flag is parsed correctly."""
         import argparse
-
 
         # We can't fully run main() without a real server, but we can test
         # that the argument parser handles the new flags.
