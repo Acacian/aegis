@@ -16,7 +16,6 @@ from aegis.core.mcp_security_report import (
 )
 from aegis.core.mcp_vuln_db import MCPVulnDB, VulnEntry, VulnFinding
 
-
 # ---------------------------------------------------------------------------
 # Grading system
 # ---------------------------------------------------------------------------

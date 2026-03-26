@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
+from typing import Any
 from urllib.parse import urlparse
 
 from aegis.core.mcp_security import Severity
@@ -212,7 +213,7 @@ class MCPTransportValidator:
 
     def validate_claude_desktop_config(
         self,
-        config: dict,
+        config: dict[str, Any],
     ) -> list[TransportProfile]:
         """Validate a Claude Desktop mcpServers configuration block.
 

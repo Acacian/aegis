@@ -50,7 +50,7 @@ class TestStdioConfig:
         cfg = StdioConfig(command="node")
         try:
             cfg.command = "python"  # type: ignore[misc]
-            assert False, "Should raise"
+            raise AssertionError("Should raise")
         except AttributeError:
             pass
 
@@ -289,7 +289,10 @@ class TestStdioUnpinnedPackages:
 
     def test_pinned_npx_package(self):
         profile = self.v.validate_stdio(
-            StdioConfig(command="npx", args=["-y", "@modelcontextprotocol/server-filesystem@1.2.3"]),
+            StdioConfig(
+                command="npx",
+                args=["-y", "@modelcontextprotocol/server-filesystem@1.2.3"],
+            ),
             server_name="test",
         )
         unpinned = [f for f in profile.findings if "Unpinned" in f.detail]
@@ -502,7 +505,10 @@ class TestNetworkTimeout:
             NetworkConfig(url="https://api.example.com/mcp", timeout_seconds=5.0),
             server_name="test",
         )
-        short = [f for f in profile.findings if f.category == "timeout" and f.severity == Severity.MEDIUM]
+        short = [
+            f for f in profile.findings
+            if f.category == "timeout" and f.severity == Severity.MEDIUM
+        ]
         assert len(short) == 0
 
     def test_boundary_120s(self):
@@ -511,7 +517,10 @@ class TestNetworkTimeout:
             NetworkConfig(url="https://api.example.com/mcp", timeout_seconds=120.0),
             server_name="test",
         )
-        long = [f for f in profile.findings if f.category == "timeout" and f.severity == Severity.LOW]
+        long = [
+            f for f in profile.findings
+            if f.category == "timeout" and f.severity == Severity.LOW
+        ]
         assert len(long) == 0
 
 
@@ -836,7 +845,7 @@ class TestRiskScore:
             NetworkConfig(url="http://api.example.com/mcp", verify_ssl=False),
             server_name="test",
         )
-        # HTTP without TLS (CRITICAL=30) + verify_ssl (CRITICAL=30) + missing auth (HIGH=20) + cors (MEDIUM=10) = capped at 100
+        # HTTP no TLS (30) + verify_ssl (30) + no auth (20) + cors (10) = capped
         assert profile.risk_score > 0
         assert _has_severity(profile, Severity.CRITICAL)
 
@@ -924,7 +933,7 @@ class TestDataclassFrozen:
         )
         try:
             f.category = "changed"  # type: ignore[misc]
-            assert False, "Should raise"
+            raise AssertionError("Should raise")
         except AttributeError:
             pass
 
@@ -938,7 +947,7 @@ class TestDataclassFrozen:
         )
         try:
             p.is_secure = False  # type: ignore[misc]
-            assert False, "Should raise"
+            raise AssertionError("Should raise")
         except AttributeError:
             pass
 

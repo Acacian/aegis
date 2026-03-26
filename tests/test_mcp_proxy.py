@@ -868,7 +868,6 @@ class TestCLINewFlags:
         """--no-response-scan flag is parsed correctly."""
         import argparse
 
-        from aegis.mcp_proxy import main
 
         # We can't fully run main() without a real server, but we can test
         # that the argument parser handles the new flags.

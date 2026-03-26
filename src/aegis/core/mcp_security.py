@@ -751,10 +751,10 @@ class MCPSecurityGate:
     def check_response(
         self,
         tool_name: str,
-        response: str | dict,
+        response: str | dict[str, Any],
         *,
         server_name: str = "",
-    ) -> list:
+    ) -> list[Any]:
         """Scan a tool response for security issues.
 
         Delegates to the configured :class:`MCPResponseScanner`. If no
@@ -773,11 +773,11 @@ class MCPSecurityGate:
             return []
 
         if isinstance(response, str):
-            return self._response_scanner.scan(response, tool_name=tool_name)
+            return list(self._response_scanner.scan(response, tool_name=tool_name))
         elif isinstance(response, (dict, list)):
-            return self._response_scanner.scan_structured(
+            return list(self._response_scanner.scan_structured(
                 response, tool_name=tool_name
-            )
+            ))
         return []
 
     def check_rate_limit(
@@ -786,7 +786,7 @@ class MCPSecurityGate:
         server_name: str,
         *,
         session_id: str = "default",
-    ):
+    ) -> Any:
         """Check rate limit for a tool call.
 
         Delegates to the configured :class:`MCPRateLimiter`. If no
@@ -811,8 +811,8 @@ class MCPSecurityGate:
     def register_tools(
         self,
         server_name: str,
-        tools: list[dict],
-    ) -> list:
+        tools: list[dict[str, Any]],
+    ) -> list[Any]:
         """Register tools from a server and check for shadows.
 
         Delegates to the configured :class:`ToolShadowDetector`. If no
@@ -830,16 +830,16 @@ class MCPSecurityGate:
         if self._shadow_detector is None:
             return []
 
-        return self._shadow_detector.register_tools(server_name, tools)
+        return list(self._shadow_detector.register_tools(server_name, tools))
 
     def record_call(
         self,
         tool_name: str,
         server_name: str,
-        arguments: dict,
+        arguments: dict[str, Any],
         *,
         session_id: str = "default",
-    ) -> list:
+    ) -> list[Any]:
         """Record a tool call and check for escalation patterns.
 
         Delegates to the configured :class:`EscalationDetector`. If no
@@ -858,6 +858,6 @@ class MCPSecurityGate:
         if self._escalation_detector is None:
             return []
 
-        return self._escalation_detector.record_and_check(
+        return list(self._escalation_detector.record_and_check(
             tool_name, server_name, arguments, session_id=session_id
-        )
+        ))

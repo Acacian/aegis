@@ -380,39 +380,6 @@ if TYPE_CHECKING:
     from aegis.core.mcp_sbom import (
         SBOMGenerator as SBOMGenerator,
     )
-    from aegis.core.mcp_shadow import (
-        ShadowFinding as ShadowFinding,
-    )
-    from aegis.core.mcp_shadow import (
-        ToolRegistration as ToolRegistration,
-    )
-    from aegis.core.mcp_shadow import (
-        ToolShadowDetector as ToolShadowDetector,
-    )
-    from aegis.core.mcp_transport import (
-        MCPTransportValidator as MCPTransportValidator,
-    )
-    from aegis.core.mcp_transport import (
-        NetworkConfig as NetworkConfig,
-    )
-    from aegis.core.mcp_transport import (
-        StdioConfig as StdioConfig,
-    )
-    from aegis.core.mcp_transport import (
-        TransportFinding as TransportFinding,
-    )
-    from aegis.core.mcp_transport import (
-        TransportProfile as TransportProfile,
-    )
-    from aegis.core.mcp_security_report import (
-        MCPSecurityReport as MCPSecurityReport,
-    )
-    from aegis.core.mcp_security_report import (
-        MCPSecurityReportGenerator as MCPSecurityReportGenerator,
-    )
-    from aegis.core.mcp_security_report import (
-        ServerSecurityProfile as ServerSecurityProfile,
-    )
     from aegis.core.mcp_security import (
         ArgumentSanitizer as ArgumentSanitizer,
     )
@@ -436,6 +403,39 @@ if TYPE_CHECKING:
     )
     from aegis.core.mcp_security import (
         TrustScore as TrustScore,
+    )
+    from aegis.core.mcp_security_report import (
+        MCPSecurityReport as MCPSecurityReport,
+    )
+    from aegis.core.mcp_security_report import (
+        MCPSecurityReportGenerator as MCPSecurityReportGenerator,
+    )
+    from aegis.core.mcp_security_report import (
+        ServerSecurityProfile as ServerSecurityProfile,
+    )
+    from aegis.core.mcp_shadow import (
+        ShadowFinding as ShadowFinding,
+    )
+    from aegis.core.mcp_shadow import (
+        ToolRegistration as ToolRegistration,
+    )
+    from aegis.core.mcp_shadow import (
+        ToolShadowDetector as ToolShadowDetector,
+    )
+    from aegis.core.mcp_transport import (
+        MCPTransportValidator as MCPTransportValidator,
+    )
+    from aegis.core.mcp_transport import (
+        NetworkConfig as NetworkConfig,
+    )
+    from aegis.core.mcp_transport import (
+        StdioConfig as StdioConfig,
+    )
+    from aegis.core.mcp_transport import (
+        TransportFinding as TransportFinding,
+    )
+    from aegis.core.mcp_transport import (
+        TransportProfile as TransportProfile,
     )
     from aegis.core.mcp_vuln_db import (
         MCPVulnDB as MCPVulnDB,
