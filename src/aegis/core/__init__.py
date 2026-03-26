@@ -67,11 +67,52 @@ _LAZY_IMPORTS: dict[str, str] = {
     "LeakageDetector": "aegis.core.leakage_detector",
     "LeakageFinding": "aegis.core.leakage_detector",
     "LeakageReport": "aegis.core.leakage_detector",
+    # mcp_audit_dashboard
+    "Alert": "aegis.core.mcp_audit_dashboard",
+    "CallRecord": "aegis.core.mcp_audit_dashboard",
+    "DashboardState": "aegis.core.mcp_audit_dashboard",
+    "DashboardStats": "aegis.core.mcp_audit_dashboard",
+    "MCPAuditDashboard": "aegis.core.mcp_audit_dashboard",
+    "ServerStatus": "aegis.core.mcp_audit_dashboard",
+    # mcp_consent
+    "AutoDenyHandler": "aegis.core.mcp_consent",
+    "CallbackConsentHandler": "aegis.core.mcp_consent",
+    "ConsentDecision": "aegis.core.mcp_consent",
+    "ConsentRequest": "aegis.core.mcp_consent",
+    "ConsentRule": "aegis.core.mcp_consent",
+    "MCPConsentManager": "aegis.core.mcp_consent",
+    # mcp_escalation
+    "EscalationDetector": "aegis.core.mcp_escalation",
+    "EscalationFinding": "aegis.core.mcp_escalation",
+    "EscalationRule": "aegis.core.mcp_escalation",
+    "ToolCallRecord": "aegis.core.mcp_escalation",
+    # mcp_rate_limiter
+    "MCPRateLimiter": "aegis.core.mcp_rate_limiter",
+    "MCPRateLimitResult": "aegis.core.mcp_rate_limiter",
+    "RateLimitConfig": "aegis.core.mcp_rate_limiter",
+    # mcp_response_scanner
+    "MCPResponseScanner": "aegis.core.mcp_response_scanner",
+    "ResponseFinding": "aegis.core.mcp_response_scanner",
+    "ResponsePattern": "aegis.core.mcp_response_scanner",
     # mcp_sbom
     "MCPServerInfo": "aegis.core.mcp_sbom",
     "MCPToolInfo": "aegis.core.mcp_sbom",
     "SBOM": "aegis.core.mcp_sbom",
     "SBOMGenerator": "aegis.core.mcp_sbom",
+    # mcp_shadow
+    "ShadowFinding": "aegis.core.mcp_shadow",
+    "ToolRegistration": "aegis.core.mcp_shadow",
+    "ToolShadowDetector": "aegis.core.mcp_shadow",
+    # mcp_transport
+    "MCPTransportValidator": "aegis.core.mcp_transport",
+    "NetworkConfig": "aegis.core.mcp_transport",
+    "StdioConfig": "aegis.core.mcp_transport",
+    "TransportFinding": "aegis.core.mcp_transport",
+    "TransportProfile": "aegis.core.mcp_transport",
+    # mcp_security_report
+    "MCPSecurityReport": "aegis.core.mcp_security_report",
+    "MCPSecurityReportGenerator": "aegis.core.mcp_security_report",
+    "ServerSecurityProfile": "aegis.core.mcp_security_report",
     # mcp_security
     "ArgumentSanitizer": "aegis.core.mcp_security",
     "MCPFinding": "aegis.core.mcp_security",
@@ -261,6 +302,72 @@ if TYPE_CHECKING:
     from aegis.core.leakage_detector import (
         LeakageReport as LeakageReport,
     )
+    from aegis.core.mcp_audit_dashboard import (
+        Alert as Alert,
+    )
+    from aegis.core.mcp_audit_dashboard import (
+        CallRecord as CallRecord,
+    )
+    from aegis.core.mcp_audit_dashboard import (
+        DashboardState as DashboardState,
+    )
+    from aegis.core.mcp_audit_dashboard import (
+        DashboardStats as DashboardStats,
+    )
+    from aegis.core.mcp_audit_dashboard import (
+        MCPAuditDashboard as MCPAuditDashboard,
+    )
+    from aegis.core.mcp_audit_dashboard import (
+        ServerStatus as ServerStatus,
+    )
+    from aegis.core.mcp_consent import (
+        AutoDenyHandler as AutoDenyHandler,
+    )
+    from aegis.core.mcp_consent import (
+        CallbackConsentHandler as CallbackConsentHandler,
+    )
+    from aegis.core.mcp_consent import (
+        ConsentDecision as ConsentDecision,
+    )
+    from aegis.core.mcp_consent import (
+        ConsentRequest as ConsentRequest,
+    )
+    from aegis.core.mcp_consent import (
+        ConsentRule as ConsentRule,
+    )
+    from aegis.core.mcp_consent import (
+        MCPConsentManager as MCPConsentManager,
+    )
+    from aegis.core.mcp_escalation import (
+        EscalationDetector as EscalationDetector,
+    )
+    from aegis.core.mcp_escalation import (
+        EscalationFinding as EscalationFinding,
+    )
+    from aegis.core.mcp_escalation import (
+        EscalationRule as EscalationRule,
+    )
+    from aegis.core.mcp_escalation import (
+        ToolCallRecord as ToolCallRecord,
+    )
+    from aegis.core.mcp_rate_limiter import (
+        MCPRateLimiter as MCPRateLimiter,
+    )
+    from aegis.core.mcp_rate_limiter import (
+        MCPRateLimitResult as MCPRateLimitResult,
+    )
+    from aegis.core.mcp_rate_limiter import (
+        RateLimitConfig as RateLimitConfig,
+    )
+    from aegis.core.mcp_response_scanner import (
+        MCPResponseScanner as MCPResponseScanner,
+    )
+    from aegis.core.mcp_response_scanner import (
+        ResponseFinding as ResponseFinding,
+    )
+    from aegis.core.mcp_response_scanner import (
+        ResponsePattern as ResponsePattern,
+    )
     from aegis.core.mcp_sbom import (
         SBOM as SBOM,
     )
@@ -272,6 +379,39 @@ if TYPE_CHECKING:
     )
     from aegis.core.mcp_sbom import (
         SBOMGenerator as SBOMGenerator,
+    )
+    from aegis.core.mcp_shadow import (
+        ShadowFinding as ShadowFinding,
+    )
+    from aegis.core.mcp_shadow import (
+        ToolRegistration as ToolRegistration,
+    )
+    from aegis.core.mcp_shadow import (
+        ToolShadowDetector as ToolShadowDetector,
+    )
+    from aegis.core.mcp_transport import (
+        MCPTransportValidator as MCPTransportValidator,
+    )
+    from aegis.core.mcp_transport import (
+        NetworkConfig as NetworkConfig,
+    )
+    from aegis.core.mcp_transport import (
+        StdioConfig as StdioConfig,
+    )
+    from aegis.core.mcp_transport import (
+        TransportFinding as TransportFinding,
+    )
+    from aegis.core.mcp_transport import (
+        TransportProfile as TransportProfile,
+    )
+    from aegis.core.mcp_security_report import (
+        MCPSecurityReport as MCPSecurityReport,
+    )
+    from aegis.core.mcp_security_report import (
+        MCPSecurityReportGenerator as MCPSecurityReportGenerator,
+    )
+    from aegis.core.mcp_security_report import (
+        ServerSecurityProfile as ServerSecurityProfile,
     )
     from aegis.core.mcp_security import (
         ArgumentSanitizer as ArgumentSanitizer,

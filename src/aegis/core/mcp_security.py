@@ -9,6 +9,9 @@ Components:
     - RugPullDetector: Hash-based change detection for tool definitions
     - ArgumentSanitizer: Path traversal + command injection detection
     - ToolTrustScorer: L0-L4 trust levels with scoring
+    - MCPSecurityGate: Unified gate integrating all components plus
+      optional response scanning, escalation detection, shadow detection,
+      and rate limiting
 
 Example::
 
@@ -640,8 +643,10 @@ class ToolTrustScorer:
 class MCPSecurityGate:
     """Unified security gate for MCP tool calls.
 
-    Combines all four security components into a single check that
-    runs before the policy engine.
+    Combines all four core security components into a single check that
+    runs before the policy engine. Optionally integrates response
+    scanning, escalation detection, shadow detection, and rate limiting
+    when the corresponding module instances are provided.
 
     Example::
 
@@ -665,6 +670,11 @@ class MCPSecurityGate:
         exempt_tools: set[str] | None = None,
         min_trust_level: TrustLevel = TrustLevel.L1_SCANNED,
         allow_shell_tools: set[str] | None = None,
+        # Optional extended modules
+        response_scanner: Any | None = None,
+        escalation_detector: Any | None = None,
+        shadow_detector: Any | None = None,
+        rate_limiter: Any | None = None,
     ) -> None:
         self._scanner = ToolDescriptionScanner(exempt_tools=exempt_tools)
         self._rug_pull = RugPullDetector(pin_store_path=pin_store_path)
@@ -673,6 +683,12 @@ class MCPSecurityGate:
         self._scorer = ToolTrustScorer()
         self._min_trust = min_trust_level
         self._shell_tools = allow_shell_tools or set()
+
+        # Extended modules (all optional — lazy-validated on use)
+        self._response_scanner = response_scanner
+        self._escalation_detector = escalation_detector
+        self._shadow_detector = shadow_detector
+        self._rate_limiter = rate_limiter
 
     def evaluate(
         self,
@@ -727,3 +743,121 @@ class MCPSecurityGate:
     def should_block(self, score: TrustScore) -> bool:
         """Check if a tool should be blocked based on trust level."""
         return score.level < self._min_trust
+
+    # ------------------------------------------------------------------
+    # Extended module methods (all safe to call even without the module)
+    # ------------------------------------------------------------------
+
+    def check_response(
+        self,
+        tool_name: str,
+        response: str | dict,
+        *,
+        server_name: str = "",
+    ) -> list:
+        """Scan a tool response for security issues.
+
+        Delegates to the configured :class:`MCPResponseScanner`. If no
+        scanner is configured, returns an empty list.
+
+        Args:
+            tool_name: The tool that produced the response.
+            response: Raw text or structured (dict/list) response.
+            server_name: MCP server name (for context in findings).
+
+        Returns:
+            A list of :class:`~aegis.core.mcp_response_scanner.ResponseFinding`
+            instances (empty when clean or when no scanner is configured).
+        """
+        if self._response_scanner is None:
+            return []
+
+        if isinstance(response, str):
+            return self._response_scanner.scan(response, tool_name=tool_name)
+        elif isinstance(response, (dict, list)):
+            return self._response_scanner.scan_structured(
+                response, tool_name=tool_name
+            )
+        return []
+
+    def check_rate_limit(
+        self,
+        tool_name: str,
+        server_name: str,
+        *,
+        session_id: str = "default",
+    ):
+        """Check rate limit for a tool call.
+
+        Delegates to the configured :class:`MCPRateLimiter`. If no
+        rate limiter is configured, returns *None*.
+
+        Args:
+            tool_name: The tool being called.
+            server_name: MCP server that owns the tool.
+            session_id: Logical session identifier.
+
+        Returns:
+            A :class:`~aegis.core.mcp_rate_limiter.MCPRateLimitResult`
+            if a rate limiter is configured, otherwise *None*.
+        """
+        if self._rate_limiter is None:
+            return None
+
+        return self._rate_limiter.check(
+            tool_name, server_name, session_id=session_id
+        )
+
+    def register_tools(
+        self,
+        server_name: str,
+        tools: list[dict],
+    ) -> list:
+        """Register tools from a server and check for shadows.
+
+        Delegates to the configured :class:`ToolShadowDetector`. If no
+        shadow detector is configured, returns an empty list.
+
+        Args:
+            server_name: Name of the MCP server providing the tools.
+            tools: List of tool dicts, each with ``name``, ``description``,
+                and optionally ``inputSchema``.
+
+        Returns:
+            A list of :class:`~aegis.core.mcp_shadow.ShadowFinding`
+            instances (empty when clean or when no detector is configured).
+        """
+        if self._shadow_detector is None:
+            return []
+
+        return self._shadow_detector.register_tools(server_name, tools)
+
+    def record_call(
+        self,
+        tool_name: str,
+        server_name: str,
+        arguments: dict,
+        *,
+        session_id: str = "default",
+    ) -> list:
+        """Record a tool call and check for escalation patterns.
+
+        Delegates to the configured :class:`EscalationDetector`. If no
+        escalation detector is configured, returns an empty list.
+
+        Args:
+            tool_name: Fully-qualified tool name.
+            server_name: MCP server that owns the tool.
+            arguments: Arguments passed to the tool call.
+            session_id: Logical session identifier.
+
+        Returns:
+            A list of :class:`~aegis.core.mcp_escalation.EscalationFinding`
+            instances (empty when clean or when no detector is configured).
+        """
+        if self._escalation_detector is None:
+            return []
+
+        return self._escalation_detector.record_and_check(
+            tool_name, server_name, arguments, session_id=session_id
+        )
