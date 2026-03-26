@@ -102,9 +102,8 @@ class AuditLogger:
 
     def _update_tenure(self, decision: PolicyDecision, result: Result | None) -> None:
         """Increment tenure counters after each log() call."""
-        is_blocked = (
-            decision.approval.value in ("block",)
-            or (result is not None and result.status.value in ("blocked", "denied"))
+        is_blocked = decision.approval.value in ("block",) or (
+            result is not None and result.status.value in ("blocked", "denied")
         )
         if is_blocked:
             self._conn.execute(
@@ -112,9 +111,7 @@ class AuditLogger:
                 "SET total_actions = total_actions + 1, threats_blocked = threats_blocked + 1"
             )
         else:
-            self._conn.execute(
-                "UPDATE governance_tenure SET total_actions = total_actions + 1"
-            )
+            self._conn.execute("UPDATE governance_tenure SET total_actions = total_actions + 1")
 
     def get_tenure_summary(self) -> dict[str, object]:
         """Return governance tenure statistics."""
