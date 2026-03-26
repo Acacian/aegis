@@ -4,21 +4,15 @@ from __future__ import annotations
 
 import json
 import threading
-import time
 
 import pytest
 
 from aegis.core.mcp_audit_dashboard import (
-    Alert,
-    CallRecord,
     DashboardState,
-    DashboardStats,
     MCPAuditDashboard,
-    ServerStatus,
     _format_timestamp,
     _format_uptime,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
