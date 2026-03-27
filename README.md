@@ -156,7 +156,7 @@ aegis.auto_instrument()
 
 ```python
 import aegis
-aegis.init()
+aegis.auto_instrument()
 # Discovers aegis.yaml, activates policy engine, audit logging, cost tracking.
 ```
 
@@ -286,7 +286,7 @@ Specifications that make Aegis a platform, not just a tool.
 
 ### The Pipeline
 
-Every action goes through 5 stages. This happens automatically — you just call `aegis.init()` or `runtime.run_one(action)`:
+Every action goes through 5 stages. This happens automatically — you just call `aegis.auto_instrument()` or `runtime.run_one(action)`:
 
 ```
 1. EVALUATE    Your action is matched against policy rules (glob patterns).
@@ -397,7 +397,7 @@ aegis audit --format jsonl -o export.jsonl  # Export
 |---|---|
 | **Auto-instrumentation** | `aegis.auto_instrument()` — monkey-patches LangChain, CrewAI, OpenAI Agents SDK, OpenAI, Anthropic. Zero code changes to your app. |
 | **Runtime guardrails** | PII detection (12 categories) + prompt injection blocking (10 categories, 85+ patterns, multi-language) + toxicity + prompt leak |
-| **One-line activation** | `aegis.init()` — guardrails, policy engine, audit, cost tracking, all active |
+| **One-line activation** | `aegis.auto_instrument()` — guardrails, policy engine, audit, cost tracking, all active |
 | **YAML policies** | Glob matching, first-match-wins, smart conditions (`time_after`, `param_gt`, `weekdays`, regex, etc.) |
 | **4-tier risk model** | `low` / `medium` / `high` / `critical` with per-rule overrides |
 | **Approval gates** | CLI, Slack, Discord, Telegram, email, webhook, or custom |
