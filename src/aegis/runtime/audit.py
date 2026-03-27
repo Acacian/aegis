@@ -38,6 +38,7 @@ def _sanitize_params(data: Any) -> Any:
         return [_sanitize_params(item) for item in data]
     return data
 
+
 _SCHEMA = """\
 CREATE TABLE IF NOT EXISTS audit_log (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -218,9 +219,7 @@ class AuditLogger:
                 try:
                     cb(entry)
                 except Exception:
-                    logger.warning(
-                        "Audit subscriber %s failed", cb, exc_info=True
-                    )
+                    logger.warning("Audit subscriber %s failed", cb, exc_info=True)
 
         return row_id
 

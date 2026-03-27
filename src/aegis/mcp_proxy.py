@@ -194,8 +194,7 @@ class AegisMCPProxy:
                 response_scanner = MCPResponseScanner()
             except ImportError:
                 logger.error(
-                    "[aegis] Response scanner module not available"
-                    " but explicitly enabled"
+                    "[aegis] Response scanner module not available but explicitly enabled"
                 )
                 raise RuntimeError(
                     "Response scanning was enabled but aegis.core.mcp_response_scanner "
@@ -210,8 +209,7 @@ class AegisMCPProxy:
                 escalation_detector = EscalationDetector()
             except ImportError:
                 logger.error(
-                    "[aegis] Escalation detector module not available"
-                    " but explicitly enabled"
+                    "[aegis] Escalation detector module not available but explicitly enabled"
                 )
                 raise RuntimeError(
                     "Escalation detection was enabled but aegis.core.mcp_escalation "
@@ -225,10 +223,7 @@ class AegisMCPProxy:
 
                 shadow_detector = ToolShadowDetector()
             except ImportError:
-                logger.error(
-                    "[aegis] Shadow detector module not available"
-                    " but explicitly enabled"
-                )
+                logger.error("[aegis] Shadow detector module not available but explicitly enabled")
                 raise RuntimeError(
                     "Shadow detection was enabled but aegis.core.mcp_shadow "
                     "could not be imported. Install the required dependency or disable "
@@ -245,10 +240,7 @@ class AegisMCPProxy:
                 )
                 rate_limiter = MCPRateLimiter(default_config=cfg)
             except ImportError:
-                logger.error(
-                    "[aegis] Rate limiter module not available"
-                    " but explicitly enabled"
-                )
+                logger.error("[aegis] Rate limiter module not available but explicitly enabled")
                 raise RuntimeError(
                     "Rate limiting was enabled but aegis.core.mcp_rate_limiter "
                     "could not be imported. Install the required dependency or disable "
