@@ -827,11 +827,14 @@ function bindEvents() {
     });
   });
 
-  // Use case cards → select preset + scroll to editor
+  // Use case cards → switch to Policy Evaluator tab, select preset, scroll to editor
   document.querySelectorAll(".usecase-card").forEach((card) => {
     card.addEventListener("click", () => {
       const preset = card.dataset.preset;
       if (!POLICY_PRESETS[preset]) return;
+      // Switch to Policy Evaluator tab
+      const policyTabBtn = document.querySelector('.demo-tab-btn[data-tab="policy"]');
+      if (policyTabBtn) policyTabBtn.click();
       // Update preset button state
       document.querySelector(".preset-btn.active")?.classList.remove("active");
       const matchBtn = document.querySelector(`.preset-btn[data-preset="${preset}"]`);
