@@ -300,9 +300,7 @@ def create_app(
                     return await call_next(request)
                 key = request.headers.get("X-API-Key", "")
                 if key != _api_key:
-                    return JSONResponse(
-                        {"error": "Invalid or missing API key"}, status_code=401
-                    )
+                    return JSONResponse({"error": "Invalid or missing API key"}, status_code=401)
                 return await call_next(request)
 
         middleware.append(Middleware(ApiKeyAuthMiddleware))
