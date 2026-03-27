@@ -674,7 +674,7 @@ function _debounce(fn, ms) {
 
 
 /* ============================================================
-   DEMO 7: aegis.init() — UNIFIED QUICK START
+   DEMO 7: aegis.auto_instrument() — UNIFIED QUICK START
    ============================================================ */
 
 const INIT_SAMPLES = {

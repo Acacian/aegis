@@ -3954,7 +3954,7 @@ footer code {
   color: var(--text-primary);
 }
 
-/* aegis.init() tab styles */
+/* aegis.auto_instrument() tab styles */
 .init-terminal {
   background: #0d1117;
   border: 1px solid var(--border);
