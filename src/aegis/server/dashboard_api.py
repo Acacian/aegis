@@ -99,7 +99,7 @@ def get_dashboard_routes(
     from starlette.routing import Route
 
     async def overview(request: Request) -> Any:
-        entries = audit_logger.get_log()
+        entries = audit_logger.get_log(limit=10000)
         total = len(entries)
 
         risk_counts: dict[str, int] = {}
@@ -134,13 +134,18 @@ def get_dashboard_routes(
 
     async def timeline(request: Request) -> Any:
         period = request.query_params.get("period", "24h")
-        entries = audit_logger.get_log()
+        entries = audit_logger.get_log(limit=10000)
         buckets = _bucket_by_time(entries, period)
         return _json_response({"period": period, "buckets": buckets})
 
     async def audit_recent(request: Request) -> Any:
-        limit = int(request.query_params.get("limit", "50"))
-        offset = int(request.query_params.get("offset", "0"))
+        try:
+            limit = min(int(request.query_params.get("limit", "50")), 1000)
+            offset = max(int(request.query_params.get("offset", "0")), 0)
+        except (ValueError, TypeError):
+            return _json_response({"error": "limit and offset must be integers"}, 400)
+        if limit < 1:
+            limit = 1
 
         filters: dict[str, Any] = {}
         if risk := request.query_params.get("risk_level"):

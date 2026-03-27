@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import threading
 import uuid
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
@@ -85,6 +86,7 @@ class Runtime:
     ) -> None:
         self.executor = executor
         self.policy = policy
+        self._policy_lock = threading.Lock()
         self.approval = approval_handler or CLIApprovalHandler()
         self.audit = audit_logger or AuditLogger()
         self.session_id = session_id or uuid.uuid4().hex[:12]
@@ -110,13 +112,15 @@ class Runtime:
         sequence violations and cumulative risk after individual action
         evaluation.
         """
+        with self._policy_lock:
+            policy = self.policy
         resolved = [self._with_agent_context(a) for a in actions]
-        decisions = [self.policy.evaluate(action) for action in resolved]
+        decisions = [policy.evaluate(action) for action in resolved]
         exec_plan = ExecutionPlan(decisions=decisions)
 
         # Plan-level evaluation
-        if self.policy.plan_rules is not None:
-            exec_plan.plan_violations = self.policy.plan_rules.evaluate(exec_plan)
+        if policy.plan_rules is not None:
+            exec_plan.plan_violations = policy.plan_rules.evaluate(exec_plan)
 
         return exec_plan
 
@@ -139,7 +143,8 @@ class Runtime:
 
             runtime.update_policy(Policy.from_yaml("new_policy.yaml"))
         """
-        self.policy = policy
+        with self._policy_lock:
+            self.policy = policy
 
     async def execute(
         self,
@@ -159,6 +164,9 @@ class Runtime:
                 ``asyncio.gather``.  Actions are assumed independent;
                 fail-fast is disabled in parallel mode.
         """
+        with self._policy_lock:
+            _policy = self.policy  # noqa: F841 — snapshot for consistent reads
+
         # Block entire plan if plan-level violations require it
         blocking_violations = [v for v in plan.plan_violations if v.approval == Approval.BLOCK]
         if blocking_violations:

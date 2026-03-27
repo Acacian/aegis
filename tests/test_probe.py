@@ -683,13 +683,13 @@ class TestEmptyPolicy:
         assert isinstance(report, ProbeReport)
         assert report.total_probes > 0
 
-    def test_empty_policy_has_findings(self) -> None:
-        """Empty policy should flag many gaps since nothing is explicitly governed."""
+    def test_empty_policy_has_no_gaps(self) -> None:
+        """Empty policy with fail-closed default blocks everything, so no gaps."""
         probe = PolicyProbe()
         policy = Policy()
         report = probe.run(policy)
-        # Default approval is "approve", so destructive actions hit default
-        assert report.gap_count > 0
+        # Default approval is "block", so nothing slips through
+        assert report.gap_count == 0
 
     def test_empty_policy_generate_probes(self) -> None:
         probe = PolicyProbe()

@@ -98,8 +98,25 @@ def _run_guardrails(
     try:
         results: list[Any] = guardrail_engine.check(content)
     except Exception:
-        logger.debug("Guardrail check failed for %s content", direction, exc_info=True)
-        return []
+        logger.warning(
+            "Guardrail check failed for %s content — failing closed",
+            direction,
+            exc_info=True,
+        )
+        from aegis.guardrails.base import GuardrailResult
+
+        return [
+            GuardrailResult(
+                passed=False,
+                guardrail_name="aegis.error",
+                action="blocked",
+                details=(
+                    f"Guardrail check raised an exception for {direction}"
+                    " content; blocking as fail-safe"
+                ),
+                severity="critical",
+            )
+        ]
 
     blocked = [r for r in results if getattr(r, "action", None) == "blocked"]
     if blocked:

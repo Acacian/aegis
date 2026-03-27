@@ -328,13 +328,13 @@ class AegisGuardrailProvider:
             if self._fail_closed:
                 return GuardrailDecision(
                     allow=False,
-                    reason=f"Evaluation error (fail-closed): {exc}",
-                    metadata={"error": str(exc), "fail_closed": True},
+                    reason="Evaluation error (fail-closed): internal governance error",
+                    metadata={"error": "Internal governance error", "fail_closed": True},
                 )
             return GuardrailDecision(
                 allow=True,
-                reason=f"Evaluation error (fail-open): {exc}",
-                metadata={"error": str(exc), "fail_closed": False},
+                reason="Evaluation error (fail-open): internal governance error",
+                metadata={"error": "Internal governance error", "fail_closed": False},
             )
 
     def _log_decision(self, action: Action, decision: PolicyDecision) -> None:

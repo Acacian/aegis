@@ -50,9 +50,9 @@ def _get_default_policy() -> Policy:
             logger.debug("Loaded default policy from %s", path)
             return _default_policy
 
-    # No policy file found — permissive default
+    # No policy file found — fail closed with blocking defaults
     _default_policy = Policy()
-    logger.debug("No policy file found; using permissive defaults")
+    logger.warning("No policy file found; using fail-closed defaults (all actions blocked)")
     return _default_policy
 
 
@@ -236,6 +236,18 @@ def guard(
                     reason = f"Blocked by policy rule: {decision.matched_rule}"
                     return _handle_block(on_block, reason, decision)
 
+                if decision.approval == Approval.APPROVE:
+                    logger.warning(
+                        "Action requires human approval (rule: %s) but @guard has no "
+                        "interactive approval mechanism — blocking by default",
+                        decision.matched_rule,
+                    )
+                    reason = (
+                        f"Requires human approval (rule: {decision.matched_rule}) "
+                        f"but no interactive mechanism available"
+                    )
+                    return _handle_block(on_block, reason, decision)
+
                 return await func(*args, **kwargs)
 
             return async_wrapper  # type: ignore[return-value]
@@ -255,6 +267,18 @@ def guard(
 
                 if decision.approval == Approval.BLOCK:
                     reason = f"Blocked by policy rule: {decision.matched_rule}"
+                    return _handle_block(on_block, reason, decision)
+
+                if decision.approval == Approval.APPROVE:
+                    logger.warning(
+                        "Action requires human approval (rule: %s) but @guard has no "
+                        "interactive approval mechanism — blocking by default",
+                        decision.matched_rule,
+                    )
+                    reason = (
+                        f"Requires human approval (rule: {decision.matched_rule}) "
+                        f"but no interactive mechanism available"
+                    )
                     return _handle_block(on_block, reason, decision)
 
                 return func(*args, **kwargs)

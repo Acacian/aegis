@@ -236,8 +236,8 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument(
         "--host",
         type=str,
-        default="0.0.0.0",
-        help="Host for SSE/HTTP transport (default: 0.0.0.0).",
+        default="127.0.0.1",
+        help="Host for SSE/HTTP transport (default: 127.0.0.1).",
     )
     args = parser.parse_args(argv)
 

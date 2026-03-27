@@ -152,6 +152,7 @@ def _op_contains(actual: Any, expected: Any) -> bool:
 
 
 _MAX_REGEX_LEN = 1000
+_MAX_INPUT_LEN = 10_000
 
 
 def _op_matches(actual: Any, expected: Any) -> bool:
@@ -163,8 +164,16 @@ def _op_matches(actual: Any, expected: Any) -> bool:
             _MAX_REGEX_LEN,
         )
         return False
+    value = str(actual)
+    if len(value) > _MAX_INPUT_LEN:
+        logger.warning(
+            "Input value too long for regex match (%d chars, max %d), truncating",
+            len(value),
+            _MAX_INPUT_LEN,
+        )
+        value = value[:_MAX_INPUT_LEN]
     try:
-        return bool(re.search(pattern, str(actual)))
+        return bool(re.search(pattern, value))
     except re.error:
         return False
 

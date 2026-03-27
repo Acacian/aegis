@@ -316,13 +316,16 @@ class TestRunGuardrails:
         results = mod._run_guardrails(engine, "bad", direction="input", on_block="return_none")
         assert len(results) == 1
 
-    def test_engine_exception_returns_empty(self):
+    def test_engine_exception_returns_blocking_result(self):
         mod = _get_module()
         engine = MagicMock()
         engine.check.side_effect = RuntimeError("engine crashed")
 
         results = mod._run_guardrails(engine, "text", direction="input", on_block="raise")
-        assert results == []
+        assert len(results) == 1
+        assert results[0].passed is False
+        assert results[0].action == "blocked"
+        assert results[0].guardrail_name == "aegis.error"
 
     def test_blocked_details_fallback_to_guardrail_name(self):
         mod = _get_module()

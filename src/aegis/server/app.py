@@ -22,6 +22,7 @@ Example usage with curl::
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -284,7 +285,34 @@ def create_app(
         500: handle_error,
     }
 
-    return Starlette(routes=routes, exception_handlers=exception_handlers)
+    # Optional API key authentication middleware
+    _api_key = os.environ.get("AEGIS_API_KEY")
+    middleware: list[Any] = []
+    if _api_key:
+        from starlette.middleware import Middleware
+        from starlette.middleware.base import BaseHTTPMiddleware
+
+        class ApiKeyAuthMiddleware(BaseHTTPMiddleware):
+            """Require X-API-Key header when AEGIS_API_KEY is set."""
+
+            async def dispatch(self, request: Request, call_next: Any) -> Any:
+                if request.url.path == "/health":
+                    return await call_next(request)
+                key = request.headers.get("X-API-Key", "")
+                if key != _api_key:
+                    return JSONResponse(
+                        {"error": "Invalid or missing API key"}, status_code=401
+                    )
+                return await call_next(request)
+
+        middleware.append(Middleware(ApiKeyAuthMiddleware))
+        _server_logger.info("API key authentication enabled via AEGIS_API_KEY")
+
+    return Starlette(
+        routes=routes,
+        exception_handlers=exception_handlers,
+        middleware=middleware,
+    )
 
 
 def _parse_actions(body: dict[str, Any] | list[dict[str, Any]]) -> list[Action]:

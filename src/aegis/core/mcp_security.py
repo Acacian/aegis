@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import re
 import time
 import unicodedata
@@ -37,6 +38,8 @@ from dataclasses import dataclass, field
 from enum import IntEnum
 from pathlib import Path
 from typing import Any
+
+logger = logging.getLogger("aegis.core.mcp_security")
 
 # ---------------------------------------------------------------------------
 # Data models
@@ -440,7 +443,13 @@ class RugPullDetector:
                     version=val.get("version", 1),
                 )
         except (json.JSONDecodeError, KeyError):
-            pass  # Corrupted pin store — start fresh
+            logger.error(
+                "Corrupted pin store at '%s' — resetting to empty. "
+                "Tool integrity verification will restart from scratch.",
+                self._path,
+                exc_info=True,
+            )
+            self._pins.clear()
 
 
 # ---------------------------------------------------------------------------

@@ -6,9 +6,14 @@ Each rule type (``"pattern"``, ``"keyword"``) has a corresponding class.
 
 from __future__ import annotations
 
+import logging
 import re
 
 from aegis.guardrails.base import Guardrail, GuardrailResult
+
+logger = logging.getLogger(__name__)
+
+_MAX_INPUT_LEN = 100_000
 
 
 class PatternGuardrail(Guardrail):
@@ -46,6 +51,18 @@ class PatternGuardrail(Guardrail):
         self.mask_replacement = mask_replacement
         self._compiled: re.Pattern[str] = re.compile(pattern, re.IGNORECASE)
 
+    def _truncate(self, content: str) -> str:
+        """Truncate input to _MAX_INPUT_LEN to mitigate ReDoS."""
+        if len(content) > _MAX_INPUT_LEN:
+            logger.warning(
+                "PatternGuardrail(%s): input too long (%d chars, max %d), truncating",
+                self.name,
+                len(content),
+                _MAX_INPUT_LEN,
+            )
+            return content[:_MAX_INPUT_LEN]
+        return content
+
     def check(
         self,
         content: str,
@@ -53,6 +70,7 @@ class PatternGuardrail(Guardrail):
         context: dict[str, object] | None = None,
     ) -> GuardrailResult:
         """Check *content* against the pattern."""
+        content = self._truncate(content)
         match = self._compiled.search(content)
         if match is None:
             return GuardrailResult(
@@ -78,6 +96,7 @@ class PatternGuardrail(Guardrail):
         context: dict[str, object] | None = None,
     ) -> tuple[GuardrailResult, str]:
         """Check *content* and apply masking if configured."""
+        content = self._truncate(content)
         match = self._compiled.search(content)
         if match is None:
             return (
