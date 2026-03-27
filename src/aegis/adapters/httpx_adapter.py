@@ -16,12 +16,18 @@ Example::
 
 from __future__ import annotations
 
+import ipaddress
+import logging
+import socket
 from datetime import UTC, datetime
 from typing import Any
+from urllib.parse import urlparse
 
 from aegis.adapters.base import BaseExecutor
 from aegis.core.action import Action
 from aegis.core.result import Result, ResultStatus
+
+logger = logging.getLogger(__name__)
 
 _METHOD_MAP = {
     "get": "GET",
@@ -32,6 +38,25 @@ _METHOD_MAP = {
     "head": "HEAD",
     "options": "OPTIONS",
 }
+
+
+def _is_private_ip(hostname: str) -> bool:
+    """Check whether *hostname* resolves to a private/reserved IP address."""
+    try:
+        addr = ipaddress.ip_address(hostname)
+        return addr.is_private or addr.is_loopback or addr.is_reserved or addr.is_link_local
+    except ValueError:
+        pass
+    # hostname is not a literal IP — resolve it
+    try:
+        infos = socket.getaddrinfo(hostname, None, proto=socket.IPPROTO_TCP)
+        for _family, _type, _proto, _canonname, sockaddr in infos:
+            addr = ipaddress.ip_address(sockaddr[0])
+            if addr.is_private or addr.is_loopback or addr.is_reserved or addr.is_link_local:
+                return True
+    except socket.gaierror:
+        pass
+    return False
 
 
 def _require_httpx() -> None:
@@ -105,6 +130,16 @@ class HttpxExecutor(BaseExecutor):
 
         url = action.target
         params = action.params
+
+        # SSRF guard: when no base_url is configured, the target is a full URL
+        # and we must reject requests to private/internal networks.
+        if not self._base_url:
+            parsed = urlparse(url)
+            hostname = parsed.hostname or ""
+            if _is_private_ip(hostname):
+                raise ValueError(
+                    f"Requests to private/internal IP addresses are blocked: {hostname}"
+                )
 
         assert self._client is not None
 

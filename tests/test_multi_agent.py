@@ -408,9 +408,9 @@ class TestPolicyHierarchy:
         hierarchy = PolicyHierarchy()
         action = Action("read", "salesforce")
         decision, conflicts = hierarchy.evaluate(action)
-        assert decision.approval == Approval.APPROVE
-        assert decision.risk_level == RiskLevel.MEDIUM
-        assert decision.matched_rule == "<no-policy>"
+        assert decision.approval == Approval.BLOCK
+        assert decision.risk_level == RiskLevel.CRITICAL
+        assert decision.matched_rule == "<no-policy-configured>"
         assert conflicts == []
 
     def test_empty_hierarchy_flatten(self):
@@ -418,7 +418,7 @@ class TestPolicyHierarchy:
         flat = hierarchy.flatten()
         assert flat.rules == []
         assert flat.default_risk_level == RiskLevel.MEDIUM
-        assert flat.default_approval == Approval.APPROVE
+        assert flat.default_approval == Approval.BLOCK
 
     def test_three_layer_conflict_block_wins_over_auto_and_approve(self):
         hierarchy = PolicyHierarchy(

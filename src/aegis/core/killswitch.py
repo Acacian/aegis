@@ -284,4 +284,4 @@ class KillSwitch:
             try:
                 self._on_trigger(reason, self.status)  # type: ignore[operator]
             except Exception:
-                logger.warning("Kill switch on_trigger callback failed", exc_info=True)
+                logger.critical("Kill switch on_trigger callback failed", exc_info=True)

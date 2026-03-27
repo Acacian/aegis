@@ -18,7 +18,7 @@ def test_from_dict_none_returns_default() -> None:
     """from_dict(None) should return a default policy (not crash)."""
     policy = Policy.from_dict(None)
     assert policy.default_risk_level == RiskLevel.MEDIUM
-    assert policy.default_approval == Approval.APPROVE
+    assert policy.default_approval == Approval.BLOCK
     assert len(policy.rules) == 0
 
 
@@ -38,7 +38,7 @@ def test_from_dict_with_none_defaults() -> None:
     """defaults: null in YAML should not crash."""
     policy = Policy.from_dict({"defaults": None, "rules": []})
     assert policy.default_risk_level == RiskLevel.MEDIUM
-    assert policy.default_approval == Approval.APPROVE
+    assert policy.default_approval == Approval.BLOCK
 
 
 def test_from_dict_with_none_rules() -> None:

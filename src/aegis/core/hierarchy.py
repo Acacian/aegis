@@ -54,12 +54,12 @@ class PolicyHierarchy:
                 layers[name] = policy.evaluate(action)
 
         if not layers:
-            # No policies configured -- default allow
+            # No policies configured -- fail closed (deny by default)
             return PolicyDecision(
                 action=action,
-                risk_level=RiskLevel.MEDIUM,
-                approval=Approval.APPROVE,
-                matched_rule="<no-policy>",
+                risk_level=RiskLevel.CRITICAL,
+                approval=Approval.BLOCK,
+                matched_rule="<no-policy-configured>",
             ), []
 
         # Most restrictive wins

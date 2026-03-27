@@ -171,7 +171,14 @@ class AegisMCPProxy:
 
         if self._policy_path and Path(self._policy_path).exists():
             self._policy = Policy.from_yaml(self._policy_path)
+        elif self._policy_path:
+            logger.error(
+                "[aegis] Policy file '%s' not found — using default-block policy",
+                self._policy_path,
+            )
+            self._policy = Policy(rules=[])
         else:
+            logger.error("[aegis] No policy file configured — using default-block policy")
             self._policy = Policy(rules=[])
 
         # Build extended security modules (lazy-create only when enabled)
@@ -186,7 +193,15 @@ class AegisMCPProxy:
 
                 response_scanner = MCPResponseScanner()
             except ImportError:
-                logger.warning("[aegis] Response scanner module not available")
+                logger.error(
+                    "[aegis] Response scanner module not available"
+                    " but explicitly enabled"
+                )
+                raise RuntimeError(
+                    "Response scanning was enabled but aegis.core.mcp_response_scanner "
+                    "could not be imported. Install the required dependency or disable "
+                    "response_scanning."
+                ) from None
 
         if self._escalation_detection:
             try:
@@ -194,7 +209,15 @@ class AegisMCPProxy:
 
                 escalation_detector = EscalationDetector()
             except ImportError:
-                logger.warning("[aegis] Escalation detector module not available")
+                logger.error(
+                    "[aegis] Escalation detector module not available"
+                    " but explicitly enabled"
+                )
+                raise RuntimeError(
+                    "Escalation detection was enabled but aegis.core.mcp_escalation "
+                    "could not be imported. Install the required dependency or disable "
+                    "escalation_detection."
+                ) from None
 
         if self._shadow_detection:
             try:
@@ -202,7 +225,15 @@ class AegisMCPProxy:
 
                 shadow_detector = ToolShadowDetector()
             except ImportError:
-                logger.warning("[aegis] Shadow detector module not available")
+                logger.error(
+                    "[aegis] Shadow detector module not available"
+                    " but explicitly enabled"
+                )
+                raise RuntimeError(
+                    "Shadow detection was enabled but aegis.core.mcp_shadow "
+                    "could not be imported. Install the required dependency or disable "
+                    "shadow_detection."
+                ) from None
 
         if self._rate_limit_config is not None:
             try:
@@ -214,7 +245,15 @@ class AegisMCPProxy:
                 )
                 rate_limiter = MCPRateLimiter(default_config=cfg)
             except ImportError:
-                logger.warning("[aegis] Rate limiter module not available")
+                logger.error(
+                    "[aegis] Rate limiter module not available"
+                    " but explicitly enabled"
+                )
+                raise RuntimeError(
+                    "Rate limiting was enabled but aegis.core.mcp_rate_limiter "
+                    "could not be imported. Install the required dependency or disable "
+                    "rate_limit_config."
+                ) from None
 
         # Security gate
         from aegis.core.mcp_security import MCPSecurityGate, TrustLevel

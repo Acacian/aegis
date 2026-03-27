@@ -17,7 +17,7 @@ def test_policy_with_no_rules_uses_defaults():
     decision = policy.evaluate(Action("anything", "anywhere"))
     assert decision.matched_rule == "<default>"
     assert decision.risk_level == RiskLevel.MEDIUM
-    assert decision.approval == Approval.APPROVE
+    assert decision.approval == Approval.BLOCK
 
 
 def test_policy_from_dict_empty_rules():

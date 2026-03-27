@@ -135,7 +135,7 @@ class Policy:
 
     rules: list[PolicyRule] = field(default_factory=list)
     default_risk_level: RiskLevel = RiskLevel.MEDIUM
-    default_approval: Approval = Approval.APPROVE
+    default_approval: Approval = Approval.BLOCK
     scope: str = "global"
     scope_id: str = ""
     version: int = 1
@@ -320,7 +320,7 @@ class Policy:
             )
         defaults = data.get("defaults") or {}
         default_risk = RiskLevel[defaults.get("risk_level", "medium").upper()]
-        default_approval = Approval(defaults.get("approval", "approve"))
+        default_approval = Approval(defaults.get("approval", "block"))
 
         rules: list[PolicyRule] = []
         for i, rule_data in enumerate(data.get("rules") or []):

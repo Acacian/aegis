@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import contextlib
 import json
+import logging
+import re
 import sqlite3
 from collections.abc import Callable
 from datetime import UTC, datetime
@@ -16,6 +18,25 @@ from typing import Any
 
 from aegis.core.policy import PolicyDecision
 from aegis.core.result import Result
+
+logger = logging.getLogger("aegis.runtime.audit")
+
+_SENSITIVE_KEY_RE = re.compile(
+    r"(password|secret|token|api_key|apikey|authorization|credential|private_key|access_key)",
+    re.IGNORECASE,
+)
+
+
+def _sanitize_params(data: Any) -> Any:
+    """Recursively redact values for keys matching sensitive patterns."""
+    if isinstance(data, dict):
+        return {
+            k: "[REDACTED]" if _SENSITIVE_KEY_RE.search(k) else _sanitize_params(v)
+            for k, v in data.items()
+        }
+    if isinstance(data, list):
+        return [_sanitize_params(item) for item in data]
+    return data
 
 _SCHEMA = """\
 CREATE TABLE IF NOT EXISTS audit_log (
@@ -162,7 +183,7 @@ class AuditLogger:
                 datetime.now(UTC).isoformat(),
                 decision.action.type,
                 decision.action.target,
-                json.dumps(decision.action.params, default=str),
+                json.dumps(_sanitize_params(decision.action.params), default=str),
                 decision.action.description or None,
                 decision.risk_level.name,
                 decision.approval.value,
@@ -194,8 +215,12 @@ class AuditLogger:
                 "agent_id": decision.action.agent_id or None,
             }
             for cb in self._subscribers:
-                with contextlib.suppress(Exception):
+                try:
                     cb(entry)
+                except Exception:
+                    logger.warning(
+                        "Audit subscriber %s failed", cb, exc_info=True
+                    )
 
         return row_id
 

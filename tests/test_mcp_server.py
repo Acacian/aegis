@@ -180,11 +180,11 @@ class TestCreateServer:
         assert result["is_allowed"] is True
 
     def test_evaluate_action_default_policy(self, server_and_tools: dict) -> None:
-        """Action that doesn't match any rule gets default policy."""
+        """Action that doesn't match any rule gets default-block policy."""
         fn = server_and_tools["evaluate_action"]
         result = fn(action_type="custom_action", target="custom_target")
         assert result["matched_rule"] == "<default>"
-        assert result["is_allowed"] is True
+        assert result["is_allowed"] is False
 
     def test_evaluate_batch(self, server_and_tools: dict) -> None:
         fn = server_and_tools["evaluate_batch"]
@@ -379,7 +379,7 @@ class TestMain:
         ):
             mod.main([])
 
-        create_mock.assert_called_once_with(host="0.0.0.0", port=8080)
+        create_mock.assert_called_once_with(host="127.0.0.1", port=8080)
         mock_server.run.assert_called_once_with(transport="stdio")
 
     def test_main_loads_policy_into_module(self, tmp_path: Path) -> None:

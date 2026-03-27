@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import json
+import os
 from typing import Any
 
 from aegis.runtime.audit import AuditLogger
@@ -56,6 +57,13 @@ def get_ws_route(broadcaster: AuditBroadcaster) -> Any:
     from starlette.websockets import WebSocket, WebSocketDisconnect
 
     async def ws_audit(websocket: WebSocket) -> None:
+        # Check API key authentication if AEGIS_API_KEY is set
+        _api_key = os.environ.get("AEGIS_API_KEY")
+        if _api_key:
+            client_key = websocket.query_params.get("api_key", "")
+            if client_key != _api_key:
+                await websocket.close(code=4001, reason="Invalid or missing API key")
+                return
         await websocket.accept()
         queue = broadcaster.add_client()
         try:

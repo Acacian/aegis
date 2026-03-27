@@ -325,13 +325,13 @@ class AegisToolInputGuardrail:
             if self._fail_closed:
                 return (
                     False,
-                    f"Evaluation error (fail-closed): {exc}",
-                    {"error": str(exc), "fail_closed": True},
+                    "Evaluation error (fail-closed): internal governance error",
+                    {"error": "Internal governance error", "fail_closed": True},
                 )
             return (
                 True,
-                f"Evaluation error (fail-open): {exc}",
-                {"error": str(exc), "fail_closed": False},
+                "Evaluation error (fail-open): internal governance error",
+                {"error": "Internal governance error", "fail_closed": False},
             )
 
     async def __call__(self, data: Any) -> Any:
@@ -518,13 +518,13 @@ class AegisToolOutputGuardrail:
             if self._fail_closed:
                 return (
                     False,
-                    f"Evaluation error (fail-closed): {exc}",
-                    {"error": str(exc), "fail_closed": True},
+                    "Evaluation error (fail-closed): internal governance error",
+                    {"error": "Internal governance error", "fail_closed": True},
                 )
             return (
                 True,
-                f"Evaluation error (fail-open): {exc}",
-                {"error": str(exc), "fail_closed": False},
+                "Evaluation error (fail-open): internal governance error",
+                {"error": "Internal governance error", "fail_closed": False},
             )
 
     async def __call__(self, data: Any) -> Any:

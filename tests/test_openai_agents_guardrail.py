@@ -225,7 +225,7 @@ class TestAegisToolInputGuardrail:
         allow, reason, meta = g.evaluate("any_tool", {})
         assert allow is False
         assert "fail-closed" in reason
-        assert meta["error"] == "boom"
+        assert meta["error"] == "Internal governance error"
 
     def test_evaluate_fail_open(self):
         from aegis.adapters.openai_agents import AegisToolInputGuardrail

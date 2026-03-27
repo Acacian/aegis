@@ -168,7 +168,7 @@ def test_policy_from_yaml_missing_defaults():
     }
     policy = Policy.from_dict(data)
     assert policy.default_risk_level == RiskLevel.MEDIUM
-    assert policy.default_approval == Approval.APPROVE
+    assert policy.default_approval == Approval.BLOCK
 
 
 # -- Policy merge ------------------------------------------------------------
