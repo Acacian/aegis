@@ -1,11 +1,11 @@
 <p align="center">
   <h1 align="center">Aegis</h1>
   <p align="center">
-    <strong>오픈소스 AI 거버넌스 프레임워크.<br/>가드레일 + 정책 + 프로토콜 — <code>aegis.init()</code> 하나로 에이전트를 보호합니다.</strong>
+    <strong>오픈소스 AI 에이전트 보안 프레임워크.<br/>가드레일 + 정책 + 프로토콜 — <code>aegis.auto_instrument()</code> 하나로 에이전트를 보호합니다.</strong>
   </p>
   <p align="center">
     런타임 가드레일 (PII, 인젝션) + 정책 엔진 (YAML 규칙, 승인 게이트) + 개방형 표준 (AGEF/AGP).<br/>
-    <code>pip install agent-aegis</code> &#8594; <code>aegis.init()</code> &#8594; 모든 AI 호출에 거버넌스 적용.<br/>
+    <code>pip install agent-aegis</code> &#8594; <code>aegis.auto_instrument()</code> &#8594; 모든 AI 호출에 보안 적용.<br/>
     <strong>LangChain, CrewAI, OpenAI, Anthropic, MCP 등 7개 프레임워크 지원.</strong>
   </p>
 </p>
@@ -67,7 +67,7 @@ async def handle_agent_action(tool_name, args):
 
 ```python
 import aegis
-aegis.init()  # PII 마스킹, 인젝션 차단, 정책 적용, 감사 로깅 — 끝.
+aegis.auto_instrument()  # PII 마스킹, 인젝션 차단, 정책 적용, 감사 로깅 — 끝.
 ```
 
 **YAML 설정** — 세밀한 제어가 필요할 때:
@@ -93,7 +93,7 @@ policy:
       approval: block
 ```
 
-**`pip install` 하나. `aegis.init()` 하나. LangChain, CrewAI, OpenAI, Anthropic, MCP 전부 지원.** 런타임 가드레일, 정책 엔진, 사람 승인 게이트, 완전한 감사 추적까지 — 서버 배포 없이.
+**`pip install` 하나. `aegis.auto_instrument()` 하나. LangChain, CrewAI, OpenAI, Anthropic, MCP 전부 지원.** 런타임 가드레일, 정책 엔진, 사람 승인 게이트, 완전한 감사 추적까지 — 서버 배포 없이.
 
 ## 3대 핵심 축
 
@@ -134,7 +134,7 @@ Aegis를 단순한 도구가 아닌 플랫폼으로 만드는 사양들.
 
 ### 파이프라인
 
-모든 액션은 5단계를 거칩니다. `aegis.init()` 또는 `runtime.run_one(action)` 한 번이면 자동 처리:
+모든 액션은 5단계를 거칩니다. `aegis.auto_instrument()` 또는 `runtime.run_one(action)` 한 번이면 자동 처리:
 
 ```
 1. 평가(EVALUATE)    정책 규칙과 대조 (글로브 패턴 매칭)
@@ -222,12 +222,12 @@ pip install agent-aegis
 
 ```python
 import aegis
-aegis.init()
-# 이것만으로 끝. 모든 OpenAI/Anthropic 호출에 거버넌스가 적용됩니다.
+aegis.auto_instrument()
+# 이것만으로 끝. 모든 OpenAI/Anthropic 호출에 보안이 적용됩니다.
 # PII 마스킹, 인젝션 차단, 정책 적용, 감사 로깅 — 전부 활성화.
 ```
 
-`aegis.init()`은 `aegis.yaml`을 자동 탐색하고 (없으면 합리적인 기본값 사용), 전체 거버넌스 스택을 활성화합니다: 런타임 가드레일, 정책 엔진, 감사 로깅, 비용 추적.
+`aegis.auto_instrument()`은 지원 프레임워크를 자동 탐지하고 monkey-patch합니다. `aegis.yaml`이 있으면 읽고, 없으면 합리적인 기본값을 사용합니다.
 
 **제로-코드 통합 — 기존 LLM 호출을 코드 변경 없이 거버넌스 적용:**
 
@@ -325,7 +325,7 @@ aegis audit
 
 | | |
 |---|---|
-| **한 줄 활성화** | `aegis.init()` — PII 마스킹, 인젝션 차단, 정책, 감사, 비용 추적 일괄 활성화 |
+| **한 줄 활성화** | `aegis.auto_instrument()` — PII 마스킹, 인젝션 차단, 정책, 감사, 비용 추적 일괄 활성화 |
 | **제로-코드 통합** | `aegis.patch_openai()`, `aegis.patch_anthropic()`, `@guard` 데코레이터 |
 | **런타임 가드레일** | PII 탐지 (12개 카테고리) + 프롬프트 인젝션 차단 (10개 카테고리, 85+ 패턴, 다국어) |
 | **YAML 정책** | 글로브 매칭, 첫 매치 우선, 스마트 조건 (`time_after`, `param_gt`, `weekdays` 등) |
