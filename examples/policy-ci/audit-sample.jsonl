@@ -1,0 +1,15 @@
+{"action_type": "read", "action_target": "crm", "agent_id": "agent-sales-01", "timestamp": "2026-03-28T10:15:00+00:00", "approval": "auto"}
+{"action_type": "read_report", "action_target": "analytics", "agent_id": "agent-analytics-01", "timestamp": "2026-03-28T10:22:00+00:00", "approval": "auto"}
+{"action_type": "get", "action_target": "user_profile", "agent_id": "agent-support-01", "timestamp": "2026-03-28T11:05:00+00:00", "approval": "auto"}
+{"action_type": "write", "action_target": "salesforce", "agent_id": "agent-sales-01", "timestamp": "2026-03-28T11:30:00+00:00", "approval": "approve"}
+{"action_type": "write_record", "action_target": "stripe", "agent_id": "agent-billing-01", "timestamp": "2026-03-28T14:00:00+00:00", "approval": "approve"}
+{"action_type": "write", "action_target": "production-db", "agent_id": "agent-deploy-01", "timestamp": "2026-03-28T15:45:00+00:00", "approval": "approve"}
+{"action_type": "bulk_update", "action_target": "crm", "agent_id": "agent-sales-01", "timestamp": "2026-03-28T16:10:00+00:00", "approval": "approve"}
+{"action_type": "bulk_import", "action_target": "warehouse", "agent_id": "agent-data-01", "timestamp": "2026-03-28T16:30:00+00:00", "approval": "approve"}
+{"action_type": "write", "action_target": "staging-db", "agent_id": "agent-deploy-01", "timestamp": "2026-03-28T19:20:00+00:00", "approval": "approve"}
+{"action_type": "write_config", "action_target": "production-api", "agent_id": "agent-ops-01", "timestamp": "2026-03-28T20:00:00+00:00", "approval": "approve"}
+{"action_type": "delete", "action_target": "temp-files", "agent_id": "agent-cleanup-01", "timestamp": "2026-03-28T22:00:00+00:00", "approval": "block"}
+{"action_type": "get_config", "action_target": "settings", "agent_id": "agent-ops-01", "timestamp": "2026-03-29T08:00:00+00:00", "approval": "auto"}
+{"action_type": "read", "action_target": "logs", "agent_id": "agent-monitor-01", "timestamp": "2026-03-29T08:30:00+00:00", "approval": "auto"}
+{"action_type": "write", "action_target": "production-cache", "agent_id": "agent-ops-01", "timestamp": "2026-03-29T09:15:00+00:00", "approval": "approve"}
+{"action_type": "delete_user", "action_target": "auth", "agent_id": "agent-admin-01", "timestamp": "2026-03-29T10:00:00+00:00", "approval": "block"}

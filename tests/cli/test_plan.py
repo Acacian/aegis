@@ -375,6 +375,63 @@ class TestPlanJsonOutput:
 
 
 # ---------------------------------------------------------------------------
+# Demo mode tests
+# ---------------------------------------------------------------------------
+
+
+class TestPlanDemo:
+    def test_demo_runs_without_files(
+        self,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """--demo should work with no positional arguments at all."""
+        main(["plan", "--demo"])
+        out = capsys.readouterr().out
+
+        assert "Demo: previewing impact of policy changes" in out
+        assert "Aegis Policy Plan" in out
+        assert "current-policy (demo)" in out
+        assert "proposed-policy (demo)" in out
+        # Should show rule changes and replay impact
+        assert "Rule changes:" in out
+        assert "historical action" in out
+
+    def test_demo_shows_blocked_warning(
+        self,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """--demo should show the NEWLY BLOCKED warning for write@production."""
+        main(["plan", "--demo"])
+        out = capsys.readouterr().out
+
+        assert "NEWLY BLOCKED" in out
+        assert "WARNING" in out
+        assert "BLOCKED" in out
+
+    def test_demo_json_output(
+        self,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """--demo --format json should produce valid JSON with replay data."""
+        main(["plan", "--demo", "--format", "json"])
+        data = json.loads(capsys.readouterr().out)
+
+        assert "rules_added" in data
+        assert "rules_removed" in data
+        assert "rules_modified" in data
+        assert "replay" in data
+        assert data["replay"]["newly_blocked"] >= 1
+        assert "impact" in data
+        # Verify the write@production action is newly blocked
+        blocked = [
+            e
+            for e in data["impact"]
+            if e["new_decision"] == "block" and e["old_decision"] != "block"
+        ]
+        assert len(blocked) >= 1
+
+
+# ---------------------------------------------------------------------------
 # Error handling
 # ---------------------------------------------------------------------------
 

@@ -6,11 +6,11 @@ branding:
 
 inputs:
   command:
-    description: "Command to run: scan, score, validate, or all"
+    description: "Command to run: scan, score, validate, plan, test, or all (default runs scan+validate+score)"
     required: false
     default: "all"
   policy-file:
-    description: "Path to policy YAML file (for score/validate)"
+    description: "Path to policy YAML file (for score/validate/test)"
     required: false
     default: "policy.yaml"
   scan-directory:
@@ -29,6 +29,32 @@ inputs:
     description: "Python version to use"
     required: false
     default: "3.11"
+  # --- plan command inputs ---
+  old-policy:
+    description: "Path to current policy YAML (for plan command)"
+    required: false
+    default: ""
+  new-policy:
+    description: "Path to proposed policy YAML (for plan command)"
+    required: false
+    default: ""
+  audit-db:
+    description: "Path to SQLite audit database for plan replay"
+    required: false
+    default: ""
+  replay:
+    description: "Path to JSONL file of recorded actions for plan replay"
+    required: false
+    default: ""
+  # --- test command inputs ---
+  test-suite:
+    description: "Path to test suite YAML (for test command)"
+    required: false
+    default: ""
+  regression-policy:
+    description: "Path to old policy for test --regression comparison"
+    required: false
+    default: ""
 
 outputs:
   score:
@@ -43,6 +69,18 @@ outputs:
   badge-url:
     description: "Shields.io badge URL for governance score"
     value: ${{ steps.score.outputs.badge_url }}
+  plan-newly-blocked:
+    description: "Number of actions newly blocked by policy change (plan command)"
+    value: ${{ steps.plan.outputs.newly_blocked }}
+  test-passed:
+    description: "Number of tests passed (test command)"
+    value: ${{ steps.test.outputs.passed }}
+  test-failed:
+    description: "Number of tests failed (test command)"
+    value: ${{ steps.test.outputs.failed }}
+  test-total:
+    description: "Total number of tests (test command)"
+    value: ${{ steps.test.outputs.total }}
 
 runs:
   using: "composite"
@@ -121,5 +159,146 @@ runs:
 
         if [ "${{ inputs.min-score }}" -gt 0 ] && [ "${score}" -lt "${{ inputs.min-score }}" ]; then
           echo "::error::Governance score ${score} is below minimum ${{ inputs.min-score }}"
+          exit 1
+        fi
+
+    - name: Run aegis plan
+      id: plan
+      if: ${{ inputs.command == 'plan' }}
+      shell: bash
+      run: |
+        # Validate required inputs
+        if [ -z "${{ inputs.old-policy }}" ] || [ -z "${{ inputs.new-policy }}" ]; then
+          echo "::error::plan command requires old-policy and new-policy inputs"
+          exit 1
+        fi
+
+        if [ ! -f "${{ inputs.old-policy }}" ]; then
+          echo "::error::Old policy file not found: ${{ inputs.old-policy }}"
+          exit 1
+        fi
+
+        if [ ! -f "${{ inputs.new-policy }}" ]; then
+          echo "::error::New policy file not found: ${{ inputs.new-policy }}"
+          exit 1
+        fi
+
+        # Build command
+        cmd="aegis plan ${{ inputs.old-policy }} ${{ inputs.new-policy }} --ci --format json"
+
+        if [ -n "${{ inputs.audit-db }}" ]; then
+          if [ ! -f "${{ inputs.audit-db }}" ]; then
+            echo "::error::Audit database not found: ${{ inputs.audit-db }}"
+            exit 1
+          fi
+          cmd="$cmd --audit-db ${{ inputs.audit-db }}"
+        fi
+
+        if [ -n "${{ inputs.replay }}" ]; then
+          if [ ! -f "${{ inputs.replay }}" ]; then
+            echo "::error::Replay file not found: ${{ inputs.replay }}"
+            exit 1
+          fi
+          cmd="$cmd --replay ${{ inputs.replay }}"
+        fi
+
+        echo "::group::Aegis Plan — Policy impact analysis"
+        set +e
+        output=$(eval "$cmd" 2>&1)
+        exit_code=$?
+        echo "$output"
+        echo "::endgroup::"
+
+        # Extract newly_blocked count from JSON output
+        newly_blocked=$(echo "$output" | python3 -c "
+        import sys, json
+        try:
+            d = json.load(sys.stdin)
+            replay = d.get('replay', {})
+            print(replay.get('newly_blocked', 0))
+        except Exception:
+            print(0)
+        " 2>/dev/null || echo "0")
+
+        echo "newly_blocked=${newly_blocked}" >> "$GITHUB_OUTPUT"
+
+        if [ "$exit_code" -ne 0 ]; then
+          echo "::error::Policy change would newly block ${newly_blocked} action(s). Review the plan output above."
+          exit 1
+        fi
+
+    - name: Run aegis test
+      id: test
+      if: ${{ inputs.command == 'test' }}
+      shell: bash
+      run: |
+        # Validate required inputs
+        if [ -z "${{ inputs.test-suite }}" ]; then
+          echo "::error::test command requires test-suite input"
+          exit 1
+        fi
+
+        if [ ! -f "${{ inputs.policy-file }}" ]; then
+          echo "::error::Policy file not found: ${{ inputs.policy-file }}"
+          exit 1
+        fi
+
+        if [ ! -f "${{ inputs.test-suite }}" ]; then
+          echo "::error::Test suite not found: ${{ inputs.test-suite }}"
+          exit 1
+        fi
+
+        # Build command
+        cmd="aegis test ${{ inputs.policy-file }} ${{ inputs.test-suite }} --format json"
+
+        if [ -n "${{ inputs.regression-policy }}" ]; then
+          if [ ! -f "${{ inputs.regression-policy }}" ]; then
+            echo "::error::Regression policy not found: ${{ inputs.regression-policy }}"
+            exit 1
+          fi
+          cmd="$cmd --regression ${{ inputs.regression-policy }}"
+        fi
+
+        echo "::group::Aegis Test — Policy regression tests"
+        set +e
+        output=$(eval "$cmd" 2>&1)
+        exit_code=$?
+        echo "$output"
+        echo "::endgroup::"
+
+        # Extract test counts from JSON output
+        passed=$(echo "$output" | python3 -c "
+        import sys, json
+        try:
+            d = json.load(sys.stdin)
+            print(d.get('passed', 0))
+        except Exception:
+            print(0)
+        " 2>/dev/null || echo "0")
+
+        failed=$(echo "$output" | python3 -c "
+        import sys, json
+        try:
+            d = json.load(sys.stdin)
+            print(d.get('failed', 0))
+        except Exception:
+            print(0)
+        " 2>/dev/null || echo "0")
+
+        total=$(echo "$output" | python3 -c "
+        import sys, json
+        try:
+            d = json.load(sys.stdin)
+            print(d.get('total', 0))
+        except Exception:
+            print(0)
+        " 2>/dev/null || echo "0")
+
+        echo "passed=${passed}" >> "$GITHUB_OUTPUT"
+        echo "failed=${failed}" >> "$GITHUB_OUTPUT"
+        echo "total=${total}" >> "$GITHUB_OUTPUT"
+
+        if [ "$exit_code" -ne 0 ]; then
+          echo "::error::Policy tests failed (${failed}/${total}). See test output above for details."
           exit 1
         fi
