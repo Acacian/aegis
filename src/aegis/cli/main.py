@@ -666,7 +666,7 @@ def _cmd_init(args: argparse.Namespace) -> None:
         policy = Policy.from_yaml(output)
         suite = PolicyTestSuite.generate_from_policy(policy)
 
-        suite_dict: dict = {
+        suite_dict: dict[str, object] = {
             "name": suite.name,
             "tests": [
                 {
