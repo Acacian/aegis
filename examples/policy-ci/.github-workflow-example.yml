@@ -1,0 +1,37 @@
+name: Policy Check
+
+on:
+  pull_request:
+    paths:
+      - "policies/**"
+      - "examples/policy-ci/**"
+
+jobs:
+  policy-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install aegis
+        run: pip install agent-aegis
+
+      # Run policy test suite — exits 1 on any failure
+      - name: Test policy
+        run: aegis test policy-v1.yaml tests.yaml
+
+      # Compare old vs new policy — exits 1 if actions would be newly blocked
+      - name: Plan policy change
+        run: aegis plan policy-v1.yaml policy-v2.yaml --replay audit-sample.jsonl --ci
+
+      # Optional: regression check between two policies using the test suite
+      - name: Regression check
+        run: aegis test policy-v2.yaml tests.yaml --regression policy-v1.yaml
+
+      # Optional: JSON output for downstream processing
+      - name: Plan (JSON)
+        run: aegis plan policy-v1.yaml policy-v2.yaml --replay audit-sample.jsonl --format json

@@ -9,21 +9,26 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from datetime import datetime
 from pathlib import Path
 
 from aegis.cli import colors
+from aegis.core.action import Action
 from aegis.core.diff import (
     ImpactEntry,
     PolicyDiffResult,
     analyze_impact,
     diff_policies,
 )
-from aegis.core.policy import Policy
+from aegis.core.policy import Approval, Policy, PolicyRule
 from aegis.core.replay import (
+    ReplayEngine,
+    ReplayEvent,
     ReplayReport,
     load_events_from_audit_db,
     load_events_from_jsonl,
 )
+from aegis.core.risk import RiskLevel
 
 
 def register(subparsers: argparse._SubParsersAction) -> None:  # type: ignore[type-arg]
@@ -32,8 +37,24 @@ def register(subparsers: argparse._SubParsersAction) -> None:  # type: ignore[ty
         "plan",
         help="Preview impact of policy changes (like terraform plan)",
     )
-    plan_parser.add_argument("old_policy", help="Path to the current policy YAML")
-    plan_parser.add_argument("new_policy", help="Path to the proposed policy YAML")
+    plan_parser.add_argument(
+        "old_policy",
+        nargs="?",
+        default=None,
+        help="Path to the current policy YAML",
+    )
+    plan_parser.add_argument(
+        "new_policy",
+        nargs="?",
+        default=None,
+        help="Path to the proposed policy YAML",
+    )
+    plan_parser.add_argument(
+        "--demo",
+        action="store_true",
+        default=False,
+        help="Run a built-in demo without requiring any files",
+    )
     plan_parser.add_argument(
         "--audit-db",
         metavar="DB",
@@ -66,6 +87,18 @@ def register(subparsers: argparse._SubParsersAction) -> None:  # type: ignore[ty
 
 def run(args: argparse.Namespace) -> None:
     """Execute the ``plan`` command."""
+    if args.demo:
+        _run_demo(args)
+        return
+
+    # Validate that positional args are provided when not using --demo.
+    if args.old_policy is None or args.new_policy is None:
+        print(
+            colors.red("old_policy and new_policy are required (or use --demo)"),
+            file=sys.stderr,
+        )
+        sys.exit(2)
+
     old_path = Path(args.old_policy)
     new_path = Path(args.new_policy)
 
@@ -100,8 +133,6 @@ def run(args: argparse.Namespace) -> None:
             sys.exit(1)
         events = load_events_from_audit_db(db_path, session_id=args.session)
         if events:
-            from aegis.core.replay import ReplayEngine
-
             engine = ReplayEngine(old_policy)
             replay_report = engine.what_if(events, new_policy)
             # Also build impact entries for action-level detail
@@ -114,8 +145,6 @@ def run(args: argparse.Namespace) -> None:
             sys.exit(1)
         events = load_events_from_jsonl(replay_path)
         if events:
-            from aegis.core.replay import ReplayEngine
-
             engine = ReplayEngine(old_policy)
             replay_report = engine.what_if(events, new_policy)
             actions = [e.action for e in events]
@@ -133,6 +162,159 @@ def run(args: argparse.Namespace) -> None:
         )
         if newly_blocked:
             sys.exit(1)
+
+
+# ---------------------------------------------------------------------------
+# Built-in demo
+# ---------------------------------------------------------------------------
+
+
+def _build_demo_data() -> tuple[Policy, Policy, list[ReplayEvent]]:
+    """Build in-memory sample policies and replay events for ``--demo``.
+
+    Returns:
+        A tuple of (current_policy, proposed_policy, replay_events).
+    """
+    # "Current" policy: basic rules
+    current_policy = Policy(
+        rules=[
+            PolicyRule(
+                name="read_auto",
+                match_type="read*",
+                match_target="*",
+                risk_level=RiskLevel.LOW,
+                approval=Approval.AUTO,
+            ),
+            PolicyRule(
+                name="write_approve",
+                match_type="write*",
+                match_target="*",
+                risk_level=RiskLevel.MEDIUM,
+                approval=Approval.APPROVE,
+            ),
+            PolicyRule(
+                name="delete_block",
+                match_type="delete*",
+                match_target="*",
+                risk_level=RiskLevel.CRITICAL,
+                approval=Approval.BLOCK,
+            ),
+        ],
+        default_risk_level=RiskLevel.MEDIUM,
+        default_approval=Approval.APPROVE,
+    )
+
+    # "Proposed" policy: stricter — adds bulk_update rule, blocks write@production
+    proposed_policy = Policy(
+        rules=[
+            PolicyRule(
+                name="read_auto",
+                match_type="read*",
+                match_target="*",
+                risk_level=RiskLevel.LOW,
+                approval=Approval.AUTO,
+            ),
+            PolicyRule(
+                name="write_production_block",
+                match_type="write*",
+                match_target="production",
+                risk_level=RiskLevel.CRITICAL,
+                approval=Approval.BLOCK,
+            ),
+            PolicyRule(
+                name="write_approve",
+                match_type="write*",
+                match_target="*",
+                risk_level=RiskLevel.MEDIUM,
+                approval=Approval.APPROVE,
+            ),
+            PolicyRule(
+                name="bulk_update_approve",
+                match_type="bulk_update*",
+                match_target="*",
+                risk_level=RiskLevel.HIGH,
+                approval=Approval.APPROVE,
+            ),
+            PolicyRule(
+                name="delete_block",
+                match_type="delete*",
+                match_target="*",
+                risk_level=RiskLevel.CRITICAL,
+                approval=Approval.BLOCK,
+            ),
+        ],
+        default_risk_level=RiskLevel.MEDIUM,
+        default_approval=Approval.APPROVE,
+    )
+
+    # Sample replay events (historical actions)
+    base_ts = datetime(2026, 3, 28, 10, 0, 0)
+    events = [
+        ReplayEvent(
+            action=Action(type="read", target="crm"),
+            agent_id="data-agent",
+            timestamp=base_ts,
+            original_decision="auto",
+        ),
+        ReplayEvent(
+            action=Action(type="write", target="staging"),
+            agent_id="sync-agent",
+            timestamp=datetime(2026, 3, 28, 10, 5, 0),
+            original_decision="approve",
+        ),
+        ReplayEvent(
+            action=Action(type="write", target="production"),
+            agent_id="deploy-agent",
+            timestamp=datetime(2026, 3, 28, 10, 10, 0),
+            original_decision="approve",
+        ),
+        ReplayEvent(
+            action=Action(type="bulk_update", target="warehouse"),
+            agent_id="etl-agent",
+            timestamp=datetime(2026, 3, 28, 10, 15, 0),
+            original_decision="approve",
+        ),
+        ReplayEvent(
+            action=Action(type="read", target="analytics"),
+            agent_id="report-agent",
+            timestamp=datetime(2026, 3, 28, 10, 20, 0),
+            original_decision="auto",
+        ),
+        ReplayEvent(
+            action=Action(type="delete", target="backup"),
+            agent_id="cleanup-agent",
+            timestamp=datetime(2026, 3, 28, 10, 25, 0),
+            original_decision="block",
+        ),
+    ]
+    return current_policy, proposed_policy, events
+
+
+def _run_demo(args: argparse.Namespace) -> None:
+    """Run the built-in demo showing policy change impact."""
+    old_policy, new_policy, events = _build_demo_data()
+
+    # Phase 1: Diff
+    diff_result = diff_policies(old_policy, new_policy)
+
+    # Phase 2: Replay
+    engine = ReplayEngine(old_policy)
+    replay_report = engine.what_if(events, new_policy)
+    actions = [e.action for e in events]
+    impact_entries = analyze_impact(old_policy, new_policy, actions)
+
+    if args.fmt == "json":
+        _print_json(diff_result, replay_report, impact_entries)
+    else:
+        print()
+        print(colors.cyan("Demo: previewing impact of policy changes..."))
+        _print_plan(
+            diff_result,
+            replay_report,
+            impact_entries,
+            "current-policy (demo)",
+            "proposed-policy (demo)",
+        )
 
 
 # ---------------------------------------------------------------------------

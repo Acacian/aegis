@@ -147,6 +147,17 @@ def main(argv: list[str] | None = None) -> None:
     # aegis init
     init_parser = subparsers.add_parser("init", help="Generate a starter policy file")
     init_parser.add_argument("--output", "-o", default="policy.yaml", help="Output file path")
+    init_parser.add_argument(
+        "--with-tests",
+        action="store_true",
+        default=False,
+        help="Also generate a matching test suite YAML",
+    )
+    init_parser.add_argument(
+        "--test-output",
+        default="tests.yaml",
+        help="Output path for generated test suite (default: tests.yaml)",
+    )
 
     # aegis simulate
     sim_parser = subparsers.add_parser(
@@ -639,11 +650,49 @@ def _cmd_init(args: argparse.Namespace) -> None:
     # Generate policy (with framework-specific rules if detected)
     policy_text = _generate_policy(detected)
     output.write_text(policy_text, encoding="utf-8")
-    print(f"Created {output}")
+
+    # --with-tests: generate a matching test suite YAML
+    if args.with_tests:
+        import yaml  # noqa: PLC0415
+
+        from aegis.core.policy import Policy  # noqa: PLC0415
+        from aegis.core.policy_test_suite import PolicyTestSuite  # noqa: PLC0415
+
+        test_output = Path(args.test_output)
+        if test_output.exists():
+            print(f"File already exists: {test_output}", file=sys.stderr)
+            sys.exit(1)
+
+        policy = Policy.from_yaml(output)
+        suite = PolicyTestSuite.generate_from_policy(policy)
+
+        suite_dict: dict = {
+            "name": suite.name,
+            "tests": [
+                {
+                    k: v
+                    for k, v in {
+                        "action": c.action,
+                        "expected_decision": c.expected_decision,
+                        "expected_risk_level": c.expected_risk_level,
+                        "description": c.description,
+                    }.items()
+                    if v
+                }
+                for c in suite.cases
+            ],
+        }
+        test_output.write_text(
+            yaml.dump(suite_dict, default_flow_style=False, sort_keys=False),
+            encoding="utf-8",
+        )
+        print(f"Generated {output} and {test_output}")
+    else:
+        print(f"Created {output}")
 
     # Auto-run scan
     print("")
-    from aegis.cli.scan import format_report, scan_directory
+    from aegis.cli.scan import format_report, scan_directory  # noqa: PLC0415
 
     file_count, findings = scan_directory(Path(".").resolve())
     if file_count > 0:

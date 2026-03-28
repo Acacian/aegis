@@ -1,0 +1,46 @@
+name: "policy-v1 test suite"
+
+tests:
+  # --- Read operations: auto-approve ---
+  - action: { type: read, target: crm }
+    expected_decision: auto
+    expected_risk_level: low
+    description: "read CRM data should auto-approve"
+
+  - action: { type: read_report, target: analytics }
+    expected_decision: auto
+    expected_risk_level: low
+    description: "read_report (glob match) should auto-approve"
+
+  # --- Get operations: auto-approve ---
+  - action: { type: get, target: user_profile }
+    expected_decision: auto
+    expected_risk_level: low
+    description: "get user profile should auto-approve"
+
+  - action: { type: get_config, target: settings }
+    expected_decision: auto
+    expected_risk_level: low
+    description: "get_config (glob match) should auto-approve"
+
+  # --- Write operations: require approval ---
+  - action: { type: write, target: salesforce }
+    expected_decision: approve
+    expected_risk_level: medium
+    description: "write to salesforce should require approval"
+
+  - action: { type: write_record, target: stripe }
+    expected_decision: approve
+    expected_risk_level: medium
+    description: "write_record (glob match) should require approval"
+
+  # --- Delete operations: blocked ---
+  - action: { type: delete, target: database }
+    expected_decision: block
+    expected_risk_level: critical
+    description: "delete database should be blocked"
+
+  - action: { type: delete_user, target: auth }
+    expected_decision: block
+    expected_risk_level: critical
+    description: "delete_user (glob match) should be blocked"

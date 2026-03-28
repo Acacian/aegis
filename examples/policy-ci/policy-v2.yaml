@@ -1,0 +1,65 @@
+version: "1"
+
+defaults:
+  risk_level: medium
+  approval: approve
+
+rules:
+  # Low-risk: auto-approve all read and get operations (unchanged)
+  - name: read_ops
+    match:
+      type: "read*"
+    risk_level: low
+    approval: auto
+
+  - name: get_ops
+    match:
+      type: "get*"
+    risk_level: low
+    approval: auto
+
+  # NEW: bulk operations require approval (high risk)
+  - name: bulk_ops
+    match:
+      type: "bulk_*"
+    risk_level: high
+    approval: approve
+
+  # NEW: block writes to production targets
+  - name: write_production_block
+    match:
+      type: "write*"
+      target: "production*"
+    risk_level: critical
+    approval: block
+
+  # NEW: block writes outside business hours (09:00-18:00 UTC)
+  - name: write_after_hours
+    match:
+      type: "write*"
+    conditions:
+      time_after: "18:00"
+    risk_level: critical
+    approval: block
+
+  - name: write_before_hours
+    match:
+      type: "write*"
+    conditions:
+      time_before: "09:00"
+    risk_level: critical
+    approval: block
+
+  # Medium-risk: require approval for writes (unchanged)
+  - name: write_ops
+    match:
+      type: "write*"
+    risk_level: medium
+    approval: approve
+
+  # Critical: block all deletes (unchanged)
+  - name: delete_ops
+    match:
+      type: "delete*"
+    risk_level: critical
+    approval: block
