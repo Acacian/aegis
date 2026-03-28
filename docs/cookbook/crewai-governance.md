@@ -1,3 +1,7 @@
+---
+description: "Add policy governance to CrewAI multi-agent crews in 5 minutes. Control tool calls, enforce approval gates, and audit every action."
+---
+
 # Add Governance to CrewAI Agents in 5 Minutes
 
 CrewAI agents collaborate as a crew, delegating tasks and calling tools

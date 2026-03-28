@@ -1,3 +1,7 @@
+---
+description: "Add policy governance to OpenAI Agents SDK in 5 minutes. Control function tool calls, enforce approvals, and audit every action."
+---
+
 # Add Governance to OpenAI Agents in 5 Minutes
 
 The OpenAI Agents SDK lets you build agents that call function tools

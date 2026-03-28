@@ -1,3 +1,7 @@
+---
+description: "Govern MCP tool calls with per-server, per-tool policies. Add approval gates and audit trails to Model Context Protocol in 5 minutes."
+---
+
 # Govern MCP Tool Calls in 5 Minutes
 
 The Model Context Protocol (MCP) lets AI models call tools across servers. Aegis adds policy enforcement to every MCP tool call — per-server, per-tool granularity.

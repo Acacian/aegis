@@ -1,3 +1,7 @@
+---
+description: "Runtime security for AI agents. Auto-instrument LangChain, CrewAI, OpenAI with prompt injection detection, PII masking, audit trail."
+---
+
 # Aegis
 
 **OpenTelemetry for AI agent security. Auto-instrument any AI framework with guardrails -- zero code changes.**

@@ -1,3 +1,7 @@
+---
+description: "Write YAML policies for AI agent governance. Define rules, risk levels, approval gates, and pattern matching for tool calls."
+---
+
 # Writing Policies
 
 Policies are YAML files that tell Aegis how to handle each action an AI agent wants to perform.

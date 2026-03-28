@@ -1,3 +1,7 @@
+---
+description: "Frequently asked questions about Aegis AI agent governance. Framework support, performance, security model, and policy configuration."
+---
+
 # FAQ
 
 ## General

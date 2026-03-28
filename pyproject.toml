@@ -15,6 +15,8 @@ keywords = [
     "auto-instrumentation", "guardrails", "prompt-injection", "pii-detection",
     "langchain", "crewai", "openai", "anthropic", "safety",
     "mcp", "cost-management", "supply-chain-security", "a2a", "observability",
+    "security", "compliance", "eu-ai-act", "policy-as-code", "audit-trail",
+    "runtime-security",
 ]
 classifiers = [
     "Development Status :: 4 - Beta",

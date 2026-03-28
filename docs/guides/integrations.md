@@ -1,3 +1,7 @@
+---
+description: "Integrate Aegis with LangChain, CrewAI, OpenAI Agents SDK, Anthropic Claude, MCP, Playwright, and httpx frameworks."
+---
+
 # Integrations
 
 Aegis integrates with popular AI agent frameworks. Install only what you need.

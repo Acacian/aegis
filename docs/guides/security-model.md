@@ -1,3 +1,7 @@
+---
+description: "Aegis security model: application-level middleware for AI agents with action classification, approval gates, and audit trails."
+---
+
 # Security Model
 
 Aegis is an **application-level middleware**, not an OS-level sandbox. Understanding this boundary helps you build the right defense-in-depth strategy.

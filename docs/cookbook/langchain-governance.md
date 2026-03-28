@@ -1,3 +1,7 @@
+---
+description: "Add policy governance to LangChain agents in 5 minutes. Block dangerous tool calls, require approval, and log every action."
+---
+
 # Add Governance to LangChain Agents in 5 Minutes
 
 LangChain agents can call tools autonomously. That is powerful -- and dangerous.

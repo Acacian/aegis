@@ -1,3 +1,7 @@
+---
+description: "Aegis Enterprise: cryptographic audit trails, regulatory compliance mapping, anomaly detection, and SSO for production AI governance."
+---
+
 # Enterprise
 
 **Production-grade AI governance for regulated industries.**

@@ -1,3 +1,7 @@
+---
+description: "Install Aegis with pip. Supports LangChain, CrewAI, OpenAI, Anthropic, MCP integrations. Python 3.11+, zero config required."
+---
+
 # Installation
 
 ## Requirements

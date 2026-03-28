@@ -1,0 +1,58 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "openai-agents-aegis"
+version = "0.1.0"
+description = "Aegis governance integration for OpenAI Agents SDK — add policy enforcement, risk assessment, and audit logging to any agent tool."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+authors = [{ name = "Acacian" }]
+keywords = [
+    "openai", "agents", "aegis", "governance", "policy", "ai", "agent",
+    "security", "audit", "approval", "risk",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Security",
+    "Typing :: Typed",
+]
+dependencies = [
+    "agent-aegis>=0.6.0",
+    "openai-agents>=0.1",
+]
+
+[project.urls]
+Homepage = "https://github.com/Acacian/aegis"
+Documentation = "https://acacian.github.io/aegis/"
+Repository = "https://github.com/Acacian/aegis"
+Issues = "https://github.com/Acacian/aegis/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/openai_agents_aegis"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 99
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+
+[[tool.mypy.overrides]]
+module = ["agents.*"]
+ignore_missing_imports = true
