@@ -1,3 +1,7 @@
+---
+description: "Aegis Policy API reference. Load YAML policies, define rules, risk levels, approval requirements, and pattern matching for AI agents."
+---
+
 # Policy
 
 ## Policy

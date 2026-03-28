@@ -1,3 +1,7 @@
+---
+description: "Add AI agent security in under 2 minutes. Auto-instrument your AI framework with one line of code using Aegis guardrails."
+---
+
 # Quick Start
 
 This guide walks you through adding AI safety to your project in under 2 minutes.

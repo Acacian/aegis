@@ -1,3 +1,7 @@
+---
+description: "Learn Aegis core concepts: Actions, Policies, Runtime, approval gates, risk levels, and audit logging for AI agent governance."
+---
+
 # Core Concepts
 
 ## Action

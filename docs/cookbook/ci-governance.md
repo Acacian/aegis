@@ -1,3 +1,7 @@
+---
+description: "Validate AI governance policies in CI/CD pipelines. Add policy-as-code checks to GitHub Actions, pre-commit hooks, and PR workflows."
+---
+
 # CI/CD Policy Governance with Aegis
 
 Governance policies are code. They belong in version control, get reviewed in

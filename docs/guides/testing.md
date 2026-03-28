@@ -1,3 +1,7 @@
+---
+description: "Test Aegis policies with pytest. Run the test suite, write policy tests, simulate actions, and validate YAML rules before deployment."
+---
+
 # Testing Guide
 
 How to run, write, and extend the Aegis test suite.

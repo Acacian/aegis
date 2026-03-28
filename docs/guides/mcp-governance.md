@@ -1,3 +1,7 @@
+---
+description: "Add policy enforcement, approval gates, and audit trails to MCP tool calls. Govern Model Context Protocol servers with YAML rules."
+---
+
 # Governing MCP Tool Calls
 
 Add policy checks, approval gates, and a full audit trail to every MCP tool call -- in under 5 minutes.

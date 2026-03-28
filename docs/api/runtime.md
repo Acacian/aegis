@@ -1,3 +1,7 @@
+---
+description: "Aegis Runtime API reference. Constructor, run_one(), execute(), session management, and executor configuration for AI agent governance."
+---
+
 # Runtime
 
 ## Constructor

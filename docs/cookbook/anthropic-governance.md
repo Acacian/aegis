@@ -1,3 +1,7 @@
+---
+description: "Add policy governance to Anthropic Claude tool_use calls in 5 minutes. Enforce approval gates, block dangerous actions, audit everything."
+---
+
 # Govern Anthropic Claude Tool Calls in 5 Minutes
 
 Claude's tool_use feature lets the model call your functions autonomously. Aegis wraps those calls with policy checks, approval gates, and audit logging.

@@ -1,3 +1,7 @@
+---
+description: "Deploy Aegis in production with Docker, Kubernetes, or pip. Includes monitoring, hardening, and REST API server configuration."
+---
+
 # Production Deployment
 
 This guide covers deploying Aegis in production -- from a minimal pip install to Kubernetes manifests with monitoring and hardening.
