@@ -462,6 +462,8 @@ aegis audit --format jsonl -o export.jsonl  # Export
 |---|---|
 | **`aegis scan`** | AST-based detection of ungoverned AI calls in your codebase |
 | **`aegis probe`** | Adversarial policy testing — glob bypass, missing coverage, escalation |
+| **`aegis plan`** | `terraform plan` for AI policies — preview impact of changes against real audit data |
+| **`aegis test`** | Policy regression testing for CI/CD pipelines |
 | **`aegis autopolicy`** | Natural language → YAML (`"block deletes, allow reads"`) |
 | **`aegis score`** | Governance coverage 0-100 with shields.io badge |
 | **Policy-as-Code SDK** | Fluent `PolicyBuilder` API for programmatic construction |
@@ -1211,6 +1213,36 @@ Add the badge to your repo:
 ![Aegis Score](https://img.shields.io/badge/aegis_score-84-brightgreen)
 ```
 
+### `aegis plan` -- Policy Impact Preview
+
+Like `terraform plan` for AI agent policies. Previews the impact of policy changes by replaying historical audit data -- see exactly what would break before deploying.
+
+```bash
+# Show what changes between two policies
+aegis plan current.yaml proposed.yaml
+
+# Replay against real audit history to see impact
+aegis plan current.yaml proposed.yaml --audit-db aegis_audit.db
+
+# CI mode: exit 1 if any actions would be newly blocked
+aegis plan current.yaml proposed.yaml --replay audit.jsonl --ci
+```
+
+### `aegis test` -- Policy Regression Testing
+
+Policy regression testing for CI/CD pipelines. Define expected outcomes, auto-generate test suites, and catch unintended side effects of policy changes.
+
+```bash
+# Run policy test suite (exit 1 on failure)
+aegis test policy.yaml tests.yaml
+
+# Auto-generate test suite from policy
+aegis test policy.yaml --generate --generate-output tests.yaml
+
+# Regression test between old and new policy
+aegis test new-policy.yaml tests.yaml --regression old-policy.yaml
+```
+
 ## AGEF & AGP — Open Governance Standards
 
 Aegis is the reference implementation of two open specifications that bring interoperability to AI security:
@@ -1315,6 +1347,10 @@ aegis scan ./src/                       # Detect ungoverned AI tool calls (AST-b
 aegis score ./src/ --policy policy.yaml # Governance score (0-100) + badge
 aegis diff policy-v1.yaml policy-v2.yaml           # Compare policies
 aegis diff policy-v1.yaml policy-v2.yaml --replay  # Impact analysis with action replay
+aegis plan current.yaml proposed.yaml              # terraform plan for AI policies
+aegis plan current.yaml proposed.yaml --replay audit.jsonl --ci  # CI gate
+aegis test policy.yaml tests.yaml                  # Policy regression testing
+aegis test policy.yaml --generate --generate-output tests.yaml   # Auto-generate tests
 aegis compliance --type soc2 --output report.json  # Generate compliance report
 aegis autopolicy "block deletes, allow reads"      # Generate policy from English
 aegis probe policy.yaml                            # Adversarial policy testing

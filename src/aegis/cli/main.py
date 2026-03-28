@@ -242,6 +242,16 @@ def main(argv: list[str] | None = None) -> None:
 
     _register_diff(subparsers)
 
+    # aegis plan
+    from aegis.cli.plan import register as _register_plan
+
+    _register_plan(subparsers)
+
+    # aegis test
+    from aegis.cli.test_cmd import register as _register_test
+
+    _register_test(subparsers)
+
     # aegis compliance
     compliance_parser = subparsers.add_parser(
         "compliance",
@@ -388,6 +398,14 @@ def main(argv: list[str] | None = None) -> None:
         from aegis.cli.diff import run as _run_diff
 
         _run_diff(args)
+    elif args.command == "plan":
+        from aegis.cli.plan import run as _run_plan
+
+        _run_plan(args)
+    elif args.command == "test":
+        from aegis.cli.test_cmd import run as _run_test
+
+        _run_test(args)
     elif args.command == "compliance":
         _cmd_compliance(args)
     elif args.command == "stats":

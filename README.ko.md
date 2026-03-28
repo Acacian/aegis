@@ -387,6 +387,8 @@ aegis audit
 |---|---|
 | **`aegis scan`** | AST 기반 미거버넌스 AI 호출 탐지 |
 | **`aegis probe`** | 정책 적대적 테스트 — 글로브 우회, 커버리지 누락, 에스컬레이션 |
+| **`aegis plan`** | AI 정책용 `terraform plan` — 실제 감사 데이터 기반 변경 영향 미리보기 |
+| **`aegis test`** | CI/CD 파이프라인용 정책 회귀 테스트 |
 | **`aegis autopolicy`** | 자연어 → YAML (`"삭제 차단, 읽기 허용"`) |
 | **`aegis score`** | 거버넌스 점수 (0-100) + shields.io 배지 |
 | **정책 SDK** | 플루언트 `PolicyBuilder` API |
@@ -907,6 +909,36 @@ aegis score ./src/ --policy policy.yaml
 ![Aegis Score](https://img.shields.io/badge/aegis_score-84-brightgreen)
 ```
 
+### `aegis plan` -- 정책 영향 미리보기
+
+AI 에이전트 정책용 `terraform plan`. 과거 감사 데이터를 리플레이하여 정책 변경의 영향을 미리 확인합니다 -- 배포 전에 정확히 무엇이 깨지는지 파악할 수 있습니다.
+
+```bash
+# 두 정책 간 변경사항 확인
+aegis plan current.yaml proposed.yaml
+
+# 실제 감사 이력 기반 리플레이로 영향 분석
+aegis plan current.yaml proposed.yaml --audit-db aegis_audit.db
+
+# CI 모드: 새로 차단되는 액션이 있으면 exit 1
+aegis plan current.yaml proposed.yaml --replay audit.jsonl --ci
+```
+
+### `aegis test` -- 정책 회귀 테스트
+
+CI/CD 파이프라인용 정책 회귀 테스트. 기대 결과를 정의하고, 테스트 스위트를 자동 생성하며, 정책 변경의 의도치 않은 부작용을 잡아냅니다.
+
+```bash
+# 정책 테스트 스위트 실행 (실패 시 exit 1)
+aegis test policy.yaml tests.yaml
+
+# 정책에서 테스트 스위트 자동 생성
+aegis test policy.yaml --generate --generate-output tests.yaml
+
+# 기존 정책과 새 정책 간 회귀 테스트
+aegis test new-policy.yaml tests.yaml --regression old-policy.yaml
+```
+
 ## AGEF & AGP — 개방형 거버넌스 표준
 
 Aegis는 AI 거버넌스에 상호운용성을 제공하는 두 개의 개방형 사양의 참조 구현입니다:
@@ -1001,6 +1033,10 @@ aegis scan ./src/                       # 거버넌스 미적용 AI 도구 호�
 aegis score ./src/ --policy policy.yaml # 거버넌스 점수 (0-100) + 배지
 aegis diff policy-v1.yaml policy-v2.yaml           # 정책 비교
 aegis diff policy-v1.yaml policy-v2.yaml --replay  # 액션 리플레이 영향 분석
+aegis plan current.yaml proposed.yaml              # AI 정책용 terraform plan
+aegis plan current.yaml proposed.yaml --replay audit.jsonl --ci  # CI 게이트
+aegis test policy.yaml tests.yaml                  # 정책 회귀 테스트
+aegis test policy.yaml --generate --generate-output tests.yaml   # 테스트 자동 생성
 aegis compliance --type soc2 --output report.json  # 컴플라이언스 리포트 생성
 ```
 
