@@ -79,6 +79,7 @@ dev = [
     "starlette>=0.37",
     "uvicorn>=0.29",
     "jsonschema>=4.0",
+    "pytest-benchmark>=5.0",
 ]
 
 [project.scripts]
