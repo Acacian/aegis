@@ -1071,7 +1071,10 @@ aegis compliance --type soc2 --output report.json  # 컴플라이언스 리포�
 | **0.3** | **출시됨** | MCP 공급망 보안 (포이즈닝/러그풀/SBOM/취약점 DB), 비용 차단기 (17 모델), 크로스-프레임워크 비용 추적 (LangChain/OpenAI/Anthropic/Google), A2A 통신 거버넌스, 세션 리플레이 + 소급 스캔, OpenTelemetry 내보내기, 정책 Git 통합 |
 | **0.4** | **출시됨** | `aegis.init()` 한 줄 활성화, 런타임 가드레일 (PII 탐지/마스킹, 프롬프트 인젝션 차단), 룰 팩 생태계, 제로-코드 통합 (`patch_openai`/`patch_anthropic`, `@guard`), AGEF/AGP 개방형 거버넌스 사양, Redis/PostgreSQL 감사 백엔드 |
 | **0.4.1** | **출시됨** | 13개 성능 & 정합성 수정: LRU 캐시, O(log n) bisect pruning, SQLite WAL + 인덱스, 병렬 `execute()`, async 가드레일, 다중 이상 탐지 `check_all()`, 캐시 키 정합성, 락 메모리 누수 수정, 배치 flush 경합 수정 |
-| **0.5** | 2026 Q3 | 중앙 정책 서버, 룰 팩 레지스트리 (npm 스타일 설치/퍼블리시), 크로스 에이전트 감사 연관 분석 |
+| **0.4.2** | **출시됨** | **자동 계측** (`aegis.auto_instrument()`) — LangChain, CrewAI, OpenAI Agents SDK, OpenAI API, Anthropic API 제로코드 monkey-patching. `AEGIS_INSTRUMENT=1` 환경변수. 기본 가드레일 (인젝션/독성/PII/프롬프트 유출) |
+| **0.5** | **출시됨** | LiteLLM, Google GenAI, Pydantic AI, LlamaIndex, Instructor, DSPy 자동 계측. 중앙 정책 서버, 룰 팩 레지스트리, 크로스 에이전트 감사 연관 분석 |
+| **0.6** | **출시됨** | 보안 강화 (18개 취약점 수정): fail-closed 기본값, API 인증 미들웨어, 감사 데이터 무결성, SSRF/ReDoS/TOCTOU 방어. IBAN PII 탐지 (mod-97 검증). Policy CI/CD 강화 (영향 분석, 테스트 러너, GitHub Action) |
+| **0.6.1** | **출시됨** | 가드레일 성능 최적화: 카테고리별 combined regex, 인젝션 + PII LRU 캐시. 실제 호출당 오버헤드 2.65ms (LLM 지연의 0.53%). 벤치마크 스위트 |
 | **1.0** | 2027 | 분산 거버넌스, 호스티드 SaaS, SSO/SCIM |
 
 ## 기여하기

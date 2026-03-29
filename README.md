@@ -1446,6 +1446,7 @@ aegis probe policy.yaml                            # Adversarial policy testing
 | **0.4.2** | **Released** | **Auto-instrumentation** (`aegis.auto_instrument()`) — zero-code monkey-patching for LangChain, CrewAI, OpenAI Agents SDK, OpenAI API, Anthropic API. `AEGIS_INSTRUMENT=1` env var. Default guardrails (injection/toxicity/PII/prompt leak). Per-framework `patch_`/`unpatch_` + `status()`/`reset()` |
 | **0.5** | **Released** | Auto-instrumentation for LiteLLM, Google GenAI, Pydantic AI, LlamaIndex, Instructor, DSPy. Centralized policy server, rule pack registry, cross-agent audit correlation |
 | **0.6** | **Released** | Security hardening (18 vulnerabilities fixed): fail-closed defaults, API auth middleware, audit data sanitization, SSRF/ReDoS/TOCTOU protection. IBAN PII detection with mod-97 validation. Policy CI/CD enhancements (impact analysis, test runner, GitHub Action) |
+| **0.6.1** | **Released** | Guardrail performance optimization: combined regex per category, LRU cache on injection + PII detection. Realistic per-call overhead 2.65ms (0.53% of LLM latency). Benchmark suite |
 | **1.0** | 2027 | Distributed security, hosted SaaS, SSO/SCIM |
 
 ## Contributing
