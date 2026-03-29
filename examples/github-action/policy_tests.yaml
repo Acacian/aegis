@@ -1,0 +1,53 @@
+# Aegis Policy Test Suite
+# Run with: aegis test policy.yaml policy_tests.yaml
+#
+# Each test case sends an action through your policy and verifies the outcome.
+# Use in CI to catch policy regressions before they hit production.
+
+name: "governance-policy test suite"
+
+tests:
+  # --- Read operations should auto-approve (low risk) ---
+  - action: { type: read, target: crm }
+    expected_decision: auto
+    expected_risk_level: low
+    description: "Read CRM data: low risk, auto-approve"
+
+  - action: { type: get_config, target: settings }
+    expected_decision: auto
+    expected_risk_level: low
+    description: "Get config: glob match on get*, auto-approve"
+
+  # --- Write operations should require approval (medium risk) ---
+  - action: { type: write, target: salesforce }
+    expected_decision: approve
+    expected_risk_level: medium
+    description: "Write to Salesforce: medium risk, needs human approval"
+
+  - action: { type: write_record, target: stripe }
+    expected_decision: approve
+    expected_risk_level: medium
+    description: "Write record to Stripe: glob match on write*, needs approval"
+
+  # --- Bulk operations should require approval (high risk) ---
+  - action: { type: bulk_update, target: user_table }
+    expected_decision: approve
+    expected_risk_level: high
+    description: "Bulk update: high risk due to batch scope, needs approval"
+
+  # --- Delete operations should be blocked (critical risk) ---
+  - action: { type: delete, target: database }
+    expected_decision: block
+    expected_risk_level: critical
+    description: "Delete database: critical, always blocked"
+
+  - action: { type: delete_user, target: auth }
+    expected_decision: block
+    expected_risk_level: critical
+    description: "Delete user: glob match on delete*, always blocked"
+
+  # --- Unknown action falls through to defaults ---
+  - action: { type: archive, target: old_records }
+    expected_decision: approve
+    expected_risk_level: medium
+    description: "Archive (no matching rule): falls to default medium/approve"
