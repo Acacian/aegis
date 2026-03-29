@@ -79,11 +79,30 @@ class PolicyConfig:
 
 @dataclass
 class CostConfig:
-    """Cost tracking / budget configuration."""
+    """Cost tracking / budget configuration.
+
+    Supports multi-dimensional cost limits that integrate with the
+    policy engine.  All limits are optional — omitted limits are not
+    enforced.
+
+    Attributes:
+        budget_usd: Overall budget ceiling in dollars.
+        per_call_limit_usd: Maximum cost for a single LLM call.
+        per_session_limit_usd: Maximum cost for a single session.
+        per_minute_tokens: Maximum tokens per rolling minute window.
+        daily_budget_usd: Maximum daily spend in dollars.
+        alert_threshold: Fraction (0-1) of budget that triggers alerts.
+        on_exceed: Action when a limit is exceeded: ``block``, ``warn``,
+            or ``log``.
+    """
 
     budget_usd: float | None = None
     per_call_limit_usd: float | None = None
+    per_session_limit_usd: float | None = None
+    per_minute_tokens: int | None = None
+    daily_budget_usd: float | None = None
     alert_threshold: float = 0.8  # alert at 80% budget
+    on_exceed: str = "block"  # block, warn, log
 
 
 @dataclass
@@ -94,6 +113,23 @@ class AuditConfig:
     backend: str = "sqlite"  # sqlite, redis, postgres
     path: str = "./aegis_audit.db"  # for sqlite
     dsn: str | None = None  # for redis/postgres
+
+
+@dataclass
+class DriftConfig:
+    """Behavioral drift detection configuration.
+
+    Controls whether drift detection is active and defines per-metric
+    baselines with thresholds and enforcement actions.
+
+    Attributes:
+        enabled: Whether drift detection is active.
+        baselines: List of per-metric configurations.  Each entry is a dict
+            with keys ``name``, ``window``, ``threshold``, ``action``.
+    """
+
+    enabled: bool = False
+    baselines: list[dict[str, Any]] = field(default_factory=list)
 
 
 @dataclass
@@ -121,6 +157,7 @@ class AegisConfig:
     cost: CostConfig | None = None
     audit: AuditConfig | None = None
     integrations: IntegrationsConfig | None = None
+    drift: DriftConfig | None = None
 
     @classmethod
     def sensible_defaults(cls) -> AegisConfig:
@@ -187,6 +224,7 @@ class AegisConfig:
             cost=_parse_cost(data.get("cost")),
             audit=_parse_audit(data.get("audit")),
             integrations=_parse_integrations(data.get("integrations")),
+            drift=_parse_drift(data.get("drift")),
         )
 
 
@@ -238,10 +276,19 @@ def _parse_policy(raw: Any) -> PolicyConfig | None:
 def _parse_cost(raw: Any) -> CostConfig | None:
     if raw is None or not isinstance(raw, dict):
         return None
+
+    per_minute_tokens = raw.get("per_minute_tokens")
+    if per_minute_tokens is not None:
+        per_minute_tokens = int(per_minute_tokens)
+
     return CostConfig(
         budget_usd=raw.get("budget_usd"),
         per_call_limit_usd=raw.get("per_call_limit_usd"),
+        per_session_limit_usd=raw.get("per_session_limit_usd"),
+        per_minute_tokens=per_minute_tokens,
+        daily_budget_usd=raw.get("daily_budget_usd"),
         alert_threshold=float(raw.get("alert_threshold", 0.8)),
+        on_exceed=str(raw.get("on_exceed", "block")),
     )
 
 
@@ -265,4 +312,16 @@ def _parse_integrations(raw: Any) -> IntegrationsConfig | None:
     return IntegrationsConfig(
         auto_patch=[str(p) for p in auto_patch],
         on_block=str(raw.get("on_block", "raise")),
+    )
+
+
+def _parse_drift(raw: Any) -> DriftConfig | None:
+    if raw is None or not isinstance(raw, dict):
+        return None
+    baselines = raw.get("baselines")
+    if not isinstance(baselines, list):
+        baselines = []
+    return DriftConfig(
+        enabled=bool(raw.get("enabled", False)),
+        baselines=[dict(b) for b in baselines if isinstance(b, dict)],
     )

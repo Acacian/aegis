@@ -126,15 +126,18 @@ def auto_instrument(
     on_block: str = "raise",
     audit: bool = True,
     frameworks: list[str] | None = None,
+    cost: Any = None,
 ) -> InstrumentationReport:
     """Instrument all detected AI frameworks with Aegis governance.
 
     This is the main entry point. It:
 
     1. Builds a guardrail engine (injection + toxicity + PII + prompt leak).
-    2. Detects which frameworks are installed.
-    3. Monkey-patches their core methods to run guardrails on I/O.
-    4. Also patches raw OpenAI/Anthropic clients.
+    2. Optionally creates a :class:`~aegis.core.cost_policy.CostPolicyEnforcer`
+       for cost governance.
+    3. Detects which frameworks are installed.
+    4. Monkey-patches their core methods to run guardrails on I/O.
+    5. Also patches raw OpenAI/Anthropic clients.
 
     Args:
         guardrails: Guardrail configuration.
@@ -150,6 +153,9 @@ def auto_instrument(
             Valid names: ``"langchain"``, ``"crewai"``, ``"openai_agents"``,
             ``"litellm"``, ``"google_genai"``, ``"pydantic_ai"``,
             ``"llamaindex"``, ``"instructor"``, ``"dspy"``.
+        cost: Cost governance configuration.  Accepts a
+            :class:`~aegis.config.CostConfig` instance or ``None``
+            to disable cost tracking.
 
     Returns:
         An :class:`InstrumentationReport` summarizing what was patched.
@@ -165,7 +171,20 @@ def auto_instrument(
 
     # Build guardrail engine
     engine = resolve_guardrails(guardrails)
-    state.configure(guardrail_engine=engine, on_block=on_block, audit=audit)
+
+    # Build cost enforcer if cost config provided
+    cost_enforcer = None
+    if cost is not None:
+        from aegis.core.cost_policy import CostPolicyEnforcer
+
+        cost_enforcer = CostPolicyEnforcer(cost)
+
+    state.configure(
+        guardrail_engine=engine,
+        cost_enforcer=cost_enforcer,
+        on_block=on_block,
+        audit=audit,
+    )
 
     # Determine which frameworks to patch
     targets = list(frameworks) if frameworks else list(_FRAMEWORK_REGISTRY.keys())

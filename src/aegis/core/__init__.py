@@ -36,6 +36,19 @@ _LAZY_IMPORTS: dict[str, str] = {
     "AnomalyDetector": "aegis.core.anomaly",
     "AnomalyResult": "aegis.core.anomaly",
     "BehaviorProfile": "aegis.core.anomaly",
+    # drift
+    "DriftAction": "aegis.core.drift",
+    "DriftBaseline": "aegis.core.drift",
+    "DriftDetector": "aegis.core.drift",
+    "DriftMetricConfig": "aegis.core.drift",
+    "DriftResult": "aegis.core.drift",
+    "DriftSeverity": "aegis.core.drift",
+    "DriftType": "aegis.core.drift",
+    "HistoricalSnapshot": "aegis.core.drift",
+    # drift_policy
+    "DriftPolicyDecision": "aegis.core.drift_policy",
+    "DriftPolicyEvaluator": "aegis.core.drift_policy",
+    "DriftPolicyRule": "aegis.core.drift_policy",
     # budget
     "BudgetAction": "aegis.core.budget",
     "BudgetExhausted": "aegis.core.budget",
@@ -53,6 +66,14 @@ _LAZY_IMPORTS: dict[str, str] = {
     # cost_attribution
     "AgentCostNode": "aegis.core.cost_attribution",
     "CostAttributionTree": "aegis.core.cost_attribution",
+    # cost_policy
+    "CostAction": "aegis.core.cost_policy",
+    "CostDecision": "aegis.core.cost_policy",
+    "CostPolicyEnforcer": "aegis.core.cost_policy",
+    # model_pricing
+    "estimate_call_cost": "aegis.core.model_pricing",
+    "get_pricing": "aegis.core.model_pricing",
+    "list_models": "aegis.core.model_pricing",
     # cost_callbacks
     "AnthropicCostExtractor": "aegis.core.cost_callbacks",
     "GoogleCostExtractor": "aegis.core.cost_callbacks",
@@ -281,6 +302,15 @@ if TYPE_CHECKING:
     from aegis.core.cost_callbacks import (
         OpenAICostExtractor as OpenAICostExtractor,
     )
+    from aegis.core.cost_policy import (
+        CostAction as CostAction,
+    )
+    from aegis.core.cost_policy import (
+        CostDecision as CostDecision,
+    )
+    from aegis.core.cost_policy import (
+        CostPolicyEnforcer as CostPolicyEnforcer,
+    )
     from aegis.core.crypto_audit import (
         AuditEntry as AuditEntry,
     )
@@ -292,6 +322,39 @@ if TYPE_CHECKING:
     )
     from aegis.core.crypto_audit import (
         VerificationResult as VerificationResult,
+    )
+    from aegis.core.drift import (
+        DriftAction as DriftAction,
+    )
+    from aegis.core.drift import (
+        DriftBaseline as DriftBaseline,
+    )
+    from aegis.core.drift import (
+        DriftDetector as DriftDetector,
+    )
+    from aegis.core.drift import (
+        DriftMetricConfig as DriftMetricConfig,
+    )
+    from aegis.core.drift import (
+        DriftResult as DriftResult,
+    )
+    from aegis.core.drift import (
+        DriftSeverity as DriftSeverity,
+    )
+    from aegis.core.drift import (
+        DriftType as DriftType,
+    )
+    from aegis.core.drift import (
+        HistoricalSnapshot as HistoricalSnapshot,
+    )
+    from aegis.core.drift_policy import (
+        DriftPolicyDecision as DriftPolicyDecision,
+    )
+    from aegis.core.drift_policy import (
+        DriftPolicyEvaluator as DriftPolicyEvaluator,
+    )
+    from aegis.core.drift_policy import (
+        DriftPolicyRule as DriftPolicyRule,
     )
     from aegis.core.leakage_detector import (
         LeakageDetector as LeakageDetector,
@@ -445,6 +508,15 @@ if TYPE_CHECKING:
     )
     from aegis.core.mcp_vuln_db import (
         VulnFinding as VulnFinding,
+    )
+    from aegis.core.model_pricing import (
+        estimate_call_cost as estimate_call_cost,
+    )
+    from aegis.core.model_pricing import (
+        get_pricing as get_pricing,
+    )
+    from aegis.core.model_pricing import (
+        list_models as list_models,
     )
     from aegis.core.otel_export import (
         AegisEvent as AegisEvent,

@@ -263,6 +263,11 @@ def main(argv: list[str] | None = None) -> None:
 
     _register_test(subparsers)
 
+    # aegis compliance-report  (evidence auto-generation)
+    from aegis.cli.compliance_cmd import register as _register_compliance_report
+
+    _register_compliance_report(subparsers)
+
     # aegis compliance
     compliance_parser = subparsers.add_parser(
         "compliance",
@@ -417,6 +422,10 @@ def main(argv: list[str] | None = None) -> None:
         from aegis.cli.test_cmd import run as _run_test
 
         _run_test(args)
+    elif args.command == "compliance-report":
+        from aegis.cli.compliance_cmd import run as _run_compliance_report
+
+        _run_compliance_report(args)
     elif args.command == "compliance":
         _cmd_compliance(args)
     elif args.command == "stats":
