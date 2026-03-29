@@ -429,6 +429,23 @@ def _build_patterns() -> list[_PIIPattern]:
         )
     )
 
+    # -- 13. IBAN (International Bank Account Number) --------------------------
+    # 2-letter country code + 2 check digits + up to 30 alphanumeric chars.
+    # Handles compact (DE89370400440532013000) and spaced/dashed formats
+    # (GB29 NWBK 6016 1331 9268 19).
+    patterns.append(
+        (
+            "iban",
+            re.compile(
+                r"\b[A-Z]{2}[0-9]{2}"  # country code + check digits
+                r"(?:[ \-]?[A-Za-z0-9]{4}){2,8}"  # BBAN groups
+                r"(?:[ \-]?[A-Za-z0-9]{1,4})?\b",  # optional trailing
+            ),
+            "high",
+            "IBAN (International Bank Account Number)",
+        )
+    )
+
     return patterns
 
 
@@ -475,6 +492,29 @@ def _luhn_check(number: str) -> bool:
                 d -= 9
         total += d
     return total % 10 == 0
+
+
+def _iban_check(iban: str) -> bool:
+    """Validate an IBAN using the mod-97 algorithm (ISO 7064).
+
+    Strips spaces and dashes, moves the first 4 chars to the end,
+    converts letters to digits (A=10..Z=35), then checks mod 97 == 1.
+    """
+    cleaned = iban.replace(" ", "").replace("-", "").upper()
+    if len(cleaned) < 15 or len(cleaned) > 34:
+        return False
+    if not cleaned[:2].isalpha() or not cleaned[2:4].isdigit():
+        return False
+    rearranged = cleaned[4:] + cleaned[:4]
+    numeric = ""
+    for ch in rearranged:
+        if ch.isdigit():
+            numeric += ch
+        elif ch.isalpha():
+            numeric += str(ord(ch) - ord("A") + 10)
+        else:
+            return False
+    return int(numeric) % 97 == 1
 
 
 # ---------------------------------------------------------------------------
@@ -576,6 +616,10 @@ class PIIGuardrail:
 
                 # Extra validation for credit cards: Luhn check.
                 if cat == "credit_card" and self._luhn_validate and not _luhn_check(matched_text):
+                    continue
+
+                # Extra validation for IBANs: mod-97 check.
+                if cat == "iban" and not _iban_check(matched_text):
                     continue
 
                 masked = self._mask_text(matched_text, cat)
