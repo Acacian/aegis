@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import base64
 import codecs
+import functools
 import re
 import unicodedata
 from dataclasses import dataclass, field
@@ -1029,6 +1030,21 @@ class InjectionGuardrail:
             if filtered:
                 self._patterns[cat] = filtered
 
+        # Build combined regex per category for O(categories) matching
+        # instead of O(total_patterns).  Each individual pattern becomes
+        # a named group so we can recover which pattern matched.
+        # Build combined regex per category for O(categories) matching.
+        self._combined: dict[str, tuple[re.Pattern[str], dict[str, PatternEntry]]] = {}
+        for cat, entries in self._patterns.items():
+            group_map: dict[str, PatternEntry] = {}
+            parts: list[str] = []
+            for idx, entry in enumerate(entries):
+                gname = f"p{idx}"
+                group_map[gname] = entry
+                parts.append(f"(?P<{gname}>{entry[1].pattern})")
+            combined = re.compile("|".join(parts), re.IGNORECASE)
+            self._combined[cat] = (combined, group_map)
+
     # ------------------------------------------------------------------
     # Core detection
     # ------------------------------------------------------------------
@@ -1036,8 +1052,8 @@ class InjectionGuardrail:
     def detect(self, content: str) -> list[InjectionMatch]:
         """Scan *content* for injection patterns and return all matches.
 
-        Applies Unicode normalization and optionally checks for encoding
-        evasion (base64, ROT13, leetspeak).
+        Results are cached (LRU, 256 entries) so repeated checks on the
+        same content are O(1).
 
         Args:
             content: The text to scan for injection patterns.
@@ -1046,6 +1062,11 @@ class InjectionGuardrail:
             A list of :class:`InjectionMatch` objects for each detected
             pattern. Empty list when no injections are found.
         """
+        return list(self._detect_cached(content))
+
+    @functools.lru_cache(maxsize=256)  # noqa: B019
+    def _detect_cached(self, content: str) -> tuple[InjectionMatch, ...]:
+        """Internal cached detection — returns a tuple for hashability."""
         normalized = _normalize_text(content)
         matches: list[InjectionMatch] = []
 
@@ -1053,7 +1074,7 @@ class InjectionGuardrail:
         matches.extend(self._scan_patterns(normalized))
 
         # Encoding evasion: check decoded content for nested injections
-        if "encoding_evasion" in self._patterns:
+        if "encoding_evasion" in self._combined:
             matches.extend(self._check_encoding_evasion(content, normalized))
 
         # Deduplicate matches at same position/category
@@ -1065,22 +1086,28 @@ class InjectionGuardrail:
                 seen.add(key)
                 unique.append(m)
 
-        return unique
+        return tuple(unique)
 
     def _scan_patterns(self, text: str) -> list[InjectionMatch]:
-        """Run all active patterns against text."""
+        """Run combined regex per category against text.
+
+        Uses one compiled alternation per category with named groups
+        to recover the original pattern name and confidence.
+        """
         matches: list[InjectionMatch] = []
-        for category, entries in self._patterns.items():
-            for pattern_name, regex, confidence, _sensitivity in entries:
-                for m in regex.finditer(text):
+        for category, (combined, group_map) in self._combined.items():
+            for m in combined.finditer(text):
+                gname = m.lastgroup
+                if gname and gname in group_map:
+                    entry = group_map[gname]
                     matches.append(
                         InjectionMatch(
                             category=category,
-                            pattern_name=pattern_name,
+                            pattern_name=entry[0],
                             matched_text=m.group(),
                             start=m.start(),
                             end=m.end(),
-                            confidence=confidence,
+                            confidence=entry[2],
                         )
                     )
         return matches

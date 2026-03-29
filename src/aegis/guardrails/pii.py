@@ -22,6 +22,7 @@ Standalone usage — no dependency on the base guardrail interface.
 
 from __future__ import annotations
 
+import functools
 import re
 from dataclasses import dataclass, field
 
@@ -602,12 +603,20 @@ class PIIGuardrail:
         Returns a list of :class:`PIIMatch` instances sorted by start
         position. Overlapping matches are deduplicated (longest match wins).
 
+        Results are cached (LRU, 256 entries) so repeated checks on the
+        same content are O(1).
+
         Args:
             content: The text to scan for PII.
 
         Returns:
             List of PII matches found, ordered by position.
         """
+        return list(self._detect_cached(content))
+
+    @functools.lru_cache(maxsize=256)  # noqa: B019
+    def _detect_cached(self, content: str) -> tuple[PIIMatch, ...]:
+        """Internal cached detection — returns a tuple for hashability."""
         raw_matches: list[PIIMatch] = []
 
         for cat, pattern, _sev, _desc in self._active_patterns:
@@ -634,7 +643,7 @@ class PIIGuardrail:
                 )
 
         # Deduplicate overlapping matches: keep the longest span.
-        return self._deduplicate(raw_matches)
+        return tuple(self._deduplicate(raw_matches))
 
     # -- Guardrail interface --------------------------------------------------
 
