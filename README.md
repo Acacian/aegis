@@ -2,10 +2,10 @@
 <p align="center">
   <h1 align="center">Aegis</h1>
   <p align="center">
-    <strong>OpenTelemetry for AI agent security.<br/>Auto-instrument any AI framework with runtime security — zero code changes.</strong>
+    <strong>Policy CI/CD for AI agents — the <code>terraform plan</code> for AI agent security.<br/>Auto-instrument 11 frameworks with runtime guardrails, policy testing, and audit trail — zero code changes.</strong>
   </p>
   <p align="center">
-    <code>pip install agent-aegis</code> and add <b>one line</b>. Aegis monkey-patches LangChain, CrewAI, OpenAI Agents SDK, OpenAI, and Anthropic at runtime — every LLM call and tool invocation passes through prompt-injection detection, PII masking, and a full audit trail. Governs what agents <b>do</b> (actions, tool calls, data access), not what they <b>say</b>. No refactoring. No infra. All checks are deterministic and sub-millisecond.
+    <code>pip install agent-aegis</code> and add <b>one line</b>. Aegis monkey-patches LangChain, CrewAI, OpenAI Agents SDK, OpenAI, Anthropic, LiteLLM, Google GenAI, Pydantic AI, LlamaIndex, Instructor, and DSPy at runtime — every LLM call and tool invocation passes through prompt-injection detection, PII masking, and a full audit trail. Preview policy changes with <code>aegis plan</code>, regression-test with <code>aegis test</code>, and gate CI/CD merges — like <code>terraform plan</code> for AI governance. Governs what agents <b>do</b> (actions, tool calls, data access), not what they <b>say</b>. No refactoring. No infra. All checks are deterministic and sub-millisecond.
   </p>
 </p>
 
@@ -17,7 +17,7 @@
   <a href="https://github.com/Acacian/aegis/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License"></a>
   <a href="https://acacian.github.io/aegis/"><img src="https://img.shields.io/badge/docs-acacian.github.io%2Faegis-blue" alt="Docs"></a>
   <br/>
-  <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-3860%2B_passed-brightgreen" alt="Tests"></a>
+  <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-4650%2B_passed-brightgreen" alt="Tests"></a>
   <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/coverage-92%25-brightgreen" alt="Coverage"></a>
   <a href="https://acacian.github.io/aegis/playground/"><img src="https://img.shields.io/badge/playground-Try_it_Live-ff6b6b" alt="Playground"></a>
   <a href="https://www.bestpractices.dev/projects/12253"><img src="https://www.bestpractices.dev/projects/12253/badge" alt="OpenSSF Best Practices"></a>
@@ -25,6 +25,7 @@
 
 <p align="center">
   <a href="#auto-instrumentation"><strong>Auto-Instrumentation</strong></a> &bull;
+  <a href="#policy-cicd"><strong>Policy CI/CD</strong></a> &bull;
   <a href="#quick-start">Quick Start</a> &bull;
   <a href="#supported-frameworks">Supported Frameworks</a> &bull;
   <a href="#three-pillars">Three Pillars</a> &bull;
@@ -49,8 +50,9 @@ Add AI safety to any project in 30 seconds. No refactoring, no wrappers, no conf
 import aegis
 aegis.auto_instrument()
 
-# That's it. Every LangChain, CrewAI, OpenAI Agents SDK, OpenAI API,
-# and Anthropic API call in your application now passes through:
+# That's it. Every LangChain, CrewAI, OpenAI, Anthropic, LiteLLM,
+# Google GenAI, Pydantic AI, LlamaIndex, Instructor, and DSPy
+# call in your application now passes through:
 #   - Prompt injection detection (blocks attacks)
 #   - PII detection (warns on personal data exposure)
 #   - Prompt leak detection (warns on system prompt extraction)
@@ -64,7 +66,7 @@ Or zero code changes — just set an environment variable:
 AEGIS_INSTRUMENT=1 python my_agent.py
 ```
 
-Aegis monkey-patches framework internals at import time, the same approach used by OpenTelemetry for observability and Sentry for error tracking. Your existing code stays untouched.
+Aegis monkey-patches framework internals at import time, the same approach used by Sentry for error tracking. Your existing code stays untouched.
 
 ### How It Works
 
@@ -102,7 +104,7 @@ All guardrails are deterministic (no LLM calls), sub-millisecond, and require ze
 | Guardrail | Default action | What it catches |
 |-----------|---------------|-----------------|
 | **Prompt injection** | Block | 10 attack categories, 85+ patterns, multi-language (EN/KO/ZH/JA) |
-| **PII detection** | Warn | 12 categories (email, credit card, SSN, API keys, etc.) |
+| **PII detection** | Warn | 13 categories (email, credit card, SSN, IBAN, API keys, etc.) |
 | **Prompt leak** | Warn | System prompt extraction attempts |
 | **Toxicity** | Warn (opt-in to block) | Harmful, violent, or abusive content |
 
@@ -134,6 +136,57 @@ reset()
 
 ---
 
+## Policy CI/CD
+
+**No one else does this.** Security tools protect at runtime. Aegis also manages the policy lifecycle — preview changes, test for regressions, and gate CI/CD merges before anything reaches production.
+
+### `aegis plan` — Preview impact before deploying
+
+Like `terraform plan` for AI agent policies. Replays historical audit data to show exactly what would change.
+
+```bash
+aegis plan current.yaml proposed.yaml --audit-db aegis_audit.db
+
+# Policy Impact Analysis
+# =====================
+#   Rules: 2 added, 1 removed, 3 modified
+#   Impact (replayed 1,247 actions):
+#     23 actions would change from AUTO → BLOCK
+#      7 actions would change from APPROVE → BLOCK
+#
+#   CI mode: aegis plan current.yaml proposed.yaml --ci  (exit 1 if breaking)
+```
+
+### `aegis test` — Regression testing for policies
+
+Define expected outcomes, auto-generate test suites, catch unintended side effects.
+
+```bash
+# Auto-generate test suite from policy
+aegis test policy.yaml --generate --generate-output tests.yaml
+
+# Run in CI — exit 1 on failure
+aegis test policy.yaml tests.yaml
+
+# Regression test between old and new policy
+aegis test new-policy.yaml tests.yaml --regression old-policy.yaml
+```
+
+### CI/CD Integration
+
+```yaml
+# .github/workflows/policy-check.yml
+- uses: Acacian/aegis@main
+  with:
+    policy: aegis.yaml
+    tests: tests.yaml
+    fail-on-regression: true
+```
+
+Policy changes get the same rigor as code changes: diff, test, review, merge.
+
+---
+
 ## Quick Start
 
 ### Step 1: Install
@@ -149,7 +202,7 @@ pip install agent-aegis
 ```python
 import aegis
 aegis.auto_instrument()
-# Every LangChain/CrewAI/OpenAI/Anthropic call is now governed.
+# All 11 supported frameworks are now governed.
 ```
 
 **Level 2: Init with full security stack** -- guardrails + policy engine + audit:
@@ -257,7 +310,7 @@ Content-level protection that runs on every input and output automatically.
 
 | Capability | Detail |
 |------------|--------|
-| **PII detection & masking** | 12 categories (email, credit card, SSN, Korean RRN, API keys, etc.) with Luhn validation |
+| **PII detection & masking** | 13 categories (email, credit card, SSN, IBAN, Korean RRN, API keys, etc.) with Luhn/mod-97 validation |
 | **Prompt injection blocking** | 10 attack categories, 85+ patterns, multi-language (English, Korean, Chinese, Japanese) |
 | **Rule pack ecosystem** | Extensible via community YAML packs (`@aegis/pii-detection`, `@aegis/prompt-injection`) |
 | **Configurable actions** | `mask`, `block`, `warn`, `log` — per deployment, per category |
@@ -395,13 +448,14 @@ aegis audit --format jsonl -o export.jsonl  # Export
 
 | | |
 |---|---|
-| **Auto-instrumentation** | `aegis.auto_instrument()` — monkey-patches LangChain, CrewAI, OpenAI Agents SDK, OpenAI, Anthropic. Zero code changes to your app. |
-| **Runtime guardrails** | PII detection (12 categories) + prompt injection blocking (10 categories, 85+ patterns, multi-language) + toxicity + prompt leak |
+| **Auto-instrumentation** | `aegis.auto_instrument()` — monkey-patches 11 frameworks (LangChain, CrewAI, OpenAI, Anthropic, LiteLLM, Google GenAI, Pydantic AI, LlamaIndex, Instructor, DSPy). Zero code changes. |
+| **Runtime guardrails** | PII detection (13 categories, incl. IBAN) + prompt injection blocking (10 categories, 85+ patterns, multi-language) + toxicity + prompt leak |
 | **One-line activation** | `aegis.auto_instrument()` — guardrails, policy engine, audit, cost tracking, all active |
 | **YAML policies** | Glob matching, first-match-wins, smart conditions (`time_after`, `param_gt`, `weekdays`, regex, etc.) |
 | **4-tier risk model** | `low` / `medium` / `high` / `critical` with per-rule overrides |
 | **Approval gates** | CLI, Slack, Discord, Telegram, email, webhook, or custom |
 | **Audit trail** | Automatic SQLite logging. Export: JSONL, webhook, or query via CLI/API |
+| **Policy CI/CD** | `aegis plan` (terraform plan for policies) + `aegis test` (regression testing) + GitHub Action — no other tool does this |
 | **Env var activation** | `AEGIS_INSTRUMENT=1` — add security via environment variable, no code changes at all |
 | **7 adapters** | LangChain, CrewAI, OpenAI Agents, Anthropic, MCP, Playwright, httpx |
 | **REST API + Dashboard** | `aegis serve policy.yaml` — web UI with KPIs, audit log, compliance reports |
@@ -479,7 +533,7 @@ Aegis includes production-grade content guardrails that run on every prompt and 
 
 ### PII Detection & Masking
 
-12 PII categories with compiled regex patterns and secondary validation (Luhn algorithm for credit cards):
+13 PII categories with compiled regex patterns and secondary validation (Luhn algorithm for credit cards, mod-97 for IBAN):
 
 | Category | Examples | Severity |
 |----------|----------|----------|
@@ -488,6 +542,7 @@ Aegis includes production-grade content guardrails that run on every prompt and 
 | SSN | US Social Security Number | critical |
 | Korean RRN | Resident Registration Number (주민등록번호) | critical |
 | Korean phone | Mobile + landline + international format | high |
+| IBAN | International Bank Account Number with mod-97 validation | critical |
 | API keys | OpenAI, AWS, GitHub, Slack, Bearer tokens, generic secrets | critical |
 | IP address | IPv4 with octet validation | medium |
 | Passport | With keyword context | critical |
@@ -566,7 +621,7 @@ policy = Policy.from_yaml("policies/crm-agent.yaml")
 
 | Aspect | Detail |
 |--------|--------|
-| **3,860+ tests, 92% coverage** | Every adapter, handler, and edge case tested |
+| **4,650+ tests, 92% coverage** | Every adapter, handler, and edge case tested |
 | **Type-safe** | `mypy --strict` with zero errors, `py.typed` marker |
 | **Performance** | Lazy imports — `import aegis` loads 20 modules (not 67); policy evaluation < 1ms (LRU-cached); O(log n) timestamp pruning; SQLite WAL mode; `execute(parallel=True)` for concurrent actions |
 | **Fail-safe** | Blocked actions never execute; can't be bypassed without policy change |
@@ -1309,7 +1364,7 @@ aegis/
   core/policy_git    Policy-as-code Git integration -- diff, impact analysis, drift detection
   core/otel_export   OpenTelemetry export -- governance events → OTel spans
   core/session_replay  Session replay -- record/replay with retroactive security scanning
-  guardrails/        Runtime content guardrails -- PII detection (12 categories), injection detection (10 categories, 85+ patterns)
+  guardrails/        Runtime content guardrails -- PII detection (13 categories), injection detection (10 categories, 85+ patterns)
   specs/agef/        AGEF (Agent Governance Event Format) -- JSON schema for governance events
   specs/agp/         AGP (Agent Governance Protocol) -- communication protocol for agent governance
   adapters/          BaseExecutor, Playwright, httpx, LangChain, CrewAI, OpenAI, Anthropic, MCP
@@ -1325,7 +1380,8 @@ aegis/
 |---|---|---|---|---|
 | **Setup** | Days of if/else | Vendor-specific config | Kubernetes + procurement | **`pip install` + one line** |
 | **Code changes** | Wrap every call | SDK-specific integration | Months of integration | **Zero — auto-instruments at runtime** |
-| **Cross-framework** | Rewrite per framework | Their ecosystem only | Usually single-vendor | **LangChain + CrewAI + OpenAI + Anthropic + MCP** |
+| **Cross-framework** | Rewrite per framework | Their ecosystem only | Usually single-vendor | **11 frameworks — LangChain to DSPy** |
+| **Policy CI/CD** | None | None | None | **`aegis plan` + `aegis test` + GitHub Action** |
 | **Audit trail** | printf debugging | Platform logs only | Cloud dashboard | **SQLite + JSONL + webhooks — local, no infra** |
 | **Compliance** | Manual documentation | None | Enterprise sales cycle | **EU AI Act, NIST, SOC2, ISO 42001 built-in** |
 | **Cost** | Engineering time | Free-to-$$$ per vendor | $$$$ + infra | **Free (MIT). Forever.** |
@@ -1372,6 +1428,7 @@ aegis probe policy.yaml                            # Adversarial policy testing
 | **0.4.1** | **Released** | 13 performance & correctness fixes: LRU cache, O(log n) bisect pruning, SQLite WAL + indexes, parallel `execute()`, async guardrails, multi-anomaly `check_all()`, cache key correctness, lock leak fix, batch flush race fix |
 | **0.4.2** | **Released** | **Auto-instrumentation** (`aegis.auto_instrument()`) — zero-code monkey-patching for LangChain, CrewAI, OpenAI Agents SDK, OpenAI API, Anthropic API. `AEGIS_INSTRUMENT=1` env var. Default guardrails (injection/toxicity/PII/prompt leak). Per-framework `patch_`/`unpatch_` + `status()`/`reset()` |
 | **0.5** | **Released** | Auto-instrumentation for LiteLLM, Google GenAI, Pydantic AI, LlamaIndex, Instructor, DSPy. Centralized policy server, rule pack registry, cross-agent audit correlation |
+| **0.6** | **Released** | Security hardening (18 vulnerabilities fixed): fail-closed defaults, API auth middleware, audit data sanitization, SSRF/ReDoS/TOCTOU protection. IBAN PII detection with mod-97 validation. Policy CI/CD enhancements (impact analysis, test runner, GitHub Action) |
 | **1.0** | 2027 | Distributed security, hosted SaaS, SSO/SCIM |
 
 ## Contributing
@@ -1413,6 +1470,6 @@ Copyright (c) 2026 구동하 (Dongha Koo, [@Acacian](https://github.com/Acacian)
 ---
 
 <p align="center">
-  <sub>OpenTelemetry for AI safety. Built for the era of autonomous AI agents.</sub><br/>
+  <sub>Policy CI/CD for AI agents. Built for the era of autonomous AI agents.</sub><br/>
   <sub>If Aegis helps you, consider giving it a star -- it helps others find it too.</sub>
 </p>

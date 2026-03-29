@@ -1,12 +1,12 @@
 <p align="center">
   <h1 align="center">Aegis</h1>
   <p align="center">
-    <strong>오픈소스 AI 에이전트 보안 프레임워크.<br/>가드레일 + 정책 + 프로토콜 — <code>aegis.auto_instrument()</code> 하나로 에이전트를 보호합니다.</strong>
+    <strong>AI 에이전트를 위한 Policy CI/CD — AI 에이전트 보안의 <code>terraform plan</code>.<br/>11개 프레임워크에 런타임 가드레일, 정책 테스팅, 감사 추적을 코드 변경 없이 적용합니다.</strong>
   </p>
   <p align="center">
     런타임 가드레일 (PII, 인젝션) + 정책 엔진 (YAML 규칙, 승인 게이트) + 개방형 표준 (AGEF/AGP).<br/>
     <code>pip install agent-aegis</code> &#8594; <code>aegis.auto_instrument()</code> &#8594; 모든 AI 호출에 보안 적용.<br/>
-    <strong>LangChain, CrewAI, OpenAI, Anthropic, MCP 등 7개 프레임워크 지원.</strong>
+    <strong>LangChain, CrewAI, OpenAI, Anthropic, LiteLLM, Google GenAI, Pydantic AI, LlamaIndex, Instructor, DSPy — 11개 프레임워크 지원.</strong>
   </p>
 </p>
 
@@ -18,7 +18,7 @@
   <a href="https://acacian.github.io/aegis/"><img src="https://img.shields.io/badge/docs-acacian.github.io%2Faegis-blue" alt="Docs"></a>
   <br/>
   <a href="https://pypi.org/project/langchain-aegis/"><img src="https://img.shields.io/pypi/v/langchain-aegis?label=langchain-aegis&color=blue&cacheSeconds=3600" alt="langchain-aegis"></a>
-  <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-3860%2B_passed-brightgreen" alt="Tests"></a>
+  <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-4650%2B_passed-brightgreen" alt="Tests"></a>
   <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/coverage-92%25-brightgreen" alt="Coverage"></a>
   <a href="https://acacian.github.io/aegis/playground/"><img src="https://img.shields.io/badge/playground-브라우저에서_체험-ff6b6b" alt="Playground"></a>
   <a href="https://www.bestpractices.dev/projects/12253"><img src="https://www.bestpractices.dev/projects/12253/badge" alt="OpenSSF Best Practices"></a>
