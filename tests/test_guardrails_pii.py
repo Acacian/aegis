@@ -398,6 +398,53 @@ class TestPIIActions:
 # -- Repr and properties ----------------------------------------------------
 
 
+class TestPIIIBAN:
+    """IBAN detection tests — issue #30."""
+
+    def test_german_iban_compact(self):
+        g = PIIGuardrail(categories=["iban"])
+        result = g.check("Transfer to DE89370400440532013000")
+        assert result.detected
+        assert "iban" in result.categories_found
+
+    def test_uk_iban_spaced(self):
+        g = PIIGuardrail(categories=["iban"])
+        result = g.check("Account: GB29 NWBK 6016 1331 9268 19")
+        assert result.detected
+        assert "iban" in result.categories_found
+
+    def test_french_iban_spaced(self):
+        g = PIIGuardrail(categories=["iban"])
+        result = g.check("IBAN: FR76 3000 6000 0112 3456 7890 189")
+        assert result.detected
+
+    def test_dutch_iban(self):
+        g = PIIGuardrail(categories=["iban"])
+        result = g.check("NL91ABNA0417164300")
+        assert result.detected
+
+    def test_spanish_iban(self):
+        g = PIIGuardrail(categories=["iban"])
+        result = g.check("ES91 2100 0418 4502 0005 1332")
+        assert result.detected
+
+    def test_invalid_iban_mod97(self):
+        g = PIIGuardrail(categories=["iban"])
+        result = g.check("DE00000000000000000000")
+        assert not result.detected
+
+    def test_iban_masked(self):
+        g = PIIGuardrail(categories=["iban"], action="mask")
+        result = g.check_and_transform("Pay to DE89370400440532013000 please")
+        assert "DE89370400440532013000" not in result.content
+        assert "***" in result.content
+
+    def test_iban_dashed_format(self):
+        g = PIIGuardrail(categories=["iban"])
+        result = g.check("GB29-NWBK-6016-1331-9268-19")
+        assert result.detected
+
+
 class TestPIIMisc:
     def test_repr(self):
         g = PIIGuardrail()
