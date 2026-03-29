@@ -20,6 +20,11 @@ from aegis.core.diff import (
     analyze_impact,
     diff_policies,
 )
+from aegis.core.plan_impact import (
+    ImpactReport,
+    PolicyImpactAnalyzer,
+    parse_period,
+)
 from aegis.core.policy import Approval, Policy, PolicyRule
 from aegis.core.replay import (
     ReplayEngine,
@@ -78,6 +83,11 @@ def register(subparsers: argparse._SubParsersAction) -> None:  # type: ignore[ty
         help="Output format (default: table)",
     )
     plan_parser.add_argument(
+        "--period",
+        metavar="PERIOD",
+        help="Filter audit data by time period (e.g., '30d', '7d', '2026-Q1')",
+    )
+    plan_parser.add_argument(
         "--ci",
         action="store_true",
         default=False,
@@ -122,20 +132,41 @@ def run(args: argparse.Namespace) -> None:
     # Phase 1: Diff rules
     diff_result = diff_policies(old_policy, new_policy)
 
+    # Parse --period if provided
+    period = None
+    if getattr(args, "period", None):
+        try:
+            period = parse_period(args.period)
+        except ValueError as e:
+            print(colors.red(f"Invalid --period: {e}"), file=sys.stderr)
+            sys.exit(1)
+
     # Phase 2: Replay against audit history (if provided)
     replay_report: ReplayReport | None = None
     impact_entries: list[ImpactEntry] = []
+    deep_impact: ImpactReport | None = None
 
     if args.audit_db:
         db_path = Path(args.audit_db)
         if not db_path.exists():
             print(colors.red(f"Audit database not found: {db_path}"), file=sys.stderr)
             sys.exit(1)
+
+        # Deep impact analysis via PolicyImpactAnalyzer
+        analyzer = PolicyImpactAnalyzer()
+        deep_impact = analyzer.analyze_from_db(
+            old_policy,
+            new_policy,
+            db_path,
+            session_id=args.session,
+            period=period,
+        )
+
+        # Also run the existing replay engine for backward compatibility
         events = load_events_from_audit_db(db_path, session_id=args.session)
         if events:
             engine = ReplayEngine(old_policy)
             replay_report = engine.what_if(events, new_policy)
-            # Also build impact entries for action-level detail
             actions = [e.action for e in events]
             impact_entries = analyze_impact(old_policy, new_policy, actions)
     elif args.replay:
@@ -151,16 +182,24 @@ def run(args: argparse.Namespace) -> None:
             impact_entries = analyze_impact(old_policy, new_policy, actions)
 
     if args.fmt == "json":
-        _print_json(diff_result, replay_report, impact_entries)
+        _print_json(diff_result, replay_report, impact_entries, deep_impact)
     else:
-        _print_plan(diff_result, replay_report, impact_entries, old_path.name, new_path.name)
+        _print_plan(
+            diff_result, replay_report, impact_entries, old_path.name, new_path.name, deep_impact
+        )
 
     # CI exit code
     if args.ci:
-        newly_blocked = sum(
-            1 for e in impact_entries if e.new_decision == "block" and e.old_decision != "block"
-        )
-        if newly_blocked:
+        nb = 0
+        if deep_impact:
+            nb = deep_impact.newly_blocked
+        else:
+            nb = sum(
+                1
+                for e in impact_entries
+                if e.new_decision == "block" and e.old_decision != "block"
+            )
+        if nb:
             sys.exit(1)
 
 
@@ -328,6 +367,7 @@ def _print_plan(
     impact: list[ImpactEntry],
     old_name: str,
     new_name: str,
+    deep_impact: ImpactReport | None = None,
 ) -> None:
     """Print a terraform-plan-style output."""
     print()
@@ -380,8 +420,13 @@ def _print_plan(
 
     print()
 
-    # Replay impact
-    if replay and replay.total_events > 0:
+    # Deep impact analysis (new — takes priority when available)
+    if deep_impact and deep_impact.total_actions > 0:
+        print(colors.bold(deep_impact.to_text()))
+        print()
+
+    # Replay impact (existing — shown when no deep impact, or as fallback)
+    elif replay and replay.total_events > 0:
         print(colors.bold(f"Impact on {replay.total_events} historical action(s):"))
         print()
 
@@ -440,11 +485,16 @@ def _print_plan(
 
     print(colors.bold(f"Plan: {', '.join(parts)}."))
 
-    if replay and replay.newly_blocked:
+    nb = 0
+    if deep_impact:
+        nb = deep_impact.newly_blocked
+    elif replay:
+        nb = replay.newly_blocked
+
+    if nb:
         print(
             colors.bright_red(
-                f"\nWARNING: {replay.newly_blocked} previously-allowed action(s) "
-                f"will be BLOCKED by this change."
+                f"\nWARNING: {nb} previously-allowed action(s) will be BLOCKED by this change."
             )
         )
     print()
@@ -459,6 +509,7 @@ def _print_json(
     diff: PolicyDiffResult,
     replay: ReplayReport | None,
     impact: list[ImpactEntry],
+    deep_impact: ImpactReport | None = None,
 ) -> None:
     """Print plan as JSON."""
     data: dict[str, object] = {
@@ -490,6 +541,9 @@ def _print_json(
         },
         "summary": diff.impact_summary,
     }
+
+    if deep_impact:
+        data["impact_analysis"] = deep_impact.to_dict()
 
     if replay:
         data["replay"] = {

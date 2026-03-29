@@ -1,0 +1,45 @@
+# Copy this file to .github/workflows/aegis-policy-ci.yml in your repo.
+#
+# Runs Aegis policy checks on every PR that touches policy files:
+#   1. Validates policy syntax and scores governance coverage
+#   2. Runs the policy test suite (like unit tests for your AI governance rules)
+#   3. Plans policy changes — shows what would break before you merge
+#
+# Requires: a policy file (aegis.yaml) and optionally a test suite YAML.
+# Generate both with: aegis init --with-tests
+
+name: Aegis Policy CI
+
+on:
+  pull_request:
+    paths:
+      - 'aegis.yaml'
+      - 'policy/**'
+      - 'tests/policy_tests.yaml'
+
+jobs:
+  policy-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Validate + score the policy (fails if score < 80)
+      - name: Aegis Policy CI/CD
+        uses: Acacian/aegis@main
+        with:
+          policy-file: 'aegis.yaml'
+          min-score: '80'
+
+  policy-test:
+    runs-on: ubuntu-latest
+    if: hashFiles('tests/policy_tests.yaml') != ''
+    steps:
+      - uses: actions/checkout@v4
+
+      # Run policy test suite — exits 1 on any test failure
+      - name: Aegis Policy Test
+        uses: Acacian/aegis@main
+        with:
+          command: test
+          policy-file: 'aegis.yaml'
+          test-suite: 'tests/policy_tests.yaml'

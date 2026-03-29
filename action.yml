@@ -1,5 +1,6 @@
-name: "Aegis AI Governance Gate"
-description: "Scan for ungoverned AI agent tool calls and enforce governance scores in CI/CD"
+name: "Aegis Policy CI/CD"
+description: "Test AI agent governance policies in CI/CD. The Terraform plan for AI agent security."
+author: "Acacian"
 branding:
   icon: "shield"
   color: "blue"
