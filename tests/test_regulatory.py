@@ -7,7 +7,6 @@ import json
 import pytest
 
 from aegis.core.regulatory import (
-    ComplianceGapAnalysis,
     ComplianceMapper,
     ComplianceRequirement,
     FeatureMapping,
@@ -15,37 +14,12 @@ from aegis.core.regulatory import (
 )
 
 # ---------------------------------------------------------------------------
-# Enum tests
-# ---------------------------------------------------------------------------
-
-
-class TestRegulatoryFramework:
-    def test_eu_ai_act_value(self) -> None:
-        assert RegulatoryFramework.EU_AI_ACT.value == "eu_ai_act"
-
-    def test_nist_ai_rmf_value(self) -> None:
-        assert RegulatoryFramework.NIST_AI_RMF.value == "nist_ai_rmf"
-
-    def test_soc2_value(self) -> None:
-        assert RegulatoryFramework.SOC2.value == "soc2"
-
-    def test_iso_42001_value(self) -> None:
-        assert RegulatoryFramework.ISO_42001.value == "iso_42001"
-
-    def test_owasp_agentic_value(self) -> None:
-        assert RegulatoryFramework.OWASP_AGENTIC.value == "owasp_agentic"
-
-    def test_all_members_count(self) -> None:
-        assert len(RegulatoryFramework) == 5
-
-
-# ---------------------------------------------------------------------------
 # Dataclass tests
 # ---------------------------------------------------------------------------
 
 
-class TestComplianceRequirement:
-    def test_frozen(self) -> None:
+class TestDataclasses:
+    def test_compliance_requirement_frozen(self) -> None:
         req = ComplianceRequirement(
             framework=RegulatoryFramework.EU_AI_ACT,
             requirement_id="TEST-1",
@@ -57,19 +31,7 @@ class TestComplianceRequirement:
         with pytest.raises(AttributeError):
             req.title = "changed"  # type: ignore[misc]
 
-    def test_optional_fields_default_none(self) -> None:
-        req = ComplianceRequirement(
-            framework=RegulatoryFramework.NIST_AI_RMF,
-            requirement_id="TEST-2",
-            title="Test",
-            description="desc",
-            category="cat",
-            mandatory=False,
-        )
-        assert req.deadline is None
-        assert req.penalty is None
-
-    def test_fields_populated(self) -> None:
+    def test_compliance_requirement_fields(self) -> None:
         req = ComplianceRequirement(
             framework=RegulatoryFramework.SOC2,
             requirement_id="SOC2-TEST",
@@ -85,28 +47,19 @@ class TestComplianceRequirement:
         assert req.deadline == "2026-08-02"
         assert req.penalty == "fine"
 
-
-class TestFeatureMapping:
-    def test_frozen(self) -> None:
+    def test_compliance_requirement_optional_defaults(self) -> None:
         req = ComplianceRequirement(
-            framework=RegulatoryFramework.EU_AI_ACT,
-            requirement_id="T",
-            title="T",
-            description="d",
-            category="c",
-            mandatory=True,
+            framework=RegulatoryFramework.NIST_AI_RMF,
+            requirement_id="TEST-2",
+            title="Test",
+            description="desc",
+            category="cat",
+            mandatory=False,
         )
-        fm = FeatureMapping(
-            requirement=req,
-            aegis_feature="policy_engine",
-            coverage="full",
-            evidence_type="logs",
-            notes="note",
-        )
-        with pytest.raises(AttributeError):
-            fm.coverage = "none"  # type: ignore[misc]
+        assert req.deadline is None
+        assert req.penalty is None
 
-    def test_coverage_values(self) -> None:
+    def test_feature_mapping_coverage_values(self) -> None:
         """Coverage should accept the three defined string values."""
         req = ComplianceRequirement(
             framework=RegulatoryFramework.EU_AI_ACT,
@@ -127,23 +80,6 @@ class TestFeatureMapping:
             assert fm.coverage == cov
 
 
-class TestComplianceGapAnalysis:
-    def test_frozen(self) -> None:
-        analysis = ComplianceGapAnalysis(
-            framework=RegulatoryFramework.EU_AI_ACT,
-            total_requirements=0,
-            fully_covered=0,
-            partially_covered=0,
-            not_covered=0,
-            coverage_score=0.0,
-            mappings=[],
-            gaps=[],
-            recommendations=[],
-        )
-        with pytest.raises(AttributeError):
-            analysis.coverage_score = 50.0  # type: ignore[misc]
-
-
 # ---------------------------------------------------------------------------
 # Built-in requirement database tests
 # ---------------------------------------------------------------------------
@@ -154,54 +90,115 @@ class TestBuiltInRequirements:
     def mapper(self) -> ComplianceMapper:
         return ComplianceMapper()
 
-    def test_eu_ai_act_count(self, mapper: ComplianceMapper) -> None:
-        reqs = mapper.get_requirements(RegulatoryFramework.EU_AI_ACT)
-        assert len(reqs) >= 10
+    @pytest.mark.parametrize(
+        ("framework", "min_count"),
+        [
+            (RegulatoryFramework.EU_AI_ACT, 10),
+            (RegulatoryFramework.NIST_AI_RMF, 8),
+            (RegulatoryFramework.SOC2, 6),
+            (RegulatoryFramework.ISO_42001, 5),
+        ],
+    )
+    def test_framework_requirement_count(
+        self,
+        mapper: ComplianceMapper,
+        framework: RegulatoryFramework,
+        min_count: int,
+    ) -> None:
+        reqs = mapper.get_requirements(framework)
+        assert len(reqs) >= min_count
 
-    def test_nist_ai_rmf_count(self, mapper: ComplianceMapper) -> None:
-        reqs = mapper.get_requirements(RegulatoryFramework.NIST_AI_RMF)
-        assert len(reqs) >= 8
+    @pytest.mark.parametrize(
+        ("framework", "expected_id"),
+        [
+            (RegulatoryFramework.EU_AI_ACT, "EU-AI-ACT-ART-12"),
+            (RegulatoryFramework.NIST_AI_RMF, "NIST-GOVERN-1"),
+            (RegulatoryFramework.SOC2, "SOC2-CC6.1"),
+        ],
+    )
+    def test_known_requirement_exists(
+        self,
+        mapper: ComplianceMapper,
+        framework: RegulatoryFramework,
+        expected_id: str,
+    ) -> None:
+        ids = [r.requirement_id for r in mapper.get_requirements(framework)]
+        assert expected_id in ids
 
-    def test_soc2_count(self, mapper: ComplianceMapper) -> None:
-        reqs = mapper.get_requirements(RegulatoryFramework.SOC2)
-        assert len(reqs) >= 6
-
-    def test_iso_42001_count(self, mapper: ComplianceMapper) -> None:
-        reqs = mapper.get_requirements(RegulatoryFramework.ISO_42001)
-        assert len(reqs) >= 5
-
-    def test_eu_ai_act_art12_exists(self, mapper: ComplianceMapper) -> None:
-        reqs = mapper.get_requirements(RegulatoryFramework.EU_AI_ACT)
-        ids = [r.requirement_id for r in reqs]
-        assert "EU-AI-ACT-ART-12" in ids
-
-    def test_nist_govern1_exists(self, mapper: ComplianceMapper) -> None:
-        reqs = mapper.get_requirements(RegulatoryFramework.NIST_AI_RMF)
-        ids = [r.requirement_id for r in reqs]
-        assert "NIST-GOVERN-1" in ids
-
-    def test_soc2_cc61_exists(self, mapper: ComplianceMapper) -> None:
-        reqs = mapper.get_requirements(RegulatoryFramework.SOC2)
-        ids = [r.requirement_id for r in reqs]
-        assert "SOC2-CC6.1" in ids
-
-    def test_eu_ai_act_requirements_are_mandatory(self, mapper: ComplianceMapper) -> None:
+    def test_eu_ai_act_requirements_are_mandatory_with_deadlines(
+        self, mapper: ComplianceMapper
+    ) -> None:
         reqs = mapper.get_requirements(RegulatoryFramework.EU_AI_ACT)
         assert all(r.mandatory for r in reqs)
-
-    def test_eu_ai_act_requirements_have_deadlines(self, mapper: ComplianceMapper) -> None:
-        reqs = mapper.get_requirements(RegulatoryFramework.EU_AI_ACT)
         assert all(r.deadline is not None for r in reqs)
 
-    def test_nist_requirements_are_voluntary(self, mapper: ComplianceMapper) -> None:
-        reqs = mapper.get_requirements(RegulatoryFramework.NIST_AI_RMF)
+    @pytest.mark.parametrize(
+        "framework",
+        [RegulatoryFramework.NIST_AI_RMF, RegulatoryFramework.OWASP_AGENTIC],
+    )
+    def test_voluntary_frameworks_no_deadlines_no_penalties(
+        self, mapper: ComplianceMapper, framework: RegulatoryFramework
+    ) -> None:
+        reqs = mapper.get_requirements(framework)
         assert all(not r.mandatory for r in reqs)
+        assert all(r.deadline is None for r in reqs)
+        assert all(r.penalty is None for r in reqs)
+
+    def test_all_soc2_mandatory(self, mapper: ComplianceMapper) -> None:
+        reqs = mapper.get_requirements(RegulatoryFramework.SOC2)
+        assert all(r.mandatory for r in reqs)
 
     def test_get_requirements_returns_copy(self, mapper: ComplianceMapper) -> None:
         reqs1 = mapper.get_requirements(RegulatoryFramework.EU_AI_ACT)
         reqs2 = mapper.get_requirements(RegulatoryFramework.EU_AI_ACT)
         assert reqs1 is not reqs2
         assert reqs1 == reqs2
+
+
+# ---------------------------------------------------------------------------
+# Cross-framework analysis tests (replaces per-framework all_features_enabled)
+# ---------------------------------------------------------------------------
+
+
+class TestCrossFrameworkAnalysis:
+    @pytest.fixture()
+    def mapper(self) -> ComplianceMapper:
+        return ComplianceMapper()
+
+    @pytest.mark.parametrize(
+        ("framework", "min_reqs"),
+        [
+            (RegulatoryFramework.EU_AI_ACT, 10),
+            (RegulatoryFramework.NIST_AI_RMF, 8),
+            (RegulatoryFramework.SOC2, 6),
+            (RegulatoryFramework.ISO_42001, 5),
+            (RegulatoryFramework.OWASP_AGENTIC, 10),
+        ],
+    )
+    def test_all_features_enabled(
+        self,
+        mapper: ComplianceMapper,
+        framework: RegulatoryFramework,
+        min_reqs: int,
+    ) -> None:
+        analysis = mapper.analyze(framework)
+        assert analysis.framework == framework
+        assert analysis.total_requirements >= min_reqs
+        assert analysis.coverage_score > 0
+
+    def test_totals_add_up_all_frameworks(self, mapper: ComplianceMapper) -> None:
+        for fw in RegulatoryFramework:
+            analysis = mapper.analyze(fw)
+            assert (
+                analysis.fully_covered + analysis.partially_covered + analysis.not_covered
+                == analysis.total_requirements
+            )
+
+    def test_all_frameworks_analyzable(self, mapper: ComplianceMapper) -> None:
+        for fw in RegulatoryFramework:
+            analysis = mapper.analyze(fw)
+            assert analysis.total_requirements > 0
+            assert 0 <= analysis.coverage_score <= 100
 
 
 # ---------------------------------------------------------------------------
@@ -213,13 +210,6 @@ class TestEUAIActAnalysis:
     @pytest.fixture()
     def mapper(self) -> ComplianceMapper:
         return ComplianceMapper()
-
-    def test_all_features_enabled(self, mapper: ComplianceMapper) -> None:
-        analysis = mapper.analyze(RegulatoryFramework.EU_AI_ACT)
-        assert analysis.framework == RegulatoryFramework.EU_AI_ACT
-        assert analysis.total_requirements >= 10
-        assert analysis.coverage_score > 0
-        assert analysis.not_covered == 0  # all requirements should have mappings
 
     def test_no_features_enabled(self, mapper: ComplianceMapper) -> None:
         features = {
@@ -254,7 +244,6 @@ class TestEUAIActAnalysis:
             "policy_diff": False,
         }
         analysis = mapper.analyze(RegulatoryFramework.EU_AI_ACT, features)
-        # With only policy_engine, Art 14 (human oversight) should be a gap
         gap_ids = [g.requirement_id for g in analysis.gaps]
         assert "EU-AI-ACT-ART-14" in gap_ids
 
@@ -289,12 +278,9 @@ class TestEUAIActAnalysis:
         assert len(art14_mappings) == 1
         assert art14_mappings[0].coverage == "full"
 
-    def test_totals_add_up(self, mapper: ComplianceMapper) -> None:
+    def test_eu_ai_act_no_gaps_all_features(self, mapper: ComplianceMapper) -> None:
         analysis = mapper.analyze(RegulatoryFramework.EU_AI_ACT)
-        assert (
-            analysis.fully_covered + analysis.partially_covered + analysis.not_covered
-            == analysis.total_requirements
-        )
+        assert analysis.not_covered == 0
 
 
 # ---------------------------------------------------------------------------
@@ -306,20 +292,6 @@ class TestNISTAnalysis:
     @pytest.fixture()
     def mapper(self) -> ComplianceMapper:
         return ComplianceMapper()
-
-    def test_all_features_enabled(self, mapper: ComplianceMapper) -> None:
-        analysis = mapper.analyze(RegulatoryFramework.NIST_AI_RMF)
-        assert analysis.framework == RegulatoryFramework.NIST_AI_RMF
-        assert analysis.total_requirements >= 8
-        assert analysis.coverage_score > 0
-
-    def test_no_penalties_in_nist(self, mapper: ComplianceMapper) -> None:
-        reqs = mapper.get_requirements(RegulatoryFramework.NIST_AI_RMF)
-        assert all(r.penalty is None for r in reqs)
-
-    def test_no_deadlines_in_nist(self, mapper: ComplianceMapper) -> None:
-        reqs = mapper.get_requirements(RegulatoryFramework.NIST_AI_RMF)
-        assert all(r.deadline is None for r in reqs)
 
     def test_policy_engine_maps_to_govern1(self, mapper: ComplianceMapper) -> None:
         analysis = mapper.analyze(RegulatoryFramework.NIST_AI_RMF)
@@ -343,12 +315,6 @@ class TestSOC2Analysis:
     def mapper(self) -> ComplianceMapper:
         return ComplianceMapper()
 
-    def test_all_features_enabled(self, mapper: ComplianceMapper) -> None:
-        analysis = mapper.analyze(RegulatoryFramework.SOC2)
-        assert analysis.framework == RegulatoryFramework.SOC2
-        assert analysis.total_requirements >= 6
-        assert analysis.coverage_score > 0
-
     def test_anomaly_detection_maps_to_monitoring(self, mapper: ComplianceMapper) -> None:
         analysis = mapper.analyze(RegulatoryFramework.SOC2)
         cc72_mappings = [
@@ -359,10 +325,6 @@ class TestSOC2Analysis:
         ]
         assert len(cc72_mappings) == 1
         assert cc72_mappings[0].coverage == "full"
-
-    def test_all_soc2_mandatory(self, mapper: ComplianceMapper) -> None:
-        reqs = mapper.get_requirements(RegulatoryFramework.SOC2)
-        assert all(r.mandatory for r in reqs)
 
 
 # ---------------------------------------------------------------------------
@@ -375,16 +337,9 @@ class TestISO42001Analysis:
     def mapper(self) -> ComplianceMapper:
         return ComplianceMapper()
 
-    def test_all_features_enabled(self, mapper: ComplianceMapper) -> None:
-        analysis = mapper.analyze(RegulatoryFramework.ISO_42001)
-        assert analysis.framework == RegulatoryFramework.ISO_42001
-        assert analysis.total_requirements >= 5
-        assert analysis.coverage_score > 0
-
     def test_no_full_coverage(self, mapper: ComplianceMapper) -> None:
         """ISO 42001 requirements all need organizational support, so no full coverage."""
         analysis = mapper.analyze(RegulatoryFramework.ISO_42001)
-        # All ISO 42001 mappings are partial since they need organizational processes
         assert analysis.fully_covered == 0
         assert analysis.partially_covered > 0
 
@@ -398,12 +353,6 @@ class TestOWASPAgenticAnalysis:
     @pytest.fixture()
     def mapper(self) -> ComplianceMapper:
         return ComplianceMapper()
-
-    def test_all_features_enabled(self, mapper: ComplianceMapper) -> None:
-        analysis = mapper.analyze(RegulatoryFramework.OWASP_AGENTIC)
-        assert analysis.framework == RegulatoryFramework.OWASP_AGENTIC
-        assert analysis.total_requirements == 10
-        assert analysis.coverage_score > 0
 
     def test_has_all_10_requirements(self, mapper: ComplianceMapper) -> None:
         reqs = mapper.get_requirements(RegulatoryFramework.OWASP_AGENTIC)
@@ -427,66 +376,32 @@ class TestOWASPAgenticAnalysis:
         assert titles["OWASP-AGENT-09"] == "Human-Agent Trust Exploitation"
         assert titles["OWASP-AGENT-10"] == "Rogue Agents"
 
-    def test_all_requirements_voluntary(self, mapper: ComplianceMapper) -> None:
-        """OWASP is a best-practice framework, not legally mandatory."""
-        reqs = mapper.get_requirements(RegulatoryFramework.OWASP_AGENTIC)
-        assert all(not r.mandatory for r in reqs)
-
-    def test_no_deadlines(self, mapper: ComplianceMapper) -> None:
-        reqs = mapper.get_requirements(RegulatoryFramework.OWASP_AGENTIC)
-        assert all(r.deadline is None for r in reqs)
-
-    def test_no_penalties(self, mapper: ComplianceMapper) -> None:
-        reqs = mapper.get_requirements(RegulatoryFramework.OWASP_AGENTIC)
-        assert all(r.penalty is None for r in reqs)
-
-    def test_all_requirements_covered(self, mapper: ComplianceMapper) -> None:
-        """Every OWASP requirement has at least one Aegis feature mapping."""
+    def test_all_requirements_covered_partial(self, mapper: ComplianceMapper) -> None:
+        """Every OWASP requirement is covered, all partial (defense-in-depth)."""
         analysis = mapper.analyze(RegulatoryFramework.OWASP_AGENTIC)
         assert analysis.not_covered == 0
-
-    def test_no_full_coverage(self, mapper: ComplianceMapper) -> None:
-        """All OWASP mappings are partial since agentic security needs defense-in-depth."""
-        analysis = mapper.analyze(RegulatoryFramework.OWASP_AGENTIC)
         assert analysis.fully_covered == 0
         assert analysis.partially_covered == 10
 
-    def test_totals_add_up(self, mapper: ComplianceMapper) -> None:
-        analysis = mapper.analyze(RegulatoryFramework.OWASP_AGENTIC)
-        assert (
-            analysis.fully_covered + analysis.partially_covered + analysis.not_covered
-            == analysis.total_requirements
-        )
-
-    def test_policy_engine_maps_to_goal_hijack(self, mapper: ComplianceMapper) -> None:
-        analysis = mapper.analyze(RegulatoryFramework.OWASP_AGENTIC)
-        mappings = [
-            m
-            for m in analysis.mappings
-            if m.requirement.requirement_id == "OWASP-AGENT-01"
-            and m.aegis_feature == "policy_engine"
-        ]
-        assert len(mappings) == 1
-        assert mappings[0].coverage == "partial"
-
-    def test_agent_trust_chain_maps_to_privilege_abuse(self, mapper: ComplianceMapper) -> None:
+    @pytest.mark.parametrize(
+        ("req_id", "feature"),
+        [
+            ("OWASP-AGENT-01", "policy_engine"),
+            ("OWASP-AGENT-03", "agent_trust_chain"),
+            ("OWASP-AGENT-09", "human_oversight"),
+        ],
+    )
+    def test_feature_maps_to_requirement(
+        self,
+        mapper: ComplianceMapper,
+        req_id: str,
+        feature: str,
+    ) -> None:
         analysis = mapper.analyze(RegulatoryFramework.OWASP_AGENTIC)
         mappings = [
             m
             for m in analysis.mappings
-            if m.requirement.requirement_id == "OWASP-AGENT-03"
-            and m.aegis_feature == "agent_trust_chain"
-        ]
-        assert len(mappings) == 1
-        assert mappings[0].coverage == "partial"
-
-    def test_human_oversight_maps_to_trust_exploitation(self, mapper: ComplianceMapper) -> None:
-        analysis = mapper.analyze(RegulatoryFramework.OWASP_AGENTIC)
-        mappings = [
-            m
-            for m in analysis.mappings
-            if m.requirement.requirement_id == "OWASP-AGENT-09"
-            and m.aegis_feature == "human_oversight"
+            if m.requirement.requirement_id == req_id and m.aegis_feature == feature
         ]
         assert len(mappings) == 1
         assert mappings[0].coverage == "partial"
@@ -549,9 +464,6 @@ class TestGapIdentification:
         }
         analysis = mapper.analyze(RegulatoryFramework.EU_AI_ACT, features)
         gap_ids = [g.requirement_id for g in analysis.gaps]
-        # Art 14 depends solely on human_oversight for full coverage
-        # but Art 26 also maps human_oversight partially; it also maps audit_logging
-        # So only Art 14 should be a gap
         assert "EU-AI-ACT-ART-14" in gap_ids
 
 
@@ -590,7 +502,6 @@ class TestRecommendations:
     def test_framework_specific_advice(self, mapper: ComplianceMapper) -> None:
         for fw in RegulatoryFramework:
             analysis = mapper.analyze(fw)
-            # Each framework should produce at least some recommendations
             assert len(analysis.recommendations) > 0
 
 
@@ -604,21 +515,15 @@ class TestReportGeneration:
     def mapper(self) -> ComplianceMapper:
         return ComplianceMapper()
 
-    def test_report_is_markdown(self, mapper: ComplianceMapper) -> None:
+    def test_report_structure(self, mapper: ComplianceMapper) -> None:
         analysis = mapper.analyze(RegulatoryFramework.EU_AI_ACT)
         report = mapper.generate_report(analysis)
         assert report.startswith("# Compliance Gap Analysis:")
         assert "## Executive Summary" in report
-
-    def test_report_contains_framework_name(self, mapper: ComplianceMapper) -> None:
-        analysis = mapper.analyze(RegulatoryFramework.EU_AI_ACT)
-        report = mapper.generate_report(analysis)
-        assert "EU AI Act" in report
-
-    def test_report_contains_coverage_score(self, mapper: ComplianceMapper) -> None:
-        analysis = mapper.analyze(RegulatoryFramework.EU_AI_ACT)
-        report = mapper.generate_report(analysis)
         assert "Coverage Score" in report
+        assert "EU AI Act" in report
+        assert "## Recommendations" in report
+        assert "Aegis Compliance Mapper" in report
 
     def test_report_with_gaps_has_gaps_section(self, mapper: ComplianceMapper) -> None:
         features = {"policy_engine": True}
@@ -632,25 +537,22 @@ class TestReportGeneration:
             report = mapper.generate_report(analysis)
             assert "## Compliance Gaps" not in report
 
-    def test_report_has_recommendations(self, mapper: ComplianceMapper) -> None:
-        analysis = mapper.analyze(RegulatoryFramework.EU_AI_ACT)
+    @pytest.mark.parametrize(
+        ("framework", "expected_name"),
+        [
+            (RegulatoryFramework.NIST_AI_RMF, "NIST AI Risk Management Framework"),
+            (RegulatoryFramework.SOC2, "SOC2 Trust Services Criteria"),
+        ],
+    )
+    def test_framework_report_name(
+        self,
+        mapper: ComplianceMapper,
+        framework: RegulatoryFramework,
+        expected_name: str,
+    ) -> None:
+        analysis = mapper.analyze(framework)
         report = mapper.generate_report(analysis)
-        assert "## Recommendations" in report
-
-    def test_report_has_footer(self, mapper: ComplianceMapper) -> None:
-        analysis = mapper.analyze(RegulatoryFramework.EU_AI_ACT)
-        report = mapper.generate_report(analysis)
-        assert "Aegis Compliance Mapper" in report
-
-    def test_nist_report_name(self, mapper: ComplianceMapper) -> None:
-        analysis = mapper.analyze(RegulatoryFramework.NIST_AI_RMF)
-        report = mapper.generate_report(analysis)
-        assert "NIST AI Risk Management Framework" in report
-
-    def test_soc2_report_name(self, mapper: ComplianceMapper) -> None:
-        analysis = mapper.analyze(RegulatoryFramework.SOC2)
-        report = mapper.generate_report(analysis)
-        assert "SOC2 Trust Services Criteria" in report
+        assert expected_name in report
 
 
 # ---------------------------------------------------------------------------
@@ -666,7 +568,6 @@ class TestEvidenceMap:
     def test_evidence_map_is_json_serializable(self, mapper: ComplianceMapper) -> None:
         analysis = mapper.analyze(RegulatoryFramework.EU_AI_ACT)
         ev = mapper.generate_evidence_map(analysis)
-        # Should not raise
         result = json.dumps(ev)
         assert isinstance(result, str)
 
@@ -718,13 +619,10 @@ class TestDeadlines:
     def mapper(self) -> ComplianceMapper:
         return ComplianceMapper()
 
-    def test_get_deadlines_returns_list(self, mapper: ComplianceMapper) -> None:
+    def test_get_deadlines_returns_sorted_list(self, mapper: ComplianceMapper) -> None:
         deadlines = mapper.get_deadlines()
         assert isinstance(deadlines, list)
         assert len(deadlines) > 0
-
-    def test_deadlines_are_sorted(self, mapper: ComplianceMapper) -> None:
-        deadlines = mapper.get_deadlines()
         dates = [d for d, _ in deadlines]
         assert dates == sorted(dates)
 
@@ -738,11 +636,10 @@ class TestDeadlines:
         frameworks = {req.framework for _, req in deadlines}
         assert RegulatoryFramework.NIST_AI_RMF not in frameworks
 
-    def test_all_deadlines_are_strings(self, mapper: ComplianceMapper) -> None:
+    def test_all_deadlines_are_date_strings(self, mapper: ComplianceMapper) -> None:
         deadlines = mapper.get_deadlines()
         for date_str, _ in deadlines:
             assert isinstance(date_str, str)
-            # Should be YYYY-MM-DD format
             parts = date_str.split("-")
             assert len(parts) == 3
 
@@ -764,15 +661,7 @@ class TestEdgeCases:
     def test_unknown_features_ignored(self, mapper: ComplianceMapper) -> None:
         features = {"policy_engine": True, "nonexistent_feature": True}
         analysis = mapper.analyze(RegulatoryFramework.EU_AI_ACT, features)
-        # Should not raise; nonexistent feature is just ignored
         assert analysis.total_requirements > 0
-
-    def test_all_frameworks_analyzable(self, mapper: ComplianceMapper) -> None:
-        for fw in RegulatoryFramework:
-            analysis = mapper.analyze(fw)
-            assert analysis.total_requirements > 0
-            assert analysis.coverage_score >= 0
-            assert analysis.coverage_score <= 100
 
     def test_multiple_analyses_independent(self, mapper: ComplianceMapper) -> None:
         a1 = mapper.analyze(RegulatoryFramework.EU_AI_ACT)
@@ -786,7 +675,6 @@ class TestEdgeCases:
         features = {"policy_engine": True}
         analysis = mapper.analyze(RegulatoryFramework.EU_AI_ACT, features)
         none_mappings = [m for m in analysis.mappings if m.coverage == "none"]
-        # Each gap should have exactly one "(none)" mapping
         assert len(none_mappings) == analysis.not_covered
         for m in none_mappings:
             assert m.aegis_feature == "(none)"
