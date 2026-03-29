@@ -101,6 +101,7 @@ nav:
   - Comparisons:
       - Aegis vs NeMo Guardrails: comparisons/vs-nemo-guardrails.md
       - Aegis vs Guardrails AI: comparisons/vs-guardrails-ai.md
+      - Aegis vs mcp-scan: comparisons/vs-mcp-scan.md
       - Aegis vs DIY: comparisons/vs-diy.md
   - Cookbook:
       - LangChain Governance: cookbook/langchain-governance.md
