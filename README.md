@@ -108,6 +108,23 @@ All guardrails are deterministic (no LLM calls), sub-millisecond, and require ze
 | **Prompt leak** | Warn | System prompt extraction attempts |
 | **Toxicity** | Warn (opt-in to block) | Harmful, violent, or abusive content |
 
+### Performance
+
+All guardrails run deterministic regex — no LLM calls, no network round-trips.
+LRU caching makes repeated checks (e.g. system prompts) effectively free.
+
+| Scenario | Cold (first call) | Warm (cached) | Notes |
+|----------|------------------|---------------|-------|
+| Short text (45 chars) | 342 us | < 1 us | Typical user message |
+| Medium text (300 chars) | 3.7 ms | < 1 us | Typical agent instruction |
+| Adversarial input | 1.3 ms | < 1 us | Multi-pattern injection attempt |
+| **Realistic per-LLM-call** | **2.65 ms** | — | System prompt (cached) + user input + response |
+
+> **0.53% of LLM latency** (vs. 500ms API round-trip). Target: < 1%.
+> Combined guardrail stack = injection + PII on both input and output (4 scans per call).
+
+Run `python benchmarks/bench_guardrails.py` to reproduce.
+
 ### Fine-Grained Control
 
 ```python
