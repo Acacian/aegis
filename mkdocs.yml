@@ -97,6 +97,7 @@ nav:
       - PII Detection: solutions/pii-detection-ai-agent.md
       - Audit Trail: solutions/ai-agent-audit-trail.md
       - Policy as Code: solutions/policy-as-code-ai.md
+      - Cost Governance: solutions/ai-agent-cost-governance.md
   - Comparisons:
       - Aegis vs NeMo Guardrails: comparisons/vs-nemo-guardrails.md
       - Aegis vs Guardrails AI: comparisons/vs-guardrails-ai.md
