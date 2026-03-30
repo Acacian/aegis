@@ -38,7 +38,7 @@
   <meta property="og:locale" content="en_US">
   <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
   <meta name="author" content="Aegis Project">
-  <meta name="generator" content="Aegis Playground v0.6.0">
+  <meta name="generator" content="Aegis Playground v0.6.1">
 
   <meta name="twitter:label1" content="Framework">
   <meta name="twitter:data1" content="Python (pip install agent-aegis)">
@@ -73,7 +73,7 @@
       "url": "https://github.com/Acacian"
     },
     "dateCreated": "2026-03-21",
-    "softwareVersion": "0.6.0",
+    "softwareVersion": "0.6.1",
     "downloadUrl": "https://pypi.org/project/agent-aegis/",
     "installUrl": "https://pypi.org/project/agent-aegis/",
     "programmingLanguage": "Python",
@@ -996,7 +996,7 @@ API Key: sk-proj-abc123def456ghi789jkl012mno345pqr678stu901vwx234yz</textarea>
       <div class="timeline-steps">
         <div class="tl-step"><span class="tl-num">1</span><span class="tl-text">Call <code>aegis.auto_instrument()</code> once at startup</span></div>
         <div class="tl-arrow">&rarr;</div>
-        <div class="tl-step"><span class="tl-num">2</span><span class="tl-text">Aegis matches rules in &lt;1ms</span></div>
+        <div class="tl-step"><span class="tl-num">2</span><span class="tl-text">Injection + PII scan + rule match &mdash; 2.65ms total (0.5% of LLM latency)</span></div>
         <div class="tl-arrow">&rarr;</div>
         <div class="tl-step"><span class="tl-num">3</span><span class="tl-text">Returns <code>auto</code> / <code>approve</code> / <code>block</code></span></div>
         <div class="tl-arrow">&rarr;</div>
@@ -1033,9 +1033,9 @@ API Key: sk-proj-abc123def456ghi789jkl012mno345pqr678stu901vwx234yz</textarea>
         <div class="step-number">3</div>
         <div class="step-icon">&#x1F6E1;&#xFE0F;</div>
         <h3>Instant Decision</h3>
-        <p>Aegis evaluates risk in &lt;1ms: auto-approve, require human approval, or block. Every decision is audit-logged.</p>
+        <p>Aegis runs 4 guardrail scans + risk eval in 2.65ms (0.5% of a typical LLM call). Auto-approve, review, or block &mdash; every decision audit-logged.</p>
         <div class="step-metrics">
-          <span class="step-metric">&lt;1ms eval</span>
+          <span class="step-metric">2.65ms / call</span>
           <span class="step-metric">100% audit</span>
           <span class="step-metric step-time">instant</span>
         </div>
@@ -1089,11 +1089,11 @@ API Key: sk-proj-abc123def456ghi789jkl012mno345pqr678stu901vwx234yz</textarea>
     </div>
 
     <div class="trust-signals">
-      <span class="trust-badge">PyPI v0.6.0</span>
+      <span class="trust-badge">PyPI v0.6.1</span>
       <span class="trust-badge">2540+ tests</span>
       <span class="trust-badge">MIT License</span>
       <span class="trust-badge">Zero runtime deps</span>
-      <span class="trust-badge">&lt;1ms eval</span>
+      <span class="trust-badge">2.65ms / 4 scans</span>
       <span class="trust-badge">Type-safe</span>
     </div>
 
@@ -1259,7 +1259,7 @@ aegis.auto_instrument()  <span class="c"># auto-patches all frameworks, activate
           <tr>
             <td class="feature">Risk evaluation</td>
             <td>Manual if/else chains</td>
-            <td class="highlight">&lt;1ms, declarative rules</td>
+            <td class="highlight">2.65ms with guardrails, declarative rules</td>
           </tr>
           <tr>
             <td class="feature">Audit trail</td>
