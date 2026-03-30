@@ -95,7 +95,7 @@ governed = govern_tools(tools, policy=policy)
 ## Requirements
 
 - Python 3.11+
-- `agent-aegis >= 0.1.3`
+- `agent-aegis >= 0.6.0`
 - `langchain-core >= 0.2`
 
 ## License

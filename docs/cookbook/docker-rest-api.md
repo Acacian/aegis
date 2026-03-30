@@ -116,7 +116,7 @@ curl http://localhost:8000/health
 ```
 
 ```json
-{"status": "ok", "version": "0.1.3"}
+{"status": "ok", "version": "0.6.1"}
 ```
 
 ### `POST /api/v1/evaluate`
@@ -428,7 +428,7 @@ ENTRYPOINT ["aegis", "serve", "policy.yaml", "--host", "0.0.0.0", "--port", "800
 Avoid surprises by pinning the exact Aegis version:
 
 ```dockerfile
-RUN pip install --no-cache-dir 'agent-aegis[server]==0.1.3'
+RUN pip install --no-cache-dir 'agent-aegis[server]==0.6.1'
 ```
 
 ### Harden the Container

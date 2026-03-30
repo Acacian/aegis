@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.1] — 2026-03-30
+
+### Changed
+
+- **Guardrail performance optimization** — combined regex per category replaces individual pattern iteration; LRU cache on injection + PII detection functions
+- **Realistic benchmark suite** — `benchmarks/bench_guardrails.py` via pytest-benchmark; per-call overhead 2.65ms (0.53% of LLM latency) for full 4-scan stack (injection + PII on input and output)
+
+## [0.6.0] — 2026-03-28
+
+### Fixed
+
+- **18 security vulnerabilities** — fail-closed defaults, API auth middleware, audit data sanitization, SSRF protection, ReDoS protection, TOCTOU fixes
+
+### Added
+
+- **IBAN PII detection** — 13th PII category with mod-97 (ISO 7064) checksum validation, 5+ country formats
+- **Policy CI/CD enhancements** — `PolicyImpactAnalyzer` (replay audit data against old/new policies), `PolicyTestRunner` (YAML test suites, JUnit XML, coverage reports, `--fail-under`)
+- **Cost governance** — `CostPolicyEnforcer` with 5-dimension enforcement, model pricing tables
+- **Compliance evidence** — `ComplianceReportGenerator` for EU AI Act, SOC2, NIST, ISO 42001
+- **Behavioral drift detection** — `DriftDetector` + `DriftPolicyEvaluator`
+
+## [0.5.0] — 2026-03-27
+
+### Added
+
+- **Auto-instrumentation for 6 additional frameworks** — LiteLLM, Google GenAI, Pydantic AI, LlamaIndex, Instructor, DSPy (total: 11 frameworks)
+- **MCP Proxy Server** (`aegis-mcp-proxy`) — transparent governance proxy wrapping any MCP server with security checks, policy evaluation, guardrails, and audit logging
+- **`aegis plan` CLI** — "terraform plan" for AI agent policies (diff + replay + CI exit codes)
+- **`aegis test` CLI** — policy regression testing for CI/CD (generate, regression)
+
 ## [0.4.2] — 2026-03-25
 
 ### Added
@@ -195,7 +225,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial public release on PyPI
 
-[Unreleased]: https://github.com/Acacian/aegis/compare/v0.4.1...HEAD
+[Unreleased]: https://github.com/Acacian/aegis/compare/v0.6.1...HEAD
+[0.6.1]: https://github.com/Acacian/aegis/compare/v0.6.0...v0.6.1
+[0.6.0]: https://github.com/Acacian/aegis/compare/v0.5.0...v0.6.0
+[0.5.0]: https://github.com/Acacian/aegis/compare/v0.4.2...v0.5.0
+[0.4.2]: https://github.com/Acacian/aegis/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/Acacian/aegis/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/Acacian/aegis/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/Acacian/aegis/compare/v0.2.0...v0.3.0
