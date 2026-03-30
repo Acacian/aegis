@@ -24,7 +24,7 @@ Health check.
 
 ```bash
 curl http://localhost:8000/health
-# => {"status": "ok", "version": "0.1.3"}
+# => {"status": "ok", "version": "0.6.1"}
 ```
 
 ### `POST /api/v1/evaluate`

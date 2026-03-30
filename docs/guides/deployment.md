@@ -21,7 +21,7 @@ Test that it works:
 
 ```bash
 curl http://localhost:8000/health
-# => {"status": "ok", "version": "0.1.3"}
+# => {"status": "ok", "version": "0.6.1"}
 
 curl -X POST http://localhost:8000/api/v1/evaluate \
   -H "Content-Type: application/json" \
@@ -99,7 +99,7 @@ FROM python:3.12-slim
 RUN useradd -m aegis
 WORKDIR /home/aegis
 
-RUN pip install --no-cache-dir 'agent-aegis[server]==0.1.3'
+RUN pip install --no-cache-dir 'agent-aegis[server]==0.6.1'
 
 COPY policy.yaml .
 
@@ -142,7 +142,7 @@ spec:
         runAsUser: 1000
       containers:
         - name: aegis
-          image: your-registry/aegis-server:0.1.3
+          image: your-registry/aegis-server:0.6.1
           ports:
             - containerPort: 8000
           env:
@@ -266,7 +266,7 @@ The `/health` endpoint returns the server status and version:
 
 ```bash
 curl http://localhost:8000/health
-# => {"status": "ok", "version": "0.1.3"}
+# => {"status": "ok", "version": "0.6.1"}
 ```
 
 Use this for:
@@ -403,7 +403,7 @@ Use this checklist before going live. See the [Governance Checklist](governance-
 
 - [ ] **Health checks** -- liveness and readiness probes configured
 - [ ] **Resource limits** -- CPU and memory limits set to prevent runaway processes
-- [ ] **Pin versions** -- use exact version (`agent-aegis==0.1.3`), not ranges
+- [ ] **Pin versions** -- use exact version (`agent-aegis==0.6.1`), not ranges
 - [ ] **Hot-reload tested** -- verify `PUT /api/v1/policy` works without downtime
 - [ ] **Alerting** -- set up alerts on blocked/critical audit events
 
