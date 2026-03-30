@@ -1445,7 +1445,7 @@ function bindEvents() {
 
   const copyPyprojectBtn = document.getElementById("copy-pyproject");
   if (copyPyprojectBtn) copyPyprojectBtn.addEventListener("click", (e) => {
-    copyToClipboard('dependencies = [\n    "agent-aegis>=0.1.3",\n]', e.target);
+    copyToClipboard('dependencies = [\n    "agent-aegis>=0.6.1",\n]', e.target);
     showToast("pyproject.toml dependency copied");
   });
 
@@ -1572,7 +1572,7 @@ function exportAuditJSON() {
     meta: {
       exported_at: new Date().toISOString(),
       policy_yaml: editor.getValue(),
-      version: "0.1.4",
+      version: "0.6.1",
       entry_count: entries.length,
       total_entries: auditEntries.length,
       filter: filter !== "all" ? filter : undefined,
@@ -2948,7 +2948,7 @@ ${safeYaml}
 </details>
 
 **Environment:** Aegis Playground (browser, Pyodide)
-**Version:** 0.1.4`;
+**Version:** 0.6.1`;
   }
 
   if (fmt === "markdown") {
