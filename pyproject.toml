@@ -47,6 +47,7 @@ Changelog = "https://github.com/Acacian/aegis/blob/main/CHANGELOG.md"
 playwright = ["playwright>=1.40"]
 langchain = ["langchain-core>=0.2"]
 crewai = ["crewai>=0.50"]
+google-adk = ["google-adk>=1.0"]
 openai-agents = ["openai-agents>=0.1"]
 anthropic = ["anthropic>=0.30"]
 httpx = ["httpx>=0.27"]
@@ -120,7 +121,7 @@ warn_return_any = true
 warn_unused_configs = true
 
 [[tool.mypy.overrides]]
-module = ["playwright.*", "langchain_core.*", "crewai.*", "agents.*", "httpx.*", "mcp.*", "starlette.*", "uvicorn.*", "redis.*", "asyncpg.*", "anthropic.*", "openai.*"]
+module = ["playwright.*", "langchain_core.*", "crewai.*", "agents.*", "httpx.*", "mcp.*", "starlette.*", "uvicorn.*", "redis.*", "asyncpg.*", "anthropic.*", "openai.*", "google.adk.*"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
