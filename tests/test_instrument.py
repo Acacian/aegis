@@ -1184,6 +1184,7 @@ class TestFrameworkRegistry:
             "crewai",
             "openai_agents",
             "litellm",
+            "google_adk",
             "google_genai",
             "pydantic_ai",
             "llamaindex",

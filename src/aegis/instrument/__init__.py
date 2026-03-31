@@ -20,7 +20,8 @@ Per-framework functions::
     from aegis.instrument import patch_langchain, patch_litellm, ...
     patch_langchain()        # Only LangChain
     patch_litellm()          # Only LiteLLM
-    patch_google_genai()     # Only Google GenAI (Gemini)
+    patch_google_adk()       # Only Google ADK (framework-level)
+    patch_google_genai()     # Only Google GenAI (Gemini SDK)
     patch_pydantic_ai()      # Only Pydantic AI
     patch_llamaindex()       # Only LlamaIndex
     patch_instructor()       # Only Instructor
@@ -42,6 +43,7 @@ from typing import Any
 from aegis.instrument._crewai import patch_crewai, unpatch_crewai
 from aegis.instrument._defaults import resolve_guardrails
 from aegis.instrument._dspy import patch_dspy, unpatch_dspy
+from aegis.instrument._google_adk import patch_google_adk, unpatch_google_adk
 from aegis.instrument._google_genai import patch_google_genai, unpatch_google_genai
 from aegis.instrument._instructor import patch_instructor, unpatch_instructor
 from aegis.instrument._langchain import patch_langchain, unpatch_langchain
@@ -61,6 +63,7 @@ __all__ = [
     "InstrumentationReport",
     "patch_crewai",
     "patch_dspy",
+    "patch_google_adk",
     "patch_google_genai",
     "patch_instructor",
     "patch_langchain",
@@ -72,6 +75,7 @@ __all__ = [
     "status",
     "unpatch_crewai",
     "unpatch_dspy",
+    "unpatch_google_adk",
     "unpatch_google_genai",
     "unpatch_instructor",
     "unpatch_langchain",
@@ -87,6 +91,7 @@ _FRAMEWORK_REGISTRY: dict[str, tuple[Any, Any]] = {
     "crewai": (patch_crewai, unpatch_crewai),
     "openai_agents": (patch_openai_agents, unpatch_openai_agents),
     "litellm": (patch_litellm, unpatch_litellm),
+    "google_adk": (patch_google_adk, unpatch_google_adk),
     "google_genai": (patch_google_genai, unpatch_google_genai),
     "pydantic_ai": (patch_pydantic_ai, unpatch_pydantic_ai),
     "llamaindex": (patch_llamaindex, unpatch_llamaindex),
@@ -151,7 +156,7 @@ def auto_instrument(
         audit: Whether to enable audit logging. Default ``True``.
         frameworks: Which frameworks to patch. ``None`` = auto-detect all.
             Valid names: ``"langchain"``, ``"crewai"``, ``"openai_agents"``,
-            ``"litellm"``, ``"google_genai"``, ``"pydantic_ai"``,
+            ``"litellm"``, ``"google_adk"``, ``"google_genai"``, ``"pydantic_ai"``,
             ``"llamaindex"``, ``"instructor"``, ``"dspy"``.
         cost: Cost governance configuration.  Accepts a
             :class:`~aegis.config.CostConfig` instance or ``None``
