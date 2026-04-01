@@ -456,6 +456,21 @@ LRU 캐싱으로 반복 검사(예: 시스템 프롬프트)는 사실상 무료.
 
 `python benchmarks/bench_guardrails.py`로 재현 가능.
 
+#### vs. 대안 비교 (2026년 3월 기준)
+
+Aegis는 **CI에 성능 회귀 감지를 통합한 유일한** 가드레일 라이브러리입니다 (pytest-benchmark).
+대부분의 대안은 ML 모델이나 외부 API에 의존하여 검사당 10~1000배 더 많은 레이턴시가 발생합니다.
+
+| 방식 | 일반적 오버헤드 | CI 성능 게이트 | 예시 |
+|------|---------------|-------------|------|
+| **In-process regex + LRU 캐시** (Aegis) | **2.65 ms cold / < 1 μs warm** | **Yes** | — |
+| ML 모델 프레임워크 | 수십 ms ~ 수초 (CPU) | No | [Guardrails AI](https://guardrailsai.com/docs/faq), [NeMo Guardrails](https://developer.nvidia.com/blog/measuring-the-effectiveness-and-performance-of-ai-guardrails-in-generative-ai-applications/), [LLM Guard](https://llm-guard.com/) |
+| 클라우드 API 서비스 | 40~250 ms | N/A | [Lakera Guard](https://docs.lakera.ai/guard) |
+| 프록시 / 게이트웨이 | 100~250 ms+ | No | [Lasso MCP Gateway](https://composio.dev/content/best-mcp-gateway-for-developers) |
+
+> **왜 이런 차이가 날까?** Aegis 가드레일은 컴파일된 패턴과 LRU 결과 캐싱을 사용하는 결정론적 regex입니다 — 모델 추론도, 네트워크 호출도 없습니다.
+> ML 분류기나 외부 API를 사용하는 대안들은 매 요청마다 그 비용을 지불합니다.
+
 ### 룰 팩 생태계
 
 가드레일은 커뮤니티 YAML 룰 팩으로 확장 가능:
