@@ -125,6 +125,21 @@ LRU caching makes repeated checks (e.g. system prompts) effectively free.
 
 Run `python benchmarks/bench_guardrails.py` to reproduce.
 
+#### vs. Alternatives (as of March 2026)
+
+Aegis is the only guardrail library with **CI-integrated performance regression gates** (pytest-benchmark).
+Most alternatives rely on ML models or external APIs, adding 10–1000x more latency per check.
+
+| Approach | Typical overhead | CI perf gate | Examples |
+|----------|-----------------|-------------|----------|
+| **In-process regex + LRU cache** (Aegis) | **2.65 ms cold / < 1 μs warm** | **Yes** | — |
+| ML model frameworks | 10s of ms – seconds (CPU) | No | [Guardrails AI](https://guardrailsai.com/docs/faq), [NeMo Guardrails](https://developer.nvidia.com/blog/measuring-the-effectiveness-and-performance-of-ai-guardrails-in-generative-ai-applications/), [LLM Guard](https://llm-guard.com/) |
+| Cloud API services | 40–250 ms | N/A | [Lakera Guard](https://docs.lakera.ai/guard) |
+| Proxy / gateway | 100–250 ms+ | No | [Lasso MCP Gateway](https://composio.dev/content/best-mcp-gateway-for-developers) |
+
+> **Why the gap?** Aegis guardrails are deterministic regex with compiled patterns and LRU result caching — no model inference, no network calls.
+> Alternatives that use ML classifiers or external APIs pay for that on every request.
+
 ### Fine-Grained Control
 
 ```python
