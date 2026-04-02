@@ -24,6 +24,7 @@ from aegis.guardrails.injection import (
     InjectionMatch,
 )
 from aegis.guardrails.pattern import KeywordGuardrail, PatternGuardrail
+from aegis.guardrails.streaming import StreamChunk, StreamingGuardrailEngine, StreamStrategy
 
 __all__ = [
     "Guardrail",
@@ -34,4 +35,7 @@ __all__ = [
     "InjectionMatch",
     "KeywordGuardrail",
     "PatternGuardrail",
+    "StreamChunk",
+    "StreamStrategy",
+    "StreamingGuardrailEngine",
 ]
