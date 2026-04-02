@@ -302,7 +302,8 @@
 
   <!-- Demo Tab Bar -->
   <nav class="demo-tab-bar" aria-label="Demo tabs">
-    <button class="demo-tab-btn active" data-tab="init">aegis.auto_instrument()</button>
+    <button class="demo-tab-btn active" data-tab="streaming" style="background:linear-gradient(135deg,rgba(88,166,255,.15),rgba(63,185,80,.15));border:1px solid rgba(88,166,255,.3)">Streaming Guard</button>
+    <button class="demo-tab-btn" data-tab="init">aegis.auto_instrument()</button>
     <button class="demo-tab-btn" data-tab="policy">Policy Evaluator</button>
     <button class="demo-tab-btn" data-tab="mcp">MCP Security Scanner</button>
     <button class="demo-tab-btn" data-tab="cost">Cost Circuit Breaker</button>
@@ -310,11 +311,10 @@
     <button class="demo-tab-btn" data-tab="regulatory">Regulatory Compliance</button>
     <button class="demo-tab-btn" data-tab="pii">PII Scanner</button>
     <button class="demo-tab-btn" data-tab="injection">Injection Detector</button>
-    <button class="demo-tab-btn" data-tab="streaming" style="background:linear-gradient(135deg,rgba(88,166,255,.15),rgba(63,185,80,.15));border:1px solid rgba(88,166,255,.3)">Streaming Guard</button>
   </nav>
 
   <!-- Tab Panel: aegis.auto_instrument() — Unified Quick Start -->
-  <div id="panel-init" class="demo-tab-panel active">
+  <div id="panel-init" class="demo-tab-panel">
     <div class="demo-panel-inner">
       <div class="demo-header">
         <h2>aegis.auto_instrument() — One Call, Full Security</h2>
@@ -972,7 +972,7 @@ API Key: sk-proj-abc123def456ghi789jkl012mno345pqr678stu901vwx234yz</textarea>
   </div>
 
   <!-- Tab Panel: Streaming Guard -->
-  <div id="panel-streaming" class="demo-tab-panel">
+  <div id="panel-streaming" class="demo-tab-panel active">
     <div class="demo-panel-inner">
       <div class="demo-header">
         <h2>Streaming Guard</h2>
