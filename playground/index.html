@@ -88,6 +88,7 @@
       "Cost Circuit Breaker — 17-model cost tracking demo",
       "Audit Chain Visualizer — SHA-256 hash-linked tamper-evident log",
       "Regulatory Compliance — EU AI Act, NIST, SOC2 gap analysis",
+      "Streaming Guard — live split-screen demo of streaming guardrail strategies",
       "Dark/light/high-contrast themes",
       "Export as JSON/CSV/YAML/HTML",
       "Code generation (13 formats including JSON Schema and HTTPie)",
@@ -226,6 +227,7 @@
   <link rel="preload" href="js/app.js" as="script">
   <link rel="preload" href="js/demos.js" as="script">
   <link rel="preload" href="js/guardrails.js" as="script">
+  <link rel="preload" href="js/streaming-demo.js" as="script">
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
   <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
@@ -308,6 +310,7 @@
     <button class="demo-tab-btn" data-tab="regulatory">Regulatory Compliance</button>
     <button class="demo-tab-btn" data-tab="pii">PII Scanner</button>
     <button class="demo-tab-btn" data-tab="injection">Injection Detector</button>
+    <button class="demo-tab-btn" data-tab="streaming" style="background:linear-gradient(135deg,rgba(88,166,255,.15),rgba(63,185,80,.15));border:1px solid rgba(88,166,255,.3)">Streaming Guard</button>
   </nav>
 
   <!-- Tab Panel: aegis.auto_instrument() — Unified Quick Start -->
@@ -968,6 +971,76 @@ API Key: sk-proj-abc123def456ghi789jkl012mno345pqr678stu901vwx234yz</textarea>
     </div>
   </div>
 
+  <!-- Tab Panel: Streaming Guard -->
+  <div id="panel-streaming" class="demo-tab-panel">
+    <div class="demo-panel-inner">
+      <div class="demo-header">
+        <h2>Streaming Guard</h2>
+        <p class="demo-desc">See the <strong>streaming guardrail problem</strong> in real-time. Left: LLM streams freely and leaks PII. Right: Aegis catches it. Same response, different outcome. <a href="https://github.com/langchain-ai/langchain/issues/35011" target="_blank" rel="noopener" style="color:var(--accent)">Based on a real LangChain issue</a>.</p>
+      </div>
+
+      <!-- Controls -->
+      <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:16px">
+        <div style="display:flex;gap:6px">
+          <button class="stream-scenario-btn demo-btn-sm active" data-scenario="email">Email Leak</button>
+          <button class="stream-scenario-btn demo-btn-sm" data-scenario="credit_card">Credit Card</button>
+          <button class="stream-scenario-btn demo-btn-sm" data-scenario="api_key">API Key Leak</button>
+          <button class="stream-scenario-btn demo-btn-sm" data-scenario="multi">Multi-PII</button>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;margin-left:auto">
+          <label style="font-size:12px;color:var(--text-secondary)">Strategy:</label>
+          <select id="stream-strategy" style="background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-size:12px">
+            <option value="windowed">Windowed Scan</option>
+            <option value="full_buffer">Full Buffer</option>
+          </select>
+          <label style="font-size:12px;color:var(--text-secondary);margin-left:8px">Window:</label>
+          <input type="range" id="stream-window-size" min="1" max="8" value="3" style="width:80px" title="Window size (tokens buffered before release)">
+          <span id="stream-window-label" style="font-size:12px;color:var(--accent);min-width:18px">3</span>
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:center;margin-bottom:16px">
+        <button id="stream-start-btn" style="background:linear-gradient(135deg,#58a6ff,#3fb950);color:#fff;border:none;border-radius:8px;padding:10px 32px;font-size:15px;font-weight:600;cursor:pointer;letter-spacing:.5px;transition:transform .15s,box-shadow .15s">
+          &#9654; Start Demo
+        </button>
+      </div>
+
+      <!-- Split panels -->
+      <div class="demo-layout-split" style="gap:16px">
+        <!-- Left: Without Aegis -->
+        <div class="demo-col">
+          <div class="demo-card" style="border:1px solid rgba(248,81,73,.3);position:relative;min-height:300px">
+            <div class="demo-card-header" style="border-bottom:1px solid rgba(248,81,73,.2)">
+              <h3 style="color:var(--risk-high)">Without Aegis</h3>
+              <span id="stream-left-status" style="font-size:11px;color:var(--text-muted)">Waiting...</span>
+            </div>
+            <div id="stream-left-output" style="padding:12px;font-family:'SF Mono',Consolas,monospace;font-size:13px;line-height:1.7;min-height:200px;white-space:pre-wrap;word-break:break-word"></div>
+            <div id="stream-left-verdict" style="display:none;padding:10px 16px;text-align:center;font-weight:600;font-size:13px;border-top:1px solid var(--border)"></div>
+          </div>
+          <div id="stream-left-stats" style="display:flex;gap:16px;margin-top:8px;font-size:11px;color:var(--text-muted)"></div>
+        </div>
+        <!-- Right: With Aegis -->
+        <div class="demo-col">
+          <div class="demo-card" style="border:1px solid rgba(63,185,80,.3);position:relative;min-height:300px">
+            <div class="demo-card-header" style="border-bottom:1px solid rgba(63,185,80,.2)">
+              <h3 style="color:var(--risk-low)">With Aegis</h3>
+              <span id="stream-right-status" style="font-size:11px;color:var(--text-muted)">Waiting...</span>
+            </div>
+            <div id="stream-right-output" style="padding:12px;font-family:'SF Mono',Consolas,monospace;font-size:13px;line-height:1.7;min-height:200px;white-space:pre-wrap;word-break:break-word"></div>
+            <div id="stream-right-verdict" style="display:none;padding:10px 16px;text-align:center;font-weight:600;font-size:13px;border-top:1px solid var(--border)"></div>
+          </div>
+          <div id="stream-right-stats" style="display:flex;gap:16px;margin-top:8px;font-size:11px;color:var(--text-muted)"></div>
+        </div>
+      </div>
+
+      <!-- Code snippet -->
+      <div class="demo-card" style="margin-top:20px">
+        <div class="demo-card-header"><h3>How It Works</h3></div>
+        <pre id="stream-code-snippet" style="padding:12px;font-size:12px;line-height:1.6;overflow-x:auto;color:var(--text-secondary);background:var(--bg-secondary);border-radius:6px;margin:0"></pre>
+      </div>
+    </div>
+  </div>
+
   <!-- How It Works Section -->
   <section class="how-it-works">
     <h2>How It Works</h2>
@@ -1347,6 +1420,7 @@ aegis.auto_instrument()  <span class="c"># auto-patches all frameworks, activate
   <script src="js/app.js" defer></script>
   <script src="js/demos.js" defer></script>
   <script src="js/guardrails.js" defer></script>
+  <script src="js/streaming-demo.js" defer></script>
   <script src="js/sw-register.js"></script>
 </body>
 </html>

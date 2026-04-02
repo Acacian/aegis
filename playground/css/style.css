@@ -4160,3 +4160,43 @@ footer code {
     grid-template-columns: 1fr !important;
   }
 }
+
+/* ============================================
+   Streaming Guard Demo
+   ============================================ */
+
+.stream-scan-spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  margin: 12px auto;
+  animation: stream-spin 0.7s linear infinite;
+}
+
+@keyframes stream-spin {
+  to { transform: rotate(360deg); }
+}
+
+#stream-start-btn:active {
+  transform: scale(0.97) !important;
+}
+
+#panel-streaming .demo-layout-split {
+  align-items: stretch;
+}
+
+#stream-left-output,
+#stream-right-output {
+  min-height: 200px;
+  max-height: 350px;
+  overflow-y: auto;
+  transition: box-shadow 0.3s ease;
+}
+
+.stream-scenario-btn.active {
+  background: var(--accent) !important;
+  color: #fff !important;
+  border-color: var(--accent) !important;
+}
