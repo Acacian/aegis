@@ -10,7 +10,7 @@ Usage::
     from aegis.guardrails import GuardrailEngine, InjectionGuardrail
 
     engine = GuardrailEngine()
-    engine.add(InjectionGuardrail())
+    engine.add(InjectionGuardrail())  # type: ignore[arg-type]
 
     agent = Agent(
         "openai:gpt-4o-mini",
@@ -34,12 +34,12 @@ if TYPE_CHECKING:
 logger = logging.getLogger("aegis.contrib.pydantic_ai")
 
 
-def _get_base_class() -> type:
+def _get_base_class() -> type:  # noqa: ANN401
     """Return AbstractCapability if pydantic-ai is installed, else object."""
     try:
         from pydantic_ai.capabilities import AbstractCapability
 
-        return AbstractCapability
+        return AbstractCapability  # type: ignore[no-any-return]
     except ImportError:
         return object
 
@@ -104,7 +104,7 @@ class AegisCapability(_get_base_class()):  # type: ignore[misc]
         from aegis.guardrails import GuardrailEngine, InjectionGuardrail
 
         engine = GuardrailEngine()
-        engine.add(InjectionGuardrail())
+        engine.add(InjectionGuardrail())  # type: ignore[arg-type]
         return cls(
             engine,
             on_block=on_block,
