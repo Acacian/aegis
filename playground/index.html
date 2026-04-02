@@ -982,11 +982,11 @@ API Key: sk-proj-abc123def456ghi789jkl012mno345pqr678stu901vwx234yz</textarea>
       <!-- Controls -->
       <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:16px">
         <div style="display:flex;flex-wrap:wrap;gap:6px">
-          <button class="stream-scenario-btn demo-btn-sm active" data-scenario="email">Email Leak</button>
+          <button class="stream-scenario-btn demo-btn-sm active" data-scenario="semantic" style="border-color:rgba(88,166,255,.4);color:#58a6ff">Semantic PII (AI)</button>
+          <button class="stream-scenario-btn demo-btn-sm" data-scenario="email">Email Leak</button>
           <button class="stream-scenario-btn demo-btn-sm" data-scenario="credit_card">Credit Card</button>
           <button class="stream-scenario-btn demo-btn-sm" data-scenario="api_key">API Key</button>
           <button class="stream-scenario-btn demo-btn-sm" data-scenario="multi">Multi-PII</button>
-          <button class="stream-scenario-btn demo-btn-sm" data-scenario="semantic" style="border-color:rgba(88,166,255,.4);color:#58a6ff">Semantic PII (AI)</button>
         </div>
         <div style="display:flex;gap:8px;align-items:center;margin-left:auto">
           <label style="font-size:12px;color:var(--text-secondary)">Strategy:</label>
@@ -1001,7 +1001,7 @@ API Key: sk-proj-abc123def456ghi789jkl012mno345pqr678stu901vwx234yz</textarea>
       </div>
 
       <!-- AI API Key (shown only for Semantic PII scenario) -->
-      <div id="stream-ai-section" style="display:none;align-items:center;gap:10px;margin-bottom:12px;padding:10px 14px;background:rgba(88,166,255,.06);border:1px solid rgba(88,166,255,.15);border-radius:8px">
+      <div id="stream-ai-section" style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:10px 14px;background:rgba(88,166,255,.06);border:1px solid rgba(88,166,255,.15);border-radius:8px">
         <span style="font-size:14px">&#x1F9E0;</span>
         <label style="font-size:12px;color:#58a6ff;white-space:nowrap">Gemini API Key:</label>
         <input type="password" id="stream-api-key" placeholder="Optional — works without key (pre-recorded demo)" style="flex:1;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:4px;padding:5px 10px;font-size:12px;min-width:0">

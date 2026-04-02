@@ -162,7 +162,7 @@ async for chunk in streaming.scan_stream(llm_stream):
 
 let _streamRunning = false;
 let _streamAbort = null;
-let _currentScenario = 'email';
+let _currentScenario = 'semantic';
 
 /* ============================================================
    HELPERS
@@ -729,7 +729,7 @@ function initStreamingDemo() {
 
   // Set initial code snippet
   const codeEl = _el('stream-code-snippet');
-  if (codeEl) codeEl.textContent = CODE_SNIPPETS.windowed;
+  if (codeEl) codeEl.textContent = CODE_SNIPPETS.ai;
 }
 
 if (document.readyState === 'loading') {
