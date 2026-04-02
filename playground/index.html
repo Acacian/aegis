@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="referrer" content="strict-origin-when-cross-origin">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net blob: 'wasm-unsafe-eval'; style-src 'self' https://cdnjs.cloudflare.com 'unsafe-inline'; connect-src 'self' https://cdn.jsdelivr.net https://files.pythonhosted.org https://pypi.org blob:; img-src 'self' data: blob:; worker-src 'self' blob:; base-uri 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net blob: 'wasm-unsafe-eval'; style-src 'self' https://cdnjs.cloudflare.com 'unsafe-inline'; connect-src 'self' https://cdn.jsdelivr.net https://files.pythonhosted.org https://pypi.org https://generativelanguage.googleapis.com blob:; img-src 'self' data: blob:; worker-src 'self' blob:; base-uri 'self'">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Aegis Playground - Interactive AI Agent Governance</title>
   <meta name="description" content="Try Aegis governance in your browser. Write YAML policies, simulate AI agent actions, see real-time EU AI Act compliance evaluation and audit trails." itemprop="description">
@@ -303,14 +303,14 @@
   <!-- Demo Tab Bar -->
   <nav class="demo-tab-bar" aria-label="Demo tabs">
     <button class="demo-tab-btn active" data-tab="streaming" style="background:linear-gradient(135deg,rgba(88,166,255,.15),rgba(63,185,80,.15));border:1px solid rgba(88,166,255,.3)">Streaming Guard</button>
-    <button class="demo-tab-btn" data-tab="init">aegis.auto_instrument()</button>
-    <button class="demo-tab-btn" data-tab="policy">Policy Evaluator</button>
-    <button class="demo-tab-btn" data-tab="mcp">MCP Security Scanner</button>
-    <button class="demo-tab-btn" data-tab="cost">Cost Circuit Breaker</button>
-    <button class="demo-tab-btn" data-tab="audit-chain">Audit Chain Visualizer</button>
-    <button class="demo-tab-btn" data-tab="regulatory">Regulatory Compliance</button>
     <button class="demo-tab-btn" data-tab="pii">PII Scanner</button>
     <button class="demo-tab-btn" data-tab="injection">Injection Detector</button>
+    <button class="demo-tab-btn" data-tab="mcp">MCP Security</button>
+    <button class="demo-tab-btn" data-tab="init">auto_instrument()</button>
+    <button class="demo-tab-btn" data-tab="policy">Policy</button>
+    <button class="demo-tab-btn" data-tab="cost">Cost Breaker</button>
+    <button class="demo-tab-btn" data-tab="audit-chain">Audit Chain</button>
+    <button class="demo-tab-btn" data-tab="regulatory">Compliance</button>
   </nav>
 
   <!-- Tab Panel: aegis.auto_instrument() — Unified Quick Start -->
@@ -981,11 +981,12 @@ API Key: sk-proj-abc123def456ghi789jkl012mno345pqr678stu901vwx234yz</textarea>
 
       <!-- Controls -->
       <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:16px">
-        <div style="display:flex;gap:6px">
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
           <button class="stream-scenario-btn demo-btn-sm active" data-scenario="email">Email Leak</button>
           <button class="stream-scenario-btn demo-btn-sm" data-scenario="credit_card">Credit Card</button>
-          <button class="stream-scenario-btn demo-btn-sm" data-scenario="api_key">API Key Leak</button>
+          <button class="stream-scenario-btn demo-btn-sm" data-scenario="api_key">API Key</button>
           <button class="stream-scenario-btn demo-btn-sm" data-scenario="multi">Multi-PII</button>
+          <button class="stream-scenario-btn demo-btn-sm" data-scenario="semantic" style="border-color:rgba(88,166,255,.4);color:#58a6ff">Semantic PII (AI)</button>
         </div>
         <div style="display:flex;gap:8px;align-items:center;margin-left:auto">
           <label style="font-size:12px;color:var(--text-secondary)">Strategy:</label>
@@ -997,6 +998,14 @@ API Key: sk-proj-abc123def456ghi789jkl012mno345pqr678stu901vwx234yz</textarea>
           <input type="range" id="stream-window-size" min="1" max="8" value="3" style="width:80px" title="Window size (tokens buffered before release)">
           <span id="stream-window-label" style="font-size:12px;color:var(--accent);min-width:18px">3</span>
         </div>
+      </div>
+
+      <!-- AI API Key (shown only for Semantic PII scenario) -->
+      <div id="stream-ai-section" style="display:none;align-items:center;gap:10px;margin-bottom:12px;padding:10px 14px;background:rgba(88,166,255,.06);border:1px solid rgba(88,166,255,.15);border-radius:8px">
+        <span style="font-size:14px">&#x1F9E0;</span>
+        <label style="font-size:12px;color:#58a6ff;white-space:nowrap">Gemini API Key:</label>
+        <input type="password" id="stream-api-key" placeholder="Optional — works without key (pre-recorded demo)" style="flex:1;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:4px;padding:5px 10px;font-size:12px;min-width:0">
+        <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="font-size:11px;color:var(--text-muted);white-space:nowrap">Get free key</a>
       </div>
 
       <div style="display:flex;justify-content:center;margin-bottom:16px">
@@ -1011,7 +1020,7 @@ API Key: sk-proj-abc123def456ghi789jkl012mno345pqr678stu901vwx234yz</textarea>
         <div class="demo-col">
           <div class="demo-card" style="border:1px solid rgba(248,81,73,.3);position:relative;min-height:300px">
             <div class="demo-card-header" style="border-bottom:1px solid rgba(248,81,73,.2)">
-              <h3 style="color:var(--risk-high)">Without Aegis</h3>
+              <h3 id="stream-left-label" style="color:var(--risk-high)">Without Aegis</h3>
               <span id="stream-left-status" style="font-size:11px;color:var(--text-muted)">Waiting...</span>
             </div>
             <div id="stream-left-output" style="padding:12px;font-family:'SF Mono',Consolas,monospace;font-size:13px;line-height:1.7;min-height:200px;white-space:pre-wrap;word-break:break-word"></div>
@@ -1023,7 +1032,7 @@ API Key: sk-proj-abc123def456ghi789jkl012mno345pqr678stu901vwx234yz</textarea>
         <div class="demo-col">
           <div class="demo-card" style="border:1px solid rgba(63,185,80,.3);position:relative;min-height:300px">
             <div class="demo-card-header" style="border-bottom:1px solid rgba(63,185,80,.2)">
-              <h3 style="color:var(--risk-low)">With Aegis</h3>
+              <h3 id="stream-right-label" style="color:var(--risk-low)">With Aegis</h3>
               <span id="stream-right-status" style="font-size:11px;color:var(--text-muted)">Waiting...</span>
             </div>
             <div id="stream-right-output" style="padding:12px;font-family:'SF Mono',Consolas,monospace;font-size:13px;line-height:1.7;min-height:200px;white-space:pre-wrap;word-break:break-word"></div>

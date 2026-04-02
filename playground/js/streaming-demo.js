@@ -5,9 +5,10 @@
  *   Left:  LLM streams freely → PII leaks to the user
  *   Right: Aegis scans the stream → PII caught, stream blocked/masked
  *
- * Demonstrates StreamingGuardrailEngine strategies:
- *   - Windowed scan (configurable window_size)
- *   - Full buffer (collect → scan → release)
+ * Two detection modes:
+ *   - Regex: Pattern-based detection (default, no API key needed)
+ *   - AI:    LLM-powered semantic detection (Gemini Flash, optional key)
+ *            Falls back to pre-recorded demo when no key is provided.
  */
 
 /* ============================================================
@@ -27,6 +28,7 @@ const STREAM_SCENARIOS = {
       `Chirp chirp, let the email adventures begin!`,
     piiPattern: /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g,
     piiLabel: 'email',
+    mode: 'regex',
   },
   credit_card: {
     label: 'Credit Card',
@@ -40,9 +42,10 @@ const STREAM_SCENARIOS = {
       `Your next billing date is April 15, 2026.`,
     piiPattern: /(?<!\d)(?:4[0-9]{3}|5[1-5][0-9]{2})(?:[\s\-]?[0-9]{4}){2}[\s\-]?[0-9]{1,4}(?!\d)/g,
     piiLabel: 'credit_card',
+    mode: 'regex',
   },
   api_key: {
-    label: 'API Key Leak',
+    label: 'API Key',
     prompt: 'Show me how to set up the OpenAI integration.',
     response: `Here's how to set up the integration:\n\n` +
       `import openai\n\n` +
@@ -55,6 +58,30 @@ const STREAM_SCENARIOS = {
       `)`,
     piiPattern: /sk-(?:proj-)?[A-Za-z0-9_\-]{20,}/g,
     piiLabel: 'api_key',
+    mode: 'regex',
+  },
+  semantic: {
+    label: 'Semantic PII',
+    prompt: 'Repeat back my contact info but spell it out so it looks natural.',
+    response: `Of course! Here's your info written out naturally:\n\n` +
+      `You can reach me at john dot doe at example dot com.\n` +
+      `My mobile is zero-one-zero, one-two-three-four, five-six-seven-eight.\n` +
+      `The last four of my social are six seven eight nine.\n\n` +
+      `My home address is 456 Teheran-ro, Gangnam-gu, Seoul, ` +
+      `and my date of birth is March 15th, 1990.\n\n` +
+      `Let me know if you need anything else!`,
+    // Regex will NOT match these — that's the point
+    piiPattern: /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}|(?<!\d)01[016789][\s\-]?[0-9]{3,4}[\s\-]?[0-9]{4}(?!\d)/g,
+    piiLabel: 'semantic',
+    mode: 'ai',
+    // Pre-recorded AI detection results (used when no API key)
+    aiFindings: [
+      { text: 'john dot doe at example dot com', type: 'email', start: 68, end: 99 },
+      { text: 'zero-one-zero, one-two-three-four, five-six-seven-eight', type: 'phone', start: 114, end: 170 },
+      { text: 'six seven eight nine', type: 'ssn_partial', start: 204, end: 224 },
+      { text: '456 Teheran-ro, Gangnam-gu, Seoul', type: 'address', start: 247, end: 280 },
+      { text: 'March 15th, 1990', type: 'dob', start: 306, end: 322 },
+    ],
   },
   multi: {
     label: 'Multi-PII',
@@ -68,6 +95,7 @@ const STREAM_SCENARIOS = {
       `Account Status: Active since 2024-01-15`,
     piiPattern: /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}|(?<!\d)(?:4[0-9]{3}|5[1-5][0-9]{2})(?:[\s\-]?[0-9]{4}){2}[\s\-]?[0-9]{1,4}(?!\d)|(?<!\d)(?!000|666|9\d{2})[0-9]{3}-(?!00)[0-9]{2}-(?!0000)[0-9]{4}(?!\d)|(?<!\d)01[016789][\s\-]?[0-9]{3,4}[\s\-]?[0-9]{4}(?!\d)/g,
     piiLabel: 'multiple',
+    mode: 'regex',
   },
 };
 
@@ -107,6 +135,25 @@ async for chunk in streaming.scan_stream(llm_stream):
         print("[BLOCKED — PII detected]")
     else:
         print(chunk.content)  # safe, fully scanned`,
+  ai: `import google.generativeai as genai
+from aegis.guardrails import GuardrailEngine, StreamingGuardrailEngine
+
+# AI-powered guardrail detects semantic PII that regex cannot
+# e.g. "john dot doe at example dot com" → detected as email
+engine = GuardrailEngine()
+engine.add(AIGuardrail(
+    model="gemini-2.0-flash",
+    categories=["email", "phone", "ssn", "address", "dob"],
+    requires_full_buffer=True,  # AI needs full context
+))
+
+streaming = StreamingGuardrailEngine(engine)
+
+async for chunk in streaming.scan_stream(llm_stream):
+    if chunk.blocked:
+        print("[BLOCKED — Semantic PII detected by AI]")
+    else:
+        print(chunk.content)`,
 };
 
 /* ============================================================
@@ -122,7 +169,6 @@ let _currentScenario = 'email';
    ============================================================ */
 
 function _tokenize(text) {
-  // Split into word-like tokens preserving whitespace/newlines
   const tokens = [];
   let buf = '';
   for (let i = 0; i < text.length; i++) {
@@ -150,30 +196,62 @@ function _highlightPII(text, pattern) {
   );
 }
 
-function _maskPII(text, pattern) {
-  const re = new RegExp(pattern.source, pattern.flags);
-  return text.replace(re, m => {
-    if (m.includes('@')) {
-      const [local, domain] = m.split('@');
-      return local[0] + '*'.repeat(local.length - 1) + '@' + domain;
-    }
-    if (m.startsWith('sk-')) return m.slice(0, 4) + '*'.repeat(m.length - 4);
-    // Numbers: keep first 4 and last 4
-    const digits = m.replace(/\D/g, '');
-    if (digits.length >= 8) {
-      return m.replace(/\d/g, (function() {
-        let idx = 0;
-        return () => { idx++; return (idx <= 4 || idx > digits.length - 4) ? digits[idx-1] : '*'; };
-      })());
-    }
-    return '*'.repeat(m.length);
-  });
+function _highlightAIFindings(text, findings) {
+  // Sort by start descending to avoid index shifting
+  const sorted = [...findings].sort((a, b) => b.start - a.start);
+  let result = text;
+  for (const f of sorted) {
+    const before = result.slice(0, f.start);
+    const match = result.slice(f.start, f.end);
+    const after = result.slice(f.end);
+    result = before +
+      `<span style="background:rgba(88,166,255,.2);color:#58a6ff;border-bottom:2px solid #58a6ff;padding:0 2px;border-radius:2px" title="${f.type}">${match}</span>` +
+      after;
+  }
+  return result;
 }
 
 function _el(id) { return document.getElementById(id); }
 
 function _sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/* ============================================================
+   GEMINI FLASH API
+   ============================================================ */
+
+const GEMINI_SCAN_PROMPT = `You are a PII detection system. Analyze the following text and identify ALL personally identifiable information, including:
+- Information written in spelled-out or obfuscated form (e.g., "john dot doe at example dot com" = email)
+- Partial PII (e.g., "last four digits are 6789" = partial SSN/card)
+- Addresses, dates of birth, phone numbers in any format
+
+Respond ONLY with a JSON array. Each item: {"text": "matched text", "type": "category", "start": start_index, "end": end_index}
+Categories: email, phone, ssn, credit_card, address, dob, api_key, name, other_pii
+If no PII found, respond with: []
+
+Text to analyze:
+`;
+
+async function _callGemini(apiKey, text) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: GEMINI_SCAN_PROMPT + text }] }],
+      generationConfig: { temperature: 0, maxOutputTokens: 1024 },
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Gemini API error: ${res.status} — ${err.slice(0, 200)}`);
+  }
+  const data = await res.json();
+  const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
+  // Extract JSON from possible markdown code block
+  const jsonMatch = raw.match(/\[[\s\S]*\]/);
+  return jsonMatch ? JSON.parse(jsonMatch[0]) : [];
 }
 
 /* ============================================================
@@ -191,6 +269,8 @@ async function runStreamingDemo() {
   const strategy = _el('stream-strategy').value;
   const windowSize = parseInt(_el('stream-window-size').value, 10);
   const tokens = _tokenize(scenario.response);
+  const apiKey = (_el('stream-api-key')?.value || '').trim();
+  const isAIScenario = scenario.mode === 'ai';
 
   // Reset UI
   const leftOut = _el('stream-left-output');
@@ -199,6 +279,8 @@ async function runStreamingDemo() {
   const rightVerdict = _el('stream-right-verdict');
   const leftStatus = _el('stream-left-status');
   const rightStatus = _el('stream-right-status');
+  const leftLabel = _el('stream-left-label');
+  const rightLabel = _el('stream-right-label');
   const btn = _el('stream-start-btn');
 
   leftOut.innerHTML = '';
@@ -208,13 +290,19 @@ async function runStreamingDemo() {
   _el('stream-left-stats').innerHTML = '';
   _el('stream-right-stats').innerHTML = '';
 
-  btn.textContent = '⏹ Running...';
+  // Update labels for AI scenario
+  if (leftLabel) leftLabel.textContent = isAIScenario ? 'Regex Only' : 'Without Aegis';
+  if (rightLabel) rightLabel.textContent = isAIScenario ? 'Aegis + AI' : 'With Aegis';
+
+  btn.textContent = '\u23F9 Running...';
   btn.style.opacity = '0.7';
   leftStatus.textContent = 'Streaming...';
   leftStatus.style.color = '#d29922';
 
-  if (strategy === 'full_buffer') {
-    rightStatus.textContent = 'Buffering...';
+  const effectiveStrategy = isAIScenario ? 'full_buffer' : strategy;
+
+  if (effectiveStrategy === 'full_buffer') {
+    rightStatus.textContent = isAIScenario ? 'Buffering for AI scan...' : 'Buffering...';
     rightStatus.style.color = '#d29922';
   } else {
     rightStatus.textContent = 'Scanning (window=' + windowSize + ')...';
@@ -222,47 +310,55 @@ async function runStreamingDemo() {
   }
 
   // Update code snippet
-  _el('stream-code-snippet').textContent = CODE_SNIPPETS[strategy];
+  _el('stream-code-snippet').textContent = isAIScenario ? CODE_SNIPPETS.ai : CODE_SNIPPETS[strategy];
 
-  const TOKEN_DELAY = 45; // ms per token
+  const TOKEN_DELAY = 45;
   let leftText = '';
   let leftTokenCount = 0;
-  let rightText = '';
-  let rightTokenCount = 0;
-  let rightBlocked = false;
-  let piiLeakedCount = 0;
 
-  // --- Left panel: stream freely (no guardrail) ---
+  // --- Left panel ---
   const leftPromise = (async () => {
     for (const token of tokens) {
       if (ac.signal.aborted) return;
       leftText += token;
       leftTokenCount++;
+      // For AI scenario, regex finds nothing — that's the point
       leftOut.innerHTML = _highlightPII(leftText, scenario.piiPattern);
       leftOut.scrollTop = leftOut.scrollHeight;
       await _sleep(TOKEN_DELAY);
     }
-    // Count leaked PII
+
     const re = new RegExp(scenario.piiPattern.source, scenario.piiPattern.flags);
     const matches = leftText.match(re);
-    piiLeakedCount = matches ? matches.length : 0;
+    const piiLeakedCount = matches ? matches.length : 0;
 
     leftStatus.textContent = 'Complete';
-    leftStatus.style.color = '#f85149';
-    leftVerdict.style.display = 'block';
-    leftVerdict.style.background = 'rgba(248,81,73,.1)';
-    leftVerdict.style.color = '#f85149';
-    leftVerdict.innerHTML = `&#x26A0; ${piiLeakedCount} PII instance(s) leaked to user`;
+
+    if (isAIScenario && piiLeakedCount === 0) {
+      leftStatus.style.color = '#d29922';
+      leftVerdict.style.display = 'block';
+      leftVerdict.style.background = 'rgba(210,153,34,.12)';
+      leftVerdict.style.color = '#d29922';
+      leftVerdict.innerHTML = '\u26A0 Regex found 0 PII — but 5 instances are hidden in plain text!';
+    } else {
+      leftStatus.style.color = '#f85149';
+      leftVerdict.style.display = 'block';
+      leftVerdict.style.background = 'rgba(248,81,73,.1)';
+      leftVerdict.style.color = '#f85149';
+      leftVerdict.innerHTML = `\u26A0 ${piiLeakedCount} PII instance(s) leaked to user`;
+    }
 
     _el('stream-left-stats').innerHTML =
       `<span>Tokens: ${leftTokenCount}</span>` +
-      `<span style="color:#f85149">PII leaked: ${piiLeakedCount}</span>` +
-      `<span>Strategy: none</span>`;
+      `<span style="color:${isAIScenario ? '#d29922' : '#f85149'}">PII found: ${piiLeakedCount}</span>` +
+      `<span>Detection: regex</span>`;
   })();
 
-  // --- Right panel: Aegis-guarded stream ---
+  // --- Right panel ---
   const rightPromise = (async () => {
-    if (strategy === 'full_buffer') {
+    if (isAIScenario) {
+      await _runAIMode(tokens, scenario, apiKey, ac, TOKEN_DELAY);
+    } else if (effectiveStrategy === 'full_buffer') {
       await _runFullBuffer(tokens, scenario, ac, TOKEN_DELAY);
     } else {
       await _runWindowed(tokens, scenario, windowSize, ac, TOKEN_DELAY);
@@ -271,10 +367,123 @@ async function runStreamingDemo() {
 
   await Promise.all([leftPromise, rightPromise]);
 
-  btn.textContent = '▶ Start Demo';
+  btn.textContent = '\u25B6 Start Demo';
   btn.style.opacity = '1';
   _streamRunning = false;
   _streamAbort = null;
+}
+
+/* ============================================================
+   AI MODE (pre-recorded or live Gemini)
+   ============================================================ */
+
+async function _runAIMode(tokens, scenario, apiKey, ac, delay) {
+  const out = _el('stream-right-output');
+  const status = _el('stream-right-status');
+  const verdict = _el('stream-right-verdict');
+  const stats = _el('stream-right-stats');
+
+  const totalTokens = tokens.length;
+  let buffered = 0;
+
+  // Buffering phase
+  out.innerHTML = '<div id="stream-buffer-progress" style="text-align:center;padding:40px 0"></div>';
+  const progressEl = _el('stream-buffer-progress');
+
+  for (const token of tokens) {
+    if (ac.signal.aborted) return;
+    buffered++;
+    const pct = Math.round((buffered / totalTokens) * 100);
+    progressEl.innerHTML =
+      `<div style="font-size:13px;color:var(--text-secondary);margin-bottom:12px">Buffering response...</div>` +
+      `<div style="background:var(--bg-secondary);border-radius:6px;height:8px;width:80%;margin:0 auto;overflow:hidden">` +
+        `<div style="background:linear-gradient(90deg,#58a6ff,#3fb950);height:100%;width:${pct}%;transition:width .1s;border-radius:6px"></div>` +
+      `</div>` +
+      `<div style="font-size:11px;color:var(--text-muted);margin-top:8px">${buffered} / ${totalTokens} tokens</div>`;
+    await _sleep(delay);
+  }
+
+  // AI scanning phase
+  status.textContent = 'AI scanning...';
+  status.style.color = '#58a6ff';
+  progressEl.innerHTML =
+    `<div style="font-size:13px;color:#58a6ff;margin-bottom:8px">AI analyzing for semantic PII...</div>` +
+    `<div class="stream-scan-spinner" style="border-top-color:#58a6ff"></div>`;
+
+  let findings;
+  let isLive = false;
+
+  if (apiKey) {
+    // Live Gemini call
+    try {
+      findings = await _callGemini(apiKey, tokens.join(''));
+      isLive = true;
+    } catch (e) {
+      progressEl.innerHTML =
+        `<div style="color:#f85149;font-size:12px;padding:8px">API error: ${e.message}<br>Falling back to pre-recorded results.</div>`;
+      await _sleep(1500);
+      findings = scenario.aiFindings || [];
+    }
+  } else {
+    // Pre-recorded demo
+    await _sleep(800); // simulate AI thinking time
+    findings = scenario.aiFindings || [];
+  }
+
+  const piiCount = findings.length;
+
+  if (piiCount > 0) {
+    status.textContent = 'BLOCKED';
+    status.style.color = '#f85149';
+
+    out.style.transition = 'box-shadow .3s';
+    out.style.boxShadow = '0 0 20px rgba(88,166,255,.4)';
+    setTimeout(() => { out.style.boxShadow = 'none'; }, 600);
+
+    // Show findings with highlights
+    const fullText = tokens.join('');
+    const highlighted = _highlightAIFindings(fullText, findings);
+
+    out.innerHTML = `<div style="padding:0">` +
+      `<div style="background:rgba(88,166,255,.08);padding:8px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px">` +
+        `<span style="font-size:18px">\u{1F9E0}</span>` +
+        `<span style="font-size:12px;font-weight:600;color:#58a6ff">AI detected ${piiCount} semantic PII instance(s)</span>` +
+        `${!isLive ? '<span style="font-size:10px;color:var(--text-muted);margin-left:auto">(pre-recorded demo)</span>' : '<span style="font-size:10px;color:#3fb950;margin-left:auto">live Gemini Flash</span>'}` +
+      `</div>` +
+      `<div style="padding:12px;font-family:\'SF Mono\',Consolas,monospace;font-size:13px;line-height:1.7;white-space:pre-wrap;word-break:break-word">${highlighted}</div>` +
+      `<div style="padding:8px 12px;border-top:1px solid var(--border);display:flex;flex-wrap:wrap;gap:6px">` +
+        findings.map(f =>
+          `<span style="font-size:11px;background:rgba(88,166,255,.15);color:#58a6ff;padding:2px 8px;border-radius:10px">${f.type}: "${f.text.slice(0, 30)}${f.text.length > 30 ? '...' : ''}"</span>`
+        ).join('') +
+      `</div>` +
+    `</div>`;
+
+    verdict.style.display = 'block';
+    verdict.style.background = 'rgba(63,185,80,.12)';
+    verdict.style.color = '#3fb950';
+    verdict.innerHTML = `\u{1F6E1} AI blocked ${piiCount} semantic PII — regex found 0. Zero exposure.`;
+  } else {
+    status.textContent = 'Clean';
+    status.style.color = '#3fb950';
+    out.innerHTML = '';
+    let displayed = '';
+    for (const token of tokens) {
+      if (ac.signal.aborted) return;
+      displayed += token;
+      out.textContent = displayed;
+      out.scrollTop = out.scrollHeight;
+      await _sleep(15);
+    }
+    verdict.style.display = 'block';
+    verdict.style.background = 'rgba(63,185,80,.08)';
+    verdict.style.color = '#3fb950';
+    verdict.innerHTML = '\u2713 AI scan passed — content released.';
+  }
+
+  stats.innerHTML =
+    `<span>Tokens buffered: ${totalTokens}</span>` +
+    `<span style="color:#3fb950">PII leaked: 0</span>` +
+    `<span>Detection: AI${isLive ? ' (live)' : ' (demo)'}</span>`;
 }
 
 /* ============================================================
@@ -290,7 +499,6 @@ async function _runWindowed(tokens, scenario, windowSize, ac, delay) {
   const buffer = [];
   let released = '';
   let releasedCount = 0;
-  let blocked = false;
 
   for (const token of tokens) {
     if (ac.signal.aborted) return;
@@ -299,28 +507,21 @@ async function _runWindowed(tokens, scenario, windowSize, ac, delay) {
     if (buffer.length >= windowSize) {
       const windowText = buffer.join('');
       if (_hasPII(windowText, scenario.piiPattern)) {
-        // BLOCKED
-        blocked = true;
         status.textContent = 'BLOCKED';
         status.style.color = '#f85149';
-
-        // Flash effect
         out.style.transition = 'box-shadow .3s';
         out.style.boxShadow = '0 0 20px rgba(63,185,80,.4)';
         setTimeout(() => { out.style.boxShadow = 'none'; }, 600);
-
         verdict.style.display = 'block';
         verdict.style.background = 'rgba(63,185,80,.12)';
         verdict.style.color = '#3fb950';
-        verdict.innerHTML = `&#x1F6E1; PII detected in window — stream killed. Zero tokens leaked.`;
-
+        verdict.innerHTML = `\u{1F6E1} PII detected in window — stream killed. Zero tokens leaked.`;
         stats.innerHTML =
           `<span>Tokens released: ${releasedCount}</span>` +
           `<span style="color:#3fb950">PII leaked: 0</span>` +
           `<span>Strategy: windowed (size=${windowSize})</span>`;
         return;
       }
-      // Release oldest token
       const oldest = buffer.shift();
       released += oldest;
       releasedCount++;
@@ -330,17 +531,16 @@ async function _runWindowed(tokens, scenario, windowSize, ac, delay) {
     await _sleep(delay);
   }
 
-  // Flush remaining buffer
+  // Flush remaining
   if (buffer.length > 0) {
     const remaining = buffer.join('');
     if (_hasPII(remaining, scenario.piiPattern)) {
-      blocked = true;
       status.textContent = 'BLOCKED';
       status.style.color = '#f85149';
       verdict.style.display = 'block';
       verdict.style.background = 'rgba(63,185,80,.12)';
       verdict.style.color = '#3fb950';
-      verdict.innerHTML = `&#x1F6E1; PII detected in final buffer — stream killed.`;
+      verdict.innerHTML = `\u{1F6E1} PII detected in final buffer — stream killed.`;
       stats.innerHTML =
         `<span>Tokens released: ${releasedCount}</span>` +
         `<span style="color:#3fb950">PII leaked: 0</span>` +
@@ -352,18 +552,16 @@ async function _runWindowed(tokens, scenario, windowSize, ac, delay) {
     out.textContent = released;
   }
 
-  if (!blocked) {
-    status.textContent = 'Clean';
-    status.style.color = '#3fb950';
-    verdict.style.display = 'block';
-    verdict.style.background = 'rgba(63,185,80,.08)';
-    verdict.style.color = '#3fb950';
-    verdict.innerHTML = `&#x2713; Stream completed — no PII detected.`;
-    stats.innerHTML =
-      `<span>Tokens released: ${releasedCount}</span>` +
-      `<span style="color:#3fb950">PII leaked: 0</span>` +
-      `<span>Strategy: windowed (size=${windowSize})</span>`;
-  }
+  status.textContent = 'Clean';
+  status.style.color = '#3fb950';
+  verdict.style.display = 'block';
+  verdict.style.background = 'rgba(63,185,80,.08)';
+  verdict.style.color = '#3fb950';
+  verdict.innerHTML = '\u2713 Stream completed — no PII detected.';
+  stats.innerHTML =
+    `<span>Tokens released: ${releasedCount}</span>` +
+    `<span style="color:#3fb950">PII leaked: 0</span>` +
+    `<span>Strategy: windowed (size=${windowSize})</span>`;
 }
 
 /* ============================================================
@@ -376,7 +574,6 @@ async function _runFullBuffer(tokens, scenario, ac, delay) {
   const verdict = _el('stream-right-verdict');
   const stats = _el('stream-right-stats');
 
-  // Show buffering progress
   const totalTokens = tokens.length;
   let buffered = 0;
 
@@ -387,17 +584,15 @@ async function _runFullBuffer(tokens, scenario, ac, delay) {
     if (ac.signal.aborted) return;
     buffered++;
     const pct = Math.round((buffered / totalTokens) * 100);
-    const barWidth = pct;
     progressEl.innerHTML =
       `<div style="font-size:13px;color:var(--text-secondary);margin-bottom:12px">Buffering response...</div>` +
       `<div style="background:var(--bg-secondary);border-radius:6px;height:8px;width:80%;margin:0 auto;overflow:hidden">` +
-        `<div style="background:linear-gradient(90deg,#58a6ff,#3fb950);height:100%;width:${barWidth}%;transition:width .1s;border-radius:6px"></div>` +
+        `<div style="background:linear-gradient(90deg,#58a6ff,#3fb950);height:100%;width:${pct}%;transition:width .1s;border-radius:6px"></div>` +
       `</div>` +
       `<div style="font-size:11px;color:var(--text-muted);margin-top:8px">${buffered} / ${totalTokens} tokens</div>`;
     await _sleep(delay);
   }
 
-  // Scanning phase
   status.textContent = 'Scanning...';
   progressEl.innerHTML =
     `<div style="font-size:13px;color:var(--accent);margin-bottom:8px">Scanning full response...</div>` +
@@ -413,13 +608,12 @@ async function _runFullBuffer(tokens, scenario, ac, delay) {
   if (hasPii) {
     status.textContent = 'BLOCKED';
     status.style.color = '#f85149';
-
     out.style.transition = 'box-shadow .3s';
     out.style.boxShadow = '0 0 20px rgba(63,185,80,.4)';
     setTimeout(() => { out.style.boxShadow = 'none'; }, 600);
 
     out.innerHTML = `<div style="text-align:center;padding:40px 20px">` +
-      `<div style="font-size:48px;margin-bottom:12px">&#x1F6E1;</div>` +
+      `<div style="font-size:48px;margin-bottom:12px">\u{1F6E1}</div>` +
       `<div style="font-size:15px;font-weight:600;color:#3fb950;margin-bottom:8px">${piiCount} PII instance(s) detected and blocked</div>` +
       `<div style="font-size:12px;color:var(--text-muted)">Full response was scanned before any content reached the user.</div>` +
       `</div>`;
@@ -427,12 +621,10 @@ async function _runFullBuffer(tokens, scenario, ac, delay) {
     verdict.style.display = 'block';
     verdict.style.background = 'rgba(63,185,80,.12)';
     verdict.style.color = '#3fb950';
-    verdict.innerHTML = `&#x1F6E1; Entire response blocked — zero exposure.`;
+    verdict.innerHTML = `\u{1F6E1} Entire response blocked — zero exposure.`;
   } else {
     status.textContent = 'Clean';
     status.style.color = '#3fb950';
-
-    // Stream out the clean content
     out.innerHTML = '';
     let displayed = '';
     for (const token of tokens) {
@@ -440,13 +632,12 @@ async function _runFullBuffer(tokens, scenario, ac, delay) {
       displayed += token;
       out.textContent = displayed;
       out.scrollTop = out.scrollHeight;
-      await _sleep(15); // faster since already scanned
+      await _sleep(15);
     }
-
     verdict.style.display = 'block';
     verdict.style.background = 'rgba(63,185,80,.08)';
     verdict.style.color = '#3fb950';
-    verdict.innerHTML = `&#x2713; Full scan passed — content released.`;
+    verdict.innerHTML = '\u2713 Full scan passed — content released.';
   }
 
   stats.innerHTML =
@@ -466,6 +657,19 @@ function initStreamingDemo() {
       document.querySelectorAll('.stream-scenario-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       _currentScenario = btn.dataset.scenario;
+
+      // Show/hide AI key section based on scenario
+      const scenario = STREAM_SCENARIOS[_currentScenario];
+      const aiSection = _el('stream-ai-section');
+      if (aiSection) {
+        aiSection.style.display = scenario.mode === 'ai' ? 'flex' : 'none';
+      }
+      // Auto-switch strategy for AI scenarios
+      const stratSelect = _el('stream-strategy');
+      if (scenario.mode === 'ai' && stratSelect) {
+        stratSelect.value = 'full_buffer';
+        stratSelect.dispatchEvent(new Event('change'));
+      }
     });
   });
 
@@ -483,8 +687,22 @@ function initStreamingDemo() {
       const isWindowed = stratSelect.value === 'windowed';
       slider.disabled = !isWindowed;
       slider.style.opacity = isWindowed ? '1' : '0.3';
-      // Update code snippet
-      _el('stream-code-snippet').textContent = CODE_SNIPPETS[stratSelect.value];
+      const scenario = STREAM_SCENARIOS[_currentScenario];
+      if (scenario.mode === 'ai') {
+        _el('stream-code-snippet').textContent = CODE_SNIPPETS.ai;
+      } else {
+        _el('stream-code-snippet').textContent = CODE_SNIPPETS[stratSelect.value];
+      }
+    });
+  }
+
+  // API key — restore from sessionStorage
+  const keyInput = _el('stream-api-key');
+  if (keyInput) {
+    const saved = sessionStorage.getItem('aegis_gemini_key');
+    if (saved) keyInput.value = saved;
+    keyInput.addEventListener('input', () => {
+      sessionStorage.setItem('aegis_gemini_key', keyInput.value);
     });
   }
 
@@ -495,7 +713,7 @@ function initStreamingDemo() {
       if (_streamRunning && _streamAbort) {
         _streamAbort.abort();
         _streamRunning = false;
-        btn.textContent = '▶ Start Demo';
+        btn.textContent = '\u25B6 Start Demo';
         btn.style.opacity = '1';
         return;
       }
@@ -514,7 +732,6 @@ function initStreamingDemo() {
   if (codeEl) codeEl.textContent = CODE_SNIPPETS.windowed;
 }
 
-// Auto-init when DOM is ready
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initStreamingDemo);
 } else {
