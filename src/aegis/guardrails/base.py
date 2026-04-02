@@ -47,21 +47,29 @@ class Guardrail(ABC):
         description: Human-readable description of what this guardrail checks.
         severity: Default severity for findings — ``"low"``, ``"medium"``,
             ``"high"``, or ``"critical"``.
+        requires_full_buffer: When ``True``, streaming engines must buffer
+            the entire response before running this guardrail.  Use this
+            for guardrails where partial exposure is a violation (e.g. PII
+            detection).  Default ``False``.
     """
 
     name: str
     description: str
     severity: str
+    requires_full_buffer: bool
 
     def __init__(
         self,
         name: str,
         description: str = "",
         severity: str = "medium",
+        *,
+        requires_full_buffer: bool = False,
     ) -> None:
         self.name = name
         self.description = description
         self.severity = severity
+        self.requires_full_buffer = requires_full_buffer
 
     @abstractmethod
     def check(
