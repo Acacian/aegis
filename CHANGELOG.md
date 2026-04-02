@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] — 2026-04-02
+
+### Added
+
+- **Streaming-aware guardrail engine** — `StreamingGuardrailEngine` scans streaming LLM responses with automatic strategy selection: windowed scan (configurable `window_size`) for incremental guardrails, full-buffer mode for guardrails where partial exposure is a violation (e.g. PII)
+- **`requires_full_buffer` flag** on `Guardrail` base class — guardrails declare whether they need complete content before scanning; the streaming engine auto-selects the safest strategy based on active guardrails
+- **Streaming Guard playground demo** — split-screen live comparison (unguarded vs Aegis-guarded streaming), 5 scenarios including AI-powered semantic PII detection via Gemini Flash
+
 ## [0.6.1] — 2026-03-30
 
 ### Changed

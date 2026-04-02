@@ -52,7 +52,7 @@
   <text x="240" y="520" fill="#6e7681" font-size="16">pip install agent-aegis</text>
   <text x="240" y="548" fill="#484f58" font-size="14">github.com/Acacian/aegis</text>
   <rect x="1070" y="580" width="80" height="26" rx="13" fill="rgba(88,166,255,0.12)" stroke="#58a6ff" stroke-width="1"/>
-  <text x="1110" y="598" fill="#58a6ff" font-size="12" text-anchor="middle" font-weight="600">v0.6.1</text>
+  <text x="1110" y="598" fill="#58a6ff" font-size="12" text-anchor="middle" font-weight="600">v0.7.0</text>
 
   <!-- Code snippet preview -->
   <g transform="translate(700, 140)">
