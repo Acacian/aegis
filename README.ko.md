@@ -21,11 +21,13 @@
   <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-4650%2B_passed-brightgreen" alt="Tests"></a>
   <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/coverage-92%25-brightgreen" alt="Coverage"></a>
   <a href="https://acacian.github.io/aegis/playground/"><img src="https://img.shields.io/badge/playground-브라우저에서_체험-ff6b6b" alt="Playground"></a>
+  <a href="https://acacian.github.io/aegis/playground/scan-report.html"><img src="https://img.shields.io/badge/스캔_리포트-9개_레포%2C_전부_F-red" alt="Scan Report"></a>
   <a href="https://www.bestpractices.dev/projects/12253"><img src="https://www.bestpractices.dev/projects/12253/badge" alt="OpenSSF Best Practices"></a>
 </p>
 
 <p align="center">
   <a href="https://acacian.github.io/aegis/playground/"><strong>브라우저에서 바로 체험하기</strong></a> &bull;
+  <a href="https://acacian.github.io/aegis/playground/scan-report.html"><strong>스캔 리포트</strong></a> &bull;
   <a href="#빠른-시작">빠른 시작</a> &bull;
   <a href="#3대-핵심-축">3대 핵심 축</a> &bull;
   <a href="#런타임-가드레일">가드레일</a> &bull;
