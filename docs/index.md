@@ -158,7 +158,10 @@ async with Runtime(
 | **0.2** | **Released** | WebSocket real-time streaming, interactive playground, policy editor, shields.io badge |
 | **0.4** | **Released** | `aegis.init()`, runtime guardrails, AGEF/AGP open governance specs |
 | **0.4.2** | **Released** | **Auto-instrumentation** -- `aegis.auto_instrument()` for LangChain, CrewAI, OpenAI Agents SDK, OpenAI, Anthropic |
-| **0.5** | **Released** | Auto-instrumentation for LiteLLM, Google GenAI, Pydantic AI, LlamaIndex. Centralized policy server |
+| **0.5** | **Released** | Auto-instrumentation for LiteLLM, Google GenAI, Pydantic AI, LlamaIndex, Instructor, DSPy (11 frameworks). MCP Proxy Server. `aegis plan` + `aegis test` CLI |
+| **0.6** | **Released** | 18 security fixes, IBAN PII detection, Policy CI/CD (`PolicyImpactAnalyzer`, `PolicyTestRunner`), cost governance, compliance reports, behavioral drift detection |
+| **0.6.1** | **Released** | Guardrail performance optimization — combined regex, LRU cache. 2.65ms per-call overhead for full 4-scan stack |
+| **0.7.0** | **Released** | Streaming-aware guardrail engine (`StreamingGuardrailEngine`), auto strategy selection (windowed vs full-buffer), Streaming Guard playground demo |
 | **1.0** | 2027 | Distributed security, hosted SaaS, SSO/SCIM |
 
 ## Links
