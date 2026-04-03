@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Agent Security Report — aegis scan results for 9 major frameworks</title>
+  <meta name="description" content="We scanned 9 major AI agent repos (LangChain, CrewAI, AutoGen, LlamaIndex, etc.) for ungoverned tool calls. All 9 scored F. 871 findings total.">
+  <meta property="og:title" content="AI Agent Security Report — 9 Repos, All F">
+  <meta property="og:description" content="871 ungoverned tool calls across LangChain, CrewAI, AutoGen, LlamaIndex, Pydantic AI, OpenAI Agents, Google ADK, LiteLLM, and awesome-llm-apps.">
+  <meta property="og:url" content="https://acacian.github.io/aegis/playground/scan-report.html">
+  <meta property="og:type" content="article">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="AI Agent Security Report — 9 Repos, All F">
+  <meta name="twitter:description" content="871 ungoverned tool calls found across 9 major AI agent frameworks.">
+  <link rel="canonical" href="https://acacian.github.io/aegis/playground/scan-report.html">
+  <style>
+    :root {
+      --bg-primary: #0d1117;
+      --bg-secondary: #161b22;
+      --bg-panel: #1c2128;
+      --bg-hover: #21262d;
+      --border: #30363d;
+      --text-primary: #e6edf3;
+      --text-secondary: #8b949e;
+      --text-muted: #6e7681;
+      --accent: #58a6ff;
+      --risk-high: #f85149;
+      --risk-high-bg: rgba(248, 81, 73, 0.12);
+      --risk-medium: #d29922;
+      --risk-medium-bg: rgba(210, 153, 34, 0.12);
+      --risk-low: #3fb950;
+      --radius: 8px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+    }
+    .container { max-width: 960px; margin: 0 auto; padding: 40px 20px; }
+    h1 { font-size: 28px; margin-bottom: 8px; }
+    .subtitle { color: var(--text-secondary); font-size: 16px; margin-bottom: 32px; }
+    .stat-bar {
+      display: flex; gap: 24px; margin-bottom: 32px; flex-wrap: wrap;
+    }
+    .stat-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 24px;
+      flex: 1; min-width: 140px;
+    }
+    .stat-num { font-size: 32px; font-weight: 700; }
+    .stat-num.red { color: var(--risk-high); }
+    .stat-label { font-size: 13px; color: var(--text-muted); }
+
+    table { width: 100%; border-collapse: collapse; margin-bottom: 32px; }
+    th {
+      text-align: left; padding: 10px 12px; font-size: 12px;
+      color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border);
+    }
+    td {
+      padding: 12px; border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+    tr:hover { background: var(--bg-hover); }
+    .repo-name { font-weight: 600; }
+    .repo-name a { color: var(--accent); text-decoration: none; }
+    .repo-name a:hover { text-decoration: underline; }
+    .stars { color: var(--text-muted); font-size: 13px; }
+    .grade {
+      display: inline-block; padding: 2px 10px; border-radius: 12px;
+      font-weight: 700; font-size: 13px;
+    }
+    .grade-f { background: var(--risk-high-bg); color: var(--risk-high); }
+    .finding-count { font-weight: 600; color: var(--risk-high); font-size: 16px; }
+    .cat-tags { display: flex; gap: 4px; flex-wrap: wrap; }
+    .cat-tag {
+      font-size: 11px; padding: 2px 8px; border-radius: 10px;
+      background: var(--bg-panel); border: 1px solid var(--border);
+      color: var(--text-secondary); white-space: nowrap;
+    }
+
+    .detail-row { display: none; }
+    .detail-row.open { display: table-row; }
+    .detail-row td {
+      padding: 0 12px 16px 12px;
+      background: var(--bg-secondary);
+    }
+    .detail-list { list-style: none; padding: 12px 0 0 0; }
+    .detail-list li {
+      font-size: 13px; padding: 6px 0;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-secondary);
+    }
+    .detail-list li:last-child { border-bottom: none; }
+    .detail-file { color: var(--accent); }
+    .detail-owasp {
+      font-size: 11px; padding: 1px 6px; border-radius: 8px;
+      background: var(--risk-high-bg); color: var(--risk-high);
+      margin-left: 6px;
+    }
+    .toggle-btn {
+      background: none; border: none; color: var(--accent);
+      cursor: pointer; font-size: 13px; padding: 0;
+    }
+    .toggle-btn:hover { text-decoration: underline; }
+
+    .method-note {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      margin-bottom: 32px;
+    }
+    .method-note h2 { font-size: 16px; margin-bottom: 8px; }
+    .method-note p { font-size: 14px; color: var(--text-secondary); margin-bottom: 8px; }
+    .method-note code {
+      background: var(--bg-panel); padding: 2px 6px; border-radius: 4px;
+      font-size: 13px;
+    }
+
+    .cta {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      text-align: center;
+    }
+    .cta h2 { font-size: 18px; margin-bottom: 8px; }
+    .cta p { color: var(--text-secondary); font-size: 14px; margin-bottom: 16px; }
+    .cta-code {
+      background: var(--bg-primary); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 12px 16px;
+      font-family: 'SFMono-Regular', Consolas, monospace;
+      font-size: 14px; display: inline-block; color: var(--text-primary);
+      user-select: all;
+    }
+    .footer {
+      margin-top: 40px; padding-top: 20px;
+      border-top: 1px solid var(--border);
+      font-size: 12px; color: var(--text-muted);
+      text-align: center;
+    }
+    .footer a { color: var(--accent); text-decoration: none; }
+
+    @media (max-width: 640px) {
+      .stat-bar { flex-direction: column; }
+      table { font-size: 13px; }
+      td, th { padding: 8px 6px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>AI Agent Security Report</h1>
+    <p class="subtitle">
+      <code>aegis scan</code> results for 9 major AI agent repositories.
+      Scanned <span id="total-files">0</span> Python files.
+      Last updated: April 2026.
+    </p>
+
+    <div class="stat-bar">
+      <div class="stat-card">
+        <div class="stat-num red" id="total-findings">0</div>
+        <div class="stat-label">Ungoverned tool calls</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num red">9/9</div>
+        <div class="stat-label">Repos scored F</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" style="color:var(--risk-medium)" id="total-repos">9</div>
+        <div class="stat-label">Repos scanned</div>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Repository</th>
+          <th>Stars</th>
+          <th>Files</th>
+          <th>Findings</th>
+          <th>Grade</th>
+          <th>Categories</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="results-body"></tbody>
+    </table>
+
+    <div class="method-note">
+      <h2>Methodology</h2>
+      <p>
+        <code>aegis scan</code> performs static AST analysis on Python files. It detects tool calls, LLM API invocations,
+        subprocess executions, and MCP tool definitions that lack a governance wrapper (policy check, guardrail, or approval gate).
+      </p>
+      <p>
+        Each finding is mapped to the
+        <a href="https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications/" style="color:var(--accent)">OWASP Top 10 for Agentic Applications</a>.
+        A governance wrapper does not mean the code is vulnerable — it means there is no automated policy enforcement at that call site.
+      </p>
+      <p>
+        Scanner source:
+        <a href="https://github.com/Acacian/aegis/blob/main/src/aegis/cli/scan.py" style="color:var(--accent)">aegis/cli/scan.py</a>.
+        Results are reproducible — clone the repo and run <code>aegis scan .</code>.
+      </p>
+    </div>
+
+    <div class="cta">
+      <h2>Scan your own repo</h2>
+      <p>Find ungoverned AI tool calls in your codebase.</p>
+      <div class="cta-code">pip install agent-aegis && aegis scan .</div>
+    </div>
+
+    <div class="footer">
+      Built with <a href="https://github.com/Acacian/aegis">aegis</a> &mdash;
+      <a href="https://acacian.github.io/aegis/playground/">Playground</a> &middot;
+      <a href="https://pypi.org/project/agent-aegis/">PyPI</a> &middot;
+      <a href="https://github.com/marketplace/actions/aegis-ai-governance-gate">GitHub Action</a>
+    </div>
+  </div>
+
+  <script>
+    const DATA = [{"dir":"langchain","name":"LangChain","stars":"108K","url":"https://github.com/langchain-ai/langchain","files":2448,"findings":223,"categories":{"LangChain":217,"subprocess":4,"Anthropic":1,"HTTP":1},"examples":[{"file":"libs/core/langchain_core/tools/simple.py","line":31,"category":"LangChain","detail":"BaseTool subclass \"Tool\" \u2014 not governed","owasp":"ASI02: Tool Misuse & Exploitation"},{"file":"libs/core/langchain_core/tools/structured.py","line":40,"category":"LangChain","detail":"BaseTool subclass \"StructuredTool\" \u2014 not governed","owasp":"ASI02: Tool Misuse & Exploitation"},{"file":"libs/core/tests/benchmarks/test_imports.py","line":54,"category":"subprocess","detail":"subprocess.run \u2014 direct shell execution","owasp":"ASI08: Uncontrolled Code Execution"}]},{"dir":"crewAI","name":"CrewAI","stars":"28K","url":"https://github.com/crewAIInc/crewAI","files":1061,"findings":266,"categories":{"subprocess":53,"HTTP":16,"LangChain":197},"examples":[{"file":"src/crewai/agent/core.py","line":1174,"category":"subprocess","detail":"subprocess.run \u2014 direct shell execution","owasp":"ASI08: Uncontrolled Code Execution"},{"file":"src/crewai/cli/authentication/main.py","line":101,"category":"HTTP","detail":"httpx.post \u2014 raw HTTP in agent code","owasp":"ASI07: Data Leakage & Exfiltration"},{"file":"src/crewai/cli/authentication/main.py","line":133,"category":"HTTP","detail":"httpx.post \u2014 raw HTTP in agent code","owasp":"ASI07: Data Leakage & Exfiltration"}]},{"dir":"autogen","name":"AutoGen","stars":"42K","url":"https://github.com/microsoft/autogen","files":546,"findings":21,"categories":{"subprocess":15,"MCP":3,"OpenAI":2,"LangChain":1},"examples":[{"file":"python/check_md_code_blocks.py","line":61,"category":"subprocess","detail":"subprocess.run \u2014 direct shell execution","owasp":"ASI08: Uncontrolled Code Execution"},{"file":"python/docs/src/_extension/code_lint.py","line":74,"category":"subprocess","detail":"subprocess.run \u2014 direct shell execution","owasp":"ASI08: Uncontrolled Code Execution"},{"file":"python/docs/src/conf.py","line":199,"category":"subprocess","detail":"subprocess.run \u2014 direct shell execution","owasp":"ASI08: Uncontrolled Code Execution"}]},{"dir":"awesome-llm-apps","name":"awesome-llm-apps","stars":"20K","url":"https://github.com/Shubhamsaboo/awesome-llm-apps","files":453,"findings":23,"categories":{"HTTP":8,"LangChain":6,"subprocess":7,"Anthropic":2},"examples":[{"file":"advanced_ai_agents/multi_agent_apps/agent_teams/ai_competitor_intelligence_agent_team/competitor_agent_team.py","line":154,"category":"HTTP","detail":"requests.post \u2014 raw HTTP in agent code","owasp":"ASI07: Data Leakage & Exfiltration"},{"file":"advanced_ai_agents/multi_agent_apps/agent_teams/ai_recruitment_agent_team/ai_recruitment_agent_team.py","line":36,"category":"HTTP","detail":"requests.post \u2014 raw HTTP in agent code","owasp":"ASI07: Data Leakage & Exfiltration"},{"file":"advanced_ai_agents/multi_agent_apps/agent_teams/ai_services_agency/agency.py","line":8,"category":"LangChain","detail":"BaseTool subclass \"AnalyzeProjectRequirements\" \u2014 not governed","owasp":"ASI02: Tool Misuse & Exploitation"}]},{"dir":"llama_index","name":"LlamaIndex","stars":"40K","url":"https://github.com/run-llama/llama_index","files":4157,"findings":122,"categories":{"subprocess":26,"HTTP":81,"LangChain":2,"OpenAI":3,"MCP":10},"examples":[{"file":"docs/scripts/prepare_for_build.py","line":198,"category":"subprocess","detail":"os.system \u2014 direct shell execution","owasp":"ASI08: Uncontrolled Code Execution"},{"file":"llama-dev/llama_dev/pkg/cmd_exec.py","line":61,"category":"subprocess","detail":"subprocess.run \u2014 direct shell execution","owasp":"ASI08: Uncontrolled Code Execution"},{"file":"llama-dev/llama_dev/release/changelog.py","line":18,"category":"subprocess","detail":"subprocess.run \u2014 direct shell execution","owasp":"ASI08: Uncontrolled Code Execution"}]},{"dir":"pydantic-ai","name":"Pydantic AI","stars":"12K","url":"https://github.com/pydantic/pydantic-ai","files":482,"findings":38,"categories":{"OpenAI":3,"MCP":35},"examples":[{"file":"pydantic_ai_slim/pydantic_ai/models/groq.py","line":315,"category":"OpenAI","detail":"function call with tools= \u2014 no governance wrapper","owasp":"ASI02: Tool Misuse & Exploitation"},{"file":"pydantic_ai_slim/pydantic_ai/models/huggingface.py","line":244,"category":"OpenAI","detail":"function call with tools= \u2014 no governance wrapper","owasp":"ASI02: Tool Misuse & Exploitation"},{"file":"pydantic_ai_slim/pydantic_ai/models/openai.py","line":788,"category":"OpenAI","detail":"function call with tools= \u2014 no governance wrapper","owasp":"ASI02: Tool Misuse & Exploitation"}]},{"dir":"openai-agents-python","name":"OpenAI Agents","stars":"6K","url":"https://github.com/openai/openai-agents-python","files":506,"findings":24,"categories":{"subprocess":13,"MCP":10,"OpenAI":1},"examples":[{"file":"docs/scripts/translate_docs.py","line":377,"category":"subprocess","detail":"subprocess.run \u2014 direct shell execution","owasp":"ASI08: Uncontrolled Code Execution"},{"file":"examples/mcp/manager_example/mcp_server.py","line":15,"category":"MCP","detail":"@mcp.tool() \"add\" \u2014 no aegis middleware","owasp":"ASI04: Supply Chain Vulnerabilities"},{"file":"examples/mcp/manager_example/mcp_server.py","line":20,"category":"MCP","detail":"@mcp.tool() \"echo\" \u2014 no aegis middleware","owasp":"ASI04: Supply Chain Vulnerabilities"}]},{"dir":"adk-python","name":"Google ADK","stars":"12K","url":"https://github.com/google/adk-python","files":1280,"findings":76,"categories":{"HTTP":8,"subprocess":19,"LangChain":40,"MCP":9},"examples":[{"file":"contributing/samples/adk_answering_agent/utils.py","line":41,"category":"HTTP","detail":"requests.post \u2014 raw HTTP in agent code","owasp":"ASI07: Data Leakage & Exfiltration"},{"file":"contributing/samples/adk_documentation/tools.py","line":475,"category":"subprocess","detail":"subprocess.run \u2014 direct shell execution","owasp":"ASI08: Uncontrolled Code Execution"},{"file":"contributing/samples/adk_documentation/tools.py","line":488,"category":"subprocess","detail":"subprocess.run \u2014 direct shell execution","owasp":"ASI08: Uncontrolled Code Execution"}]},{"dir":"litellm","name":"LiteLLM","stars":"20K","url":"https://github.com/BerriAI/litellm","files":3531,"findings":78,"categories":{"subprocess":48,"HTTP":28,"MCP":2},"examples":[{"file":"ci_cd/baseline_db.py","line":29,"category":"subprocess","detail":"subprocess.run \u2014 direct shell execution","owasp":"ASI08: Uncontrolled Code Execution"},{"file":"ci_cd/run_migration.py","line":38,"category":"subprocess","detail":"subprocess.run \u2014 direct shell execution","owasp":"ASI08: Uncontrolled Code Execution"},{"file":"ci_cd/run_migration.py","line":44,"category":"subprocess","detail":"subprocess.run \u2014 direct shell execution","owasp":"ASI08: Uncontrolled Code Execution"}]}];
+
+    // Sort by findings descending
+    DATA.sort((a, b) => b.findings - a.findings);
+
+    const totalFindings = DATA.reduce((s, r) => s + r.findings, 0);
+    const totalFiles = DATA.reduce((s, r) => s + r.files, 0);
+    document.getElementById('total-findings').textContent = totalFindings.toLocaleString();
+    document.getElementById('total-files').textContent = totalFiles.toLocaleString();
+
+    const tbody = document.getElementById('results-body');
+
+    DATA.forEach((repo, i) => {
+      // Main row
+      const tr = document.createElement('tr');
+      tr.style.cursor = 'pointer';
+      tr.innerHTML = `
+        <td class="repo-name"><a href="${repo.url}" target="_blank" rel="noopener">${repo.name}</a></td>
+        <td class="stars">${repo.stars}</td>
+        <td>${repo.files.toLocaleString()}</td>
+        <td class="finding-count">${repo.findings}</td>
+        <td><span class="grade grade-f">F</span></td>
+        <td class="cat-tags">${Object.entries(repo.categories)
+          .sort((a,b) => b[1]-a[1])
+          .map(([c,n]) => `<span class="cat-tag">${c}: ${n}</span>`)
+          .join('')}</td>
+        <td><button class="toggle-btn" data-idx="${i}">details</button></td>
+      `;
+      tbody.appendChild(tr);
+
+      // Detail row
+      const detailTr = document.createElement('tr');
+      detailTr.className = 'detail-row';
+      detailTr.id = `detail-${i}`;
+      detailTr.innerHTML = `
+        <td colspan="7">
+          <ul class="detail-list">
+            ${repo.examples.map(ex => `
+              <li>
+                <span class="detail-file">${ex.file}:${ex.line}</span>
+                &mdash; ${ex.detail}
+                ${ex.owasp ? `<span class="detail-owasp">${ex.owasp}</span>` : ''}
+              </li>
+            `).join('')}
+            ${repo.findings > 3 ? `<li style="color:var(--text-muted)">... and ${repo.findings - 3} more findings. Run <code>aegis scan</code> to see all.</li>` : ''}
+          </ul>
+        </td>
+      `;
+      tbody.appendChild(detailTr);
+
+      // Toggle
+      tr.addEventListener('click', () => {
+        detailTr.classList.toggle('open');
+      });
+    });
+
+    // Also handle button clicks
+    document.querySelectorAll('.toggle-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const idx = btn.dataset.idx;
+        document.getElementById(`detail-${idx}`).classList.toggle('open');
+      });
+    });
+  </script>
+</body>
+</html>
