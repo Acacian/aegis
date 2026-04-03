@@ -1090,6 +1090,7 @@ aegis compliance --type soc2 --output report.json  # 컴플라이언스 리포�
 | **0.5** | **출시됨** | LiteLLM, Google GenAI, Pydantic AI, LlamaIndex, Instructor, DSPy 자동 계측. 중앙 정책 서버, 룰 팩 레지스트리, 크로스 에이전트 감사 연관 분석 |
 | **0.6** | **출시됨** | 보안 강화 (18개 취약점 수정): fail-closed 기본값, API 인증 미들웨어, 감사 데이터 무결성, SSRF/ReDoS/TOCTOU 방어. IBAN PII 탐지 (mod-97 검증). Policy CI/CD 강화 (영향 분석, 테스트 러너, GitHub Action) |
 | **0.6.1** | **출시됨** | 가드레일 성능 최적화: 카테고리별 combined regex, 인젝션 + PII LRU 캐시. 실제 호출당 오버헤드 2.65ms (LLM 지연의 0.53%). 벤치마크 스위트 |
+| **0.7.0** | **출시됨** | 스트리밍 인식 가드레일 엔진 (`StreamingGuardrailEngine`): 자동 전략 선택 (윈도우 스캔 vs 풀 버퍼), 가드레일 `requires_full_buffer` 플래그. 스트리밍 가드 플레이그라운드 데모 (AI 기반 시맨틱 PII 탐지) |
 | **1.0** | 2027 | 분산 거버넌스, 호스티드 SaaS, SSO/SCIM |
 
 ## 기여하기

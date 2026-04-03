@@ -1462,6 +1462,7 @@ aegis probe policy.yaml                            # Adversarial policy testing
 | **0.5** | **Released** | Auto-instrumentation for LiteLLM, Google GenAI, Pydantic AI, LlamaIndex, Instructor, DSPy. Centralized policy server, rule pack registry, cross-agent audit correlation |
 | **0.6** | **Released** | Security hardening (18 vulnerabilities fixed): fail-closed defaults, API auth middleware, audit data sanitization, SSRF/ReDoS/TOCTOU protection. IBAN PII detection with mod-97 validation. Policy CI/CD enhancements (impact analysis, test runner, GitHub Action) |
 | **0.6.1** | **Released** | Guardrail performance optimization: combined regex per category, LRU cache on injection + PII detection. Realistic per-call overhead 2.65ms (0.53% of LLM latency). Benchmark suite |
+| **0.7.0** | **Released** | Streaming-aware guardrail engine (`StreamingGuardrailEngine`): auto strategy selection (windowed scan vs full-buffer), `requires_full_buffer` flag on guardrails. Streaming Guard playground demo with AI-powered semantic PII detection |
 | **1.0** | 2027 | Distributed security, hosted SaaS, SSO/SCIM |
 
 ## Contributing
