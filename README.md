@@ -20,6 +20,7 @@
   <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-4650%2B_passed-brightgreen" alt="Tests"></a>
   <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/coverage-92%25-brightgreen" alt="Coverage"></a>
   <a href="https://acacian.github.io/aegis/playground/"><img src="https://img.shields.io/badge/playground-Try_it_Live-ff6b6b" alt="Playground"></a>
+  <a href="https://acacian.github.io/aegis/playground/scan-report.html"><img src="https://img.shields.io/badge/scan_report-9_Repos%2C_All_F-red" alt="Scan Report"></a>
   <a href="https://www.bestpractices.dev/projects/12253"><img src="https://www.bestpractices.dev/projects/12253/badge" alt="OpenSSF Best Practices"></a>
 </p>
 
@@ -32,6 +33,7 @@
   <a href="https://acacian.github.io/aegis/">Documentation</a> &bull;
   <a href="#integrations">Integrations</a> &bull;
   <a href="https://acacian.github.io/aegis/playground/"><strong>Try it Live</strong></a> &bull;
+  <a href="https://acacian.github.io/aegis/playground/scan-report.html"><strong>Scan Report</strong></a> &bull;
   <a href="https://github.com/Acacian/aegis/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22">Contributing</a>
 </p>
 
