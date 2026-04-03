@@ -474,6 +474,23 @@ header {
   border-color: var(--text-secondary);
 }
 
+.lang-toggle {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 5px 10px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: .5px;
+  transition: border-color 0.15s, color 0.15s;
+}
+.lang-toggle:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 .theme-toggle {
   background: transparent;
   border: 1px solid var(--border);
