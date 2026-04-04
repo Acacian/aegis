@@ -57,13 +57,15 @@ class ImpactVector:
     @property
     def magnitude(self) -> float:
         """L2 norm normalized to 0.0-1.0."""
-        raw = sum(getattr(self, d) ** 2 for d in self._DIMS) ** 0.5
-        return min(raw / (len(self._DIMS) ** 0.5), 1.0)
+        raw = float(sum(getattr(self, d) ** 2 for d in self._DIMS) ** 0.5)
+        norm = len(self._DIMS) ** 0.5
+        return float(min(raw / norm, 1.0))
 
     def distance(self, other: ImpactVector) -> float:
         """Euclidean distance normalized to 0.0-1.0."""
-        raw = sum((getattr(self, d) - getattr(other, d)) ** 2 for d in self._DIMS) ** 0.5
-        return min(raw / (len(self._DIMS) ** 0.5), 1.0)
+        raw = float(sum((getattr(self, d) - getattr(other, d)) ** 2 for d in self._DIMS) ** 0.5)
+        norm = len(self._DIMS) ** 0.5
+        return float(min(raw / norm, 1.0))
 
     def asymmetric_gap(self, other: ImpactVector) -> float:
         """Asymmetric gap: only counts dimensions where other > self.
@@ -71,15 +73,16 @@ class ImpactVector:
         Used for justification gap where under-reporting (assessed > declared)
         is the concern. Over-reporting is conservative and safe.
         """
-        diffs = []
+        diffs: list[float] = []
         for d in self._DIMS:
-            diff = getattr(other, d) - getattr(self, d)
+            diff = float(getattr(other, d)) - float(getattr(self, d))
             if diff > 0:
                 diffs.append(diff**2)
         if not diffs:
             return 0.0
-        raw = sum(diffs) ** 0.5
-        return min(raw / (len(self._DIMS) ** 0.5), 1.0)
+        raw = float(sum(diffs) ** 0.5)
+        norm = len(self._DIMS) ** 0.5
+        return float(min(raw / norm, 1.0))
 
     def as_tuple(self) -> tuple[float, ...]:
         return tuple(getattr(self, d) for d in self._DIMS)

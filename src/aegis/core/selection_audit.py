@@ -313,7 +313,7 @@ def audit_selection(
     auditor: SelectionAuditor | None = None,
     context: str = "",
     agent_id: str = "",
-) -> Callable:
+) -> Callable[..., Any]:
     """Decorator to audit agent selection functions.
 
     Wraps an async function that returns a :class:`SelectionSet` (or an
@@ -330,7 +330,7 @@ def audit_selection(
             return SelectionSet(selected=selected, eliminated=eliminated)
     """
 
-    def decorator(func: Callable) -> Callable:
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         @functools.wraps(func)
         async def wrapper(*args: Any, **kwargs: Any) -> Any:
             result = await func(*args, **kwargs)

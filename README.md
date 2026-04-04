@@ -17,7 +17,7 @@
   <a href="https://github.com/Acacian/aegis/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License"></a>
   <a href="https://acacian.github.io/aegis/"><img src="https://img.shields.io/badge/docs-acacian.github.io%2Faegis-blue" alt="Docs"></a>
   <br/>
-  <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-4650%2B_passed-brightgreen" alt="Tests"></a>
+  <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-4996%2B_passed-brightgreen" alt="Tests"></a>
   <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/coverage-92%25-brightgreen" alt="Coverage"></a>
   <a href="https://acacian.github.io/aegis/playground/"><img src="https://img.shields.io/badge/playground-Try_it_Live-ff6b6b" alt="Playground"></a>
   <a href="https://acacian.github.io/aegis/playground/scan-report.html"><img src="https://img.shields.io/badge/scan_report-9_Repos%2C_All_F-red" alt="Scan Report"></a>
@@ -540,6 +540,39 @@ aegis audit --format jsonl -o export.jsonl  # Export
 | **Governance Handshake** | Constitutional compatibility verification before agent communication (domain, capability, constraint, trust checks) |
 | **Policy-as-code Git integration** | Diff formatting, impact analysis, drift detection, YAML export |
 | **OpenTelemetry export** | Policy/cost/anomaly/MCP events → OTel spans, in-memory fallback |
+
+</details>
+
+<details>
+<summary><strong>Selection Governance (v0.9)</strong> — detect what agents <em>exclude</em>, not just what they do</summary>
+
+Agents exercise covert power through option elimination — filtering choices before humans see them. Aegis v0.9 detects this "selection-by-negation" pattern. Based on Santander AI Lab's "Selection as Power" framework (arXiv:2602.14606) and COA-MAS ActionClaim ontology.
+
+| | |
+|---|---|
+| **ActionClaim** | Tripartite structure: agent-declared intent (untrusted) vs. system-assessed impact (independent) vs. delegation chain. 6-dimensional ImpactVector (destructivity, data exposure, resource consumption, privilege escalation, reversibility, autonomy depth) |
+| **Justification Gap** | Asymmetric distance between declared and assessed impact — only under-reporting counts. Thresholds: APPROVE (≤0.15), ESCALATE (0.15–0.40), BLOCK (>0.40) |
+| **Selection Audit** | 4 detection types: high elimination ratio, better-option-eliminated, unjustified elimination, systematic exclusion patterns |
+| **Commit-Reveal** | Agent commits full option set before execution — prevents post-hoc rationalization |
+| **Circuit Breaker** | Fail-loud pattern with Quality Degradation Visibility (QDV) metric, sliding window, thread-safe registry |
+| **Monotone Constraint** | Trust levels must be non-increasing along delegation chains — prevents privilege escalation through delegation |
+
+```python
+from aegis.core import ActionClaim, ClaimAssessor, DeclaredFields
+
+claim = ActionClaim(
+    declared=DeclaredFields(
+        proposed_transition="delete_records",
+        target="production_db",
+        justification="cleanup old data",
+    )
+)
+
+assessor = ClaimAssessor()
+result = assessor.assess(claim)
+# result.verdict -> BLOCK (agent declared zero impact for destructive action)
+# result.assessed.justification_gap -> 0.385
+```
 
 </details>
 
