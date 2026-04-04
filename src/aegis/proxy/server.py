@@ -44,10 +44,10 @@ class AegisProxy:
     def __init__(self, config: ProxyConfig) -> None:
         self._config = config
         self._upstreams: dict[str, UpstreamConfig] = {u.name: u for u in config.upstreams}
-        self._policy = None
-        self._gap_computer = None
-        self._impact_scorer = None
-        self._congruence_checker = None
+        self._policy: Any = None
+        self._gap_computer: Any = None
+        self._impact_scorer: Any = None
+        self._congruence_checker: Any = None
         self._circuit_breakers: dict[str, Any] = {}
         self._started = False
 

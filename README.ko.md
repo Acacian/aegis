@@ -18,7 +18,7 @@
   <a href="https://acacian.github.io/aegis/"><img src="https://img.shields.io/badge/docs-acacian.github.io%2Faegis-blue" alt="Docs"></a>
   <br/>
   <a href="https://pypi.org/project/langchain-aegis/"><img src="https://img.shields.io/pypi/v/langchain-aegis?label=langchain-aegis&color=blue&cacheSeconds=3600" alt="langchain-aegis"></a>
-  <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-4650%2B_passed-brightgreen" alt="Tests"></a>
+  <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-4996%2B_passed-brightgreen" alt="Tests"></a>
   <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/coverage-92%25-brightgreen" alt="Coverage"></a>
   <a href="https://acacian.github.io/aegis/playground/"><img src="https://img.shields.io/badge/playground-브라우저에서_체험-ff6b6b" alt="Playground"></a>
   <a href="https://acacian.github.io/aegis/playground/scan-report.html"><img src="https://img.shields.io/badge/스캔_리포트-9개_레포%2C_전부_F-red" alt="Scan Report"></a>
@@ -379,6 +379,39 @@ aegis audit
 | **A2A 통신 거버넌스** | 케이퍼빌리티 기반 메시징, PII/크레덴셜 자동 삭제, 레이트 리밋 |
 | **정책 Git 통합** | Diff 포맷팅, 영향 분석, 드리프트 감지, YAML 내보내기 |
 | **OpenTelemetry 내보내기** | 정책/비용/이상/MCP 이벤트 → OTel 스팬, 인메모리 폴백 |
+
+</details>
+
+<details>
+<summary><strong>Selection Governance (v0.9)</strong> — 에이전트가 <em>배제한 것</em>을 감지</summary>
+
+에이전트는 옵션 제거를 통해 은밀한 권력을 행사합니다 — 사용자가 보기 전에 선택지를 필터링하는 방식입니다. Aegis v0.9는 이 "선택에 의한 부정(selection-by-negation)" 패턴을 감지합니다. Santander AI Lab의 "Selection as Power" 프레임워크(arXiv:2602.14606)와 COA-MAS ActionClaim 온톨로지 기반.
+
+| | |
+|---|---|
+| **ActionClaim** | 삼분 구조: 에이전트 선언 의도(비신뢰) vs. 시스템 평가 영향(독립 검증) vs. 위임 체인. 6차원 ImpactVector (파괴성, 데이터 노출, 자원 소비, 권한 상승, 가역성, 자율 깊이) |
+| **Justification Gap** | 선언과 평가 간 비대칭 거리 — 과소 보고만 카운트. 임계값: APPROVE (≤0.15), ESCALATE (0.15–0.40), BLOCK (>0.40) |
+| **Selection Audit** | 4가지 탐지: 높은 제거율, 더 나은 옵션 제거, 정당화 없는 제거, 체계적 배제 패턴 |
+| **Commit-Reveal** | 에이전트가 실행 전 전체 옵션셋을 커밋 — 사후 합리화 방지 |
+| **Circuit Breaker** | Fail-loud 패턴 + QDV(품질 저하 가시성) 메트릭, 슬라이딩 윈도우, 스레드 안전 레지스트리 |
+| **Monotone Constraint** | 위임 체인에서 신뢰 수준은 비증가 — 위임을 통한 권한 상승 방지 |
+
+```python
+from aegis.core import ActionClaim, ClaimAssessor, DeclaredFields
+
+claim = ActionClaim(
+    declared=DeclaredFields(
+        proposed_transition="delete_records",
+        target="production_db",
+        justification="cleanup old data",
+    )
+)
+
+assessor = ClaimAssessor()
+result = assessor.assess(claim)
+# result.verdict -> BLOCK (에이전트가 파괴적 작업에 영향 0으로 선언)
+# result.assessed.justification_gap -> 0.385
+```
 
 </details>
 
