@@ -620,7 +620,7 @@ def create_aegis_input_guardrail(
             return await guardrail(data)
 
         # Attach aegis internals for testing/introspection
-        _aegis_input._aegis_guardrail = guardrail
+        _aegis_input._aegis_guardrail = guardrail  # type: ignore[attr-defined]
         return _aegis_input
     except ImportError:
         # SDK not installed — return the raw callable (usable in tests)
@@ -673,7 +673,7 @@ def create_aegis_output_guardrail(
         async def _aegis_output(data: Any) -> Any:
             return await guardrail(data)
 
-        _aegis_output._aegis_guardrail = guardrail
+        _aegis_output._aegis_guardrail = guardrail  # type: ignore[attr-defined]
         return _aegis_output
     except ImportError:
         return guardrail

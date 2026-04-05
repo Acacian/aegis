@@ -82,7 +82,7 @@ class TemporalRule:
     description: str
     severity: str = Severity.MEDIUM
     actions: tuple[str, ...] = ()
-    params: dict[str, object] = field(default_factory=dict)
+    params: dict[str, float | int | str] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
