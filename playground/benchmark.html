@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Agent Governance Benchmark — Aegis vs Microsoft AGT</title>
+  <meta name="description" content="Head-to-head performance comparison: Aegis vs Microsoft Agent Governance Toolkit. Policy evaluation, audit verification, guardrails.">
+  <meta property="og:title" content="AI Agent Governance Benchmark — Aegis vs Microsoft AGT">
+  <meta property="og:description" content="Policy evaluation 3.1x faster. Built-in guardrails. Verifiable Merkle audit. One pip install.">
+  <meta property="og:url" content="https://acacian.github.io/aegis/playground/benchmark.html">
+  <meta property="og:type" content="article">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="AI Agent Governance Benchmark — Aegis vs Microsoft AGT">
+  <meta name="twitter:description" content="Policy evaluation 3.1x faster. Built-in guardrails. Verifiable Merkle audit. One pip install.">
+  <link rel="canonical" href="https://acacian.github.io/aegis/playground/benchmark.html">
+  <style>
+    :root {
+      --bg-primary: #0d1117;
+      --bg-secondary: #161b22;
+      --bg-panel: #1c2128;
+      --bg-hover: #21262d;
+      --border: #30363d;
+      --text-primary: #e6edf3;
+      --text-secondary: #8b949e;
+      --text-muted: #6e7681;
+      --accent: #58a6ff;
+      --aegis: #58a6ff;
+      --aegis-bg: rgba(88, 166, 255, 0.10);
+      --ms: #8b949e;
+      --ms-bg: rgba(139, 148, 158, 0.08);
+      --win: #3fb950;
+      --win-bg: rgba(63, 185, 80, 0.12);
+      --lose: #f85149;
+      --neutral: #d29922;
+      --radius: 8px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+    }
+    .container { max-width: 1100px; margin: 0 auto; padding: 40px 20px; }
+    h1 { font-size: 28px; margin-bottom: 8px; }
+    .subtitle { color: var(--text-secondary); font-size: 16px; margin-bottom: 32px; }
+    .subtitle a { color: var(--accent); text-decoration: none; }
+    .subtitle a:hover { text-decoration: underline; }
+
+    /* Stat bar */
+    .stat-bar { display: flex; gap: 16px; margin-bottom: 32px; flex-wrap: wrap; }
+    .stat-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      flex: 1; min-width: 140px;
+    }
+    .stat-num { font-size: 28px; font-weight: 700; }
+    .stat-num.blue { color: var(--aegis); }
+    .stat-num.green { color: var(--win); }
+    .stat-num.yellow { color: var(--neutral); }
+    .stat-label { font-size: 12px; color: var(--text-muted); }
+
+    /* Key finding */
+    .key-finding {
+      background: var(--aegis-bg);
+      border: 1px solid rgba(88, 166, 255, 0.3);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      margin-bottom: 32px;
+    }
+    .key-finding h2 { font-size: 16px; color: var(--aegis); margin-bottom: 8px; }
+    .key-finding p { font-size: 14px; color: var(--text-secondary); margin-bottom: 4px; }
+    .key-finding strong { color: var(--text-primary); }
+
+    /* Section headers */
+    .section-title {
+      font-size: 20px; font-weight: 600;
+      margin: 40px 0 16px; padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .section-desc { color: var(--text-secondary); font-size: 14px; margin-bottom: 20px; }
+
+    /* Benchmark table */
+    table { width: 100%; border-collapse: collapse; margin-bottom: 32px; }
+    th {
+      text-align: left; padding: 10px 12px; font-size: 12px;
+      color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border);
+    }
+    td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 14px; }
+    tr:hover td { background: var(--bg-hover); }
+    .op-name { font-weight: 500; }
+    .val-aegis { color: var(--aegis); font-weight: 600; font-variant-numeric: tabular-nums; }
+    .val-ms { color: var(--ms); font-variant-numeric: tabular-nums; }
+    .val-win { color: var(--win); font-weight: 700; }
+    .val-na { color: var(--text-muted); font-style: italic; }
+    .badge {
+      display: inline-block; padding: 2px 8px; border-radius: 12px;
+      font-size: 11px; font-weight: 600;
+    }
+    .badge-win { background: var(--win-bg); color: var(--win); }
+    .badge-lose { background: rgba(248, 81, 73, 0.12); color: var(--lose); }
+    .badge-tie { background: rgba(210, 153, 34, 0.12); color: var(--neutral); }
+    .badge-unique { background: var(--aegis-bg); color: var(--aegis); }
+
+    /* Feature grid */
+    .feature-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 32px; }
+    @media (max-width: 700px) { .feature-grid { grid-template-columns: 1fr; } }
+    .feature-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+    .feature-card h3 { font-size: 15px; margin-bottom: 8px; }
+    .feature-card p { font-size: 13px; color: var(--text-secondary); }
+    .feature-card .highlight { color: var(--aegis); font-weight: 600; }
+    .feature-card.aegis-wins { border-color: rgba(63, 185, 80, 0.3); }
+    .feature-card.ms-wins { border-color: rgba(139, 148, 158, 0.3); }
+
+    /* Bar chart */
+    .bar-row { display: flex; align-items: center; margin-bottom: 12px; gap: 12px; }
+    .bar-label { width: 200px; font-size: 13px; flex-shrink: 0; text-align: right; }
+    .bar-container { flex: 1; height: 28px; position: relative; }
+    .bar {
+      height: 100%; border-radius: 4px; position: absolute; top: 0;
+      display: flex; align-items: center; padding: 0 8px;
+      font-size: 11px; font-weight: 600; min-width: 60px;
+    }
+    .bar.aegis { background: var(--aegis-bg); border: 1px solid rgba(88, 166, 255, 0.3); color: var(--aegis); }
+    .bar.ms { background: var(--ms-bg); border: 1px solid rgba(139, 148, 158, 0.3); color: var(--ms); top: 0; }
+
+    /* Footer */
+    .method-note {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      margin-top: 40px;
+    }
+    .method-note h3 { font-size: 14px; margin-bottom: 8px; color: var(--text-secondary); }
+    .method-note p, .method-note li { font-size: 13px; color: var(--text-muted); }
+    .method-note a { color: var(--accent); text-decoration: none; }
+    .method-note ul { margin: 8px 0; padding-left: 20px; }
+
+    .cta {
+      margin-top: 32px; padding: 24px;
+      background: var(--aegis-bg);
+      border: 1px solid rgba(88, 166, 255, 0.3);
+      border-radius: var(--radius);
+      text-align: center;
+    }
+    .cta code {
+      display: inline-block; background: var(--bg-primary); padding: 8px 20px;
+      border-radius: 6px; font-size: 15px; color: var(--aegis);
+      border: 1px solid var(--border); margin: 8px 0;
+    }
+    .cta p { font-size: 13px; color: var(--text-secondary); margin-top: 8px; }
+    .cta a { color: var(--accent); text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <h1>AI Agent Governance Benchmark</h1>
+    <p class="subtitle">
+      <a href="https://github.com/Acacian/aegis">Aegis</a> vs
+      <a href="https://github.com/microsoft/agent-governance-toolkit">Microsoft Agent Governance Toolkit</a>
+      &mdash; performance and feature comparison
+    </p>
+
+    <!-- Stat cards -->
+    <div class="stat-bar">
+      <div class="stat-card">
+        <div class="stat-num blue">3.1x</div>
+        <div class="stat-label">Policy eval speedup</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num green">5</div>
+        <div class="stat-label">Built-in guardrails<br>(vs 0 in AGT)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num blue">2.7 &micro;s</div>
+        <div class="stat-label">Merkle audit proof<br>(AGT: N/A)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num green">1</div>
+        <div class="stat-label">pip install<br>(vs 7 packages)</div>
+      </div>
+    </div>
+
+    <!-- Key finding -->
+    <div class="key-finding">
+      <h2>Key Finding</h2>
+      <p>Aegis policy evaluation is <strong>3.1x faster</strong> than MS AGT (3.5 &micro;s vs 11 &micro;s p50).
+        Aegis also includes <strong>built-in guardrails</strong> (injection, PII, tool output) that AGT
+        explicitly does not provide &mdash; requiring a separate Azure AI Content Safety subscription.</p>
+      <p>Aegis is the only framework offering <strong>verifiable Merkle audit proofs</strong> with O(log n)
+        inclusion verification in 2.7 &micro;s.</p>
+    </div>
+
+    <!-- Performance benchmarks -->
+    <h2 class="section-title">Performance Benchmarks</h2>
+    <p class="section-desc">Lower latency = better. All values in microseconds (p50 median).</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Operation</th>
+          <th>Aegis</th>
+          <th>MS AGT</th>
+          <th>Result</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="op-name">Policy evaluation (single rule)</td>
+          <td class="val-aegis">3.5 &micro;s</td>
+          <td class="val-ms">11 &micro;s</td>
+          <td><span class="badge badge-win">Aegis 3.1x</span></td>
+        </tr>
+        <tr>
+          <td class="op-name">Policy eval ops/sec</td>
+          <td class="val-aegis">249,000</td>
+          <td class="val-ms">84,000</td>
+          <td><span class="badge badge-win">Aegis 3.0x</span></td>
+        </tr>
+        <tr>
+          <td class="op-name">Rate limit / circuit breaker</td>
+          <td class="val-aegis">1.1 &micro;s</td>
+          <td class="val-ms">0.5 &micro;s</td>
+          <td><span class="badge badge-lose">AGT 2.2x</span></td>
+        </tr>
+        <tr>
+          <td class="op-name">Audit entry write</td>
+          <td class="val-aegis">10.4 &micro;s</td>
+          <td class="val-ms">2.0 &micro;s</td>
+          <td><span class="badge badge-tie">Different: Merkle vs JSONL</span></td>
+        </tr>
+        <tr>
+          <td class="op-name">Audit inclusion proof (Merkle)</td>
+          <td class="val-aegis">2.7 &micro;s</td>
+          <td class="val-na">N/A</td>
+          <td><span class="badge badge-unique">Aegis unique</span></td>
+        </tr>
+        <tr>
+          <td class="op-name">Cached root hash (1,000 entries)</td>
+          <td class="val-aegis">0.5 &micro;s</td>
+          <td class="val-na">N/A</td>
+          <td><span class="badge badge-unique">Aegis unique</span></td>
+        </tr>
+        <tr>
+          <td class="op-name">Injection detection (clean text)</td>
+          <td class="val-aegis">5.0 &micro;s</td>
+          <td class="val-na">N/A (use Azure)</td>
+          <td><span class="badge badge-unique">Aegis built-in</span></td>
+        </tr>
+        <tr>
+          <td class="op-name">PII detection (clean text)</td>
+          <td class="val-aegis">~10 &micro;s</td>
+          <td class="val-na">N/A (use Azure)</td>
+          <td><span class="badge badge-unique">Aegis built-in</span></td>
+        </tr>
+        <tr>
+          <td class="op-name">Tool output injection guard</td>
+          <td class="val-aegis">5.0 &micro;s</td>
+          <td class="val-na">N/A</td>
+          <td><span class="badge badge-unique">Aegis unique</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Visual bar chart -->
+    <h2 class="section-title">Policy Evaluation Throughput</h2>
+    <p class="section-desc">Operations per second (higher = better)</p>
+
+    <div style="margin-bottom: 32px;">
+      <div class="bar-row">
+        <div class="bar-label">Single rule eval</div>
+        <div class="bar-container">
+          <div class="bar aegis" style="width: 100%;">Aegis: 249K ops/s</div>
+        </div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label"></div>
+        <div class="bar-container">
+          <div class="bar ms" style="width: 33.7%;">MS AGT: 84K ops/s</div>
+        </div>
+      </div>
+
+      <div class="bar-row" style="margin-top: 24px;">
+        <div class="bar-label">Rate limit check</div>
+        <div class="bar-container">
+          <div class="bar ms" style="width: 100%;">MS AGT: 1,830K ops/s</div>
+        </div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label"></div>
+        <div class="bar-container">
+          <div class="bar aegis" style="width: 44%;">Aegis: 807K ops/s</div>
+        </div>
+      </div>
+
+      <div class="bar-row" style="margin-top: 24px;">
+        <div class="bar-label">Merkle root (1K entries)</div>
+        <div class="bar-container">
+          <div class="bar aegis" style="width: 100%;">Aegis: 2,130K ops/s</div>
+        </div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label"></div>
+        <div class="bar-container">
+          <div class="bar ms" style="width: 0%; min-width: 60px;">MS AGT: N/A</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feature comparison -->
+    <h2 class="section-title">Feature Comparison</h2>
+    <p class="section-desc">Where each framework excels</p>
+
+    <div class="feature-grid">
+      <div class="feature-card aegis-wins">
+        <h3>Built-in Guardrails</h3>
+        <p><span class="highlight">Aegis</span>: Prompt injection (85+ patterns), PII (12 categories), tool output injection (5 categories), pattern guardrails. All deterministic, sub-millisecond.</p>
+        <p style="margin-top: 8px;">MS AGT: <em>"Not a model safety tool"</em> &mdash; defers to Azure AI Content Safety (separate subscription).</p>
+      </div>
+      <div class="feature-card aegis-wins">
+        <h3>Verifiable Audit Trail</h3>
+        <p><span class="highlight">Aegis</span>: Merkle tree with O(log n) inclusion proofs + SHA-256 hash-linked crypto audit chain. Stateless third-party verification in 2.7 &micro;s.</p>
+        <p style="margin-top: 8px;">MS AGT: Hash-chain audit log (JSONL + hash linking).</p>
+      </div>
+      <div class="feature-card aegis-wins">
+        <h3>Research-Backed Security</h3>
+        <p><span class="highlight">Aegis</span>: 5 peer-reviewed papers implemented &mdash; taint tracking (FIDES), resource contracts, Merkle audit (Right to History), tool output guard (AgentSentry), cross-tool privacy (TOP-Bench).</p>
+        <p style="margin-top: 8px;">MS AGT: Industry best practices, no academic paper implementations.</p>
+      </div>
+      <div class="feature-card aegis-wins">
+        <h3>Lightweight Installation</h3>
+        <p><span class="highlight">Aegis</span>: <code>pip install agent-aegis</code>. 1 dependency (pyyaml). ~2 MB.</p>
+        <p style="margin-top: 8px;">MS AGT: 7 packages, 53 MB, 1,420 files. Core deps: pydantic + rich.</p>
+      </div>
+      <div class="feature-card ms-wins">
+        <h3>Multi-Language SDKs</h3>
+        <p>MS AGT: Python, TypeScript, .NET 8.0, Rust, Go.</p>
+        <p style="margin-top: 8px;">Aegis: Python only.</p>
+      </div>
+      <div class="feature-card ms-wins">
+        <h3>Execution Sandboxing</h3>
+        <p>MS AGT: 4-ring isolation model with privilege levels, kill switches, and saga orchestration.</p>
+        <p style="margin-top: 8px;">Aegis: No execution sandboxing.</p>
+      </div>
+      <div class="feature-card ms-wins">
+        <h3>SRE Features</h3>
+        <p>MS AGT: SLOs, error budgets, chaos engineering, circuit breakers.</p>
+        <p style="margin-top: 8px;">Aegis: No SRE features.</p>
+      </div>
+      <div class="feature-card ms-wins">
+        <h3>Framework Adapters</h3>
+        <p>MS AGT: 12+ adapters (AutoGen, Semantic Kernel, Google ADK, Dify, Haystack, etc.).</p>
+        <p style="margin-top: 8px;">Aegis: 7 adapters (LangChain, CrewAI, OpenAI, Anthropic, MCP, httpx, Playwright).</p>
+      </div>
+    </div>
+
+    <!-- Positioning -->
+    <h2 class="section-title">Positioning</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th></th>
+          <th>Action Governance</th>
+          <th>Content Guardrails</th>
+          <th>Verifiable Audit</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="op-name">MS Agent Governance Toolkit</td>
+          <td class="val-win">Yes</td>
+          <td class="val-na">No (use Azure)</td>
+          <td class="val-ms">Hash chain</td>
+        </tr>
+        <tr>
+          <td class="op-name">Guardrails AI</td>
+          <td class="val-na">No</td>
+          <td class="val-win">Yes</td>
+          <td class="val-na">No</td>
+        </tr>
+        <tr>
+          <td class="op-name">NeMo Guardrails</td>
+          <td class="val-na">Partial</td>
+          <td class="val-win">Yes</td>
+          <td class="val-na">No</td>
+        </tr>
+        <tr>
+          <td class="op-name" style="color: var(--aegis); font-weight: 700;">Aegis</td>
+          <td class="val-win">Yes</td>
+          <td class="val-win">Yes (built-in)</td>
+          <td class="val-win">Merkle proofs</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Method note -->
+    <div class="method-note">
+      <h3>Methodology &amp; Sources</h3>
+      <ul>
+        <li><strong>Aegis benchmarks</strong>: <code>tests/bench_paper_modules.py</code>, Python 3.12, Apple Silicon. Source: <a href="https://github.com/Acacian/aegis">github.com/Acacian/aegis</a></li>
+        <li><strong>MS AGT benchmarks</strong>: <a href="https://github.com/microsoft/agent-governance-toolkit/blob/master/BENCHMARKS.md">BENCHMARKS.md</a>, v2.1.0</li>
+        <li>Benchmarks run on different hardware &mdash; use for order-of-magnitude comparison</li>
+        <li>AGT "not a model safety tool" claim: <a href="https://github.com/microsoft/agent-governance-toolkit">README.md</a></li>
+        <li>Feature presence verified from public GitHub source code and documentation</li>
+      </ul>
+      <p style="margin-top: 12px;">Last updated: April 2026. If any data is inaccurate, please <a href="https://github.com/Acacian/aegis/issues">open an issue</a>.</p>
+    </div>
+
+    <!-- CTA -->
+    <div class="cta">
+      <code>pip install agent-aegis</code>
+      <p>Action governance + guardrails + verifiable audit. One package, one dependency.</p>
+      <p><a href="https://github.com/Acacian/aegis">GitHub</a> &middot; <a href="https://acacian.github.io/aegis/">Docs</a> &middot; <a href="https://acacian.github.io/aegis/playground/">Playground</a></p>
+    </div>
+
+  </div>
+</body>
+</html>

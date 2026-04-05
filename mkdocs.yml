@@ -100,6 +100,7 @@ nav:
       - Cost Governance: solutions/ai-agent-cost-governance.md
       - Permission Control: solutions/ai-agent-permission-control.md
   - Comparisons:
+      - Aegis vs MS Agent Governance Toolkit: comparisons/vs-ms-agt.md
       - Aegis vs NeMo Guardrails: comparisons/vs-nemo-guardrails.md
       - Aegis vs Guardrails AI: comparisons/vs-guardrails-ai.md
       - Aegis vs mcp-scan: comparisons/vs-mcp-scan.md
