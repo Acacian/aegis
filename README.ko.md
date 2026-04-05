@@ -1,11 +1,11 @@
 <p align="center">
   <h1 align="center">Aegis</h1>
   <p align="center">
-    <strong>AI 에이전트를 위한 Policy CI/CD — AI 에이전트 보안의 <code>terraform plan</code>.<br/>11개 프레임워크에 런타임 가드레일, 정책 테스팅, 감사 추적을 코드 변경 없이 적용합니다.</strong>
+    <strong>AI 에이전트를 위한 런타임 보안 — AI 에이전트 보안의 <code>terraform plan</code>.<br/>11개 프레임워크에 런타임 가드레일, 선택 거버넌스, 정책 테스팅, 감사 추적을 코드 변경 없이 적용합니다.</strong>
   </p>
   <p align="center">
-    런타임 가드레일 (PII, 인젝션) + 정책 엔진 (YAML 규칙, 승인 게이트) + 개방형 표준 (AGEF/AGP).<br/>
     <code>pip install agent-aegis</code> &#8594; <code>aegis.auto_instrument()</code> &#8594; 모든 AI 호출에 보안 적용.<br/>
+    에이전트가 <b>하는 것</b>(액션, 툴 호출, 데이터 접근)뿐 아니라 <b>하지 않기로 선택한 것</b>(선택-부정 탐지 — 이 거버넌스 카테고리의 최초 런타임 구현)까지 거버닝합니다.<br/>
     <strong>LangChain, CrewAI, OpenAI, Anthropic, LiteLLM, Google GenAI, Pydantic AI, LlamaIndex, Instructor, DSPy — 11개 프레임워크 지원.</strong>
   </p>
 </p>
@@ -26,14 +26,15 @@
 </p>
 
 <p align="center">
-  <a href="https://acacian.github.io/aegis/playground/"><strong>브라우저에서 바로 체험하기</strong></a> &bull;
-  <a href="https://acacian.github.io/aegis/playground/scan-report.html"><strong>스캔 리포트</strong></a> &bull;
+  <a href="#런타임-가드레일"><strong>런타임 가드레일</strong></a> &bull;
+  <a href="#선택-거버넌스"><strong>선택 거버넌스</strong></a> &bull;
+  <a href="#정책-cicd"><strong>정책 CI/CD</strong></a> &bull;
   <a href="#빠른-시작">빠른 시작</a> &bull;
   <a href="#3대-핵심-축">3대 핵심 축</a> &bull;
-  <a href="#런타임-가드레일">가드레일</a> &bull;
   <a href="https://acacian.github.io/aegis/">문서</a> &bull;
   <a href="#통합">통합</a> &bull;
-  <a href="#agef--agp--개방형-거버넌스-표준">AGEF & AGP</a> &bull;
+  <a href="https://acacian.github.io/aegis/playground/"><strong>브라우저 체험</strong></a> &bull;
+  <a href="https://acacian.github.io/aegis/playground/scan-report.html"><strong>스캔 리포트</strong></a> &bull;
   <a href="https://github.com/Acacian/aegis/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22">기여하기</a>
 </p>
 
@@ -207,6 +208,94 @@ aegis audit --tail                       # 실시간 모니터링 (1초 폴링)
 aegis stats                              # 규칙별 통계
 aegis audit --format jsonl -o export.jsonl  # 내보내기
 ```
+
+---
+
+## 선택 거버넌스
+
+**선택-부정 탐지의 최초 런타임 구현.** 모든 다른 거버넌스 도구는 에이전트가 *하는 것*만 모니터링합니다. Aegis는 에이전트가 *하지 않기로 선택한 것* — 사람이 보기 전에 조용히 제거하는 선택지들 — 까지 모니터링합니다.
+
+Santander AI Lab의 ["Selection as Power"](https://arxiv.org/abs/2602.14606) 프레임워크에 기반: 에이전트는 액션 실행이 아니라 옵션 필터링을 통해 은밀한 권력을 행사합니다.
+
+```python
+from aegis.core import ActionClaim, ClaimAssessor, DeclaredFields
+
+# 에이전트가 의도를 선언 (비신뢰)
+claim = ActionClaim(
+    declared=DeclaredFields(
+        proposed_transition="delete_records",
+        target="production_db",
+        justification="cleanup old data",
+    )
+)
+
+# Aegis가 실제 영향을 독립적으로 평가 (6차원)
+assessor = ClaimAssessor()
+result = assessor.assess(claim)
+# result.verdict -> BLOCK
+# result.assessed.justification_gap -> 0.385 (에이전트가 영향을 과소 보고)
+```
+
+| 기능 | 설명 |
+|---|---|
+| **ActionClaim** | 삼분 구조: 에이전트 선언(비신뢰) vs 시스템 평가(독립 검증) vs 위임 체인 |
+| **Justification Gap** | 비대칭 갭 탐지 — 과소 보고만 카운트. APPROVE / ESCALATE / BLOCK |
+| **Selection Audit** | 4가지 탐지: 높은 제거율, 더 나은 옵션 제거, 정당화 없는 제거, 체계적 배제 |
+| **Commit-Reveal** | 에이전트가 실행 전 전체 옵션셋을 커밋 — 사후 합리화 방지 |
+| **Circuit Breaker** | Fail-loud + QDV 메트릭, 스레드 안전, 설정 가능한 복구 |
+
+> **왜 중요한가:** 지시를 항상 따르지만 불편한 옵션을 제시 전에 필터링하는 에이전트는, 공개적으로 거부하는 에이전트보다 더 위험합니다. Aegis는 이 패턴을 런타임에서 탐지하는 최초의 도구입니다.
+
+---
+
+## 정책 CI/CD
+
+**다른 어떤 도구도 이것을 하지 않습니다.** 보안 도구들은 런타임에서 보호합니다. Aegis는 정책 수명주기까지 관리합니다 — 변경 사항을 미리 보고, 회귀를 테스트하고, 프로덕션에 도달하기 전에 CI/CD 머지를 게이트합니다.
+
+### `aegis plan` — 배포 전 영향 미리보기
+
+AI 에이전트 정책을 위한 `terraform plan`. 과거 감사 데이터를 리플레이하여 정확히 무엇이 변경되는지 보여줍니다.
+
+```bash
+aegis plan current.yaml proposed.yaml --audit-db aegis_audit.db
+
+# 정책 영향 분석
+# =====================
+#   규칙: 2개 추가, 1개 삭제, 3개 수정
+#   영향 (1,247개 액션 리플레이):
+#     23개 액션이 AUTO → BLOCK으로 변경
+#      7개 액션이 APPROVE → BLOCK으로 변경
+#
+#   CI 모드: aegis plan current.yaml proposed.yaml --ci  (브레이킹 시 exit 1)
+```
+
+### `aegis test` — 정책 회귀 테스트
+
+예상 결과를 정의하고, 테스트 스위트를 자동 생성하고, 의도하지 않은 부수 효과를 잡습니다.
+
+```bash
+# 정책에서 테스트 스위트 자동 생성
+aegis test policy.yaml --generate --generate-output tests.yaml
+
+# CI에서 실행 — 실패 시 exit 1
+aegis test policy.yaml tests.yaml
+
+# 이전 정책과 회귀 비교
+aegis test new-policy.yaml tests.yaml --regression old-policy.yaml
+```
+
+### CI/CD 통합
+
+```yaml
+# .github/workflows/policy-check.yml
+- uses: Acacian/aegis@main
+  with:
+    policy: aegis.yaml
+    tests: tests.yaml
+    fail-on-regression: true
+```
+
+정책 변경이 코드 변경과 동일한 엄밀함을 얻습니다: diff, test, review, merge.
 
 ---
 
@@ -538,7 +627,7 @@ guardrails:
 
 | 항목 | 상세 |
 |------|------|
-| **2,500+ 테스트, 92% 커버리지** | 모든 어댑터, 핸들러, 엣지 케이스 테스트 |
+| **5,035+ 테스트, 92% 커버리지** | 모든 어댑터, 핸들러, 엣지 케이스 테스트 |
 | **타입 안전** | `mypy --strict` 에러 제로, `py.typed` 마커 |
 | **성능** | 정책 평가 < 1ms (LRU 캐시); O(log n) 타임스탬프 pruning; SQLite WAL 모드; `execute(parallel=True)` 병렬 실행 |
 | **페일 세이프** | 차단된 액션은 절대 실행 안 됨, 정책 변경 없이 우회 불가 |

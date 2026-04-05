@@ -2,10 +2,10 @@
 <p align="center">
   <h1 align="center">Aegis</h1>
   <p align="center">
-    <strong>Policy CI/CD for AI agents — the <code>terraform plan</code> for AI agent security.<br/>Auto-instrument 11 frameworks with runtime guardrails, policy testing, and audit trail — zero code changes.</strong>
+    <strong>Runtime security for AI agents — the <code>terraform plan</code> for AI agent security.<br/>Auto-instrument 11 frameworks with runtime guardrails, selection governance, policy testing, and audit trail — zero code changes.</strong>
   </p>
   <p align="center">
-    <code>pip install agent-aegis</code> and add <b>one line</b>. Aegis monkey-patches LangChain, CrewAI, OpenAI Agents SDK, OpenAI, Anthropic, LiteLLM, Google GenAI, Pydantic AI, LlamaIndex, Instructor, and DSPy at runtime — every LLM call and tool invocation passes through prompt-injection detection, PII masking, and a full audit trail. Preview policy changes with <code>aegis plan</code>, regression-test with <code>aegis test</code>, and gate CI/CD merges — like <code>terraform plan</code> for AI governance. Governs what agents <b>do</b> (actions, tool calls, data access), not what they <b>say</b>. No refactoring. No infra. All checks are deterministic and sub-millisecond.
+    <code>pip install agent-aegis</code> and add <b>one line</b>. Aegis monkey-patches LangChain, CrewAI, OpenAI Agents SDK, OpenAI, Anthropic, LiteLLM, Google GenAI, Pydantic AI, LlamaIndex, Instructor, and DSPy at runtime — every LLM call and tool invocation passes through prompt-injection detection, PII masking, and a full audit trail. Preview policy changes with <code>aegis plan</code>, regression-test with <code>aegis test</code>, and gate CI/CD merges. Governs what agents <b>do</b> (actions, tool calls, data access) <em>and</em> what they <b>choose not to do</b> (selection-by-negation detection — the first runtime implementation of this governance category). All checks are deterministic and sub-millisecond.
   </p>
 </p>
 
@@ -26,6 +26,7 @@
 
 <p align="center">
   <a href="#auto-instrumentation"><strong>Auto-Instrumentation</strong></a> &bull;
+  <a href="#selection-governance"><strong>Selection Governance</strong></a> &bull;
   <a href="#policy-cicd"><strong>Policy CI/CD</strong></a> &bull;
   <a href="#quick-start">Quick Start</a> &bull;
   <a href="#supported-frameworks">Supported Frameworks</a> &bull;
@@ -167,6 +168,43 @@ print(status())
 # Clean removal — restore all original methods
 reset()
 ```
+
+---
+
+## Selection Governance
+
+**The first runtime implementation of selection-by-negation detection.** Every other governance tool monitors what agents *do*. Aegis also monitors what agents *choose not to do* — the options they silently eliminate before humans see them.
+
+Based on Santander AI Lab's ["Selection as Power"](https://arxiv.org/abs/2602.14606) framework: agents exercise covert power through option filtering, not just action execution.
+
+```python
+from aegis.core import ActionClaim, ClaimAssessor, DeclaredFields
+
+# Agent declares what it intends to do (untrusted)
+claim = ActionClaim(
+    declared=DeclaredFields(
+        proposed_transition="delete_records",
+        target="production_db",
+        justification="cleanup old data",
+    )
+)
+
+# Aegis independently assesses actual impact (6-dimensional)
+assessor = ClaimAssessor()
+result = assessor.assess(claim)
+# result.verdict -> BLOCK
+# result.assessed.justification_gap -> 0.385 (agent under-reported impact)
+```
+
+| Capability | Description |
+|---|---|
+| **ActionClaim** | Tripartite structure: agent-declared (untrusted) vs system-assessed (independent) vs delegation chain |
+| **Justification Gap** | Asymmetric gap detection — only under-reporting counts. APPROVE / ESCALATE / BLOCK |
+| **Selection Audit** | 4 detection types: high elimination, better-option-eliminated, unjustified elimination, systematic exclusion |
+| **Commit-Reveal** | Agent commits full option set before execution — prevents post-hoc rationalization |
+| **Circuit Breaker** | Fail-loud with QDV metric, thread-safe, configurable recovery |
+
+> **Why this matters:** An agent that always follows instructions but filters out inconvenient options before presenting them is more dangerous than one that openly refuses. Aegis is the first tool that detects this pattern at runtime.
 
 ---
 
