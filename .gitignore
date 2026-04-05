@@ -42,3 +42,4 @@ _*.md
 # Internal marketing / social drafts
 .github/DEVTO_ARTICLE.md
 .github/SOCIAL.md
+context/
