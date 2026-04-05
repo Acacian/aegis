@@ -467,12 +467,15 @@ class TestPatchAnthropic:
         keys_to_remove = [k for k in sys.modules if k.startswith("anthropic")]
         for k in keys_to_remove:
             saved[k] = sys.modules.pop(k)
+        # Block re-import by setting to None
+        sys.modules["anthropic"] = None  # type: ignore[assignment]
 
         mod._patched = False
         try:
             with pytest.raises(ImportError, match="anthropic"):
                 mod.patch_anthropic()
         finally:
+            sys.modules.pop("anthropic", None)
             sys.modules.update(saved)
             mod._patched = False
 

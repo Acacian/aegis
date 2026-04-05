@@ -486,8 +486,9 @@ class TestCreateAegisInputGuardrail:
 
     def test_returns_guardrail_without_sdk(self):
         """Without SDK, returns the raw AegisToolInputGuardrail."""
-        # Remove mock agents so import fails inside factory
-        original = sys.modules.pop("agents", None)
+        # Block agents import so factory falls through to ImportError branch
+        original = sys.modules.get("agents")
+        sys.modules["agents"] = None  # type: ignore[assignment]
         try:
             from aegis.adapters.openai_agents import (
                 AegisToolInputGuardrail,
@@ -500,6 +501,8 @@ class TestCreateAegisInputGuardrail:
         finally:
             if original is not None:
                 sys.modules["agents"] = original
+            else:
+                sys.modules.pop("agents", None)
 
     def test_returns_wrapped_with_sdk(self, _mock_agents_module):
         """With SDK installed, wraps via @tool_input_guardrail."""
@@ -532,8 +535,9 @@ class TestCreateAegisInputGuardrail:
             create_aegis_input_guardrail,
         )
 
-        # Remove SDK so we get the raw guardrail
-        original = sys.modules.pop("agents", None)
+        # Block SDK import so we get the raw guardrail
+        original = sys.modules.get("agents")
+        sys.modules["agents"] = None  # type: ignore[assignment]
         try:
             policy = _make_policy(allow_types=["x"])
             g = create_aegis_input_guardrail(
@@ -550,13 +554,16 @@ class TestCreateAegisInputGuardrail:
         finally:
             if original is not None:
                 sys.modules["agents"] = original
+            else:
+                sys.modules.pop("agents", None)
 
 
 class TestCreateAegisOutputGuardrail:
     """Tests for create_aegis_output_guardrail factory."""
 
     def test_returns_guardrail_without_sdk(self):
-        original = sys.modules.pop("agents", None)
+        original = sys.modules.get("agents")
+        sys.modules["agents"] = None  # type: ignore[assignment]
         try:
             from aegis.adapters.openai_agents import (
                 AegisToolOutputGuardrail,
@@ -569,6 +576,8 @@ class TestCreateAegisOutputGuardrail:
         finally:
             if original is not None:
                 sys.modules["agents"] = original
+            else:
+                sys.modules.pop("agents", None)
 
     def test_returns_wrapped_with_sdk(self, _mock_agents_module):
         def mock_decorator(name: str = ""):

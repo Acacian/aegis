@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] — 2026-04-05
+
+### Added
+
+- **Selection Governance** — detects what agents EXCLUDE, not just what they do. Based on Santander "Selection as Power" (arXiv:2602.14606) and COA-MAS (Carvalho) frameworks
+- **ActionClaim tripartite structure** — separates DeclaredFields (agent-authored, untrusted), AssessedFields (Aegis-computed, independent), and ChainFields (delegation infrastructure) for independent verification of agent intent
+- **ImpactVector** — frozen 6-dimensional impact assessment (destructivity, data_exposure, resource_consumption, privilege_escalation, reversibility, autonomy_depth) with L2 norm, Euclidean distance, and asymmetric gap computation
+- **Justification Gap** — asymmetric distance between declared and assessed impact; thresholds: ≤0.15 APPROVE, 0.15–0.40 ESCALATE, >0.40 BLOCK
+- **RuleBasedImpactScorer** — Tier 1 keyword-based impact scorer with CongruenceChecker for declared-action consistency validation
+- **SelectionAuditor** — 4 detection types: high_elimination, better_option_eliminated, unjustified_elimination, systematic_exclusion
+- **CommitRevealSelection** — commit-reveal protocol: agent commits full option set hash before governance reveals which option is selected, preventing post-hoc rationalization
+- **CircuitBreaker** — fail-loud with QDV (Quality-Diversity-Volume) metric, CLOSED→OPEN→HALF_OPEN→CLOSED state machine, thread-safe with configurable thresholds
+- **AegisProxy** — external governance gateway with authentication, claims assessment, circuit breaker, and policy evaluation pipeline
+- **Monotone constraint validation** — ensures trust levels are non-increasing along delegation chains
+- **Selection Governance playground demo** — interactive Selection Audit and Justification Gap demos with Korean/English i18n
+
 ## [0.7.0] — 2026-04-02
 
 ### Added

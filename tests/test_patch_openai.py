@@ -481,17 +481,19 @@ class TestPatchOpenAI:
     def test_import_error_when_openai_missing(self):
         """patch_openai raises ImportError when openai is not installed."""
         mod = _get_module()
-        # Remove openai from sys.modules to trigger ImportError
+        # Remove openai from sys.modules and block re-import
         saved = {}
         keys_to_remove = [k for k in sys.modules if k.startswith("openai")]
         for k in keys_to_remove:
             saved[k] = sys.modules.pop(k)
+        sys.modules["openai"] = None  # type: ignore[assignment]
 
         mod._patched = False
         try:
             with pytest.raises(ImportError, match="openai"):
                 mod.patch_openai()
         finally:
+            sys.modules.pop("openai", None)
             sys.modules.update(saved)
             mod._patched = False
 
