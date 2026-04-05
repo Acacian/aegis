@@ -38,7 +38,7 @@ const I18N = {
     'tab.cost': 'Cost Breaker',
     'tab.audit': 'Audit Chain',
     'tab.regulatory': 'Compliance',
-    'tab.scan': 'Scan Report (9 Repos, All F)',
+    'tab.scan': 'Scan Report (39 Repos, 92% F)',
     'tab.selection': 'Selection Gov',
 
     // Selection Governance panel
@@ -182,7 +182,7 @@ const I18N = {
     'tab.cost': '\uBE44\uC6A9 \uCC28\uB2E8\uAE30',
     'tab.audit': '\uAC10\uC0AC \uCCB4\uC778',
     'tab.regulatory': '\uADDC\uC81C \uC900\uC218',
-    'tab.scan': '\uC2A4\uCE94 \uB9AC\uD3EC\uD2B8 (9\uAC1C \uB808\uD3EC, \uC804\uBD80 F)',
+    'tab.scan': '\uC2A4\uCE94 \uB9AC\uD3EC\uD2B8 (39\uAC1C \uB808\uD3EC, 92% F)',
     'tab.selection': '\uC120\uD0DD \uAC70\uBC84\uB10C\uC2A4',
 
     // Selection Governance panel
