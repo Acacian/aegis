@@ -1,5 +1,5 @@
 /**
- * Aegis Playground i18n — lightweight, no-dependency translation system.
+ * Agent-Aegis Playground i18n — lightweight, no-dependency translation system.
  *
  * Usage:
  *   HTML:  <span data-i18n="header.tagline">fallback text</span>

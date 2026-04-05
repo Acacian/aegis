@@ -1,5 +1,5 @@
 /**
- * Aegis Playground — Interactive Demo Tabs
+ * Agent-Aegis Playground — Interactive Demo Tabs
  *
  * 4 standalone demos that run in pure JavaScript (no Pyodide):
  *   1. MCP Security Scanner
@@ -7,7 +7,7 @@
  *   3. Audit Chain Visualizer
  *   4. Regulatory Compliance
  *
- * Ported from the real Aegis Python source code.
+ * Ported from the real Agent-Aegis Python source code.
  */
 
 /* ============================================================

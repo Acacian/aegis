@@ -1,5 +1,5 @@
 /**
- * Aegis Playground — Guardrails Interactive Demos
+ * Agent-Aegis Playground — Guardrails Interactive Demos
  *
  * Two standalone demos ported from Python guardrails to pure JS:
  *   Demo 5: PII Scanner (from aegis/guardrails/pii.py)

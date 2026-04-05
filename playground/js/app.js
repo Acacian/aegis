@@ -1,5 +1,5 @@
 /**
- * Aegis Playground — Main application logic.
+ * Agent-Aegis Playground — Main application logic.
  *
  * Loads Pyodide, installs agent-aegis, and provides interactive
  * policy evaluation entirely in the browser.

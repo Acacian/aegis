@@ -1,5 +1,5 @@
 /**
- * Policy presets for the Aegis Playground.
+ * Policy presets for the Agent-Aegis Playground.
  */
 const POLICY_PRESETS = {
   default: `version: "1"
