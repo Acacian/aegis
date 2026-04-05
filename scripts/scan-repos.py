@@ -69,7 +69,7 @@ REPOS: list[dict[str, str]] = [
         "url": "https://github.com/OpenInterpreter/open-interpreter",
         "stars": "58K",
     },
-    {"name": "Cline", "url": "https://github.com/cline/cline", "stars": "30K"},
+    # Cline excluded: VS Code extension, only 8 Python files
     {"name": "GPT Engineer", "url": "https://github.com/AntonOsika/gpt-engineer", "stars": "52K"},
     {"name": "Devika", "url": "https://github.com/stitionai/devika", "stars": "18K"},
     # === Tier 4: LLM tooling & orchestration ===
@@ -89,7 +89,7 @@ REPOS: list[dict[str, str]] = [
     # === Tier 6: Multi-agent & workflow ===
     {"name": "Agency Swarm", "url": "https://github.com/VRSEN/agency-swarm", "stars": "4K"},
     {"name": "Langflow", "url": "https://github.com/langflow-ai/langflow", "stars": "48K"},
-    {"name": "Flowise", "url": "https://github.com/FlowiseAI/Flowise", "stars": "35K"},
+    # Flowise excluded: TypeScript project, 0 Python files
     {"name": "Dify", "url": "https://github.com/langgenius/dify", "stars": "75K"},
     {"name": "SuperAGI", "url": "https://github.com/TransformerOptimus/SuperAGI", "stars": "15K"},
     {"name": "Promptflow", "url": "https://github.com/microsoft/promptflow", "stars": "10K"},
