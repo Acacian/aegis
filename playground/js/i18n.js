@@ -21,12 +21,12 @@ const I18N = {
     'header.eval': '<1ms eval',
 
     // Loading
-    'loading.title': 'Loading Aegis Playground',
+    'loading.title': 'Loading Agent-Aegis Playground',
     'loading.status': 'Initializing Python runtime...',
-    'loading.tip': 'Tip: Aegis evaluates policies in under 1ms',
+    'loading.tip': 'Tip: Agent-Aegis evaluates policies in under 1ms',
 
     // Noscript
-    'noscript': 'The Aegis Playground requires JavaScript. Please enable JavaScript or install the Python library: pip install agent-aegis',
+    'noscript': 'The Agent-Aegis Playground requires JavaScript. Please enable JavaScript or install the Python library: pip install agent-aegis',
 
     // Tab names
     'tab.streaming': 'Streaming Guard',
@@ -39,7 +39,7 @@ const I18N = {
     'tab.audit': 'Audit Chain',
     'tab.regulatory': 'Compliance',
     'tab.scan': 'Scan Report (39 Repos, 92% F)',
-    'tab.benchmark': 'Benchmark vs MS AGT',
+    'tab.benchmark': 'Compare vs MS AGT',
     'tab.selection': 'Selection Gov',
 
     // Selection Governance panel
@@ -134,9 +134,9 @@ const I18N = {
 
     // Streaming panel
     'streaming.title': 'Streaming Guard',
-    'streaming.desc': 'See how Aegis protects streaming LLM responses in real time.',
+    'streaming.desc': 'See how Agent-Aegis protects streaming LLM responses in real time.',
     'streaming.unguarded': 'Unguarded Stream',
-    'streaming.guarded': 'Aegis-Protected Stream',
+    'streaming.guarded': 'Agent-Aegis-Protected Stream',
 
     // Common
     'common.run': 'Run',
@@ -166,12 +166,12 @@ const I18N = {
     'header.eval': '<1ms \uD3C9\uAC00',
 
     // Loading
-    'loading.title': 'Aegis Playground \uB85C\uB529 \uC911',
+    'loading.title': 'Agent-Aegis Playground \uB85C\uB529 \uC911',
     'loading.status': 'Python \uB7F0\uD0C0\uC784 \uCD08\uAE30\uD654 \uC911...',
-    'loading.tip': '\uD301: Aegis\uB294 1ms \uBBF8\uB9CC\uC73C\uB85C \uC815\uCC45\uC744 \uD3C9\uAC00\uD569\uB2C8\uB2E4',
+    'loading.tip': '\uD301: Agent-Aegis\uB294 1ms \uBBF8\uB9CC\uC73C\uB85C \uC815\uCC45\uC744 \uD3C9\uAC00\uD569\uB2C8\uB2E4',
 
     // Noscript
-    'noscript': 'Aegis Playground\uB294 JavaScript\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4. JavaScript\uB97C \uD65C\uC131\uD654\uD558\uAC70\uB098 Python \uB77C\uC774\uBE0C\uB7EC\uB9AC\uB97C \uC124\uCE58\uD558\uC138\uC694: pip install agent-aegis',
+    'noscript': 'Agent-Aegis Playground\uB294 JavaScript\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4. JavaScript\uB97C \uD65C\uC131\uD654\uD558\uAC70\uB098 Python \uB77C\uC774\uBE0C\uB7EC\uB9AC\uB97C \uC124\uCE58\uD558\uC138\uC694: pip install agent-aegis',
 
     // Tab names
     'tab.streaming': '\uC2A4\uD2B8\uB9AC\uBC0D \uAC00\uB4DC',
@@ -184,7 +184,7 @@ const I18N = {
     'tab.audit': '\uAC10\uC0AC \uCCB4\uC778',
     'tab.regulatory': '\uADDC\uC81C \uC900\uC218',
     'tab.scan': '\uC2A4\uCE94 \uB9AC\uD3EC\uD2B8 (39\uAC1C \uB808\uD3EC, 92% F)',
-    'tab.benchmark': '\uBCA4\uCE58\uB9C8\uD06C vs MS AGT',
+    'tab.benchmark': '\uBE44\uAD50: Agent-Aegis vs MS AGT',
     'tab.selection': '\uC120\uD0DD \uAC70\uBC84\uB10C\uC2A4',
 
     // Selection Governance panel
@@ -279,9 +279,9 @@ const I18N = {
 
     // Streaming panel
     'streaming.title': '\uC2A4\uD2B8\uB9AC\uBC0D \uAC00\uB4DC',
-    'streaming.desc': 'Aegis\uAC00 \uC2A4\uD2B8\uB9AC\uBC0D LLM \uC751\uB2F5\uC744 \uC2E4\uC2DC\uAC04\uC73C\uB85C \uBCF4\uD638\uD558\uB294 \uBAA8\uC2B5\uC744 \uD655\uC778\uD558\uC138\uC694.',
+    'streaming.desc': 'Agent-Aegis\uAC00 \uC2A4\uD2B8\uB9AC\uBC0D LLM \uC751\uB2F5\uC744 \uC2E4\uC2DC\uAC04\uC73C\uB85C \uBCF4\uD638\uD558\uB294 \uBAA8\uC2B5\uC744 \uD655\uC778\uD558\uC138\uC694.',
     'streaming.unguarded': '\uBE44\uBCF4\uD638 \uC2A4\uD2B8\uB9BC',
-    'streaming.guarded': 'Aegis \uBCF4\uD638 \uC2A4\uD2B8\uB9BC',
+    'streaming.guarded': 'Agent-Aegis \uBCF4\uD638 \uC2A4\uD2B8\uB9BC',
 
     // Common
     'common.run': '\uC2E4\uD589',

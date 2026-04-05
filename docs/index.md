@@ -2,11 +2,11 @@
 description: "Runtime security for AI agents. Auto-instrument LangChain, CrewAI, OpenAI with prompt injection detection, PII masking, audit trail."
 ---
 
-# Aegis
+# Agent-Aegis
 
-**OpenTelemetry for AI agent security. Auto-instrument any AI framework with guardrails -- zero code changes.**
+**The lightweight, research-grade governance library for AI agents. Zero dependencies. 20+ academic papers. Two lines of code.**
 
-`pip install agent-aegis` and add one line. Aegis monkey-patches LangChain, CrewAI, OpenAI Agents SDK, OpenAI, and Anthropic at runtime -- every LLM call and tool invocation passes through prompt-injection detection, PII masking, toxicity filtering, and a full audit trail.
+`pip install agent-aegis` and add one line. Agent-Aegis auto-instruments LangChain, CrewAI, OpenAI Agents SDK, OpenAI, Anthropic, and 6 more frameworks at runtime -- every LLM call and tool invocation passes through prompt-injection detection, PII masking, and a full audit trail.
 
 [**Try it live in your browser**](playground/){ .md-button .md-button--primary } -- no install needed.
 

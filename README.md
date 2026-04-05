@@ -1,6 +1,6 @@
 <!-- mcp-name: io.github.Acacian/aegis -->
 <p align="center">
-  <h1 align="center">Aegis</h1>
+  <h1 align="center">Agent-Aegis</h1>
   <p align="center">
     <strong>Runtime security for AI agents — the <code>terraform plan</code> for AI agent security.<br/>Auto-instrument 11 frameworks with runtime guardrails, selection governance, policy testing, and audit trail — zero code changes.</strong>
   </p>

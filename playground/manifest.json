@@ -1,6 +1,6 @@
 {
-  "name": "Aegis Playground",
-  "short_name": "Aegis",
+  "name": "Agent-Aegis Playground",
+  "short_name": "Agent-Aegis",
   "description": "Interactive AI agent governance simulator. Write YAML policies, simulate agent actions, see real-time risk evaluation.",
   "start_url": ".",
   "display": "standalone",
