@@ -223,6 +223,32 @@ _LAZY_IMPORTS: dict[str, str] = {
     "ReplayReport": "aegis.core.session_replay",
     "SessionRecorder": "aegis.core.session_replay",
     "SessionReplayer": "aegis.core.session_replay",
+    # taint (arXiv:2505.23643 FIDES)
+    "TaintAction": "aegis.core.taint",
+    "TaintFinding": "aegis.core.taint",
+    "TaintLabel": "aegis.core.taint",
+    "TaintPolicy": "aegis.core.taint",
+    "TaintPolicyRule": "aegis.core.taint",
+    "TaintReport": "aegis.core.taint",
+    "TaintSeverity": "aegis.core.taint",
+    "TaintTracker": "aegis.core.taint",
+    "TaintedValue": "aegis.core.taint",
+    # contracts (arXiv:2601.08815 Agent Contracts)
+    "ContractMonitor": "aegis.core.contracts",
+    "ContractStatus": "aegis.core.contracts",
+    "ContractViolation": "aegis.core.contracts",
+    "ResourceContract": "aegis.core.contracts",
+    "resource_contract": "aegis.core.contracts",
+    # merkle_audit (arXiv:2602.20214 Right to History)
+    "BatchProofResult": "aegis.core.merkle_audit",
+    "MerkleAuditTree": "aegis.core.merkle_audit",
+    "MerkleLeaf": "aegis.core.merkle_audit",
+    "MerkleProof": "aegis.core.merkle_audit",
+    # cross_tool_privacy (arXiv:2512.16310 TOP-Bench)
+    "CrossToolPrivacyDetector": "aegis.core.cross_tool_privacy",
+    "PIICategory": "aegis.core.cross_tool_privacy",
+    "PrivacyFinding": "aegis.core.cross_tool_privacy",
+    "PrivacyReport": "aegis.core.cross_tool_privacy",
 }
 
 __all__ = list(_LAZY_IMPORTS.keys())
@@ -368,6 +394,21 @@ if TYPE_CHECKING:
     from aegis.core.constitution import (
         Obligation as Obligation,
     )
+    from aegis.core.contracts import (
+        ContractMonitor as ContractMonitor,
+    )
+    from aegis.core.contracts import (
+        ContractStatus as ContractStatus,
+    )
+    from aegis.core.contracts import (
+        ContractViolation as ContractViolation,
+    )
+    from aegis.core.contracts import (
+        ResourceContract as ResourceContract,
+    )
+    from aegis.core.contracts import (
+        resource_contract as resource_contract,
+    )
     from aegis.core.cost_attribution import (
         AgentCostNode as AgentCostNode,
     )
@@ -394,6 +435,18 @@ if TYPE_CHECKING:
     )
     from aegis.core.cost_policy import (
         CostPolicyEnforcer as CostPolicyEnforcer,
+    )
+    from aegis.core.cross_tool_privacy import (
+        CrossToolPrivacyDetector as CrossToolPrivacyDetector,
+    )
+    from aegis.core.cross_tool_privacy import (
+        PIICategory as PIICategory,
+    )
+    from aegis.core.cross_tool_privacy import (
+        PrivacyFinding as PrivacyFinding,
+    )
+    from aegis.core.cross_tool_privacy import (
+        PrivacyReport as PrivacyReport,
     )
     from aegis.core.crypto_audit import (
         AuditEntry as AuditEntry,
@@ -614,6 +667,18 @@ if TYPE_CHECKING:
     from aegis.core.mcp_vuln_db import (
         VulnFinding as VulnFinding,
     )
+    from aegis.core.merkle_audit import (
+        BatchProofResult as BatchProofResult,
+    )
+    from aegis.core.merkle_audit import (
+        MerkleAuditTree as MerkleAuditTree,
+    )
+    from aegis.core.merkle_audit import (
+        MerkleLeaf as MerkleLeaf,
+    )
+    from aegis.core.merkle_audit import (
+        MerkleProof as MerkleProof,
+    )
     from aegis.core.model_pricing import (
         estimate_call_cost as estimate_call_cost,
     )
@@ -726,4 +791,31 @@ if TYPE_CHECKING:
     )
     from aegis.core.session_replay import (
         SessionReplayer as SessionReplayer,
+    )
+    from aegis.core.taint import (
+        TaintAction as TaintAction,
+    )
+    from aegis.core.taint import (
+        TaintedValue as TaintedValue,
+    )
+    from aegis.core.taint import (
+        TaintFinding as TaintFinding,
+    )
+    from aegis.core.taint import (
+        TaintLabel as TaintLabel,
+    )
+    from aegis.core.taint import (
+        TaintPolicy as TaintPolicy,
+    )
+    from aegis.core.taint import (
+        TaintPolicyRule as TaintPolicyRule,
+    )
+    from aegis.core.taint import (
+        TaintReport as TaintReport,
+    )
+    from aegis.core.taint import (
+        TaintSeverity as TaintSeverity,
+    )
+    from aegis.core.taint import (
+        TaintTracker as TaintTracker,
     )
