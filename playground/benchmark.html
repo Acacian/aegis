@@ -4,14 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Agent Governance Comparison — Agent-Aegis vs Microsoft AGT</title>
-  <meta name="description" content="Honest comparison: Agent-Aegis (zero-dep, 20+ papers, 2 lines) vs Microsoft AGT (7 packages, 5 languages, enterprise). Choose the right tool.">
+  <meta name="description" content="Honest comparison: Agent-Aegis (1 dep, 24 papers, 2 lines) vs Microsoft AGT (7 packages, 5 languages, enterprise). Choose the right tool.">
   <meta property="og:title" content="Agent Governance: Choose Your Tool">
-  <meta property="og:description" content="Zero dependencies, 20+ academic papers, 2 lines of code. Agent-Aegis is the lightweight alternative to enterprise agent governance.">
+  <meta property="og:description" content="1 dependency (PyYAML), 24 academic papers, 2 lines of code. Agent-Aegis is the lightweight alternative to enterprise agent governance.">
   <meta property="og:url" content="https://acacian.github.io/aegis/playground/benchmark.html">
   <meta property="og:type" content="article">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Agent Governance: Choose Your Tool">
-  <meta name="twitter:description" content="Zero dependencies, 20+ academic papers, 2 lines of code. The SQLite of agent governance.">
+  <meta name="twitter:description" content="1 dependency, 24 academic papers, 2 lines of code. The SQLite of agent governance.">
   <link rel="canonical" href="https://acacian.github.io/aegis/playground/benchmark.html">
   <style>
     :root {
@@ -209,15 +209,15 @@
     <!-- At a glance -->
     <div class="stat-bar">
       <div class="stat-card">
-        <div class="stat-num blue">0</div>
-        <div class="stat-label">Agent-Aegis dependencies<br>(vs pydantic + rich)</div>
+        <div class="stat-num blue">1</div>
+        <div class="stat-label">Agent-Aegis dependency<br>(PyYAML only)</div>
       </div>
       <div class="stat-card">
         <div class="stat-num green">2</div>
         <div class="stat-label">Lines to get started<br>(vs 9 lines)</div>
       </div>
       <div class="stat-card">
-        <div class="stat-num blue">20+</div>
+        <div class="stat-num blue">24</div>
         <div class="stat-label">Academic papers<br>implemented</div>
       </div>
       <div class="stat-card">
@@ -230,7 +230,7 @@
     <div class="message-box neutral">
       <h2 class="neutral">Different tools for different needs</h2>
       <p>MS AGT is an <strong>enterprise governance platform</strong> &mdash; 7 packages, 5 languages, SRE, sandboxing, marketplace.</p>
-      <p>Agent-Aegis is a <strong>lightweight research-grade library</strong> &mdash; zero dependencies, 20+ academic papers, one pip install.</p>
+      <p>Agent-Aegis is a <strong>lightweight research-grade library</strong> &mdash; 1 dependency (PyYAML), 24 academic papers, one pip install.</p>
       <p style="margin-top: 8px;">Think <strong>SQLite vs PostgreSQL</strong>. Both are excellent. Pick the one that fits your needs.</p>
     </div>
 
@@ -243,7 +243,7 @@
         <div class="tagline">pip install agent-aegis &mdash; done.</div>
         <ul>
           <li>You want zero external dependencies</li>
-          <li>You need 20+ research paper implementations</li>
+          <li>You need 24 research paper implementations</li>
           <li>You're building a Python-only project</li>
           <li>You want governance running in 2 lines of code</li>
           <li>You're a researcher or student</li>
@@ -276,7 +276,7 @@
         <pre><code>import aegis
 
 aegis.auto_instrument()</code></pre>
-        <div class="line-count">2 lines &middot; 0 dependencies &middot; works immediately</div>
+        <div class="line-count">2 lines &middot; 1 dependency (PyYAML) &middot; works immediately</div>
       </div>
       <div class="code-block">
         <div class="code-header ms">Microsoft AGT</div>
@@ -327,12 +327,12 @@ decision = engine.evaluate(
         </tr>
         <tr>
           <td class="op-name">Academic paper implementations</td>
-          <td class="val-aegis">20+ papers</td>
+          <td class="val-aegis">24 papers</td>
           <td class="val-no">0 (industry best practices)</td>
         </tr>
         <tr>
-          <td class="op-name">Zero-dependency core</td>
-          <td class="val-yes">Yes</td>
+          <td class="op-name">Minimal dependencies</td>
+          <td class="val-aegis">PyYAML only</td>
           <td class="val-no">pydantic + rich required</td>
         </tr>
         <tr>
@@ -459,7 +459,7 @@ decision = engine.evaluate(
         </tr>
         <tr>
           <td class="op-name">External dependencies</td>
-          <td class="val-aegis">0</td>
+          <td class="val-aegis">1 (PyYAML)</td>
           <td class="val-ms">pydantic + rich + more</td>
           <td style="color: var(--text-muted); font-size: 13px;">Core package deps</td>
         </tr>
@@ -467,7 +467,7 @@ decision = engine.evaluate(
     </table>
 
     <!-- Research coverage -->
-    <h2 class="section-title">Research Coverage: 20+ Academic Papers</h2>
+    <h2 class="section-title">Research Coverage: 24 Academic Papers</h2>
     <p class="section-desc">
       Agent-Aegis implements peer-reviewed research as pure Python modules.
       Each paper is a working implementation &mdash; not a citation. Zero external dependencies. Thread-safe. Sub-millisecond.
@@ -597,7 +597,7 @@ decision = engine.evaluate(
           <td class="val-yes">Yes</td>
           <td class="val-yes">Yes (built-in)</td>
           <td class="val-yes">Merkle proofs</td>
-          <td class="val-yes">20+ papers</td>
+          <td class="val-yes">24 papers</td>
         </tr>
       </tbody>
     </table>
@@ -619,7 +619,7 @@ decision = engine.evaluate(
     <!-- CTA -->
     <div class="cta">
       <code>pip install agent-aegis</code>
-      <p>20+ academic papers. Zero dependencies. Two lines of code.</p>
+      <p>24 academic papers. 1 dependency. Two lines of code.</p>
       <p><a href="https://github.com/Acacian/aegis">GitHub</a> &middot; <a href="https://acacian.github.io/aegis/">Docs</a> &middot; <a href="https://acacian.github.io/aegis/playground/">Playground</a></p>
     </div>
 
