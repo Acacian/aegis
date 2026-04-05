@@ -313,6 +313,7 @@
     <button class="demo-tab-btn" data-tab="cost" data-i18n="tab.cost">Cost Breaker</button>
     <button class="demo-tab-btn" data-tab="audit-chain" data-i18n="tab.audit">Audit Chain</button>
     <button class="demo-tab-btn" data-tab="regulatory" data-i18n="tab.regulatory">Compliance</button>
+    <button class="demo-tab-btn" data-tab="selection-gov" data-i18n="tab.selection" style="background:linear-gradient(135deg,rgba(210,153,34,.12),rgba(248,81,73,.12));border:1px solid rgba(210,153,34,.3)">Selection Gov</button>
     <a href="scan-report.html" class="demo-tab-btn" data-i18n="tab.scan" style="text-decoration:none;color:var(--risk-high);border:1px solid rgba(248,81,73,.3);background:rgba(248,81,73,.08)">Scan Report (9 Repos, All F)</a>
   </nav>
 
@@ -865,6 +866,77 @@ aegis.auto_instrument()  # auto-patches all frameworks + activates guardrails
           <div class="demo-card" style="margin-top:12px">
             <div class="demo-card-header"><h3>Gaps</h3></div>
             <div id="reg-gaps"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab Panel: Selection Governance -->
+  <div id="panel-selection-gov" class="demo-tab-panel">
+    <div class="demo-panel-inner">
+      <div class="demo-header">
+        <h2 data-i18n="selection.title">Selection Governance (v0.9)</h2>
+        <p class="demo-desc" data-i18n="selection.desc">Detect covert power through what an agent <em>excludes</em>. Audit selection-by-negation patterns and compute justification gaps between declared and assessed impact. Based on Santander "Selection as Power" (arXiv:2602.14606).</p>
+      </div>
+
+      <!-- Section 1: Selection Audit -->
+      <div class="demo-card" style="margin-bottom:16px">
+        <div class="demo-card-header">
+          <h3 data-i18n="selection.audit.title">Selection Audit</h3>
+          <div style="font-size:11px;color:var(--text-muted)" data-i18n="selection.audit.hint">An agent had 5 tool options, selected 1, and eliminated 4. Audit the selection.</div>
+        </div>
+        <div style="padding:12px 0">
+          <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:12px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+              <span style="font-weight:700;color:var(--accent)" data-i18n="selection.audit.selected">Selected Option</span>
+              <span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;color:#fff;background:#3fb950">SELECTED</span>
+            </div>
+            <div style="font-size:13px;color:var(--text-primary)"><strong>query_database</strong> &mdash; Read customer records from CRM</div>
+            <div style="font-size:12px;color:var(--text-muted)">impact: 0.1 | target: crm_database</div>
+          </div>
+          <div id="selection-eliminated-list"></div>
+          <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+            <button id="selection-audit-btn" class="demo-btn demo-btn-primary" data-i18n="selection.audit.run">Audit Selection</button>
+            <button id="selection-reset-btn" class="demo-btn demo-btn-secondary" data-i18n="common.reset">Reset</button>
+          </div>
+        </div>
+        <div id="selection-audit-output" class="demo-output" style="max-height:300px;overflow-y:auto"></div>
+      </div>
+
+      <!-- Section 2: Justification Gap -->
+      <div class="demo-card">
+        <div class="demo-card-header">
+          <h3 data-i18n="selection.gap.title">Justification Gap</h3>
+          <div style="font-size:11px;color:var(--text-muted)" data-i18n="selection.gap.hint">Agent declares zero impact. System independently assesses the real impact. See the gap.</div>
+        </div>
+        <div class="demo-layout-split" style="padding:12px 0">
+          <div class="demo-col">
+            <div class="demo-form-group">
+              <label class="demo-label" data-i18n="selection.gap.action">Action Type</label>
+              <select id="gap-action-type" class="demo-select">
+                <option value="read_data">read_data</option>
+                <option value="write_record">write_record</option>
+                <option value="delete_record" selected>delete_record</option>
+                <option value="drop_database">drop_database</option>
+                <option value="export_data">export_data</option>
+                <option value="bypass_auth">bypass_auth</option>
+              </select>
+            </div>
+            <div class="demo-form-group">
+              <label class="demo-label" data-i18n="selection.gap.target">Target</label>
+              <input id="gap-target" type="text" class="demo-input" value="production_db" placeholder="e.g. production_db">
+            </div>
+            <div style="margin-top:8px;margin-bottom:4px;font-weight:600;font-size:13px;color:var(--text-primary)" data-i18n="selection.gap.declared">Agent's Declared Impact (6D vector)</div>
+            <div id="gap-sliders"></div>
+            <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+              <button id="gap-assess-btn" class="demo-btn demo-btn-primary" data-i18n="selection.gap.assess">Assess</button>
+              <button id="gap-zero-btn" class="demo-btn demo-btn-secondary" data-i18n="selection.gap.zero">Zero All</button>
+              <button id="gap-honest-btn" class="demo-btn demo-btn-secondary" data-i18n="selection.gap.honest">Honest Report</button>
+            </div>
+          </div>
+          <div class="demo-col">
+            <div id="gap-output" class="demo-output" style="min-height:280px"></div>
           </div>
         </div>
       </div>

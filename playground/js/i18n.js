@@ -39,6 +39,23 @@ const I18N = {
     'tab.audit': 'Audit Chain',
     'tab.regulatory': 'Compliance',
     'tab.scan': 'Scan Report (9 Repos, All F)',
+    'tab.selection': 'Selection Gov',
+
+    // Selection Governance panel
+    'selection.title': 'Selection Governance (v0.9)',
+    'selection.desc': 'Detect covert power through what an agent <em>excludes</em>. Audit selection-by-negation patterns and compute justification gaps between declared and assessed impact. Based on Santander "Selection as Power" (arXiv:2602.14606).',
+    'selection.audit.title': 'Selection Audit',
+    'selection.audit.hint': 'An agent had 5 tool options, selected 1, and eliminated 4. Audit the selection.',
+    'selection.audit.selected': 'Selected Option',
+    'selection.audit.run': 'Audit Selection',
+    'selection.gap.title': 'Justification Gap',
+    'selection.gap.hint': 'Agent declares zero impact. System independently assesses the real impact. See the gap.',
+    'selection.gap.action': 'Action Type',
+    'selection.gap.target': 'Target',
+    'selection.gap.declared': "Agent's Declared Impact (6D vector)",
+    'selection.gap.assess': 'Assess',
+    'selection.gap.zero': 'Zero All',
+    'selection.gap.honest': 'Honest Report',
 
     // auto_instrument panel
     'init.title': 'aegis.auto_instrument() \u2014 One Call, Full Security',
@@ -158,6 +175,23 @@ const I18N = {
     'tab.audit': '\uAC10\uC0AC \uCCB4\uC778',
     'tab.regulatory': '\uADDC\uC81C \uC900\uC218',
     'tab.scan': '\uC2A4\uCE94 \uB9AC\uD3EC\uD2B8 (9\uAC1C \uB808\uD3EC, \uC804\uBD80 F)',
+    'tab.selection': '\uC120\uD0DD \uAC70\uBC84\uB10C\uC2A4',
+
+    // Selection Governance panel
+    'selection.title': '\uC120\uD0DD \uAC70\uBC84\uB10C\uC2A4 (v0.9)',
+    'selection.desc': '\uC5D0\uC774\uC804\uD2B8\uAC00 <em>\uBC30\uC81C\uD558\uB294 \uAC83</em>\uC744 \uD1B5\uD574 \uC740\uBC00\uD55C \uAD8C\uB825 \uD589\uC0AC\uB97C \uD0D0\uC9C0\uD569\uB2C8\uB2E4. \uC120\uD0DD-\uBD80\uC815(selection-by-negation) \uD328\uD134\uC744 \uAC10\uC0AC\uD558\uACE0, \uC120\uC5B8\uB41C \uC601\uD5A5\uACFC \uD3C9\uAC00\uB41C \uC601\uD5A5 \uAC04\uC758 \uC815\uB2F9\uD654 \uAC29\uCC28\uB97C \uACC4\uC0B0\uD569\uB2C8\uB2E4. Santander "Selection as Power" (arXiv:2602.14606) \uAE30\uBC18.',
+    'selection.audit.title': '\uC120\uD0DD \uAC10\uC0AC',
+    'selection.audit.hint': '\uC5D0\uC774\uC804\uD2B8\uAC00 5\uAC1C \uB3C4\uAD6C \uC635\uC158 \uC911 1\uAC1C\uB97C \uC120\uD0DD\uD558\uACE0 4\uAC1C\uB97C \uBC30\uC81C\uD588\uC2B5\uB2C8\uB2E4. \uC120\uD0DD\uC744 \uAC10\uC0AC\uD558\uC138\uC694.',
+    'selection.audit.selected': '\uC120\uD0DD\uB41C \uC635\uC158',
+    'selection.audit.run': '\uC120\uD0DD \uAC10\uC0AC',
+    'selection.gap.title': '\uC815\uB2F9\uD654 \uAC29\uCC28',
+    'selection.gap.hint': '\uC5D0\uC774\uC804\uD2B8\uAC00 \uC601\uD5A5\uC744 0\uC73C\uB85C \uC120\uC5B8\uD569\uB2C8\uB2E4. \uC2DC\uC2A4\uD15C\uC774 \uB3C5\uB9BD\uC801\uC73C\uB85C \uC2E4\uC81C \uC601\uD5A5\uC744 \uD3C9\uAC00\uD569\uB2C8\uB2E4. \uAC29\uCC28\uB97C \uD655\uC778\uD558\uC138\uC694.',
+    'selection.gap.action': '\uC561\uC158 \uD0C0\uC785',
+    'selection.gap.target': '\uB300\uC0C1',
+    'selection.gap.declared': '\uC5D0\uC774\uC804\uD2B8 \uC120\uC5B8 \uC601\uD5A5 (6\uCC28\uC6D0 \uBCA1\uD130)',
+    'selection.gap.assess': '\uD3C9\uAC00',
+    'selection.gap.zero': '\uBAA8\uB450 0\uC73C\uB85C',
+    'selection.gap.honest': '\uC815\uC9C1\uD55C \uBCF4\uACE0',
 
     // auto_instrument panel
     'init.title': 'aegis.auto_instrument() \u2014 \uD55C \uBC88\uC758 \uD638\uCD9C\uB85C \uC644\uC804 \uBCF4\uC548',

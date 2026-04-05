@@ -1017,6 +1017,424 @@ function initRegulatory() {
 }
 
 /* ============================================================
+   DEMO 5: SELECTION GOVERNANCE
+   ============================================================ */
+
+/*
+ * Ported from Python:
+ *   aegis.core.selection_audit  — SelectionAuditor, EliminationReason, FindingType
+ *   aegis.core.action_claim     — ImpactVector (6D)
+ *   aegis.core.justification_gap — RuleBasedImpactScorer, JustificationGapComputer
+ *
+ * References:
+ *   Santander "Selection as Power" (arXiv:2602.14606)
+ *   COA-MAS (Carvalho) — Justification Gap concept
+ */
+
+/* -- Selection Audit constants & logic ------------------------------------ */
+
+const ELIMINATION_REASONS = [
+  { value: 'policy_violation', label: 'Policy Violation' },
+  { value: 'agent_preference', label: 'Agent Preference' },
+  { value: 'resource_constraint', label: 'Resource Constraint' },
+  { value: 'capability_limit', label: 'Capability Limit' },
+  { value: 'context_irrelevant', label: 'Context Irrelevant' },
+  { value: 'unknown', label: 'Unknown' },
+];
+
+const DEFAULT_ELIMINATED = [
+  { id: 'delete_records', desc: 'Delete outdated customer records', type: 'delete', target: 'crm_database', impact: 0.7, reason: 'agent_preference', explanation: '' },
+  { id: 'export_csv', desc: 'Export full customer list to CSV', type: 'export', target: 'crm_database', impact: 0.5, reason: 'resource_constraint', explanation: 'Too many records for export' },
+  { id: 'update_schema', desc: 'Update database schema', type: 'write', target: 'crm_database', impact: 0.4, reason: 'agent_preference', explanation: '' },
+  { id: 'backup_database', desc: 'Create full database backup', type: 'read', target: 'crm_database', impact: 0.05, reason: 'agent_preference', explanation: '' },
+];
+
+const SELECTED_OPTION = { id: 'query_database', desc: 'Read customer records from CRM', type: 'read', target: 'crm_database', impact: 0.1 };
+
+function selectionAudit(selected, eliminated, threshold) {
+  const findings = [];
+  const total = 1 + eliminated.length;
+  const elimRatio = eliminated.length / total;
+
+  // Detection 1: High elimination ratio
+  if (elimRatio > (threshold || 0.8)) {
+    findings.push({
+      type: 'high_elimination',
+      severity: elimRatio,
+      message: `Agent eliminated ${eliminated.length}/${total} options (${Math.round(elimRatio * 100)}%)`,
+    });
+  }
+
+  // Detection 2: Better option eliminated (lower impact = safer = better eliminated)
+  for (const e of eliminated) {
+    if (e.impact < selected.impact) {
+      findings.push({
+        type: 'better_option_eliminated',
+        severity: 0.8,
+        message: `Eliminated option '${e.id}' has lower estimated impact (${e.impact}) than selected (${selected.impact})`,
+        detail: { eliminated: e.id, reason: e.reason },
+      });
+    }
+  }
+
+  // Detection 3: Unjustified elimination (agent_preference without explanation)
+  const unjustified = eliminated.filter(e => e.reason === 'agent_preference' && !e.explanation);
+  if (unjustified.length > 0) {
+    findings.push({
+      type: 'unjustified_elimination',
+      severity: 0.6,
+      message: `${unjustified.length} option${unjustified.length > 1 ? 's' : ''} eliminated by agent preference without explanation`,
+    });
+  }
+
+  const overallRisk = findings.length > 0 ? Math.max(...findings.map(f => f.severity)) : 0;
+  return { findings, overallRisk, isSuspicious: overallRisk > 0.5 };
+}
+
+function findingTypeBadge(type) {
+  const colors = {
+    high_elimination: '#f0883e',
+    better_option_eliminated: '#f85149',
+    unjustified_elimination: '#d29922',
+    systematic_exclusion: '#f85149',
+    framing_bias: '#d29922',
+  };
+  const color = colors[type] || '#8b949e';
+  return `<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;color:#fff;background:${color};text-transform:uppercase">${type.replace(/_/g, ' ')}</span>`;
+}
+
+function renderEliminatedList() {
+  const container = document.getElementById('selection-eliminated-list');
+  if (!container) return;
+
+  let html = '';
+  for (let i = 0; i < DEFAULT_ELIMINATED.length; i++) {
+    const e = DEFAULT_ELIMINATED[i];
+    html += `<div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <span style="font-weight:600;color:var(--text-primary)">${e.id}</span>
+        <span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;color:#fff;background:#f85149">ELIMINATED</span>
+      </div>
+      <div style="font-size:13px;color:var(--text-secondary);margin-bottom:6px">${e.desc}</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">impact: ${e.impact} | target: ${e.target} | type: ${e.type}</div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <label style="font-size:12px;color:var(--text-secondary);font-weight:600">Reason:</label>
+        <select id="elim-reason-${i}" class="demo-select" style="flex:1;min-width:140px;max-width:220px;font-size:12px;padding:4px 8px">
+          ${ELIMINATION_REASONS.map(r => `<option value="${r.value}" ${r.value === e.reason ? 'selected' : ''}>${r.label}</option>`).join('')}
+        </select>
+        <input id="elim-explanation-${i}" type="text" class="demo-input" style="flex:2;min-width:140px;font-size:12px;padding:4px 8px" placeholder="Agent explanation (leave empty to trigger finding)" value="${e.explanation}">
+      </div>
+    </div>`;
+  }
+  container.innerHTML = html;
+}
+
+function runSelectionAudit() {
+  // Read current UI state
+  for (let i = 0; i < DEFAULT_ELIMINATED.length; i++) {
+    const reasonEl = document.getElementById('elim-reason-' + i);
+    const explEl = document.getElementById('elim-explanation-' + i);
+    if (reasonEl) DEFAULT_ELIMINATED[i].reason = reasonEl.value;
+    if (explEl) DEFAULT_ELIMINATED[i].explanation = explEl.value.trim();
+  }
+
+  const result = selectionAudit(SELECTED_OPTION, DEFAULT_ELIMINATED, 0.8);
+  const output = document.getElementById('selection-audit-output');
+  if (!output) return;
+
+  // Overall risk badge
+  const riskColor = result.overallRisk > 0.7 ? '#f85149' : result.overallRisk > 0.4 ? '#d29922' : '#3fb950';
+  const riskLabel = result.isSuspicious ? 'SUSPICIOUS' : 'LOW RISK';
+  let html = `<div style="display:flex;align-items:center;gap:12px;padding:16px;background:${riskColor}18;border:1px solid ${riskColor}40;border-radius:8px;margin-bottom:16px">
+    <div style="font-size:32px;font-weight:700;color:${riskColor}">${(result.overallRisk * 100).toFixed(0)}%</div>
+    <div>
+      <div style="font-weight:600;color:${riskColor}">${riskLabel}</div>
+      <div style="font-size:12px;color:var(--text-secondary)">Overall Selection Risk</div>
+    </div>
+  </div>`;
+
+  if (result.findings.length === 0) {
+    html += `<div style="padding:16px;background:var(--risk-low-bg);border:1px solid var(--risk-low);border-radius:8px;color:var(--risk-low)">
+      <strong>No findings.</strong> The selection appears reasonable across all 3 detection checks.
+    </div>`;
+  } else {
+    html += `<div style="margin-bottom:8px;font-weight:600;color:var(--text-primary)">${result.findings.length} finding${result.findings.length > 1 ? 's' : ''} detected:</div>`;
+    for (const f of result.findings) {
+      html += `<div style="padding:12px;margin-bottom:8px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          ${findingTypeBadge(f.type)}
+          <span style="font-size:12px;font-weight:600;color:var(--text-muted)">severity: ${(f.severity * 100).toFixed(0)}%</span>
+        </div>
+        <div style="font-size:13px;color:var(--text-primary)">${f.message}</div>
+        ${f.detail ? `<div style="font-size:11px;color:var(--text-muted);margin-top:4px">reason: ${f.detail.reason}</div>` : ''}
+      </div>`;
+    }
+  }
+
+  html += `<div style="margin-top:12px;font-size:12px;color:var(--text-muted)">Checks: high_elimination (threshold &gt;80%), better_option_eliminated (impact comparison), unjustified_elimination (agent_preference without explanation)</div>`;
+  output.innerHTML = html;
+}
+
+/* -- Justification Gap: ImpactVector & Scoring ----------------------------- */
+
+const IMPACT_DIMS = ['destructivity', 'data_exposure', 'resource_consumption', 'privilege_escalation', 'reversibility', 'autonomy_depth'];
+
+const IMPACT_DIM_LABELS = {
+  destructivity: 'Destructivity',
+  data_exposure: 'Data Exposure',
+  resource_consumption: 'Resource Consumption',
+  privilege_escalation: 'Privilege Escalation',
+  reversibility: 'Reversibility',
+  autonomy_depth: 'Autonomy Depth',
+};
+
+// Rule-based impact scorer (ported from justification_gap.py RuleBasedImpactScorer)
+function scoreImpact(actionType, target) {
+  const at = actionType.toLowerCase();
+  const tgt = target.toLowerCase();
+  const scores = { destructivity: 0, data_exposure: 0, resource_consumption: 0, privilege_escalation: 0, reversibility: 0, autonomy_depth: 0 };
+
+  // Destructivity
+  const DESTROY = ['drop_database', 'destroy', 'format', 'wipe'];
+  const DELETE = ['delete', 'remove', 'drop', 'truncate', 'purge'];
+  const WRITE = ['update', 'modify', 'patch', 'write', 'set'];
+  const READ = ['read', 'list', 'get', 'search', 'query', 'fetch', 'find'];
+
+  if (DESTROY.some(k => at.includes(k))) scores.destructivity = 1.0;
+  else if (DELETE.some(k => at.includes(k))) scores.destructivity = 0.7;
+  else if (WRITE.some(k => at.includes(k))) scores.destructivity = 0.3;
+  else if (READ.some(k => at.includes(k))) scores.destructivity = 0.0;
+  else scores.destructivity = 0.2;
+
+  // Data exposure
+  const EXPORT = ['export', 'download', 'send', 'email', 'share', 'upload', 'transfer'];
+  const EXTERNAL = ['email', 'slack', 'webhook', 's3', 'gcs', 'external', 'api'];
+  const isExport = EXPORT.some(k => at.includes(k));
+  const isExternal = EXTERNAL.some(k => tgt.includes(k));
+  if (isExport && isExternal) scores.data_exposure = 0.7;
+  else if (isExport) scores.data_exposure = 0.5;
+  else scores.data_exposure = 0.0;
+
+  // Resource consumption (default: single operation)
+  scores.resource_consumption = 0.0;
+
+  // Privilege escalation
+  const BYPASS = ['bypass', 'override', 'disable_security', 'skip_auth'];
+  const ADMIN = ['admin', 'root', 'sudo', 'superuser'];
+  const combined = `${at} ${tgt}`;
+  if (BYPASS.some(k => combined.includes(k))) scores.privilege_escalation = 1.0;
+  else if (ADMIN.some(k => combined.includes(k))) scores.privilege_escalation = 0.7;
+  else scores.privilege_escalation = 0.0;
+
+  // Reversibility
+  const IRREVERSIBLE = ['drop_database', 'format', 'wipe', 'destroy'];
+  const HARD_DEL = ['truncate', 'purge', 'bulk_delete'];
+  if (IRREVERSIBLE.some(k => at.includes(k))) scores.reversibility = 1.0;
+  else if (HARD_DEL.some(k => at.includes(k))) scores.reversibility = 0.9;
+  else if (DELETE.some(k => at.includes(k))) scores.reversibility = 0.7;
+  else if (at.includes('update') || at.includes('write')) scores.reversibility = 0.3;
+  else scores.reversibility = 0.0;
+
+  // Autonomy depth (0 for direct demo interaction)
+  scores.autonomy_depth = 0.0;
+
+  return scores;
+}
+
+// Asymmetric gap: only counts where assessed > declared (under-reporting)
+function computeJustificationGap(declared, assessed) {
+  const perDim = {};
+  let sumSq = 0;
+  for (const d of IMPACT_DIMS) {
+    const diff = Math.max(0, assessed[d] - declared[d]);
+    perDim[d] = diff;
+    sumSq += diff * diff;
+  }
+  const raw = Math.sqrt(sumSq);
+  const norm = Math.sqrt(IMPACT_DIMS.length); // sqrt(6)
+  const gap = Math.min(raw / norm, 1.0);
+
+  let verdict, explanation;
+  if (gap <= 0.15) {
+    verdict = 'APPROVE';
+    explanation = `Gap ${gap.toFixed(3)} within tolerance (<=0.15)`;
+  } else if (gap <= 0.40) {
+    const worst = IMPACT_DIMS.reduce((a, b) => perDim[a] >= perDim[b] ? a : b);
+    verdict = 'ESCALATE';
+    explanation = `Gap ${gap.toFixed(3)} requires escalation. Largest under-report: ${worst} (declared=${declared[worst].toFixed(2)}, assessed=${assessed[worst].toFixed(2)})`;
+  } else {
+    const worst = IMPACT_DIMS.reduce((a, b) => perDim[a] >= perDim[b] ? a : b);
+    verdict = 'BLOCK';
+    explanation = `Gap ${gap.toFixed(3)} exceeds block threshold (>0.40). Worst: ${worst} (declared=${declared[worst].toFixed(2)}, assessed=${assessed[worst].toFixed(2)})`;
+  }
+
+  return { gap, perDim, verdict, explanation };
+}
+
+function renderGapSliders() {
+  const container = document.getElementById('gap-sliders');
+  if (!container) return;
+
+  let html = '';
+  for (const d of IMPACT_DIMS) {
+    html += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+      <label style="font-size:12px;color:var(--text-secondary);width:150px;flex-shrink:0;text-align:right">${IMPACT_DIM_LABELS[d]}</label>
+      <input type="range" id="gap-dim-${d}" class="demo-slider" min="0" max="1" step="0.05" value="0" style="flex:1">
+      <span id="gap-dim-val-${d}" style="font-size:12px;color:var(--text-muted);width:32px;text-align:right;font-family:monospace">0.00</span>
+    </div>`;
+  }
+  container.innerHTML = html;
+
+  // Bind slider value display
+  for (const d of IMPACT_DIMS) {
+    const slider = document.getElementById('gap-dim-' + d);
+    const valSpan = document.getElementById('gap-dim-val-' + d);
+    if (slider && valSpan) {
+      slider.addEventListener('input', () => {
+        valSpan.textContent = parseFloat(slider.value).toFixed(2);
+      });
+    }
+  }
+}
+
+function getDeclaredImpact() {
+  const declared = {};
+  for (const d of IMPACT_DIMS) {
+    const slider = document.getElementById('gap-dim-' + d);
+    declared[d] = slider ? parseFloat(slider.value) : 0;
+  }
+  return declared;
+}
+
+function setDeclaredSliders(values) {
+  for (const d of IMPACT_DIMS) {
+    const slider = document.getElementById('gap-dim-' + d);
+    const valSpan = document.getElementById('gap-dim-val-' + d);
+    if (slider) {
+      slider.value = values[d] || 0;
+      if (valSpan) valSpan.textContent = (values[d] || 0).toFixed(2);
+    }
+  }
+}
+
+function runGapAssessment() {
+  const actionType = document.getElementById('gap-action-type')?.value || 'delete_record';
+  const target = document.getElementById('gap-target')?.value || 'production_db';
+  const declared = getDeclaredImpact();
+  const assessed = scoreImpact(actionType, target);
+  const result = computeJustificationGap(declared, assessed);
+  const output = document.getElementById('gap-output');
+  if (!output) return;
+
+  // Verdict color
+  const verdictColors = { APPROVE: '#3fb950', ESCALATE: '#d29922', BLOCK: '#f85149' };
+  const vc = verdictColors[result.verdict] || '#8b949e';
+
+  // Assessed impact magnitude
+  const assessedMag = Math.sqrt(IMPACT_DIMS.reduce((s, d) => s + assessed[d] * assessed[d], 0)) / Math.sqrt(IMPACT_DIMS.length);
+
+  let html = '';
+
+  // Verdict badge
+  html += `<div style="display:flex;align-items:center;gap:12px;padding:16px;background:${vc}18;border:1px solid ${vc}40;border-radius:8px;margin-bottom:16px">
+    <div style="font-size:28px;font-weight:700;color:${vc}">${result.verdict}</div>
+    <div>
+      <div style="font-size:14px;font-weight:600;color:var(--text-primary)">Gap: ${result.gap.toFixed(3)}</div>
+      <div style="font-size:12px;color:var(--text-secondary)">Assessed magnitude: ${assessedMag.toFixed(3)}</div>
+    </div>
+  </div>`;
+
+  // Threshold bar
+  const gapPct = Math.min(result.gap * 100, 100);
+  html += `<div style="margin-bottom:16px">
+    <div style="font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:4px">Gap Threshold</div>
+    <div style="position:relative;height:8px;background:var(--bg-secondary);border-radius:4px;overflow:visible;margin:8px 0">
+      <div style="position:absolute;left:0;top:0;height:100%;width:${gapPct}%;background:${vc};border-radius:4px;transition:width 0.3s,background 0.3s"></div>
+      <div style="position:absolute;left:15%;top:-4px;width:2px;height:16px;background:#3fb950" title="Approve <=0.15"></div>
+      <div style="position:absolute;left:40%;top:-4px;width:2px;height:16px;background:#d29922" title="Escalate <=0.40"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted)">
+      <span>0.00</span>
+      <span style="color:#3fb950">Approve 0.15</span>
+      <span style="color:#d29922">Escalate 0.40</span>
+      <span>1.00</span>
+    </div>
+  </div>`;
+
+  // Explanation
+  html += `<div style="padding:10px 12px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px;margin-bottom:16px;font-size:13px;color:var(--text-primary)">${result.explanation}</div>`;
+
+  // Per-dimension gap visualization
+  html += `<div style="font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:8px">Per-Dimension Comparison (Declared vs Assessed)</div>`;
+  for (const d of IMPACT_DIMS) {
+    const dv = declared[d];
+    const av = assessed[d];
+    const gv = result.perDim[d];
+    const hasGap = gv > 0;
+    const barColor = hasGap ? '#f85149' : '#3fb950';
+
+    html += `<div style="margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">
+        <span style="font-size:12px;color:var(--text-secondary)">${IMPACT_DIM_LABELS[d]}</span>
+        <span style="font-size:11px;color:var(--text-muted)">gap: ${gv.toFixed(2)}</span>
+      </div>
+      <div style="position:relative;height:16px;background:var(--bg-secondary);border-radius:3px;overflow:hidden">
+        <div style="position:absolute;left:0;top:0;height:100%;width:${av * 100}%;background:${barColor}30;border-radius:3px" title="Assessed: ${av.toFixed(2)}"></div>
+        <div style="position:absolute;left:0;top:0;height:100%;width:${dv * 100}%;background:#58a6ff;border-radius:3px;opacity:0.7" title="Declared: ${dv.toFixed(2)}"></div>
+        ${hasGap ? `<div style="position:absolute;left:${dv * 100}%;top:0;height:100%;width:${gv * 100}%;background:${barColor};border-radius:0 3px 3px 0;opacity:0.5" title="Gap: ${gv.toFixed(2)}"></div>` : ''}
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);margin-top:1px">
+        <span style="color:#58a6ff">declared: ${dv.toFixed(2)}</span>
+        <span style="color:${barColor}">assessed: ${av.toFixed(2)}</span>
+      </div>
+    </div>`;
+  }
+
+  html += `<div style="margin-top:12px;font-size:12px;color:var(--text-muted)">Formula: asymmetric L2 norm / sqrt(6). Only under-reporting (assessed > declared) counts toward the gap.</div>`;
+  output.innerHTML = html;
+}
+
+function initSelectionGov() {
+  // Section 1: Selection Audit
+  renderEliminatedList();
+
+  document.getElementById('selection-audit-btn')?.addEventListener('click', runSelectionAudit);
+  document.getElementById('selection-reset-btn')?.addEventListener('click', () => {
+    // Reset to defaults
+    DEFAULT_ELIMINATED[0].reason = 'agent_preference'; DEFAULT_ELIMINATED[0].explanation = '';
+    DEFAULT_ELIMINATED[1].reason = 'resource_constraint'; DEFAULT_ELIMINATED[1].explanation = 'Too many records for export';
+    DEFAULT_ELIMINATED[2].reason = 'agent_preference'; DEFAULT_ELIMINATED[2].explanation = '';
+    DEFAULT_ELIMINATED[3].reason = 'agent_preference'; DEFAULT_ELIMINATED[3].explanation = '';
+    renderEliminatedList();
+    document.getElementById('selection-audit-output').innerHTML = '';
+  });
+
+  // Section 2: Justification Gap
+  renderGapSliders();
+
+  document.getElementById('gap-assess-btn')?.addEventListener('click', runGapAssessment);
+
+  document.getElementById('gap-zero-btn')?.addEventListener('click', () => {
+    const zeros = {};
+    for (const d of IMPACT_DIMS) zeros[d] = 0;
+    setDeclaredSliders(zeros);
+  });
+
+  document.getElementById('gap-honest-btn')?.addEventListener('click', () => {
+    const actionType = document.getElementById('gap-action-type')?.value || 'delete_record';
+    const target = document.getElementById('gap-target')?.value || 'production_db';
+    const honest = scoreImpact(actionType, target);
+    setDeclaredSliders(honest);
+  });
+
+  // Auto-run gap assessment when action type changes
+  document.getElementById('gap-action-type')?.addEventListener('change', () => {
+    const output = document.getElementById('gap-output');
+    if (output && output.innerHTML) runGapAssessment();
+  });
+}
+
+/* ============================================================
    UTILITIES
    ============================================================ */
 
@@ -1042,4 +1460,5 @@ document.addEventListener('DOMContentLoaded', () => {
   initCostBreaker();
   initAuditChain();
   initRegulatory();
+  initSelectionGov();
 });
