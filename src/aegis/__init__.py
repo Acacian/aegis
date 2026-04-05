@@ -99,6 +99,19 @@ _LAZY_IMPORTS: dict[str, str] = {
     "PrivacyFinding": "aegis.core.cross_tool_privacy",
     # Tool output guard (arXiv:2602.22724)
     "ToolOutputGuardrail": "aegis.guardrails.tool_output",
+    # -- OWASP Agentic modules --
+    # Code execution safety (ASI05)
+    "CodeExecSafetyGate": "aegis.core.code_exec_safety",
+    "CodeExecResult": "aegis.core.code_exec_safety",
+    # Memory integrity (ASI06)
+    "MemoryIntegrityVerifier": "aegis.core.memory_integrity",
+    "IntegrityViolation": "aegis.core.memory_integrity",
+    # Cascade guard (ASI08)
+    "CascadeGuard": "aegis.core.cascade_guard",
+    "CascadeDecision": "aegis.core.cascade_guard",
+    # Behavioral drift (ASI10)
+    "DriftDetector": "aegis.core.behavioral_drift",
+    "DriftFinding": "aegis.core.behavioral_drift",
 }
 
 __all__ = [
@@ -166,7 +179,27 @@ if TYPE_CHECKING:
     from aegis.core.anomaly import (
         BehaviorProfile as BehaviorProfile,
     )
+
+    # OWASP Agentic modules
+    from aegis.core.behavioral_drift import (
+        DriftDetector as DriftDetector,
+    )
+    from aegis.core.behavioral_drift import (
+        DriftFinding as DriftFinding,
+    )
     from aegis.core.builder import PolicyBuilder as PolicyBuilder
+    from aegis.core.cascade_guard import (
+        CascadeDecision as CascadeDecision,
+    )
+    from aegis.core.cascade_guard import (
+        CascadeGuard as CascadeGuard,
+    )
+    from aegis.core.code_exec_safety import (
+        CodeExecResult as CodeExecResult,
+    )
+    from aegis.core.code_exec_safety import (
+        CodeExecSafetyGate as CodeExecSafetyGate,
+    )
     from aegis.core.constitution import AgentConstitution as AgentConstitution
 
     # Paper-based features
@@ -196,6 +229,12 @@ if TYPE_CHECKING:
         PolicyHierarchy as PolicyHierarchy,
     )
     from aegis.core.leakage_detector import LeakageDetector as LeakageDetector
+    from aegis.core.memory_integrity import (
+        IntegrityViolation as IntegrityViolation,
+    )
+    from aegis.core.memory_integrity import (
+        MemoryIntegrityVerifier as MemoryIntegrityVerifier,
+    )
     from aegis.core.merkle_audit import (
         MerkleAuditTree as MerkleAuditTree,
     )

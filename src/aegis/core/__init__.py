@@ -65,6 +65,14 @@ _LAZY_IMPORTS: dict[str, str] = {
     "CostTracker": "aegis.core.budget",
     "ModelPricing": "aegis.core.budget",
     "TokenUsage": "aegis.core.budget",
+    # cascade_guard (OWASP ASI08: Cascading Failures)
+    "AgentHealth": "aegis.core.cascade_guard",
+    "AgentState": "aegis.core.cascade_guard",
+    "CascadeDecision": "aegis.core.cascade_guard",
+    "CascadeEvent": "aegis.core.cascade_guard",
+    "CascadeEventType": "aegis.core.cascade_guard",
+    "CascadeGuard": "aegis.core.cascade_guard",
+    "CascadeReport": "aegis.core.cascade_guard",
     # circuit_breaker
     "AnomalyCircuitBridge": "aegis.core.circuit_breaker",
     "CircuitBreaker": "aegis.core.circuit_breaker",
@@ -77,6 +85,13 @@ _LAZY_IMPORTS: dict[str, str] = {
     # builder
     "PolicyBuilder": "aegis.core.builder",
     "RuleBuilder": "aegis.core.builder",
+    # code_exec_safety (OWASP Agentic ASI05)
+    "Category": "aegis.core.code_exec_safety",
+    "CodeExecFinding": "aegis.core.code_exec_safety",
+    "CodeExecResult": "aegis.core.code_exec_safety",
+    "CodeExecSafetyGate": "aegis.core.code_exec_safety",
+    "ExecAction": "aegis.core.code_exec_safety",
+    "Severity": "aegis.core.code_exec_safety",
     # compliance
     "ComplianceFinding": "aegis.core.compliance",
     "ComplianceReport": "aegis.core.compliance",
@@ -249,6 +264,12 @@ _LAZY_IMPORTS: dict[str, str] = {
     "PIICategory": "aegis.core.cross_tool_privacy",
     "PrivacyFinding": "aegis.core.cross_tool_privacy",
     "PrivacyReport": "aegis.core.cross_tool_privacy",
+    # memory_integrity (OWASP ASI06: Memory & Context Poisoning)
+    "InjectionSignal": "aegis.core.memory_integrity",
+    "IntegrityViolation": "aegis.core.memory_integrity",
+    "MemoryEntry": "aegis.core.memory_integrity",
+    "MemoryIntegrityVerifier": "aegis.core.memory_integrity",
+    "MemoryStats": "aegis.core.memory_integrity",
 }
 
 __all__ = list(_LAZY_IMPORTS.keys())
@@ -349,6 +370,27 @@ if TYPE_CHECKING:
     from aegis.core.builder import (
         RuleBuilder as RuleBuilder,
     )
+    from aegis.core.cascade_guard import (
+        AgentHealth as AgentHealth,
+    )
+    from aegis.core.cascade_guard import (
+        AgentState as AgentState,
+    )
+    from aegis.core.cascade_guard import (
+        CascadeDecision as CascadeDecision,
+    )
+    from aegis.core.cascade_guard import (
+        CascadeEvent as CascadeEvent,
+    )
+    from aegis.core.cascade_guard import (
+        CascadeEventType as CascadeEventType,
+    )
+    from aegis.core.cascade_guard import (
+        CascadeGuard as CascadeGuard,
+    )
+    from aegis.core.cascade_guard import (
+        CascadeReport as CascadeReport,
+    )
     from aegis.core.circuit_breaker import (
         AnomalyCircuitBridge as AnomalyCircuitBridge,
     )
@@ -372,6 +414,24 @@ if TYPE_CHECKING:
     )
     from aegis.core.circuit_breaker import (
         QualityLevel as QualityLevel,
+    )
+    from aegis.core.code_exec_safety import (
+        Category as Category,
+    )
+    from aegis.core.code_exec_safety import (
+        CodeExecFinding as CodeExecFinding,
+    )
+    from aegis.core.code_exec_safety import (
+        CodeExecResult as CodeExecResult,
+    )
+    from aegis.core.code_exec_safety import (
+        CodeExecSafetyGate as CodeExecSafetyGate,
+    )
+    from aegis.core.code_exec_safety import (
+        ExecAction as ExecAction,
+    )
+    from aegis.core.code_exec_safety import (
+        Severity as Severity,
     )
     from aegis.core.compliance import (
         ComplianceFinding as ComplianceFinding,
@@ -666,6 +726,21 @@ if TYPE_CHECKING:
     )
     from aegis.core.mcp_vuln_db import (
         VulnFinding as VulnFinding,
+    )
+    from aegis.core.memory_integrity import (
+        InjectionSignal as InjectionSignal,
+    )
+    from aegis.core.memory_integrity import (
+        IntegrityViolation as IntegrityViolation,
+    )
+    from aegis.core.memory_integrity import (
+        MemoryEntry as MemoryEntry,
+    )
+    from aegis.core.memory_integrity import (
+        MemoryIntegrityVerifier as MemoryIntegrityVerifier,
+    )
+    from aegis.core.memory_integrity import (
+        MemoryStats as MemoryStats,
     )
     from aegis.core.merkle_audit import (
         BatchProofResult as BatchProofResult,
