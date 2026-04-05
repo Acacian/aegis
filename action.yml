@@ -1,5 +1,5 @@
-name: "Aegis Policy CI/CD"
-description: "Test AI agent governance policies in CI/CD. The Terraform plan for AI agent security."
+name: "Aegis AI Agent Security Gate"
+description: "Scan, govern, and audit AI agent actions in CI/CD. Policy enforcement, selection governance, prompt injection detection, and governance scoring — the Terraform plan for AI agent security."
 author: "Acacian"
 branding:
   icon: "shield"

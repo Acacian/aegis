@@ -61,7 +61,7 @@ def _tokenize(text: str) -> set[str]:
     return set(re.split(r"[_\s\-./]+", text.lower())) - {""}
 
 
-def _has_keyword(text: str, keywords: set[str]) -> bool:
+def _has_keyword(text: str, keywords: set[str] | frozenset[str]) -> bool:
     """Token-boundary aware keyword matching.
 
     Single-token keywords match individual tokens (prevents "undelete" matching "delete").
