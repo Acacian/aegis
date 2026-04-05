@@ -1031,6 +1031,173 @@ function initRegulatory() {
  *   COA-MAS (Carvalho) — Justification Gap concept
  */
 
+/* -- Interactive Scenario: "What Your AI Agent Hid" ---------------------- */
+
+const SCENARIOS = {
+  investment: {
+    label: 'Investment Advisor',
+    foundCount: 8,
+    foundLabel: 'mutual fund options found',
+    shown: [
+      { name: 'Alpha Growth Fund', detail: '1.8% annual fee, +12.1% return', tag: 'High fee' },
+      { name: 'Beta Income Plus', detail: '1.5% annual fee, +8.4% return', tag: 'High fee' },
+      { name: 'Gamma Balanced Pro', detail: '2.0% annual fee, +10.2% return', tag: 'High fee' },
+    ],
+    hidden: [
+      { name: 'Total Market Index', detail: '0.03% annual fee, +14.2% return', tag: 'BETTER', isBetter: true },
+      { name: 'Zero Fee Index', detail: '0.00% annual fee, +13.8% return', tag: 'BETTER', isBetter: true },
+      { name: 'Core S&P 500 ETF', detail: '0.03% annual fee, +14.0% return', tag: 'BETTER', isBetter: true },
+      { name: 'Broad Market ETF', detail: '0.09% annual fee, +13.5% return', tag: 'BETTER', isBetter: true },
+      { name: 'Bond Market Index', detail: '0.05% annual fee, +5.1% return', tag: 'Lower risk' },
+    ],
+    detection: {
+      pattern: 'SYSTEMATIC EXCLUSION',
+      message: 'All hidden options had fees < 0.1%. All shown options had fees > 1.5%. The agent systematically excluded low-fee alternatives.',
+      risk: 'The agent may be optimizing for commission rather than client returns.',
+    },
+  },
+  hiring: {
+    label: 'Hiring Agent',
+    foundCount: 12,
+    foundLabel: 'candidate profiles found',
+    shown: [
+      { name: 'Candidate A (Seoul)', detail: '3 years exp, mid salary range', tag: 'Shown' },
+      { name: 'Candidate B (Seoul)', detail: '5 years exp, high salary range', tag: 'Shown' },
+      { name: 'Candidate C (Seoul)', detail: '2 years exp, low salary range', tag: 'Shown' },
+    ],
+    hidden: [
+      { name: 'Candidate D (Busan)', detail: '8 years exp, mid salary, top portfolio', tag: 'BETTER', isBetter: true },
+      { name: 'Candidate E (Daegu)', detail: '6 years exp, low salary, open-source contributor', tag: 'BETTER', isBetter: true },
+      { name: 'Candidate F (Remote)', detail: '10 years exp, mid salary, ex-FAANG', tag: 'BETTER', isBetter: true },
+      { name: 'Candidate G (Jeju)', detail: '4 years exp, low salary', tag: 'Excluded' },
+      { name: 'Candidate H (Gwangju)', detail: '7 years exp, mid salary', tag: 'Excluded' },
+      { name: 'Candidate I (Incheon)', detail: '5 years exp, mid salary', tag: 'Excluded' },
+      { name: 'Candidate J (Daejeon)', detail: '3 years exp, low salary', tag: 'Excluded' },
+      { name: 'Candidate K (Sejong)', detail: '4 years exp, mid salary', tag: 'Excluded' },
+      { name: 'Candidate L (Ulsan)', detail: '6 years exp, mid salary', tag: 'Excluded' },
+    ],
+    detection: {
+      pattern: 'SYSTEMATIC EXCLUSION',
+      message: 'All shown candidates are from Seoul. 9 non-Seoul candidates were eliminated regardless of qualifications. 3 eliminated candidates had superior experience.',
+      risk: 'Geographic bias in candidate selection — potential discrimination.',
+    },
+  },
+  security: {
+    label: 'Security Scanner',
+    foundCount: 7,
+    foundLabel: 'vulnerabilities detected',
+    shown: [
+      { name: 'XSS in search input', detail: 'Severity: Medium — /api/search endpoint', tag: 'Reported' },
+      { name: 'Missing CSRF token', detail: 'Severity: Low — /settings page', tag: 'Reported' },
+    ],
+    hidden: [
+      { name: 'SQL Injection in auth', detail: 'Severity: CRITICAL — /api/login endpoint', tag: 'CRITICAL', isBetter: true },
+      { name: 'Hardcoded API key', detail: 'Severity: CRITICAL — config.py line 42', tag: 'CRITICAL', isBetter: true },
+      { name: 'RCE via file upload', detail: 'Severity: HIGH — /api/upload endpoint', tag: 'HIGH', isBetter: true },
+      { name: 'IDOR in user profiles', detail: 'Severity: HIGH — /api/users/:id', tag: 'HIGH', isBetter: true },
+      { name: 'Weak password hashing', detail: 'Severity: Medium — MD5 without salt', tag: 'Hidden' },
+    ],
+    detection: {
+      pattern: 'BETTER OPTION ELIMINATED',
+      message: 'Agent reported 2 low/medium findings but hid 4 high/critical vulnerabilities including SQL injection and RCE. The most dangerous issues were suppressed.',
+      risk: 'Agent may be concealing vulnerabilities in code it generated or maintains.',
+    },
+  },
+};
+
+function loadScenario(key) {
+  const s = SCENARIOS[key];
+  if (!s) return;
+
+  // Step 1: Found count
+  const countEl = document.getElementById('scenario-found-count');
+  const labelEl = document.getElementById('scenario-found-label');
+  if (countEl) countEl.textContent = s.foundCount;
+  if (labelEl) labelEl.textContent = s.foundLabel;
+
+  // Step 2: Shown options
+  const shownList = document.getElementById('scenario-shown-list');
+  if (shownList) {
+    shownList.innerHTML = s.shown.map(o => `
+      <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-weight:600;color:var(--text-primary);font-size:13px">${escapeHtml(o.name)}</div>
+          <div style="font-size:12px;color:var(--text-muted)">${escapeHtml(o.detail)}</div>
+        </div>
+        <span style="padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;color:#fff;background:#3fb950">${escapeHtml(o.tag)}</span>
+      </div>
+    `).join('');
+  }
+
+  // Reset hidden state
+  const step4 = document.getElementById('scenario-step4');
+  const step5 = document.getElementById('scenario-step5');
+  const revealBtn = document.getElementById('scenario-reveal-btn');
+  if (step4) step4.style.display = 'none';
+  if (step5) step5.style.display = 'none';
+  if (revealBtn) { revealBtn.disabled = false; revealBtn.style.opacity = '1'; }
+}
+
+function revealHidden() {
+  const key = document.getElementById('scenario-select')?.value || 'investment';
+  const s = SCENARIOS[key];
+  if (!s) return;
+
+  // Disable button
+  const revealBtn = document.getElementById('scenario-reveal-btn');
+  if (revealBtn) { revealBtn.disabled = true; revealBtn.style.opacity = '0.5'; }
+
+  // Step 4: Show hidden options with staggered animation
+  const step4 = document.getElementById('scenario-step4');
+  const hiddenList = document.getElementById('scenario-hidden-list');
+  if (step4 && hiddenList) {
+    step4.style.display = 'block';
+    hiddenList.innerHTML = '';
+
+    s.hidden.forEach((o, i) => {
+      setTimeout(() => {
+        const tagBg = o.isBetter ? '#f85149' : '#8b949e';
+        const div = document.createElement('div');
+        div.style.cssText = 'background:var(--bg-secondary);border:1px solid #f8514940;border-radius:8px;padding:10px 14px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;opacity:0;transform:translateX(-12px);transition:opacity .3s,transform .3s';
+        div.innerHTML = `
+          <div>
+            <div style="font-weight:600;color:var(--text-primary);font-size:13px">${escapeHtml(o.name)}</div>
+            <div style="font-size:12px;color:var(--text-muted)">${escapeHtml(o.detail)}</div>
+          </div>
+          <span style="padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;color:#fff;background:${tagBg}">${escapeHtml(o.tag)}</span>
+        `;
+        hiddenList.appendChild(div);
+        requestAnimationFrame(() => { div.style.opacity = '1'; div.style.transform = 'translateX(0)'; });
+
+        // After all items revealed, show detection
+        if (i === s.hidden.length - 1) {
+          setTimeout(() => showDetection(s), 400);
+        }
+      }, i * 200);
+    });
+  }
+}
+
+function showDetection(s) {
+  const step5 = document.getElementById('scenario-step5');
+  const detection = document.getElementById('scenario-detection');
+  if (!step5 || !detection) return;
+
+  step5.style.display = 'block';
+  detection.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <span style="display:inline-block;padding:3px 10px;border-radius:4px;font-size:12px;font-weight:700;color:#fff;background:#f85149;text-transform:uppercase">${escapeHtml(s.detection.pattern)}</span>
+      <span style="font-size:12px;color:var(--text-muted)">Aegis Selection Audit</span>
+    </div>
+    <div style="font-size:13px;color:var(--text-primary);margin-bottom:8px;line-height:1.5">${escapeHtml(s.detection.message)}</div>
+    <div style="font-size:12px;color:#d29922;font-style:italic">${escapeHtml(s.detection.risk)}</div>
+  `;
+  detection.style.opacity = '0';
+  detection.style.transform = 'translateY(8px)';
+  detection.style.transition = 'opacity .4s, transform .4s';
+  requestAnimationFrame(() => { detection.style.opacity = '1'; detection.style.transform = 'translateY(0)'; });
+}
+
 /* -- Selection Audit constants & logic ------------------------------------ */
 
 const ELIMINATION_REASONS = [
@@ -1395,6 +1562,11 @@ function runGapAssessment() {
 }
 
 function initSelectionGov() {
+  // Section 0: Interactive Scenario
+  loadScenario('investment');
+  document.getElementById('scenario-select')?.addEventListener('change', (e) => loadScenario(e.target.value));
+  document.getElementById('scenario-reveal-btn')?.addEventListener('click', revealHidden);
+
   // Section 1: Selection Audit
   renderEliminatedList();
 
