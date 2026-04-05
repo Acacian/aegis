@@ -140,7 +140,7 @@ async with Runtime(
 
 | Aspect | Detail |
 |--------|--------|
-| **4,996+ tests** | Every adapter, handler, and edge case tested |
+| **5,035+ tests** | Every adapter, handler, and edge case tested |
 | **Type-safe** | `mypy --strict` with zero errors |
 | **< 1ms evaluation** | Policy check adds negligible overhead |
 | **Fail-safe** | Blocked actions never execute, period |
@@ -163,6 +163,7 @@ async with Runtime(
 | **0.6.1** | **Released** | Guardrail performance optimization — combined regex, LRU cache. 2.65ms per-call overhead for full 4-scan stack |
 | **0.7.0** | **Released** | Streaming-aware guardrail engine (`StreamingGuardrailEngine`), auto strategy selection (windowed vs full-buffer), Streaming Guard playground demo |
 | **0.9.0** | **Released** | Selection Governance — ActionClaim tripartite structure, ImpactVector 6D scoring, justification gap detection, SelectionAudit, commit-reveal protocol, CircuitBreaker, AegisProxy |
+| **0.9.1** | **Released** | Quality hardening — token-boundary matching, gaming resistance, thread safety, TTL, sync decorator support |
 | **1.0** | 2027 | Distributed security, hosted SaaS, SSO/SCIM |
 
 ## Links

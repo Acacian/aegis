@@ -405,7 +405,7 @@ class ClaimAssessor:
             risk_level=self._risk_from_magnitude(assessed_impact.magnitude),
             congruence_score=congruence,
             assessed_at=datetime.now(UTC),
-            assessor_version="0.9.0",
+            assessor_version="0.9.1",
         )
         claim.verdict = gap_result.verdict
 

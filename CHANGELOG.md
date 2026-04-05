@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.1] — 2026-04-05
+
+### Fixed
+
+- **Token-boundary keyword matching** — ImpactScorer no longer triggers on substrings (e.g. "undelete" no longer matches "delete"). Uses `_`-delimited token matching for single keywords and substring matching for compound keywords only
+- **CongruenceChecker priority** — explicit DELETE > WRITE > READ priority replaces non-deterministic frozenset iteration order
+- **Privilege escalation gaming** — scoring uses action_type, target, and param keys only; no longer blindly concatenates arbitrary param values
+- **Resource consumption gaming** — `max(count, limit, batch_size)` prevents gaming with low count + high batch_size
+- **PII keyword list** — synced with design doc: added `email` and `name` to PII indicators
+
+### Added
+
+- **SelectionAuditor thread safety** — `threading.Lock` protects `_history` for concurrent access
+- **CommitRevealSelection TTL + capacity** — `max_pending` limit and `ttl_seconds` with automatic pruning of expired entries (prevents memory leak)
+- **`@audit_selection` sync support** — decorator now works with both sync and async functions via `inspect.iscoroutinefunction`
+- **33 new tests** — false positive scenarios, gaming resistance, NaN/inf rejection, thread safety, TTL expiry, sync decorator, PII keyword coverage
+
 ## [0.9.0] — 2026-04-05
 
 ### Added

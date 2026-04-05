@@ -18,7 +18,7 @@
   <a href="https://acacian.github.io/aegis/"><img src="https://img.shields.io/badge/docs-acacian.github.io%2Faegis-blue" alt="Docs"></a>
   <br/>
   <a href="https://pypi.org/project/langchain-aegis/"><img src="https://img.shields.io/pypi/v/langchain-aegis?label=langchain-aegis&color=blue&cacheSeconds=3600" alt="langchain-aegis"></a>
-  <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-4996%2B_passed-brightgreen" alt="Tests"></a>
+  <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-5035%2B_passed-brightgreen" alt="Tests"></a>
   <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/coverage-92%25-brightgreen" alt="Coverage"></a>
   <a href="https://acacian.github.io/aegis/playground/"><img src="https://img.shields.io/badge/playground-브라우저에서_체험-ff6b6b" alt="Playground"></a>
   <a href="https://acacian.github.io/aegis/playground/scan-report.html"><img src="https://img.shields.io/badge/스캔_리포트-9개_레포%2C_전부_F-red" alt="Scan Report"></a>

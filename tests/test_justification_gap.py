@@ -570,7 +570,7 @@ class TestClaimAssessor:
 
         assert result.is_assessed is True
         assert result.assessed.assessed_at is not None
-        assert result.assessed.assessor_version == "0.9.0"
+        assert result.assessed.assessor_version == "0.9.1"
         assert result.assessed.impact_profile.destructivity > 0
         assert result.assessed.justification_gap > 0
         assert result.assessed.risk_level >= 1
