@@ -4,7 +4,7 @@ description: "Runtime security for AI agents. Auto-instrument LangChain, CrewAI,
 
 # Agent-Aegis
 
-**The lightweight, research-grade governance library for AI agents. Zero dependencies. 20+ academic papers. Two lines of code.**
+**The lightweight, research-grade governance library for AI agents. 1 dependency (PyYAML). 24 academic papers. Two lines of code.**
 
 `pip install agent-aegis` and add one line. Agent-Aegis auto-instruments LangChain, CrewAI, OpenAI Agents SDK, OpenAI, Anthropic, and 6 more frameworks at runtime -- every LLM call and tool invocation passes through prompt-injection detection, PII masking, and a full audit trail.
 
