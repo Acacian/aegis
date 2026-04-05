@@ -39,6 +39,7 @@ const I18N = {
     'tab.audit': 'Audit Chain',
     'tab.regulatory': 'Compliance',
     'tab.scan': 'Scan Report (39 Repos, 92% F)',
+    'tab.benchmark': 'Benchmark vs MS AGT',
     'tab.selection': 'Selection Gov',
 
     // Selection Governance panel
@@ -183,6 +184,7 @@ const I18N = {
     'tab.audit': '\uAC10\uC0AC \uCCB4\uC778',
     'tab.regulatory': '\uADDC\uC81C \uC900\uC218',
     'tab.scan': '\uC2A4\uCE94 \uB9AC\uD3EC\uD2B8 (39\uAC1C \uB808\uD3EC, 92% F)',
+    'tab.benchmark': '\uBCA4\uCE58\uB9C8\uD06C vs MS AGT',
     'tab.selection': '\uC120\uD0DD \uAC70\uBC84\uB10C\uC2A4',
 
     // Selection Governance panel
