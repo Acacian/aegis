@@ -291,8 +291,8 @@ async function runStreamingDemo() {
   _el('stream-right-stats').innerHTML = '';
 
   // Update labels for AI scenario
-  if (leftLabel) leftLabel.textContent = isAIScenario ? 'Regex Only' : 'Without Aegis';
-  if (rightLabel) rightLabel.textContent = isAIScenario ? 'Aegis + AI' : 'With Aegis';
+  if (leftLabel) leftLabel.textContent = isAIScenario ? 'Regex Only' : 'Without Agent-Aegis';
+  if (rightLabel) rightLabel.textContent = isAIScenario ? 'Agent-Aegis + AI' : 'With Agent-Aegis';
 
   btn.textContent = '\u23F9 Running...';
   btn.style.opacity = '0.7';

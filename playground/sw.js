@@ -1,8 +1,8 @@
 /**
- * Aegis Playground Service Worker — caches static assets for fast repeat loads.
+ * Agent-Aegis Playground Service Worker — caches static assets for fast repeat loads.
  * Pyodide + WASM are cached on first use for near-instant subsequent visits.
  */
-const CACHE_NAME = "aegis-playground-v23";
+const CACHE_NAME = "aegis-playground-v24";
 const STATIC_ASSETS = [
   "./",
   "./index.html",

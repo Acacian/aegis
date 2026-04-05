@@ -1,12 +1,12 @@
 ---
-description: "Microsoft Agent Governance Toolkit vs Aegis: Enterprise governance platform vs all-in-one security SDK. Feature, performance, and architecture comparison."
+description: "Microsoft Agent Governance Toolkit vs Agent-Aegis: Enterprise governance platform vs zero-dependency research-grade library. Feature, performance, and architecture comparison."
 ---
 
-# Microsoft Agent Governance Toolkit vs Aegis
+# Microsoft Agent Governance Toolkit vs Agent-Aegis
 
 ## TL;DR
 
-Microsoft's [Agent Governance Toolkit](https://github.com/microsoft/agent-governance-toolkit) (AGT) is a broad governance platform with execution sandboxing, SRE features, and multi-language SDKs. Aegis is a lightweight, all-in-one security SDK that combines action governance with built-in guardrails and verifiable audit trails in a single `pip install`. AGT has breadth; Aegis has depth in security verification and content safety.
+Microsoft's [Agent Governance Toolkit](https://github.com/microsoft/agent-governance-toolkit) (AGT) is an enterprise governance platform with 7 packages, 5 language SDKs, execution sandboxing, and SRE features. Agent-Aegis is a lightweight, zero-dependency library implementing 20+ academic papers in a single `pip install`. Different tools for different needs — think PostgreSQL vs SQLite.
 
 ## What Microsoft AGT Does
 

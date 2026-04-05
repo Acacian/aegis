@@ -701,7 +701,7 @@ API Key for the project: sk-proj-abc123def456ghi789jkl012mno345pqr678stu901vwx23
 };
 
 const INIT_BOOT_LINES = [
-  { text: 'Aegis v0.7.0 initializing...', delay: 0 },
+  { text: 'Agent-Aegis v0.7.0 initializing...', delay: 0 },
   { text: 'Config loaded from aegis.yaml', icon: 'ok', delay: 300 },
   { text: 'Injection guardrail activated (block: medium sensitivity)', icon: 'ok', delay: 600 },
   { text: 'PII guardrail activated (mask: email, credit_card, ssn, korean_rrn, api_key)', icon: 'ok', delay: 900 },

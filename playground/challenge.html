@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Aegis Challenge — Can You Stop a Rogue AI Agent?</title>
+<title>Agent-Aegis Challenge — Can You Stop a Rogue AI Agent?</title>
 <meta name="description" content="5 increasingly devious AI agent attacks. Write YAML policies to stop them. How far can you get?">
-<meta property="og:title" content="Aegis Challenge — Can You Stop a Rogue AI Agent?">
+<meta property="og:title" content="Agent-Aegis Challenge — Can You Stop a Rogue AI Agent?">
 <meta property="og:description" content="5 increasingly devious AI agent attacks. Write YAML policies to stop them before they wreck your systems.">
 <meta property="og:url" content="https://acacian.github.io/aegis/playground/challenge.html">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Aegis Challenge — Can You Stop a Rogue AI Agent?">
+<meta name="twitter:title" content="Agent-Aegis Challenge — Can You Stop a Rogue AI Agent?">
 <meta name="twitter:description" content="5 increasingly devious AI agent attacks. Write YAML policies to stop them.">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
@@ -118,7 +118,7 @@ textarea.policy-editor:focus{border-color:var(--blue)}
 <body>
 
 <header>
-  <h1>Aegis Challenge</h1>
+  <h1>Agent-Aegis Challenge</h1>
   <p>A rogue AI agent is attacking your systems. Write YAML policies to stop it.</p>
 </header>
 
@@ -549,7 +549,7 @@ function renderCompletion() {
   const perfectCount = scores.filter((s, i) => s && !hintUsed[i]).length;
   const stars = Math.min(5, passed + (perfectCount >= 3 ? 1 : 0));
 
-  const shareText = `I scored ${passed}/${total} on the Aegis Challenge — can you protect an AI agent from going rogue? 🛡️`;
+  const shareText = `I scored ${passed}/${total} on the Agent-Aegis Challenge — can you protect an AI agent from going rogue? 🛡️`;
   const shareUrl = `${window.location.origin}${window.location.pathname}#score=${passed}-${total}-${perfectCount}`;
 
   const $game = document.getElementById('game');

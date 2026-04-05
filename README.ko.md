@@ -1,5 +1,5 @@
 <p align="center">
-  <h1 align="center">Aegis</h1>
+  <h1 align="center">Agent-Aegis</h1>
   <p align="center">
     <strong>AI 에이전트를 위한 런타임 보안 — AI 에이전트 보안의 <code>terraform plan</code>.<br/>11개 프레임워크에 런타임 가드레일, 선택 거버넌스, 정책 테스팅, 감사 추적을 코드 변경 없이 적용합니다.</strong>
   </p>

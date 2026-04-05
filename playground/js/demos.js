@@ -1187,7 +1187,7 @@ function showDetection(s) {
   detection.innerHTML = `
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
       <span style="display:inline-block;padding:3px 10px;border-radius:4px;font-size:12px;font-weight:700;color:#fff;background:#f85149;text-transform:uppercase">${escapeHtml(s.detection.pattern)}</span>
-      <span style="font-size:12px;color:var(--text-muted)">Aegis Selection Audit</span>
+      <span style="font-size:12px;color:var(--text-muted)">Agent-Aegis Selection Audit</span>
     </div>
     <div style="font-size:13px;color:var(--text-primary);margin-bottom:8px;line-height:1.5">${escapeHtml(s.detection.message)}</div>
     <div style="font-size:12px;color:#d29922;font-style:italic">${escapeHtml(s.detection.risk)}</div>

@@ -14,7 +14,7 @@ let stats = { total: 0, auto: 0, approve: 0, block: 0, totalMs: 0 };
 
 /* ---- Loading Tips ---- */
 const LOADING_TIPS = [
-  "Tip: Aegis evaluates policies in under 1ms",
+  "Tip: Agent-Aegis evaluates policies in under 1ms",
   "Tip: YAML policies can be hot-reloaded without restarting",
   "Tip: 7 adapters — LangChain, CrewAI, OpenAI, Anthropic, MCP, and more",
   "Tip: Use 'aegis simulate' to test policies without executing",
@@ -538,7 +538,7 @@ function sharePolicyURL() {
 function openShareModal() {
   const url = sharePolicyURL();
   const ruleCount = (editor.getValue().match(/- name:/g) || []).length;
-  const text = `Check out my AI agent governance policy (${ruleCount} rules) built with Aegis Playground`;
+  const text = `Check out my AI agent governance policy (${ruleCount} rules) built with Agent-Aegis Playground`;
 
   let modal = document.getElementById("share-modal");
   if (!modal) {
@@ -590,7 +590,7 @@ function openShareModal() {
       copyToClipboard(urlInput.value, copyBtn);
     });
     embedBtn.addEventListener("click", () => {
-      const iframe = `<iframe src="${_esc(urlInput.value)}" width="100%" height="600" frameborder="0" title="Aegis Playground"></iframe>`;
+      const iframe = `<iframe src="${_esc(urlInput.value)}" width="100%" height="600" frameborder="0" title="Agent-Aegis Playground"></iframe>`;
       copyToClipboard(iframe, embedBtn);
       showToast("Embed code copied!");
     });
@@ -1262,7 +1262,7 @@ function bindEvents() {
     const avgMs = stats.total > 0 ? (stats.totalMs / stats.total).toFixed(1) : "0";
     const filter = getActiveFilter();
     const md = [
-      "# Aegis Evaluation Report",
+      "# Agent-Aegis Evaluation Report",
       `Generated: ${new Date().toISOString()}`,
       "",
       "## Summary",
@@ -1542,7 +1542,7 @@ function toggleExportMenu() {
     else if (format === "ndjson") exportAuditNDJSON();
     else if (format === "summary") {
       const avgMs = stats.total > 0 ? (stats.totalMs / stats.total).toFixed(1) : "0";
-      const line = `Aegis: ${stats.total} evals (${stats.auto} auto, ${stats.approve} approve, ${stats.block} block) avg ${avgMs}ms`;
+      const line = `Agent-Aegis: ${stats.total} evals (${stats.auto} auto, ${stats.approve} approve, ${stats.block} block) avg ${avgMs}ms`;
       copyToClipboard(line, e.target);
       showToast("Summary copied");
     }
@@ -1608,7 +1608,7 @@ function exportAuditYAML() {
   const entries = getFilteredEntries();
   if (!entries.length) { showToast("No audit entries to export"); return; }
   const filter = getActiveFilter();
-  const yamlLines = ["# Aegis Audit Report", `# Generated: ${new Date().toISOString()}`];
+  const yamlLines = ["# Agent-Aegis Audit Report", `# Generated: ${new Date().toISOString()}`];
   if (filter !== "all") yamlLines.push(`# Filter: ${filter}`);
   yamlLines.push("");
   yamlLines.push("policy: |");
@@ -1640,12 +1640,12 @@ function exportAuditHTML() {
     `<tr><td>${_esc(e.time || e.timestamp)}</td><td>${_esc(e.type || e.action_type)}</td><td class="${_esc((e.risk || "").toLowerCase())}">${_esc(e.risk)}</td><td><strong>${_esc(e.decision || e.approval)}</strong></td><td>${_esc(e.rule)}</td></tr>`
   ).join("");
   const avgMs = stats.total > 0 ? (stats.totalMs / stats.total).toFixed(1) : "0";
-  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'"><title>Aegis Audit Report</title>
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'"><title>Agent-Aegis Audit Report</title>
 <style>body{font-family:system-ui;max-width:900px;margin:2rem auto;color:#e6edf3;background:#0d1117}
 table{border-collapse:collapse;width:100%}th,td{border:1px solid #30363d;padding:8px 12px;text-align:left}
 th{background:#161b22}h1{color:#58a6ff}.low{color:#3fb950}.medium{color:#d29922}.high{color:#f0883e}.critical{color:#f85149}
 .summary{display:flex;gap:16px;margin:12px 0;font-size:0.9rem}</style></head><body>
-<h1>Aegis Audit Report</h1><p>Generated: ${new Date().toISOString()}</p>
+<h1>Agent-Aegis Audit Report</h1><p>Generated: ${new Date().toISOString()}</p>
 <div class="summary"><span>Total: <strong>${stats.total}</strong></span><span>Auto: <strong>${stats.auto}</strong></span><span>Approve: <strong>${stats.approve}</strong></span><span>Block: <strong>${stats.block}</strong></span><span>Avg: <strong>${avgMs}ms</strong></span></div>
 <table><tr><th>Time</th><th>Action</th><th>Risk</th><th>Decision</th><th>Rule</th></tr>${rows}</table></body></html>`;
   downloadBlob(html, "text/html", "html");
@@ -1669,7 +1669,7 @@ async function copyAuditToClipboard() {
     `[${e.time || e.timestamp || ""}] ${e.type || e.action_type || ""} → ${e.target || ""} | ${e.decision || e.approval || ""} (${e.risk || e.risk_level || ""}) ${e.rule || e.matched_rule ? "rule:" + (e.rule || e.matched_rule) : ""}`
   );
   const filterNote = getActiveFilter() !== "all" ? ` (${getActiveFilter()})` : "";
-  const header = `Aegis Audit Log — ${entries.length} entries${filterNote}, ${new Date().toISOString()}`;
+  const header = `Agent-Aegis Audit Log — ${entries.length} entries${filterNote}, ${new Date().toISOString()}`;
   const text = header + "\n" + "=".repeat(header.length) + "\n" + lines.join("\n");
   await copyToClipboard(text);
   showToast(`Copied ${entries.length} entries to clipboard`);
@@ -1682,7 +1682,7 @@ async function copyAuditAsMarkdown() {
     `| ${e.time || ""} | ${e.type || ""} | ${e.risk || ""} | **${e.decision || ""}** | ${e.rule || ""} |`
   );
   const filterNote = getActiveFilter() !== "all" ? ` (${getActiveFilter()})` : "";
-  const md = `### Aegis Audit Log\n\n| Time | Action | Risk | Decision | Rule |\n|------|--------|------|----------|------|\n${rows.join("\n")}\n\n_${entries.length} entries${filterNote} — ${new Date().toISOString()}_`;
+  const md = `### Agent-Aegis Audit Log\n\n| Time | Action | Risk | Decision | Rule |\n|------|--------|------|----------|------|\n${rows.join("\n")}\n\n_${entries.length} entries${filterNote} — ${new Date().toISOString()}_`;
   await copyToClipboard(md);
   showToast(`Copied ${entries.length} entries as Markdown`);
 }
@@ -1702,8 +1702,8 @@ function printAuditLog() {
     `<tr><td>${_esc(e.timestamp || e.time)}</td><td>${_esc(e.action_type || e.type)}</td><td>${_esc(e.target)}</td><td>${_esc(e.risk)}</td><td>${_esc(e.approval || e.decision)}</td></tr>`
   ).join("");
   const filterNote = getActiveFilter() !== "all" ? ` (filter: ${_esc(getActiveFilter())})` : "";
-  w.document.write(`<html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'"><title>Aegis Audit</title><style>body{font-family:system-ui;max-width:900px;margin:2rem auto}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ccc;padding:6px 10px;text-align:left}th{background:#f0f0f0}@media print{button{display:none}}</style></head><body>
-<h1>Aegis Audit Log</h1><p>${_esc(new Date().toLocaleString())} &mdash; ${entries.length} entries${filterNote}</p>
+  w.document.write(`<html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'"><title>Agent-Aegis Audit</title><style>body{font-family:system-ui;max-width:900px;margin:2rem auto}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ccc;padding:6px 10px;text-align:left}th{background:#f0f0f0}@media print{button{display:none}}</style></head><body>
+<h1>Agent-Aegis Audit Log</h1><p>${_esc(new Date().toLocaleString())} &mdash; ${entries.length} entries${filterNote}</p>
 <table><tr><th>Time</th><th>Action</th><th>Target</th><th>Risk</th><th>Decision</th></tr>${rows}</table></body></html>`);
   w.document.close();
   w.print();
@@ -1740,7 +1740,7 @@ async function _initPyodideInner() {
 
     const loadTime = ((performance.now() - t0) / 1000).toFixed(1);
     setProgress(100, `Ready! (loaded in ${loadTime}s)`);
-    console.log(`[Aegis] Pyodide loaded in ${loadTime}s`);
+    console.log(`[Agent-Aegis] Pyodide loaded in ${loadTime}s`);
     setupPolicyValidation();
     if (tipInterval) clearInterval(tipInterval);
     if (_tipTypeTimer) { clearInterval(_tipTypeTimer); _tipTypeTimer = null; }
@@ -2901,7 +2901,7 @@ def test_${_safeStr(r.action_type)}_${_safeStr(r.approval)}(policy):
       target: r.target,
       params: r.params || {},
     });
-    return `# Run Aegis REST API in Docker
+    return `# Run Agent-Aegis REST API in Docker
 docker run -d -p 8000:8000 -v $(pwd)/policy.yaml:/app/policy.yaml \\
   ghcr.io/acacian/aegis:latest
 
@@ -2913,7 +2913,7 @@ curl -s http://localhost:8000/api/v1/evaluate \\
   }
 
   if (fmt === "ci") {
-    return `# GitHub Actions step — Aegis policy check
+    return `# GitHub Actions step — Agent-Aegis policy check
 - name: Check ${_safeStr(r.action_type)} policy
   run: |
     pip install agent-aegis
@@ -2947,14 +2947,14 @@ ${safeYaml}
 \`\`\`
 </details>
 
-**Environment:** Aegis Playground (browser, Pyodide)
+**Environment:** Agent-Aegis Playground (browser, Pyodide)
 **Version:** 0.7.0`;
   }
 
   if (fmt === "markdown") {
     const mdType = r.action_type.replace(/`/g, "'");
     const mdTarget = r.target.replace(/`/g, "'");
-    return `### Aegis Policy Evaluation
+    return `### Agent-Aegis Policy Evaluation
 
 | Field | Value |
 |-------|-------|
@@ -2971,7 +2971,7 @@ ${(() => { const ls = editor.getValue().replace(/```/g, "` ` `").split("\n"); re
   }
 
   if (fmt === "yaml") {
-    return `# Aegis test case — ${_safeStr(r.action_type)}
+    return `# Agent-Aegis test case — ${_safeStr(r.action_type)}
 test_case:
   action:
     type: "${_safeStr(r.action_type)}"
@@ -2999,7 +2999,7 @@ test-${_safeStr(r.action_type)}: ## Test ${_safeStr(r.action_type)} policy evalu
   }
 
   if (fmt === "env") {
-    return `# Aegis environment config for ${_safeStr(r.action_type)}
+    return `# Agent-Aegis environment config for ${_safeStr(r.action_type)}
 AEGIS_POLICY_PATH=./policy.yaml
 AEGIS_ACTION_TYPE=${_safeStr(r.action_type)}
 AEGIS_ACTION_TARGET=${_safeStr(r.target)}
@@ -3011,7 +3011,7 @@ AEGIS_LOG_LEVEL=INFO`;
   if (fmt === "json-schema") {
     return JSON.stringify({
       "$schema": "https://json-schema.org/draft/2020-12/schema",
-      "title": `Aegis evaluation: ${r.action_type}`,
+      "title": `Agent-Aegis evaluation: ${r.action_type}`,
       "type": "object",
       "properties": {
         "action_type": { "const": r.action_type },
