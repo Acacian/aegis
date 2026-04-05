@@ -80,6 +80,25 @@ _LAZY_IMPORTS: dict[str, str] = {
     "patch_openai": "aegis.integrations.patch_openai",
     "unpatch_anthropic": "aegis.integrations.patch_anthropic",
     "unpatch_openai": "aegis.integrations.patch_openai",
+    # -- Paper-based features (v0.10+) --
+    # Taint tracking (arXiv:2505.23643)
+    "TaintTracker": "aegis.core.taint",
+    "TaintLabel": "aegis.core.taint",
+    "TaintPolicy": "aegis.core.taint",
+    "TaintFinding": "aegis.core.taint",
+    # Resource contracts (arXiv:2601.08815)
+    "ResourceContract": "aegis.core.contracts",
+    "ContractMonitor": "aegis.core.contracts",
+    "ContractViolation": "aegis.core.contracts",
+    "resource_contract": "aegis.core.contracts",
+    # Merkle audit (arXiv:2602.20214)
+    "MerkleAuditTree": "aegis.core.merkle_audit",
+    "MerkleProof": "aegis.core.merkle_audit",
+    # Cross-tool privacy (arXiv:2512.16310)
+    "CrossToolPrivacyDetector": "aegis.core.cross_tool_privacy",
+    "PrivacyFinding": "aegis.core.cross_tool_privacy",
+    # Tool output guard (arXiv:2602.22724)
+    "ToolOutputGuardrail": "aegis.guardrails.tool_output",
 }
 
 __all__ = [
@@ -149,6 +168,26 @@ if TYPE_CHECKING:
     )
     from aegis.core.builder import PolicyBuilder as PolicyBuilder
     from aegis.core.constitution import AgentConstitution as AgentConstitution
+
+    # Paper-based features
+    from aegis.core.contracts import (
+        ContractMonitor as ContractMonitor,
+    )
+    from aegis.core.contracts import (
+        ContractViolation as ContractViolation,
+    )
+    from aegis.core.contracts import (
+        ResourceContract as ResourceContract,
+    )
+    from aegis.core.contracts import (
+        resource_contract as resource_contract,
+    )
+    from aegis.core.cross_tool_privacy import (
+        CrossToolPrivacyDetector as CrossToolPrivacyDetector,
+    )
+    from aegis.core.cross_tool_privacy import (
+        PrivacyFinding as PrivacyFinding,
+    )
     from aegis.core.crypto_audit import CryptoAuditChain as CryptoAuditChain
     from aegis.core.hierarchy import (
         PolicyConflict as PolicyConflict,
@@ -157,6 +196,12 @@ if TYPE_CHECKING:
         PolicyHierarchy as PolicyHierarchy,
     )
     from aegis.core.leakage_detector import LeakageDetector as LeakageDetector
+    from aegis.core.merkle_audit import (
+        MerkleAuditTree as MerkleAuditTree,
+    )
+    from aegis.core.merkle_audit import (
+        MerkleProof as MerkleProof,
+    )
     from aegis.core.plan import ExecutionPlan as ExecutionPlan
     from aegis.core.plan_rules import (
         PlanRules as PlanRules,
@@ -197,6 +242,18 @@ if TYPE_CHECKING:
     from aegis.core.result import ResultStatus as ResultStatus
     from aegis.core.retry import RetryPolicy as RetryPolicy
     from aegis.core.risk import RiskLevel as RiskLevel
+    from aegis.core.taint import (
+        TaintFinding as TaintFinding,
+    )
+    from aegis.core.taint import (
+        TaintLabel as TaintLabel,
+    )
+    from aegis.core.taint import (
+        TaintPolicy as TaintPolicy,
+    )
+    from aegis.core.taint import (
+        TaintTracker as TaintTracker,
+    )
     from aegis.core.versioning import (
         PolicyStore as PolicyStore,
     )
@@ -204,6 +261,9 @@ if TYPE_CHECKING:
         PolicyVersion as PolicyVersion,
     )
     from aegis.core.webhooks import WebhookManager as WebhookManager
+    from aegis.guardrails.tool_output import (
+        ToolOutputGuardrail as ToolOutputGuardrail,
+    )
     from aegis.integrations.decorators import guard as guard
     from aegis.integrations.errors import (
         AegisBlockedError as AegisBlockedError,

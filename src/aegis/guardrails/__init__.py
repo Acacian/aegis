@@ -25,6 +25,7 @@ from aegis.guardrails.injection import (
 )
 from aegis.guardrails.pattern import KeywordGuardrail, PatternGuardrail
 from aegis.guardrails.streaming import StreamChunk, StreamingGuardrailEngine, StreamStrategy
+from aegis.guardrails.tool_output import ToolOutputGuardrail, ToolOutputMatch
 
 __all__ = [
     "Guardrail",
@@ -38,4 +39,6 @@ __all__ = [
     "StreamChunk",
     "StreamStrategy",
     "StreamingGuardrailEngine",
+    "ToolOutputGuardrail",
+    "ToolOutputMatch",
 ]
