@@ -47,11 +47,7 @@ REPOS: list[dict[str, str]] = [
     # === Tier 2: Popular AI agent frameworks ===
     {"name": "DSPy", "url": "https://github.com/stanfordnlp/dspy", "stars": "22K"},
     {"name": "Haystack", "url": "https://github.com/deepset-ai/haystack", "stars": "18K"},
-    {
-        "name": "Semantic Kernel",
-        "url": "https://github.com/microsoft/semantic-kernel",
-        "stars": "24K",
-    },
+    # Semantic Kernel excluded: C# primary, Python is thin wrapper (3 findings all test fixtures)
     {"name": "MetaGPT", "url": "https://github.com/geekan/MetaGPT", "stars": "48K"},
     {"name": "ChatDev", "url": "https://github.com/OpenBMB/ChatDev", "stars": "26K"},
     {"name": "CAMEL", "url": "https://github.com/camel-ai/camel", "stars": "10K"},
@@ -73,12 +69,9 @@ REPOS: list[dict[str, str]] = [
     {"name": "GPT Engineer", "url": "https://github.com/AntonOsika/gpt-engineer", "stars": "52K"},
     {"name": "Devika", "url": "https://github.com/stitionai/devika", "stars": "18K"},
     # === Tier 4: LLM tooling & orchestration ===
-    {"name": "Instructor", "url": "https://github.com/instructor-ai/instructor", "stars": "10K"},
-    {"name": "Guidance", "url": "https://github.com/guidance-ai/guidance", "stars": "19K"},
-    # Outlines excluded: structured text generation, no agent/tool functionality
+    # Excluded (AI libraries, not agent frameworks):
+    #   Instructor, Guidance, Outlines, Magentic, ell, txtai, Chainlit
     {"name": "Mirascope", "url": "https://github.com/Mirascope/mirascope", "stars": "2K"},
-    {"name": "Magentic", "url": "https://github.com/jackmpcollins/magentic", "stars": "2K"},
-    {"name": "ell", "url": "https://github.com/MadcowD/ell", "stars": "5K"},
     {"name": "ControlFlow", "url": "https://github.com/PrefectHQ/ControlFlow", "stars": "2K"},
     {"name": "Letta", "url": "https://github.com/letta-ai/letta", "stars": "15K"},
     # === Tier 5: RAG & data pipelines ===
@@ -95,10 +88,8 @@ REPOS: list[dict[str, str]] = [
     {"name": "Promptflow", "url": "https://github.com/microsoft/promptflow", "stars": "10K"},
     {"name": "TaskWeaver", "url": "https://github.com/microsoft/TaskWeaver", "stars": "5K"},
     # === Tier 7: Misc AI tools with agent capabilities ===
-    {"name": "Chainlit", "url": "https://github.com/Chainlit/chainlit", "stars": "8K"},
     {"name": "Griptape", "url": "https://github.com/griptape-ai/griptape", "stars": "2K"},
     {"name": "Smolagents", "url": "https://github.com/huggingface/smolagents", "stars": "15K"},
-    {"name": "txtai", "url": "https://github.com/neuml/txtai", "stars": "10K"},
 ]
 
 
