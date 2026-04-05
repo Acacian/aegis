@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import asyncio
+import threading
+import time
 from unittest.mock import MagicMock
 
 import pytest
@@ -579,3 +581,135 @@ class TestCommitRevealSelection:
         r2 = asyncio.get_event_loop().run_until_complete(cr.reveal(sid2))
         assert r1.selection_id == ss1.selection_id
         assert r2.selection_id == ss2.selection_id
+
+    def test_max_pending_limit(self) -> None:
+        """CommitRevealSelection enforces max_pending limit."""
+        auditor = SelectionAuditor()
+        cr = CommitRevealSelection(auditor=auditor, policy=MagicMock(), max_pending=3)
+
+        for i in range(3):
+            ss = SelectionSet(selected=_opt(f"s{i}"))
+            asyncio.get_event_loop().run_until_complete(cr.commit(ss))
+
+        # 4th commit should fail
+        ss4 = SelectionSet(selected=_opt("s3"))
+        with pytest.raises(RuntimeError, match="Too many pending commits"):
+            asyncio.get_event_loop().run_until_complete(cr.commit(ss4))
+
+    def test_ttl_expiry(self) -> None:
+        """Expired committed entries are pruned on next commit."""
+        auditor = SelectionAuditor()
+        cr = CommitRevealSelection(
+            auditor=auditor,
+            policy=MagicMock(),
+            ttl_seconds=0.01,
+        )
+
+        ss1 = SelectionSet(selected=_opt("s1"))
+        sid1 = asyncio.get_event_loop().run_until_complete(cr.commit(ss1))
+
+        time.sleep(0.05)  # wait for TTL to expire
+
+        # Reveal should fail — entry expired
+        with pytest.raises(ValueError, match="No committed selection"):
+            asyncio.get_event_loop().run_until_complete(cr.reveal(sid1))
+
+    def test_ttl_prune_frees_capacity(self) -> None:
+        """Expired entries are pruned, freeing capacity for new commits."""
+        auditor = SelectionAuditor()
+        cr = CommitRevealSelection(
+            auditor=auditor,
+            policy=MagicMock(),
+            max_pending=2,
+            ttl_seconds=0.01,
+        )
+
+        for i in range(2):
+            ss = SelectionSet(selected=_opt(f"s{i}"))
+            asyncio.get_event_loop().run_until_complete(cr.commit(ss))
+
+        time.sleep(0.05)  # TTL expires
+
+        # Should succeed because expired entries were pruned
+        ss_new = SelectionSet(selected=_opt("new"))
+        sid = asyncio.get_event_loop().run_until_complete(cr.commit(ss_new))
+        assert sid == ss_new.selection_id
+
+
+# ---------------------------------------------------------------------------
+# Thread safety (WARNING-07)
+# ---------------------------------------------------------------------------
+
+
+class TestSelectionAuditorThreadSafety:
+    def test_concurrent_audits_no_crash(self) -> None:
+        """Multiple threads auditing concurrently should not crash."""
+        auditor = SelectionAuditor(history_window=50)
+        errors: list[Exception] = []
+
+        def audit_many(thread_id: int) -> None:
+            try:
+                for i in range(20):
+                    ss = SelectionSet(
+                        selected=_opt(f"t{thread_id}-s{i}", target="target"),
+                        eliminated=[_elim(_opt(f"t{thread_id}-e{i}", target="victim"))],
+                    )
+                    auditor.audit(ss)
+            except Exception as e:
+                errors.append(e)
+
+        threads = [threading.Thread(target=audit_many, args=(t,)) for t in range(4)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+        assert len(errors) == 0
+
+
+# ---------------------------------------------------------------------------
+# Sync decorator (SPEC_GAP-05)
+# ---------------------------------------------------------------------------
+
+
+class TestAuditSelectionSyncDecorator:
+    def test_sync_function_supported(self) -> None:
+        """@audit_selection works with synchronous functions."""
+        auditor = SelectionAuditor()
+
+        @audit_selection(auditor=auditor, context="sync_test", agent_id="sync-agent")
+        def sync_select() -> SelectionSet:
+            return SelectionSet(
+                selected=_opt("chosen"),
+                eliminated=[_elim(_opt("rejected"))],
+            )
+
+        result = sync_select()
+        assert isinstance(result, SelectionSet)
+        assert result.agent_id == "sync-agent"
+        assert result.context == "sync_test"
+
+    def test_async_function_still_works(self) -> None:
+        """@audit_selection still works with async functions."""
+        auditor = SelectionAuditor()
+
+        @audit_selection(auditor=auditor, context="async_test")
+        async def async_select() -> SelectionSet:
+            return SelectionSet(
+                selected=_opt("chosen"),
+                eliminated=[_elim(_opt("rejected"))],
+            )
+
+        result = asyncio.get_event_loop().run_until_complete(async_select())
+        assert isinstance(result, SelectionSet)
+        assert result.context == "async_test"
+
+    def test_sync_non_selection_passthrough(self) -> None:
+        """Sync function returning non-SelectionSet passes through."""
+
+        @audit_selection()
+        def compute() -> dict[str, int]:
+            return {"value": 42}
+
+        result = compute()
+        assert result == {"value": 42}

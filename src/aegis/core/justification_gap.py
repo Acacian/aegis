@@ -12,6 +12,7 @@ Theoretical basis:
 from __future__ import annotations
 
 import fnmatch
+import re
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
@@ -55,10 +56,32 @@ class ImpactRule:
 # -- Rule-Based Impact Scorer -------------------------------------------------
 
 
+def _tokenize(text: str) -> set[str]:
+    """Split text into tokens at word boundaries (_, space, -, ., /)."""
+    return set(re.split(r"[_\s\-./]+", text.lower())) - {""}
+
+
+def _has_keyword(text: str, keywords: set[str]) -> bool:
+    """Token-boundary aware keyword matching.
+
+    Single-token keywords match individual tokens (prevents "undelete" matching "delete").
+    Compound keywords (containing ``_``) match as substrings (already specific enough).
+    """
+    tokens = _tokenize(text)
+    for kw in keywords:
+        if "_" in kw:
+            if kw in text.lower():
+                return True
+        elif kw in tokens:
+            return True
+    return False
+
+
 class RuleBasedImpactScorer:
     """Rule-based impact scorer (Tier 1, no external deps).
 
     Scores impact from action parameters via pattern matching.
+    Uses token-boundary matching to avoid false positives (e.g. "undelete" != "delete").
     """
 
     def __init__(self, rules: list[ImpactRule] | None = None) -> None:
@@ -104,26 +127,26 @@ class RuleBasedImpactScorer:
         _WRITE = {"update", "modify", "patch", "write", "set"}
         _READ = {"read", "list", "get", "search", "query", "fetch", "find"}
 
-        if any(kw in action_type for kw in _DESTROY):
+        if _has_keyword(action_type, _DESTROY):
             return 1.0
-        if any(kw in action_type for kw in _DELETE):
+        if _has_keyword(action_type, _DELETE):
             is_bulk = params.get("bulk", False) or params.get("count", 1) > 10
             return 0.9 if is_bulk else 0.7
-        if any(kw in action_type for kw in _WRITE):
+        if _has_keyword(action_type, _WRITE):
             is_bulk = params.get("bulk", False) or params.get("count", 1) > 10
             return 0.5 if is_bulk else 0.3
-        if any(kw in action_type for kw in _READ):
+        if _has_keyword(action_type, _READ):
             return 0.0
         return 0.2
 
     @staticmethod
     def _score_data_exposure(action_type: str, target: str, params: dict[str, Any]) -> float:
         _EXPORT = {"export", "download", "send", "email", "share", "upload", "transfer"}
-        _PII = {"ssn", "passport", "credit_card", "phone", "address"}
+        _PII = {"ssn", "passport", "credit_card", "phone", "address", "email", "name"}
         _EXTERNAL = {"email", "slack", "webhook", "s3", "gcs", "external", "api"}
 
-        is_export = any(kw in action_type for kw in _EXPORT)
-        is_external = any(kw in target for kw in _EXTERNAL)
+        is_export = _has_keyword(action_type, _EXPORT)
+        is_external = _has_keyword(target, _EXTERNAL)
 
         param_keys = {str(k).lower() for k in params}
         param_vals = {str(v).lower() for v in params.values() if isinstance(v, str)}
@@ -141,12 +164,25 @@ class RuleBasedImpactScorer:
 
     @staticmethod
     def _score_resource_consumption(params: dict[str, Any]) -> float:
-        count = params.get("count", params.get("limit", params.get("batch_size", 1)))
-        if isinstance(count, str):
-            try:
-                count = int(count)
-            except ValueError:
-                return 0.2
+        raw_values: list[Any] = []
+        for key in ("count", "limit", "batch_size"):
+            val = params.get(key)
+            if val is not None:
+                raw_values.append(val)
+
+        if not raw_values:
+            return 0.0
+
+        count = 1
+        for v in raw_values:
+            if isinstance(v, str):
+                try:
+                    v = int(v)
+                except ValueError:
+                    continue
+            if isinstance(v, int | float):
+                count = max(count, int(v))
+
         if count <= 1:
             return 0.0
         if count <= 10:
@@ -167,13 +203,15 @@ class RuleBasedImpactScorer:
         _ADMIN = {"admin", "root", "sudo", "superuser"}
         _ROLE = {"role", "permission", "grant", "revoke", "escalate"}
 
-        combined = f"{action_type} {target} {' '.join(str(v) for v in params.values())}".lower()
+        # Check action_type and target only (not arbitrary params values)
+        type_target = f"{action_type}_{target}"
+        param_keys = {str(k).lower() for k in params}
 
-        if any(kw in combined for kw in _BYPASS):
+        if _has_keyword(type_target, _BYPASS):
             return 1.0
-        if any(kw in combined for kw in _ADMIN):
+        if _has_keyword(type_target, _ADMIN) or bool(param_keys & _ADMIN):
             return 0.7
-        if any(kw in combined for kw in _ROLE):
+        if _has_keyword(type_target, _ROLE) or bool(param_keys & _ROLE):
             return 0.5
         return 0.0
 
@@ -183,14 +221,14 @@ class RuleBasedImpactScorer:
         _HARD = {"truncate", "purge", "bulk_delete"}
         _DELETE = {"delete", "remove", "drop"}
 
-        if any(kw in action_type for kw in _IRREVERSIBLE):
+        if _has_keyword(action_type, _IRREVERSIBLE):
             return 1.0
-        if any(kw in action_type for kw in _HARD):
+        if _has_keyword(action_type, _HARD):
             return 0.9
-        if any(kw in action_type for kw in _DELETE):
+        if _has_keyword(action_type, _DELETE):
             has_backup = params.get("backup", False) or params.get("soft_delete", False)
             return 0.4 if has_backup else 0.7
-        if "update" in action_type or "write" in action_type:
+        if _has_keyword(action_type, {"update", "write"}):
             return 0.3
         return 0.0
 
@@ -215,6 +253,7 @@ class CongruenceChecker:
     """Checks consistency between declared intent and actual parameters.
 
     Returns 0.0 (contradictory) to 1.0 (fully congruent).
+    Priority order: DELETE > WRITE > READ (most dangerous category wins).
     """
 
     _READ = frozenset({"read", "get", "list", "fetch", "query", "search"})
@@ -229,27 +268,26 @@ class CongruenceChecker:
         if category == "unknown":
             return 1.0
 
-        param_str = " ".join(str(v) for v in params.values()).lower()
+        param_keys = {str(k).lower() for k in params}
 
         contradictions = 0
         if category == "read":
-            if any(kw in param_str for kw in self._DELETE | self._WRITE):
+            if bool(param_keys & (self._DELETE | self._WRITE)):
                 contradictions += 1
-        elif category == "write" and any(kw in param_str for kw in self._DELETE):
+        elif category == "write" and bool(param_keys & self._DELETE):
             contradictions += 1
 
         return max(0.0, 1.0 - contradictions * 0.5)
 
     def _categorize(self, intent: str) -> str:
-        for kw in self._READ:
-            if kw in intent:
-                return "read"
-        for kw in self._WRITE:
-            if kw in intent:
-                return "write"
-        for kw in self._DELETE:
-            if kw in intent:
-                return "delete"
+        """Categorize intent with explicit priority: DELETE > WRITE > READ."""
+        # Check highest-danger category first (deterministic priority)
+        if _has_keyword(intent, self._DELETE):
+            return "delete"
+        if _has_keyword(intent, self._WRITE):
+            return "write"
+        if _has_keyword(intent, self._READ):
+            return "read"
         return "unknown"
 
 
