@@ -233,6 +233,72 @@ _ALL_PATTERNS: list[tuple[str, list[tuple[str, str, re.Pattern[str]]]]] = [
     ("privilege_escalation", _PRIVESC_PATTERNS),
 ]
 
+# Fast pre-screen keywords — if none match (case-insensitive), skip full
+# regex scan.  Covers at least one keyword from every pattern category.
+_PRESCREEN_KEYWORDS: tuple[str, ...] = (
+    "important",
+    "critical",
+    "system",
+    "instruction",
+    "override",
+    "admin",
+    "priority",  # category 1
+    "ignore",
+    "disregard",
+    "forget",
+    "bypass",  # category 1 override
+    "you are",
+    "your new",
+    "your real",
+    "your true",  # category 2
+    "system prompt",
+    "hidden instruction",  # category 2
+    "from now on",
+    "starting now",
+    "henceforth",  # category 2
+    "call the",
+    "invoke",
+    "execute",
+    "function_call",
+    "tool_use",
+    "tool_call",  # category 3
+    '"function":',
+    '"tool":',
+    '"action":',  # category 3 json
+    "send ",
+    "post ",
+    "upload ",
+    "transmit ",
+    "forward ",
+    "exfiltrate",  # category 4
+    "webhook",
+    "callback",  # category 4
+    "skip ",
+    "bypass ",
+    "disable ",  # category 5
+    "grant ",
+    "enable ",
+    "allow ",
+    "permit ",  # category 5
+    "you must",
+    "you should",
+    "you need to",
+    "you have to",
+    "you are required",  # category 1 agent directive
+    "always do",
+    "never do",
+    "immediately do",
+    "always execute",
+    "always run",
+    "always perform",
+    "always ignore",
+    "never execute",
+    "never run",
+    "immediately execute",
+    "immediately run",
+    "immediately ignore",  # category 1 agent directive
+)
+
 
 # ---------------------------------------------------------------------------
 # Guardrail implementation
@@ -295,6 +361,15 @@ class ToolOutputGuardrail(Guardrail):
                 guardrail_name=self.name,
                 action="allowed",
                 details="skipped: exempt_tool",
+            )
+
+        # Fast pre-screen: skip full regex if no keywords match
+        if content and not self._prescreen(content):
+            return GuardrailResult(
+                passed=True,
+                guardrail_name=self.name,
+                action="allowed",
+                details="0 matches",
             )
 
         matches = self.detect(content)
@@ -373,6 +448,12 @@ class ToolOutputGuardrail(Guardrail):
         return matches
 
     # -- helpers -------------------------------------------------------------
+
+    @staticmethod
+    def _prescreen(content: str) -> bool:
+        """Fast keyword pre-screen. Returns True if full regex scan needed."""
+        lower = content.lower()
+        return any(kw in lower for kw in _PRESCREEN_KEYWORDS)
 
     @staticmethod
     def _resolve_min_confidence(sensitivity: str) -> int:
