@@ -1,9 +1,9 @@
 /**
- * Aegis Playground — Streaming Guardrail Demo
+ * Agent-Aegis Playground — Streaming Guardrail Demo
  *
  * Split-screen live comparison:
  *   Left:  LLM streams freely → PII leaks to the user
- *   Right: Aegis scans the stream → PII caught, stream blocked/masked
+ *   Right: Agent-Aegis scans the stream → PII caught, stream blocked/masked
  *
  * Two detection modes:
  *   - Regex: Pattern-based detection (default, no API key needed)
