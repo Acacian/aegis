@@ -5,7 +5,7 @@
   </p>
   <p align="center">
     <code>pip install agent-aegis</code> &#8594; <code>aegis.auto_instrument()</code> &#8594; 모든 AI 호출에 보안 적용.<br/>
-    에이전트가 <b>하는 것</b>(액션, 툴 호출, 데이터 접근)뿐 아니라 <b>하지 않기로 선택한 것</b>(선택-부정 탐지 — 이 거버넌스 카테고리의 최초 런타임 구현)까지 거버닝합니다.<br/>
+    에이전트가 <b>하는 것</b>(액션, 툴 호출, 데이터 접근)뿐 아니라 <b>하지 않기로 선택한 것</b>(선택-부정 탐지 — 이 거버넌스 카테고리의 최초 오픈소스 라이브러리)까지 거버닝합니다.<br/>
     <strong>LangChain, CrewAI, OpenAI, Anthropic, LiteLLM, Google GenAI, Pydantic AI, LlamaIndex, Instructor, DSPy — 11개 프레임워크 지원.</strong>
   </p>
 </p>
@@ -213,7 +213,7 @@ aegis audit --format jsonl -o export.jsonl  # 내보내기
 
 ## 선택 거버넌스
 
-**선택-부정 탐지의 최초 런타임 구현.** 모든 다른 거버넌스 도구는 에이전트가 *하는 것*만 모니터링합니다. Aegis는 에이전트가 *하지 않기로 선택한 것* — 사람이 보기 전에 조용히 제거하는 선택지들 — 까지 모니터링합니다.
+**선택-부정 탐지를 구현한 최초의 오픈소스 라이브러리.** 다른 거버넌스 도구는 에이전트가 *하는 것*만 모니터링합니다. Agent-Aegis는 에이전트가 *하지 않기로 선택한 것* — 사람이 보기 전에 조용히 제거하는 선택지들 — 까지 모니터링합니다.
 
 Santander AI Lab의 ["Selection as Power"](https://arxiv.org/abs/2602.14606) 프레임워크에 기반: 에이전트는 액션 실행이 아니라 옵션 필터링을 통해 은밀한 권력을 행사합니다.
 
