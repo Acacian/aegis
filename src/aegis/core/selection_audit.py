@@ -20,6 +20,8 @@ Key concepts:
 from __future__ import annotations
 
 import functools
+import inspect
+import threading
 import uuid
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -179,6 +181,7 @@ class SelectionAuditor:
         self._negation_risk_threshold = negation_risk_threshold
         self._history_window = history_window
         self._history: list[SelectionSet] = []
+        self._lock = threading.Lock()
 
     # -- Public API ---------------------------------------------------------
 
@@ -236,11 +239,12 @@ class SelectionAuditor:
                 )
             )
 
-        # Detection 4: Pattern analysis (historical)
-        self._history.append(selection)
-        if len(self._history) > self._history_window:
-            self._history = self._history[-self._history_window :]
-        pattern_findings = self._detect_patterns()
+        # Detection 4: Pattern analysis (historical, thread-safe)
+        with self._lock:
+            self._history.append(selection)
+            if len(self._history) > self._history_window:
+                self._history = self._history[-self._history_window :]
+            pattern_findings = self._detect_patterns()
         findings.extend(pattern_findings)
 
         return SelectionAuditResult(
@@ -331,32 +335,41 @@ def audit_selection(
     """
 
     def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
-        @functools.wraps(func)
-        async def wrapper(*args: Any, **kwargs: Any) -> Any:
-            result = await func(*args, **kwargs)
-
-            # Extract selection data from result
+        def _run_audit(result: Any) -> Any:
+            """Shared audit logic for sync and async wrappers."""
             if hasattr(result, "to_selection_set"):
                 selection_set = result.to_selection_set()
             elif isinstance(result, SelectionSet):
                 selection_set = result
             else:
-                return result  # not a selection -- pass through
+                return result
 
             selection_set.agent_id = agent_id or selection_set.agent_id
             selection_set.context = context or selection_set.context
 
-            # Audit
             _auditor = auditor or _get_global_auditor()
             if _auditor is not None:
                 audit_result = _auditor.audit(selection_set)
-                # Attach audit metadata to result if it supports it
                 if hasattr(result, "_aegis_audit"):
                     result._aegis_audit = audit_result
 
             return result
 
-        return wrapper
+        if inspect.iscoroutinefunction(func):
+
+            @functools.wraps(func)
+            async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
+                result = await func(*args, **kwargs)
+                return _run_audit(result)
+
+            return async_wrapper
+
+        @functools.wraps(func)
+        def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
+            result = func(*args, **kwargs)
+            return _run_audit(result)
+
+        return sync_wrapper
 
     return decorator
 
@@ -379,30 +392,58 @@ class CommitRevealSelection:
                        block based on audit outcome.
     """
 
-    def __init__(self, auditor: SelectionAuditor, policy: Policy) -> None:
+    def __init__(
+        self,
+        auditor: SelectionAuditor,
+        policy: Policy,
+        *,
+        max_pending: int = 1000,
+        ttl_seconds: float = 3600.0,
+    ) -> None:
         self._auditor = auditor
         self._policy = policy
-        self._committed: dict[str, SelectionSet] = {}
+        self._max_pending = max_pending
+        self._ttl_seconds = ttl_seconds
+        self._committed: dict[str, tuple[SelectionSet, float]] = {}
+        self._lock = threading.Lock()
+
+    def _prune_expired(self) -> None:
+        """Remove expired committed entries (called under lock)."""
+        now = datetime.now(UTC).timestamp()
+        expired = [sid for sid, (_, ts) in self._committed.items() if now - ts > self._ttl_seconds]
+        for sid in expired:
+            del self._committed[sid]
 
     async def commit(self, selection: SelectionSet) -> str:
         """Phase 1: Agent commits its full selection set.
 
         Returns the ``selection_id`` that must be used for :meth:`reveal`.
+        Prunes expired entries and enforces ``max_pending`` limit.
         """
-        self._committed[selection.selection_id] = selection
+        with self._lock:
+            self._prune_expired()
+            if len(self._committed) >= self._max_pending:
+                raise RuntimeError(
+                    f"Too many pending commits ({self._max_pending}). "
+                    f"Call reveal() to clear or wait for TTL expiry."
+                )
+            ts = datetime.now(UTC).timestamp()
+            self._committed[selection.selection_id] = (selection, ts)
         return selection.selection_id
 
     async def reveal(self, selection_id: str) -> SelectionAuditResult:
         """Phase 2 + 3: Audit the committed selection and return the verdict.
 
-        Raises :class:`ValueError` if the ``selection_id`` was never committed.
+        Raises :class:`ValueError` if the ``selection_id`` was never committed
+        or has expired.
         """
-        selection = self._committed.get(selection_id)
-        if selection is None:
-            raise ValueError(f"No committed selection: {selection_id}")
+        with self._lock:
+            self._prune_expired()
+            entry = self._committed.get(selection_id)
+            if entry is None:
+                raise ValueError(f"No committed selection: {selection_id}")
+            selection, _ = entry
+            del self._committed[selection_id]
 
         audit_result = self._auditor.audit(selection)
-
-        # Clean up committed entry
-        del self._committed[selection_id]
         return audit_result

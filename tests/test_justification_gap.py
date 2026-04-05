@@ -220,7 +220,8 @@ class TestResourceConsumptionScoring:
         scorer = RuleBasedImpactScorer()
         claim = _make_claim("read", "api", params={"count": "all"})
         result = scorer.score(claim)
-        assert result.resource_consumption == 0.2
+        # Invalid string with no other valid count keys → 0.0
+        assert result.resource_consumption == 0.0
 
 
 # -- RuleBasedImpactScorer: privilege_escalation -------------------------
@@ -435,27 +436,34 @@ class TestCongruenceChecker:
 
     def test_read_with_delete_params_contradictory(self):
         checker = CongruenceChecker()
-        claim = _make_claim("read_data", "db", params={"action": "delete everything"})
+        claim = _make_claim("read_data", "db", params={"delete": "users"})
         score = checker.check(claim)
         assert score < 1.0
 
     def test_read_with_write_params_contradictory(self):
         checker = CongruenceChecker()
-        claim = _make_claim("read_data", "db", params={"op": "update the table"})
+        claim = _make_claim("read_data", "db", params={"update": "table"})
         score = checker.check(claim)
         assert score < 1.0
 
     def test_write_with_delete_params_contradictory(self):
         checker = CongruenceChecker()
-        claim = _make_claim("write_record", "db", params={"op": "destroy records"})
+        claim = _make_claim("write_record", "db", params={"destroy": "records"})
         score = checker.check(claim)
         assert score < 1.0
 
     def test_congruence_never_negative(self):
         checker = CongruenceChecker()
-        claim = _make_claim("read_data", "db", params={"x": "delete purge destroy"})
+        claim = _make_claim("read_data", "db", params={"delete": "a", "purge": "b"})
         score = checker.check(claim)
         assert score >= 0.0
+
+    def test_read_with_irrelevant_param_values_congruent(self):
+        """Param values with keywords should NOT trigger contradiction."""
+        checker = CongruenceChecker()
+        claim = _make_claim("read_data", "db", params={"note": "delete everything"})
+        score = checker.check(claim)
+        assert score == 1.0
 
 
 # -- JustificationGapComputer -------------------------------------------
@@ -665,3 +673,206 @@ class TestClaimAssessor:
         claim = _make_claim("write_record", "db", declared_impact=ImpactVector())
         result = assessor.assess(claim)
         assert result.verdict in (ClaimVerdict.ESCALATE, ClaimVerdict.BLOCK)
+
+
+# -- Token-boundary keyword matching (CRITICAL-01 false positive tests) ----
+
+
+class TestTokenBoundaryMatching:
+    """Verify token-boundary matching prevents false positives."""
+
+    def test_undelete_not_matched_as_delete(self):
+        scorer = RuleBasedImpactScorer()
+        claim = _make_claim("undelete_record", "db")
+        result = scorer.score(claim)
+        # "undelete" should NOT match "delete" — it's a restore operation
+        assert result.destructivity < 0.7
+
+    def test_readonly_not_matched_as_read(self):
+        scorer = RuleBasedImpactScorer()
+        # "readonly" is a single token, not "read" + "only"
+        claim = _make_claim("set_readonly", "config")
+        result = scorer.score(claim)
+        # "set" matches WRITE, "readonly" is one token, should not match READ
+        assert result.destructivity > 0.0
+
+    def test_setup_not_matched_as_set(self):
+        scorer = RuleBasedImpactScorer()
+        claim = _make_claim("setup_environment", "system")
+        result = scorer.score(claim)
+        # "setup" is one token, not "set" — should not match WRITE
+        assert result.destructivity == 0.2  # default unknown
+
+    def test_delete_record_still_matches(self):
+        scorer = RuleBasedImpactScorer()
+        claim = _make_claim("delete_record", "db")
+        result = scorer.score(claim)
+        assert result.destructivity == 0.7
+
+    def test_bulk_delete_still_matches(self):
+        scorer = RuleBasedImpactScorer()
+        claim = _make_claim("bulk_delete", "db", params={"bulk": True})
+        result = scorer.score(claim)
+        assert result.destructivity == 0.9
+
+    def test_drop_database_compound_match(self):
+        scorer = RuleBasedImpactScorer()
+        claim = _make_claim("drop_database", "production")
+        result = scorer.score(claim)
+        assert result.destructivity == 1.0
+
+    def test_update_readiness_not_write(self):
+        scorer = RuleBasedImpactScorer()
+        claim = _make_claim("check_update_readiness", "system")
+        result = scorer.score(claim)
+        # "update" is a separate token here, should match WRITE
+        assert result.destructivity == 0.3
+
+    def test_reversibility_undelete(self):
+        scorer = RuleBasedImpactScorer()
+        claim = _make_claim("undelete_file", "storage")
+        result = scorer.score(claim)
+        # "undelete" should NOT match _DELETE keywords
+        assert result.reversibility == 0.0
+
+
+# -- Privilege escalation gaming resistance (CRITICAL-03) ------------------
+
+
+class TestPrivilegeEscalationGaming:
+    """Verify privilege scoring doesn't blindly consume param values."""
+
+    def test_innocent_param_values_not_matched(self):
+        scorer = RuleBasedImpactScorer()
+        claim = _make_claim(
+            "read_data",
+            "cache",
+            params={"note": "this admin operation is safe"},
+        )
+        result = scorer.score(claim)
+        # "admin" in param VALUE should NOT trigger escalation
+        assert result.privilege_escalation == 0.0
+
+    def test_admin_in_param_key_detected(self):
+        scorer = RuleBasedImpactScorer()
+        claim = _make_claim(
+            "read_data",
+            "cache",
+            params={"admin": True},
+        )
+        result = scorer.score(claim)
+        assert result.privilege_escalation == 0.7
+
+    def test_role_in_action_type_detected(self):
+        scorer = RuleBasedImpactScorer()
+        claim = _make_claim("grant_permission", "user")
+        result = scorer.score(claim)
+        assert result.privilege_escalation >= 0.5
+
+    def test_bypass_in_target_detected(self):
+        scorer = RuleBasedImpactScorer()
+        claim = _make_claim("update_config", "bypass_auth")
+        result = scorer.score(claim)
+        assert result.privilege_escalation == 1.0
+
+
+# -- Resource consumption max() (WARNING-04) --------------------------------
+
+
+class TestResourceConsumptionMax:
+    """Verify max() across all count-like params prevents gaming."""
+
+    def test_gaming_with_low_count_high_batch(self):
+        scorer = RuleBasedImpactScorer()
+        claim = _make_claim("read", "api", params={"count": 1, "batch_size": 100000})
+        result = scorer.score(claim)
+        # Should use max(1, 100000) = 100000 → 0.9
+        assert result.resource_consumption == 0.9
+
+    def test_all_count_keys_present(self):
+        scorer = RuleBasedImpactScorer()
+        claim = _make_claim("read", "api", params={"count": 5, "limit": 500, "batch_size": 50})
+        result = scorer.score(claim)
+        # max(5, 500, 50) = 500 → 0.5
+        assert result.resource_consumption == 0.5
+
+    def test_string_count_parsed(self):
+        scorer = RuleBasedImpactScorer()
+        claim = _make_claim("read", "api", params={"count": "200"})
+        result = scorer.score(claim)
+        # 200 is in range 100-1000 → 0.5
+        assert result.resource_consumption == 0.5
+
+    def test_no_count_keys_zero(self):
+        scorer = RuleBasedImpactScorer()
+        claim = _make_claim("read", "api", params={"filter": "active"})
+        result = scorer.score(claim)
+        assert result.resource_consumption == 0.0
+
+
+# -- CongruenceChecker priority (CRITICAL-02) -------------------------------
+
+
+class TestCongruenceCheckerPriority:
+    """Verify DELETE > WRITE > READ priority is deterministic."""
+
+    def test_delete_and_create_categorized_as_delete(self):
+        checker = CongruenceChecker()
+        category = checker._categorize("delete_and_create")
+        assert category == "delete"
+
+    def test_write_and_read_categorized_as_write(self):
+        checker = CongruenceChecker()
+        category = checker._categorize("read_and_update")
+        # "update" is WRITE, "read" is READ → WRITE wins (higher danger)
+        # But token matching: "read" matches READ, "update" matches WRITE
+        # DELETE checked first, then WRITE — "update" matches WRITE
+        assert category == "write"
+
+    def test_pure_read_categorized_as_read(self):
+        checker = CongruenceChecker()
+        category = checker._categorize("search_users")
+        assert category == "read"
+
+    def test_unknown_action(self):
+        checker = CongruenceChecker()
+        category = checker._categorize("process_data")
+        assert category == "unknown"
+
+
+# -- ImpactVector edge cases (WARNING-10) ----------------------------------
+
+
+class TestImpactVectorEdgeCases:
+    def test_nan_rejected(self):
+        with pytest.raises(ValueError, match="destructivity"):
+            ImpactVector(destructivity=float("nan"))
+
+    def test_inf_rejected(self):
+        with pytest.raises(ValueError, match="destructivity"):
+            ImpactVector(destructivity=float("inf"))
+
+    def test_negative_rejected(self):
+        with pytest.raises(ValueError, match="data_exposure"):
+            ImpactVector(data_exposure=-0.1)
+
+    def test_above_one_rejected(self):
+        with pytest.raises(ValueError, match="reversibility"):
+            ImpactVector(reversibility=1.01)
+
+
+# -- PII keyword sync (WARNING-03) -----------------------------------------
+
+
+class TestPiiKeywordSync:
+    def test_email_detected_as_pii(self):
+        scorer = RuleBasedImpactScorer()
+        claim = _make_claim("export_data", "external_api", params={"email": "x@y.com"})
+        result = scorer.score(claim)
+        assert result.data_exposure >= 0.9
+
+    def test_name_detected_as_pii(self):
+        scorer = RuleBasedImpactScorer()
+        claim = _make_claim("export_data", "external_api", params={"name": "John"})
+        result = scorer.score(claim)
+        assert result.data_exposure >= 0.9
