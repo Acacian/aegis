@@ -162,12 +162,20 @@ class MerkleAuditTree:
     """Append-only Merkle tree for audit entries.
 
     Thread-safe: all mutations and reads are guarded by a lock.
+
+    Internally caches the full tree structure (all levels from leaves to
+    root).  The cache is invalidated on ``append()`` and lazily rebuilt
+    on the next read.
     """
 
     def __init__(self) -> None:
         self._leaves: list[MerkleLeaf] = []
         self._leaf_hashes: list[str] = []
         self._lock = threading.Lock()
+        # Cached tree state — invalidated on append
+        self._cached_root: str | None = None
+        self._cached_levels: list[list[str]] | None = None
+        self._cached_leaf_count: int = 0
 
     # -- properties ----------------------------------------------------------
 
@@ -179,7 +187,8 @@ class MerkleAuditTree:
     def root_hash(self) -> str:
         """Current Merkle root hash. Empty hash if tree is empty."""
         with self._lock:
-            return self._compute_root()
+            self._ensure_cache()
+            return self._cached_root  # type: ignore[return-value]
 
     # -- append --------------------------------------------------------------
 
@@ -225,6 +234,8 @@ class MerkleAuditTree:
             )
             self._leaves.append(leaf)
             self._leaf_hashes.append(lh)
+            self._cached_root = None  # invalidate cache
+            self._cached_levels = None
             return index
 
     # -- proofs --------------------------------------------------------------
@@ -241,15 +252,15 @@ class MerkleAuditTree:
                 msg = f"Leaf index {leaf_index} out of range [0, {n})"
                 raise IndexError(msg)
 
-            siblings = self._collect_siblings(leaf_index, list(self._leaf_hashes))
-            root = self._compute_root()
+            self._ensure_cache()
+            siblings = self._collect_siblings_from_cache(leaf_index)
 
             return MerkleProof(
                 leaf_index=leaf_index,
                 leaf_hash=self._leaf_hashes[leaf_index],
                 siblings=tuple(siblings),
                 tree_size=n,
-                root_hash=root,
+                root_hash=self._cached_root,  # type: ignore[arg-type]
             )
 
     @staticmethod
@@ -309,68 +320,63 @@ class MerkleAuditTree:
     def export_json(self) -> dict[str, Any]:
         """Export the tree state as a JSON-serialisable dict."""
         with self._lock:
+            self._ensure_cache()
             return {
-                "root_hash": self._compute_root(),
+                "root_hash": self._cached_root,
                 "size": len(self._leaves),
                 "leaves": [asdict(leaf) for leaf in self._leaves],
             }
 
     # -- internal tree operations --------------------------------------------
 
-    def _compute_root(self) -> str:
-        """Compute Merkle root from current leaf hashes (caller holds lock)."""
+    def _ensure_cache(self) -> None:
+        """Rebuild the tree cache if stale (caller holds lock)."""
+        if self._cached_root is not None and self._cached_leaf_count == len(self._leaf_hashes):
+            return
+
         hashes = list(self._leaf_hashes)
         if not hashes:
-            return _EMPTY_HASH
+            self._cached_root = _EMPTY_HASH
+            self._cached_levels = []
+            self._cached_leaf_count = 0
+            return
 
         # Pad to next power of 2
         n = len(hashes)
         size = 1 << math.ceil(math.log2(n)) if n > 1 else 1
         hashes.extend([_EMPTY_HASH] * (size - n))
 
-        # Build tree bottom-up
-        while len(hashes) > 1:
+        # Build tree bottom-up, keeping all levels
+        levels: list[list[str]] = [hashes]
+        current = hashes
+        while len(current) > 1:
             next_level: list[str] = []
-            for i in range(0, len(hashes), 2):
-                next_level.append(_hash_pair(hashes[i], hashes[i + 1]))
-            hashes = next_level
+            for i in range(0, len(current), 2):
+                next_level.append(_hash_pair(current[i], current[i + 1]))
+            levels.append(next_level)
+            current = next_level
 
-        return hashes[0]
+        self._cached_root = current[0]
+        self._cached_levels = levels
+        self._cached_leaf_count = len(self._leaf_hashes)
 
-    def _collect_siblings(
-        self,
-        index: int,
-        hashes: list[str],
-    ) -> list[tuple[str, str]]:
-        """Collect sibling hashes for a proof path (caller holds lock).
+    def _collect_siblings_from_cache(self, index: int) -> list[tuple[str, str]]:
+        """Collect sibling hashes from the cached tree (caller holds lock).
 
         Returns list of ``(hash, direction)`` pairs from leaf to root.
         """
-        n = len(hashes)
-        if n <= 1:
+        levels = self._cached_levels
+        if not levels or len(levels[0]) <= 1:
             return []
 
-        # Pad to next power of 2
-        size = 1 << math.ceil(math.log2(n)) if n > 1 else 1
-        hashes = hashes + [_EMPTY_HASH] * (size - n)
-
         siblings: list[tuple[str, str]] = []
-        level = hashes
         idx = index
 
-        while len(level) > 1:
+        for level in levels[:-1]:  # skip root level
             if idx % 2 == 0:
-                sibling_idx = idx + 1
-                siblings.append((level[sibling_idx], "right"))
+                siblings.append((level[idx + 1], "right"))
             else:
-                sibling_idx = idx - 1
-                siblings.append((level[sibling_idx], "left"))
-
-            # Move to parent level
-            next_level: list[str] = []
-            for i in range(0, len(level), 2):
-                next_level.append(_hash_pair(level[i], level[i + 1]))
-            level = next_level
-            idx = idx // 2
+                siblings.append((level[idx - 1], "left"))
+            idx //= 2
 
         return siblings
