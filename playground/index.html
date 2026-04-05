@@ -89,6 +89,7 @@
       "Audit Chain Visualizer — SHA-256 hash-linked tamper-evident log",
       "Regulatory Compliance — EU AI Act, NIST, SOC2 gap analysis",
       "Streaming Guard — live split-screen demo of streaming guardrail strategies",
+      "Selection Governance — interactive scenarios showing what AI agents hide from you",
       "Dark/light/high-contrast themes",
       "Export as JSON/CSV/YAML/HTML",
       "Code generation (13 formats including JSON Schema and HTTPie)",
@@ -878,6 +879,62 @@ aegis.auto_instrument()  # auto-patches all frameworks + activates guardrails
       <div class="demo-header">
         <h2 data-i18n="selection.title">Selection Governance (v0.9)</h2>
         <p class="demo-desc" data-i18n="selection.desc">Detect covert power through what an agent <em>excludes</em>. Audit selection-by-negation patterns and compute justification gaps between declared and assessed impact. Based on Santander "Selection as Power" (arXiv:2602.14606).</p>
+      </div>
+
+      <!-- Section 0: Interactive Scenario — "What Your AI Agent Hid" -->
+      <div class="demo-card" style="margin-bottom:16px;border:1px solid rgba(210,153,34,.4);background:linear-gradient(135deg,rgba(210,153,34,.04),rgba(248,81,73,.04))">
+        <div class="demo-card-header" style="border-bottom:1px solid rgba(210,153,34,.2)">
+          <h3 data-i18n="selection.scenario.title" style="color:#d29922">What Your AI Agent Hid From You</h3>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <label style="font-size:12px;color:var(--text-secondary);font-weight:600" data-i18n="selection.scenario.pick">Scenario:</label>
+            <select id="scenario-select" class="demo-select" style="font-size:12px;padding:4px 8px;min-width:180px">
+              <option value="investment" data-i18n-opt="selection.scenario.investment">Investment Advisor</option>
+              <option value="hiring" data-i18n-opt="selection.scenario.hiring">Hiring Agent</option>
+              <option value="security" data-i18n-opt="selection.scenario.security">Security Scanner</option>
+            </select>
+          </div>
+        </div>
+        <div style="padding:12px 0">
+          <!-- Step 1: Agent searches -->
+          <div id="scenario-step1" style="margin-bottom:12px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+              <span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:#58a6ff;color:#fff;font-size:13px;font-weight:700;flex-shrink:0">1</span>
+              <span id="scenario-step1-label" style="font-weight:600;color:var(--text-primary);font-size:14px">Your agent searched and found options</span>
+            </div>
+            <div id="scenario-found-bar" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:12px 16px;text-align:center">
+              <div id="scenario-found-count" style="font-size:28px;font-weight:700;color:#58a6ff">8</div>
+              <div id="scenario-found-label" style="font-size:12px;color:var(--text-muted)">options found</div>
+            </div>
+          </div>
+
+          <!-- Step 2: What agent showed -->
+          <div id="scenario-step2" style="margin-bottom:12px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+              <span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:#3fb950;color:#fff;font-size:13px;font-weight:700;flex-shrink:0">2</span>
+              <span style="font-weight:600;color:var(--text-primary);font-size:14px" data-i18n="selection.scenario.shown">Agent showed you these options:</span>
+            </div>
+            <div id="scenario-shown-list"></div>
+          </div>
+
+          <!-- Step 3: Reveal button -->
+          <div id="scenario-step3" style="text-align:center;margin:16px 0">
+            <button id="scenario-reveal-btn" class="demo-btn" style="background:linear-gradient(135deg,#d29922,#f85149);color:#fff;font-weight:700;padding:10px 24px;font-size:14px;border:none;border-radius:8px;cursor:pointer;transition:transform .15s,box-shadow .15s" onmouseover="this.style.transform='scale(1.05)';this.style.boxShadow='0 4px 16px rgba(248,81,73,.3)'" onmouseout="this.style.transform='scale(1)';this.style.boxShadow='none'" data-i18n="selection.scenario.reveal">Reveal What Was Hidden</button>
+          </div>
+
+          <!-- Step 4: Hidden options (initially hidden) -->
+          <div id="scenario-step4" style="display:none;margin-bottom:12px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+              <span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:#f85149;color:#fff;font-size:13px;font-weight:700;flex-shrink:0">3</span>
+              <span style="font-weight:600;color:#f85149;font-size:14px" data-i18n="selection.scenario.hidden">What your agent DIDN'T show you:</span>
+            </div>
+            <div id="scenario-hidden-list"></div>
+          </div>
+
+          <!-- Step 5: Aegis detection (initially hidden) -->
+          <div id="scenario-step5" style="display:none">
+            <div id="scenario-detection" style="padding:16px;background:#f8514918;border:1px solid #f8514940;border-radius:8px;margin-top:8px"></div>
+          </div>
+        </div>
       </div>
 
       <!-- Section 1: Selection Audit -->
