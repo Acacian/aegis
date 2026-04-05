@@ -5,7 +5,7 @@
     <strong>Runtime security for AI agents — the <code>terraform plan</code> for AI agent security.<br/>Auto-instrument 11 frameworks with runtime guardrails, selection governance, policy testing, and audit trail — zero code changes.</strong>
   </p>
   <p align="center">
-    <code>pip install agent-aegis</code> and add <b>one line</b>. Aegis monkey-patches LangChain, CrewAI, OpenAI Agents SDK, OpenAI, Anthropic, LiteLLM, Google GenAI, Pydantic AI, LlamaIndex, Instructor, and DSPy at runtime — every LLM call and tool invocation passes through prompt-injection detection, PII masking, and a full audit trail. Preview policy changes with <code>aegis plan</code>, regression-test with <code>aegis test</code>, and gate CI/CD merges. Governs what agents <b>do</b> (actions, tool calls, data access) <em>and</em> what they <b>choose not to do</b> (selection-by-negation detection — the first runtime implementation of this governance category). All checks are deterministic and sub-millisecond.
+    <code>pip install agent-aegis</code> and add <b>one line</b>. Aegis monkey-patches LangChain, CrewAI, OpenAI Agents SDK, OpenAI, Anthropic, LiteLLM, Google GenAI, Pydantic AI, LlamaIndex, Instructor, and DSPy at runtime — every LLM call and tool invocation passes through prompt-injection detection, PII masking, and a full audit trail. Preview policy changes with <code>aegis plan</code>, regression-test with <code>aegis test</code>, and gate CI/CD merges. Governs what agents <b>do</b> (actions, tool calls, data access) <em>and</em> what they <b>choose not to do</b> (selection-by-negation detection — the first open-source library in this governance category). All checks are deterministic and sub-millisecond.
   </p>
 </p>
 
@@ -173,7 +173,7 @@ reset()
 
 ## Selection Governance
 
-**The first runtime implementation of selection-by-negation detection.** Every other governance tool monitors what agents *do*. Aegis also monitors what agents *choose not to do* — the options they silently eliminate before humans see them.
+**The first open-source library with selection-by-negation detection.** Other governance tools monitor what agents *do*. Agent-Aegis also monitors what agents *choose not to do* — the options they silently eliminate before humans see them.
 
 Based on Santander AI Lab's ["Selection as Power"](https://arxiv.org/abs/2602.14606) framework: agents exercise covert power through option filtering, not just action execution.
 
