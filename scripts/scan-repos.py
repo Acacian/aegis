@@ -55,7 +55,7 @@ REPOS: list[dict[str, str]] = [
     {"name": "MetaGPT", "url": "https://github.com/geekan/MetaGPT", "stars": "48K"},
     {"name": "ChatDev", "url": "https://github.com/OpenBMB/ChatDev", "stars": "26K"},
     {"name": "CAMEL", "url": "https://github.com/camel-ai/camel", "stars": "10K"},
-    {"name": "Swarm", "url": "https://github.com/openai/swarm", "stars": "18K"},
+    # Swarm excluded: deprecated educational demo (512 lines)
     {"name": "Agno", "url": "https://github.com/agno-agi/agno", "stars": "20K"},
     {"name": "mem0", "url": "https://github.com/mem0ai/mem0", "stars": "25K"},
     {"name": "Composio", "url": "https://github.com/ComposioHQ/composio", "stars": "15K"},
@@ -75,7 +75,7 @@ REPOS: list[dict[str, str]] = [
     # === Tier 4: LLM tooling & orchestration ===
     {"name": "Instructor", "url": "https://github.com/instructor-ai/instructor", "stars": "10K"},
     {"name": "Guidance", "url": "https://github.com/guidance-ai/guidance", "stars": "19K"},
-    {"name": "Outlines", "url": "https://github.com/dottxt-ai/outlines", "stars": "10K"},
+    # Outlines excluded: structured text generation, no agent/tool functionality
     {"name": "Mirascope", "url": "https://github.com/Mirascope/mirascope", "stars": "2K"},
     {"name": "Magentic", "url": "https://github.com/jackmpcollins/magentic", "stars": "2K"},
     {"name": "ell", "url": "https://github.com/MadcowD/ell", "stars": "5K"},
