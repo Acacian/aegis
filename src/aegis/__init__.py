@@ -112,6 +112,67 @@ _LAZY_IMPORTS: dict[str, str] = {
     # Behavioral drift (ASI10)
     "DriftDetector": "aegis.core.behavioral_drift",
     "DriftFinding": "aegis.core.behavioral_drift",
+    # -- Paper-based modules (v0.11+) --
+    # MCP manifest signing (arXiv:2512.06556)
+    "ManifestSigner": "aegis.core.mcp_manifest",
+    "ManifestVerifier": "aegis.core.mcp_manifest",
+    # ETDI tool verification (arXiv:2506.01333)
+    "ETDIVerifier": "aegis.core.etdi",
+    "ETDIViolation": "aegis.core.etdi",
+    # MCP vulnerability scanner (arXiv:2510.23673)
+    "MCPVulnScanner": "aegis.core.mcp_vuln_scanner",
+    "VulnFinding": "aegis.core.mcp_vuln_scanner",
+    # MCP threat intelligence (arXiv:2508.14925)
+    "MCPThreatIntel": "aegis.core.mcp_threat_intel",
+    "ThreatMatch": "aegis.core.mcp_threat_intel",
+    # Trust scoring (arXiv:2508.18765)
+    "TrustScorer": "aegis.core.trust_score",
+    "TrustScore": "aegis.core.trust_score",
+    # Autonomy levels (arXiv:2506.12469)
+    "AutonomyManager": "aegis.core.autonomy_level",
+    "AutonomyLevel": "aegis.core.autonomy_level",
+    # Trust calibration (arXiv:2509.23497)
+    "TrustCalibrator": "aegis.core.trust_calibration",
+    "CalibrationDecision": "aegis.core.trust_calibration",
+    # Threat taxonomy (arXiv:2510.23883)
+    "ThreatTaxonomy": "aegis.core.threat_taxonomy",
+    "ThreatAssessment": "aegis.core.threat_taxonomy",
+    # Tool poisoning graph (arXiv:2508.20412)
+    "DecisionDependenceGraph": "aegis.core.tool_poisoning_graph",
+    "PoisoningReport": "aegis.core.tool_poisoning_graph",
+    # Temporal monitor (arXiv:2509.20364)
+    "TemporalMonitor": "aegis.core.temporal_monitor",
+    "TemporalViolation": "aegis.core.temporal_monitor",
+    # RAG guard (arXiv:2510.25025)
+    "RAGGuard": "aegis.guardrails.rag_guard",
+    "RAGScanResult": "aegis.guardrails.rag_guard",
+    # MAS monitor (arXiv:2510.19420)
+    "MASMonitor": "aegis.core.mas_monitor",
+    "MASReport": "aegis.core.mas_monitor",
+    # Reversibility (arXiv:2510.14503)
+    "ReversibilityScorer": "aegis.core.reversibility",
+    "ReversibilityScore": "aegis.core.reversibility",
+    # Sandbox policy (arXiv:2512.12806)
+    "SandboxPolicy": "aegis.core.sandbox_policy",
+    "SandboxDecision": "aegis.core.sandbox_policy",
+    # Execution trace (arXiv:2512.15892)
+    "ExecutionTracer": "aegis.core.exec_trace",
+    "TraceVerification": "aegis.core.exec_trace",
+    # Hazard classifier (arXiv:2412.13178)
+    "HazardClassifier": "aegis.core.hazard_classifier",
+    "HazardAssessment": "aegis.core.hazard_classifier",
+    # Zero-trust agent (arXiv:2505.19301)
+    "ZeroTrustAgent": "aegis.core.zero_trust_agent",
+    "AgentCredential": "aegis.core.zero_trust_agent",
+    # Identity binding (arXiv:2512.17538)
+    "IdentityBinder": "aegis.core.identity_binding",
+    "IdentityBinding": "aegis.core.identity_binding",
+    # Audit lifecycle (arXiv:2601.20727)
+    "AuditLifecycle": "aegis.core.audit_lifecycle",
+    "LifecycleEvent": "aegis.core.audit_lifecycle",
+    # Data isolation (arXiv:2403.04960)
+    "DataIsolator": "aegis.core.data_isolation",
+    "IsolationViolation": "aegis.core.data_isolation",
 }
 
 __all__ = [
@@ -180,6 +241,20 @@ if TYPE_CHECKING:
         BehaviorProfile as BehaviorProfile,
     )
 
+    # Paper-based modules (v0.11+)
+    from aegis.core.audit_lifecycle import (
+        AuditLifecycle as AuditLifecycle,
+    )
+    from aegis.core.audit_lifecycle import (
+        LifecycleEvent as LifecycleEvent,
+    )
+    from aegis.core.autonomy_level import (
+        AutonomyLevel as AutonomyLevel,
+    )
+    from aegis.core.autonomy_level import (
+        AutonomyManager as AutonomyManager,
+    )
+
     # OWASP Agentic modules
     from aegis.core.behavioral_drift import (
         DriftDetector as DriftDetector,
@@ -222,13 +297,59 @@ if TYPE_CHECKING:
         PrivacyFinding as PrivacyFinding,
     )
     from aegis.core.crypto_audit import CryptoAuditChain as CryptoAuditChain
+    from aegis.core.data_isolation import (
+        DataIsolator as DataIsolator,
+    )
+    from aegis.core.data_isolation import (
+        IsolationViolation as IsolationViolation,
+    )
+    from aegis.core.etdi import ETDIVerifier as ETDIVerifier
+    from aegis.core.etdi import ETDIViolation as ETDIViolation
+    from aegis.core.exec_trace import (
+        ExecutionTracer as ExecutionTracer,
+    )
+    from aegis.core.exec_trace import (
+        TraceVerification as TraceVerification,
+    )
+    from aegis.core.hazard_classifier import (
+        HazardAssessment as HazardAssessment,
+    )
+    from aegis.core.hazard_classifier import (
+        HazardClassifier as HazardClassifier,
+    )
     from aegis.core.hierarchy import (
         PolicyConflict as PolicyConflict,
     )
     from aegis.core.hierarchy import (
         PolicyHierarchy as PolicyHierarchy,
     )
+    from aegis.core.identity_binding import (
+        IdentityBinder as IdentityBinder,
+    )
+    from aegis.core.identity_binding import (
+        IdentityBinding as IdentityBinding,
+    )
     from aegis.core.leakage_detector import LeakageDetector as LeakageDetector
+    from aegis.core.mas_monitor import MASMonitor as MASMonitor
+    from aegis.core.mas_monitor import MASReport as MASReport
+    from aegis.core.mcp_manifest import (
+        ManifestSigner as ManifestSigner,
+    )
+    from aegis.core.mcp_manifest import (
+        ManifestVerifier as ManifestVerifier,
+    )
+    from aegis.core.mcp_threat_intel import (
+        MCPThreatIntel as MCPThreatIntel,
+    )
+    from aegis.core.mcp_threat_intel import (
+        ThreatMatch as ThreatMatch,
+    )
+    from aegis.core.mcp_vuln_scanner import (
+        MCPVulnScanner as MCPVulnScanner,
+    )
+    from aegis.core.mcp_vuln_scanner import (
+        VulnFinding as VulnFinding,
+    )
     from aegis.core.memory_integrity import (
         IntegrityViolation as IntegrityViolation,
     )
@@ -280,7 +401,19 @@ if TYPE_CHECKING:
     from aegis.core.result import Result as Result
     from aegis.core.result import ResultStatus as ResultStatus
     from aegis.core.retry import RetryPolicy as RetryPolicy
+    from aegis.core.reversibility import (
+        ReversibilityScore as ReversibilityScore,
+    )
+    from aegis.core.reversibility import (
+        ReversibilityScorer as ReversibilityScorer,
+    )
     from aegis.core.risk import RiskLevel as RiskLevel
+    from aegis.core.sandbox_policy import (
+        SandboxDecision as SandboxDecision,
+    )
+    from aegis.core.sandbox_policy import (
+        SandboxPolicy as SandboxPolicy,
+    )
     from aegis.core.taint import (
         TaintFinding as TaintFinding,
     )
@@ -293,6 +426,32 @@ if TYPE_CHECKING:
     from aegis.core.taint import (
         TaintTracker as TaintTracker,
     )
+    from aegis.core.temporal_monitor import (
+        TemporalMonitor as TemporalMonitor,
+    )
+    from aegis.core.temporal_monitor import (
+        TemporalViolation as TemporalViolation,
+    )
+    from aegis.core.threat_taxonomy import (
+        ThreatAssessment as ThreatAssessment,
+    )
+    from aegis.core.threat_taxonomy import (
+        ThreatTaxonomy as ThreatTaxonomy,
+    )
+    from aegis.core.tool_poisoning_graph import (
+        DecisionDependenceGraph as DecisionDependenceGraph,
+    )
+    from aegis.core.tool_poisoning_graph import (
+        PoisoningReport as PoisoningReport,
+    )
+    from aegis.core.trust_calibration import (
+        CalibrationDecision as CalibrationDecision,
+    )
+    from aegis.core.trust_calibration import (
+        TrustCalibrator as TrustCalibrator,
+    )
+    from aegis.core.trust_score import TrustScore as TrustScore
+    from aegis.core.trust_score import TrustScorer as TrustScorer
     from aegis.core.versioning import (
         PolicyStore as PolicyStore,
     )
@@ -300,6 +459,16 @@ if TYPE_CHECKING:
         PolicyVersion as PolicyVersion,
     )
     from aegis.core.webhooks import WebhookManager as WebhookManager
+    from aegis.core.zero_trust_agent import (
+        AgentCredential as AgentCredential,
+    )
+    from aegis.core.zero_trust_agent import (
+        ZeroTrustAgent as ZeroTrustAgent,
+    )
+    from aegis.guardrails.rag_guard import RAGGuard as RAGGuard
+    from aegis.guardrails.rag_guard import (
+        RAGScanResult as RAGScanResult,
+    )
     from aegis.guardrails.tool_output import (
         ToolOutputGuardrail as ToolOutputGuardrail,
     )
