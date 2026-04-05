@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI Agent Security Report — aegis scan results for 9 major frameworks</title>
-  <meta name="description" content="We scanned 9 major AI agent repos (LangChain, CrewAI, AutoGen, LlamaIndex, etc.) for ungoverned tool calls. All 9 scored F. 871 findings total.">
-  <meta property="og:title" content="AI Agent Security Report — 9 Repos, All F">
-  <meta property="og:description" content="871 ungoverned tool calls across LangChain, CrewAI, AutoGen, LlamaIndex, Pydantic AI, OpenAI Agents, Google ADK, LiteLLM, and awesome-llm-apps.">
+  <title>AI Agent Security Report — aegis scan results for 50 repos</title>
+  <meta name="description" content="We scanned 50 AI agent repos for ungoverned tool calls. 36/50 scored F. 2,579 findings total.">
+  <meta property="og:title" content="AI Agent Security Report — 50 Repos, 36 Scored F">
+  <meta property="og:description" content="2,579 ungoverned tool calls across 50 major AI agent frameworks. Selection governance: 0/50.">
   <meta property="og:url" content="https://acacian.github.io/aegis/playground/scan-report.html">
   <meta property="og:type" content="article">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="AI Agent Security Report — 9 Repos, All F">
-  <meta name="twitter:description" content="871 ungoverned tool calls found across 9 major AI agent frameworks.">
+  <meta name="twitter:title" content="AI Agent Security Report — 50 Repos, 36 Scored F">
+  <meta name="twitter:description" content="2,579 ungoverned tool calls found across 50 major AI agent frameworks.">
   <link rel="canonical" href="https://acacian.github.io/aegis/playground/scan-report.html">
   <style>
     :root {
@@ -29,6 +29,7 @@
       --risk-medium: #d29922;
       --risk-medium-bg: rgba(210, 153, 34, 0.12);
       --risk-low: #3fb950;
+      --risk-low-bg: rgba(63, 185, 80, 0.12);
       --radius: 8px;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -38,29 +39,43 @@
       color: var(--text-primary);
       line-height: 1.6;
     }
-    .container { max-width: 960px; margin: 0 auto; padding: 40px 20px; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 40px 20px; }
     h1 { font-size: 28px; margin-bottom: 8px; }
     .subtitle { color: var(--text-secondary); font-size: 16px; margin-bottom: 32px; }
     .stat-bar {
-      display: flex; gap: 24px; margin-bottom: 32px; flex-wrap: wrap;
+      display: flex; gap: 16px; margin-bottom: 32px; flex-wrap: wrap;
     }
     .stat-card {
       background: var(--bg-secondary);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 16px 24px;
-      flex: 1; min-width: 140px;
+      padding: 16px 20px;
+      flex: 1; min-width: 120px;
     }
-    .stat-num { font-size: 32px; font-weight: 700; }
+    .stat-num { font-size: 28px; font-weight: 700; }
     .stat-num.red { color: var(--risk-high); }
-    .stat-label { font-size: 13px; color: var(--text-muted); }
+    .stat-num.yellow { color: var(--risk-medium); }
+    .stat-num.green { color: var(--risk-low); }
+    .stat-label { font-size: 12px; color: var(--text-muted); }
+
+    .key-finding {
+      background: var(--risk-high-bg);
+      border: 1px solid rgba(248, 81, 73, 0.3);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      margin-bottom: 32px;
+    }
+    .key-finding h2 { font-size: 16px; color: var(--risk-high); margin-bottom: 8px; }
+    .key-finding p { font-size: 14px; color: var(--text-secondary); margin-bottom: 4px; }
+    .key-finding strong { color: var(--text-primary); }
 
     table { width: 100%; border-collapse: collapse; margin-bottom: 32px; }
     th {
       text-align: left; padding: 10px 12px; font-size: 12px;
       color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;
-      border-bottom: 1px solid var(--border);
+      border-bottom: 1px solid var(--border); cursor: pointer;
     }
+    th:hover { color: var(--accent); }
     td {
       padding: 12px; border-bottom: 1px solid var(--border);
       font-size: 14px;
@@ -74,8 +89,13 @@
       display: inline-block; padding: 2px 10px; border-radius: 12px;
       font-weight: 700; font-size: 13px;
     }
+    .grade-a { background: var(--risk-low-bg); color: var(--risk-low); }
+    .grade-b { background: var(--risk-low-bg); color: var(--risk-low); }
+    .grade-c { background: var(--risk-medium-bg); color: var(--risk-medium); }
+    .grade-d { background: var(--risk-medium-bg); color: var(--risk-medium); }
     .grade-f { background: var(--risk-high-bg); color: var(--risk-high); }
     .finding-count { font-weight: 600; color: var(--risk-high); font-size: 16px; }
+    .finding-count.low { color: var(--risk-low); }
     .cat-tags { display: flex; gap: 4px; flex-wrap: wrap; }
     .cat-tag {
       font-size: 11px; padding: 2px 8px; border-radius: 10px;
@@ -146,6 +166,19 @@
     }
     .footer a { color: var(--accent); text-decoration: none; }
 
+    .filter-bar {
+      display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;
+      align-items: center;
+    }
+    .filter-btn {
+      background: var(--bg-secondary); border: 1px solid var(--border);
+      border-radius: 16px; padding: 4px 12px; font-size: 12px;
+      color: var(--text-secondary); cursor: pointer;
+    }
+    .filter-btn:hover, .filter-btn.active {
+      border-color: var(--accent); color: var(--accent);
+    }
+
     @media (max-width: 640px) {
       .stat-bar { flex-direction: column; }
       table { font-size: 13px; }
@@ -157,7 +190,7 @@
   <div class="container">
     <h1>AI Agent Security Report</h1>
     <p class="subtitle">
-      <code>aegis scan</code> results for 9 major AI agent repositories.
+      <code>aegis scan</code> results for <strong>50</strong> AI agent repositories.
       Scanned <span id="total-files">0</span> Python files.
       Last updated: April 2026.
     </p>
@@ -168,23 +201,44 @@
         <div class="stat-label">Ungoverned tool calls</div>
       </div>
       <div class="stat-card">
-        <div class="stat-num red">9/9</div>
+        <div class="stat-num red">36/50</div>
         <div class="stat-label">Repos scored F</div>
       </div>
       <div class="stat-card">
-        <div class="stat-num" style="color:var(--risk-medium)" id="total-repos">9</div>
+        <div class="stat-num yellow" id="total-repos">50</div>
         <div class="stat-label">Repos scanned</div>
       </div>
+      <div class="stat-card">
+        <div class="stat-num red">0/50</div>
+        <div class="stat-label">Have selection governance</div>
+      </div>
+    </div>
+
+    <div class="key-finding">
+      <h2>Key Finding</h2>
+      <p><strong>36 out of 50</strong> scanned repositories have <strong>zero governance</strong> on their AI tool calls.</p>
+      <p><strong>0 out of 50</strong> have any form of <strong>selection governance</strong> (detecting what agents choose NOT to show).</p>
+      <p>Combined: <strong>2,579</strong> ungoverned tool calls across <strong>38,287</strong> Python files.</p>
+    </div>
+
+    <div class="filter-bar">
+      <span style="font-size:12px;color:var(--text-muted)">Filter:</span>
+      <button class="filter-btn active" data-grade="all">All (50)</button>
+      <button class="filter-btn" data-grade="F">Grade F (36)</button>
+      <button class="filter-btn" data-grade="D">Grade D (5)</button>
+      <button class="filter-btn" data-grade="C">Grade C (3)</button>
+      <button class="filter-btn" data-grade="B">Grade B (2)</button>
+      <button class="filter-btn" data-grade="A">Grade A (4)</button>
     </div>
 
     <table>
       <thead>
         <tr>
-          <th>Repository</th>
-          <th>Stars</th>
-          <th>Files</th>
-          <th>Findings</th>
-          <th>Grade</th>
+          <th data-sort="name">Repository</th>
+          <th data-sort="stars">Stars</th>
+          <th data-sort="files">Files</th>
+          <th data-sort="findings">Findings</th>
+          <th data-sort="grade">Grade</th>
           <th>Categories</th>
           <th></th>
         </tr>
@@ -201,12 +255,16 @@
       <p>
         Each finding is mapped to the
         <a href="https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications/" style="color:var(--accent)">OWASP Top 10 for Agentic Applications</a>.
-        A governance wrapper does not mean the code is vulnerable — it means there is no automated policy enforcement at that call site.
+        A governance wrapper does not mean the code is vulnerable &mdash; it means there is no automated policy enforcement at that call site.
+      </p>
+      <p>
+        <strong>Selection governance check:</strong> We also verified whether each framework implements any form of
+        selection-by-negation detection, option filtering audit, or commit-reveal protocol. None do.
       </p>
       <p>
         Scanner source:
         <a href="https://github.com/Acacian/aegis/blob/main/src/aegis/cli/scan.py" style="color:var(--accent)">aegis/cli/scan.py</a>.
-        Results are reproducible — clone the repo and run <code>aegis scan .</code>.
+        Results are reproducible &mdash; clone the repo and run <code>aegis scan .</code>.
       </p>
     </div>
 
@@ -217,17 +275,16 @@
     </div>
 
     <div class="footer">
-      Built with <a href="https://github.com/Acacian/aegis">aegis</a> &mdash;
+      Built with <a href="https://github.com/Acacian/aegis">Aegis</a> &mdash;
       <a href="https://acacian.github.io/aegis/playground/">Playground</a> &middot;
       <a href="https://pypi.org/project/agent-aegis/">PyPI</a> &middot;
-      <a href="https://github.com/marketplace/actions/aegis-ai-governance-gate">GitHub Action</a>
+      <a href="https://github.com/marketplace/actions/aegis-ai-agent-security-gate">GitHub Action</a>
     </div>
   </div>
 
   <script>
-    const DATA = [{"dir":"langchain","name":"LangChain","stars":"108K","url":"https://github.com/langchain-ai/langchain","files":2448,"findings":223,"categories":{"LangChain":217,"subprocess":4,"Anthropic":1,"HTTP":1},"examples":[{"file":"libs/core/langchain_core/tools/simple.py","line":31,"category":"LangChain","detail":"BaseTool subclass \"Tool\" \u2014 not governed","owasp":"ASI02: Tool Misuse & Exploitation"},{"file":"libs/core/langchain_core/tools/structured.py","line":40,"category":"LangChain","detail":"BaseTool subclass \"StructuredTool\" \u2014 not governed","owasp":"ASI02: Tool Misuse & Exploitation"},{"file":"libs/core/tests/benchmarks/test_imports.py","line":54,"category":"subprocess","detail":"subprocess.run \u2014 direct shell execution","owasp":"ASI08: Uncontrolled Code Execution"}]},{"dir":"crewAI","name":"CrewAI","stars":"28K","url":"https://github.com/crewAIInc/crewAI","files":1061,"findings":266,"categories":{"subprocess":53,"HTTP":16,"LangChain":197},"examples":[{"file":"src/crewai/agent/core.py","line":1174,"category":"subprocess","detail":"subprocess.run \u2014 direct shell execution","owasp":"ASI08: Uncontrolled Code Execution"},{"file":"src/crewai/cli/authentication/main.py","line":101,"category":"HTTP","detail":"httpx.post \u2014 raw HTTP in agent code","owasp":"ASI07: Data Leakage & Exfiltration"},{"file":"src/crewai/cli/authentication/main.py","line":133,"category":"HTTP","detail":"httpx.post \u2014 raw HTTP in agent code","owasp":"ASI07: Data Leakage & Exfiltration"}]},{"dir":"autogen","name":"AutoGen","stars":"42K","url":"https://github.com/microsoft/autogen","files":546,"findings":21,"categories":{"subprocess":15,"MCP":3,"OpenAI":2,"LangChain":1},"examples":[{"file":"python/check_md_code_blocks.py","line":61,"category":"subprocess","detail":"subprocess.run \u2014 direct shell execution","owasp":"ASI08: Uncontrolled Code Execution"},{"file":"python/docs/src/_extension/code_lint.py","line":74,"category":"subprocess","detail":"subprocess.run \u2014 direct shell execution","owasp":"ASI08: Uncontrolled Code Execution"},{"file":"python/docs/src/conf.py","line":199,"category":"subprocess","detail":"subprocess.run \u2014 direct shell execution","owasp":"ASI08: Uncontrolled Code Execution"}]},{"dir":"awesome-llm-apps","name":"awesome-llm-apps","stars":"20K","url":"https://github.com/Shubhamsaboo/awesome-llm-apps","files":453,"findings":23,"categories":{"HTTP":8,"LangChain":6,"subprocess":7,"Anthropic":2},"examples":[{"file":"advanced_ai_agents/multi_agent_apps/agent_teams/ai_competitor_intelligence_agent_team/competitor_agent_team.py","line":154,"category":"HTTP","detail":"requests.post \u2014 raw HTTP in agent code","owasp":"ASI07: Data Leakage & Exfiltration"},{"file":"advanced_ai_agents/multi_agent_apps/agent_teams/ai_recruitment_agent_team/ai_recruitment_agent_team.py","line":36,"category":"HTTP","detail":"requests.post \u2014 raw HTTP in agent code","owasp":"ASI07: Data Leakage & Exfiltration"},{"file":"advanced_ai_agents/multi_agent_apps/agent_teams/ai_services_agency/agency.py","line":8,"category":"LangChain","detail":"BaseTool subclass \"AnalyzeProjectRequirements\" \u2014 not governed","owasp":"ASI02: Tool Misuse & Exploitation"}]},{"dir":"llama_index","name":"LlamaIndex","stars":"40K","url":"https://github.com/run-llama/llama_index","files":4157,"findings":122,"categories":{"subprocess":26,"HTTP":81,"LangChain":2,"OpenAI":3,"MCP":10},"examples":[{"file":"docs/scripts/prepare_for_build.py","line":198,"category":"subprocess","detail":"os.system \u2014 direct shell execution","owasp":"ASI08: Uncontrolled Code Execution"},{"file":"llama-dev/llama_dev/pkg/cmd_exec.py","line":61,"category":"subprocess","detail":"subprocess.run \u2014 direct shell execution","owasp":"ASI08: Uncontrolled Code Execution"},{"file":"llama-dev/llama_dev/release/changelog.py","line":18,"category":"subprocess","detail":"subprocess.run \u2014 direct shell execution","owasp":"ASI08: Uncontrolled Code Execution"}]},{"dir":"pydantic-ai","name":"Pydantic AI","stars":"12K","url":"https://github.com/pydantic/pydantic-ai","files":482,"findings":38,"categories":{"OpenAI":3,"MCP":35},"examples":[{"file":"pydantic_ai_slim/pydantic_ai/models/groq.py","line":315,"category":"OpenAI","detail":"function call with tools= \u2014 no governance wrapper","owasp":"ASI02: Tool Misuse & Exploitation"},{"file":"pydantic_ai_slim/pydantic_ai/models/huggingface.py","line":244,"category":"OpenAI","detail":"function call with tools= \u2014 no governance wrapper","owasp":"ASI02: Tool Misuse & Exploitation"},{"file":"pydantic_ai_slim/pydantic_ai/models/openai.py","line":788,"category":"OpenAI","detail":"function call with tools= \u2014 no governance wrapper","owasp":"ASI02: Tool Misuse & Exploitation"}]},{"dir":"openai-agents-python","name":"OpenAI Agents","stars":"6K","url":"https://github.com/openai/openai-agents-python","files":506,"findings":24,"categories":{"subprocess":13,"MCP":10,"OpenAI":1},"examples":[{"file":"docs/scripts/translate_docs.py","line":377,"category":"subprocess","detail":"subprocess.run \u2014 direct shell execution","owasp":"ASI08: Uncontrolled Code Execution"},{"file":"examples/mcp/manager_example/mcp_server.py","line":15,"category":"MCP","detail":"@mcp.tool() \"add\" \u2014 no aegis middleware","owasp":"ASI04: Supply Chain Vulnerabilities"},{"file":"examples/mcp/manager_example/mcp_server.py","line":20,"category":"MCP","detail":"@mcp.tool() \"echo\" \u2014 no aegis middleware","owasp":"ASI04: Supply Chain Vulnerabilities"}]},{"dir":"adk-python","name":"Google ADK","stars":"12K","url":"https://github.com/google/adk-python","files":1280,"findings":76,"categories":{"HTTP":8,"subprocess":19,"LangChain":40,"MCP":9},"examples":[{"file":"contributing/samples/adk_answering_agent/utils.py","line":41,"category":"HTTP","detail":"requests.post \u2014 raw HTTP in agent code","owasp":"ASI07: Data Leakage & Exfiltration"},{"file":"contributing/samples/adk_documentation/tools.py","line":475,"category":"subprocess","detail":"subprocess.run \u2014 direct shell execution","owasp":"ASI08: Uncontrolled Code Execution"},{"file":"contributing/samples/adk_documentation/tools.py","line":488,"category":"subprocess","detail":"subprocess.run \u2014 direct shell execution","owasp":"ASI08: Uncontrolled Code Execution"}]},{"dir":"litellm","name":"LiteLLM","stars":"20K","url":"https://github.com/BerriAI/litellm","files":3531,"findings":78,"categories":{"subprocess":48,"HTTP":28,"MCP":2},"examples":[{"file":"ci_cd/baseline_db.py","line":29,"category":"subprocess","detail":"subprocess.run \u2014 direct shell execution","owasp":"ASI08: Uncontrolled Code Execution"},{"file":"ci_cd/run_migration.py","line":38,"category":"subprocess","detail":"subprocess.run \u2014 direct shell execution","owasp":"ASI08: Uncontrolled Code Execution"},{"file":"ci_cd/run_migration.py","line":44,"category":"subprocess","detail":"subprocess.run \u2014 direct shell execution","owasp":"ASI08: Uncontrolled Code Execution"}]}];
+    const DATA = [{"dir": "promptflow", "name": "Promptflow", "stars": "10K", "url": "https://github.com/microsoft/promptflow", "files": 1474, "findings": 446, "grade": "F", "categories": {"LangChain": 377, "HTTP": 11, "subprocess": 58}, "examples": [{"file": "benchmark/promptflow-serve/pf_flows/static_async/chat.py", "line": 8, "category": "LangChain", "detail": "@tool \"my_python_tool\" — no policy check", "owasp": "ASI02: Tool Misuse & Exploitation"}, {"file": "benchmark/promptflow-serve/pf_flows/static_async/node1.py", "line": 5, "category": "LangChain", "detail": "@tool \"my_python_tool\" — no policy check", "owasp": "ASI02: Tool Misuse & Exploitation"}, {"file": "benchmark/promptflow-serve/pf_flows/static_async/node2.py", "line": 5, "category": "LangChain", "detail": "@tool \"my_python_tool\" — no policy check", "owasp": "ASI02: Tool Misuse & Exploitation"}]}, {"dir": "crewai", "name": "CrewAI", "stars": "28K", "url": "https://github.com/crewAIInc/crewAI", "files": 1062, "findings": 266, "grade": "F", "categories": {"subprocess": 53, "HTTP": 16, "LangChain": 197}, "examples": [{"file": "lib/crewai/src/crewai/agent/core.py", "line": 1227, "category": "subprocess", "detail": "subprocess.run — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}, {"file": "lib/crewai/src/crewai/cli/authentication/main.py", "line": 101, "category": "HTTP", "detail": "httpx.post — raw HTTP in agent code", "owasp": "ASI07: Data Leakage & Exfiltration"}, {"file": "lib/crewai/src/crewai/cli/authentication/main.py", "line": 133, "category": "HTTP", "detail": "httpx.post — raw HTTP in agent code", "owasp": "ASI07: Data Leakage & Exfiltration"}]}, {"dir": "langchain", "name": "LangChain", "stars": "108K", "url": "https://github.com/langchain-ai/langchain", "files": 2449, "findings": 223, "grade": "F", "categories": {"LangChain": 217, "subprocess": 4, "Anthropic": 1, "HTTP": 1}, "examples": [{"file": "libs/core/langchain_core/tools/simple.py", "line": 31, "category": "LangChain", "detail": "BaseTool subclass \"Tool\" — not governed", "owasp": "ASI02: Tool Misuse & Exploitation"}, {"file": "libs/core/langchain_core/tools/structured.py", "line": 40, "category": "LangChain", "detail": "BaseTool subclass \"StructuredTool\" — not governed", "owasp": "ASI02: Tool Misuse & Exploitation"}, {"file": "libs/core/tests/benchmarks/test_imports.py", "line": 54, "category": "subprocess", "detail": "subprocess.run — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}]}, {"dir": "agency-swarm", "name": "Agency Swarm", "stars": "4K", "url": "https://github.com/VRSEN/agency-swarm", "files": 289, "findings": 117, "grade": "F", "categories": {"HTTP": 7, "LangChain": 72, "subprocess": 36, "MCP": 2}, "examples": [{"file": "examples/fastapi_integration/client.py", "line": 40, "category": "HTTP", "detail": "requests.post — raw HTTP in agent code", "owasp": "ASI07: Data Leakage & Exfiltration"}, {"file": "examples/fastapi_integration/client.py", "line": 82, "category": "HTTP", "detail": "requests.post — raw HTTP in agent code", "owasp": "ASI07: Data Leakage & Exfiltration"}, {"file": "examples/fastapi_integration/client.py", "line": 122, "category": "HTTP", "detail": "requests.post — raw HTTP in agent code", "owasp": "ASI07: Data Leakage & Exfiltration"}]}, {"dir": "llamaindex", "name": "LlamaIndex", "stars": "40K", "url": "https://github.com/run-llama/llama_index", "files": 3825, "findings": 114, "grade": "F", "categories": {"subprocess": 21, "HTTP": 78, "LangChain": 2, "OpenAI": 3, "MCP": 10}, "examples": [{"file": "docs/scripts/prepare_for_build.py", "line": 198, "category": "subprocess", "detail": "os.system — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}, {"file": "llama-dev/llama_dev/pkg/cmd_exec.py", "line": 61, "category": "subprocess", "detail": "subprocess.run — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}, {"file": "llama-dev/llama_dev/release/changelog.py", "line": 18, "category": "subprocess", "detail": "subprocess.run — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}]}, {"dir": "openhands", "name": "OpenHands", "stars": "50K", "url": "https://github.com/All-Hands-AI/OpenHands", "files": 1206, "findings": 106, "grade": "F", "categories": {"HTTP": 32, "subprocess": 69, "MCP": 5}, "examples": [{"file": "enterprise/server/routes/integration/jira.py", "line": 478, "category": "HTTP", "detail": "requests.post — raw HTTP in agent code", "owasp": "ASI07: Data Leakage & Exfiltration"}, {"file": "enterprise/server/routes/integration/jira_dc.py", "line": 507, "category": "HTTP", "detail": "requests.post — raw HTTP in agent code", "owasp": "ASI07: Data Leakage & Exfiltration"}, {"file": "enterprise/server/routes/integration/linear.py", "line": 412, "category": "HTTP", "detail": "requests.post — raw HTTP in agent code", "owasp": "ASI07: Data Leakage & Exfiltration"}]}, {"dir": "camel", "name": "CAMEL", "stars": "10K", "url": "https://github.com/camel-ai/camel", "files": 1122, "findings": 95, "grade": "F", "categories": {"subprocess": 55, "HTTP": 29, "MCP": 10, "LangChain": 1}, "examples": [{"file": "camel/benchmarks/mock_website/mock_web.py", "line": 164, "category": "subprocess", "detail": "subprocess.Popen — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}, {"file": "camel/benchmarks/mock_website/mock_web.py", "line": 192, "category": "HTTP", "detail": "requests.post — raw HTTP in agent code", "owasp": "ASI07: Data Leakage & Exfiltration"}, {"file": "camel/embeddings/jina_embedding.py", "line": 153, "category": "HTTP", "detail": "requests.post — raw HTTP in agent code", "owasp": "ASI07: Data Leakage & Exfiltration"}]}, {"dir": "agno", "name": "Agno", "stars": "20K", "url": "https://github.com/agno-agi/agno", "files": 3502, "findings": 95, "grade": "F", "categories": {"LangChain": 39, "subprocess": 13, "HTTP": 18, "MCP": 25}, "examples": [{"file": "cookbook/01_demo/agents/dash/tools/introspect.py", "line": 13, "category": "LangChain", "detail": "@tool \"introspect_schema\" — no policy check", "owasp": "ASI02: Tool Misuse & Exploitation"}, {"file": "cookbook/01_demo/agents/dash/tools/save_query.py", "line": 14, "category": "LangChain", "detail": "@tool \"save_validated_query\" — no policy check", "owasp": "ASI02: Tool Misuse & Exploitation"}, {"file": "cookbook/01_demo/agents/scout/tools/awareness.py", "line": 16, "category": "LangChain", "detail": "@tool \"list_sources\" — no policy check", "owasp": "ASI02: Tool Misuse & Exploitation"}]}, {"dir": "letta", "name": "Letta", "stars": "15K", "url": "https://github.com/letta-ai/letta", "files": 875, "findings": 87, "grade": "F", "categories": {"HTTP": 45, "LangChain": 3, "subprocess": 18, "OpenAI": 1, "MCP": 20}, "examples": [{"file": "letta/local_llm/utils.py", "line": 24, "category": "HTTP", "detail": "requests.post — raw HTTP in agent code", "owasp": "ASI07: Data Leakage & Exfiltration"}, {"file": "letta/local_llm/utils.py", "line": 31, "category": "HTTP", "detail": "requests.post — raw HTTP in agent code", "owasp": "ASI07: Data Leakage & Exfiltration"}, {"file": "letta/local_llm/utils.py", "line": 38, "category": "HTTP", "detail": "requests.post — raw HTTP in agent code", "owasp": "ASI07: Data Leakage & Exfiltration"}]}, {"dir": "litellm", "name": "LiteLLM", "stars": "20K", "url": "https://github.com/BerriAI/litellm", "files": 3555, "findings": 78, "grade": "F", "categories": {"subprocess": 48, "HTTP": 28, "MCP": 2}, "examples": [{"file": "ci_cd/baseline_db.py", "line": 29, "category": "subprocess", "detail": "subprocess.run — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}, {"file": "ci_cd/run_migration.py", "line": 38, "category": "subprocess", "detail": "subprocess.run — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}, {"file": "ci_cd/run_migration.py", "line": 44, "category": "subprocess", "detail": "subprocess.run — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}]}, {"dir": "google-adk", "name": "Google ADK", "stars": "12K", "url": "https://github.com/google/adk-python", "files": 1282, "findings": 77, "grade": "F", "categories": {"HTTP": 8, "subprocess": 20, "LangChain": 40, "MCP": 9}, "examples": [{"file": "contributing/samples/adk_answering_agent/utils.py", "line": 41, "category": "HTTP", "detail": "requests.post — raw HTTP in agent code", "owasp": "ASI07: Data Leakage & Exfiltration"}, {"file": "contributing/samples/adk_documentation/tools.py", "line": 475, "category": "subprocess", "detail": "subprocess.run — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}, {"file": "contributing/samples/adk_documentation/tools.py", "line": 488, "category": "subprocess", "detail": "subprocess.run — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}]}, {"dir": "smolagents", "name": "Smolagents", "stars": "15K", "url": "https://github.com/huggingface/smolagents", "files": 75, "findings": 65, "grade": "F", "categories": {"LangChain": 53, "subprocess": 10, "HTTP": 2}, "examples": [{"file": "examples/agent_from_any_llm.py", "line": 42, "category": "LangChain", "detail": "@tool \"get_weather\" — no policy check", "owasp": "ASI02: Tool Misuse & Exploitation"}, {"file": "examples/multiple_tools.py", "line": 15, "category": "LangChain", "detail": "@tool \"get_weather\" — no policy check", "owasp": "ASI02: Tool Misuse & Exploitation"}, {"file": "examples/multiple_tools.py", "line": 51, "category": "LangChain", "detail": "@tool \"convert_currency\" — no policy check", "owasp": "ASI02: Tool Misuse & Exploitation"}]}, {"dir": "crawl4ai", "name": "Crawl4AI", "stars": "35K", "url": "https://github.com/unclecode/crawl4ai", "files": 433, "findings": 64, "grade": "F", "categories": {"subprocess": 24, "HTTP": 40}, "examples": [{"file": "crawl4ai/browser_manager.py", "line": 217, "category": "subprocess", "detail": "subprocess.check_output — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}, {"file": "crawl4ai/browser_manager.py", "line": 249, "category": "subprocess", "detail": "subprocess.Popen — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}, {"file": "crawl4ai/browser_manager.py", "line": 256, "category": "subprocess", "detail": "subprocess.Popen — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}]}, {"dir": "langflow", "name": "Langflow", "stars": "48K", "url": "https://github.com/langflow-ai/langflow", "files": 1934, "findings": 61, "grade": "F", "categories": {"subprocess": 19, "MCP": 18, "LangChain": 14, "OpenAI": 1, "HTTP": 9}, "examples": [{"file": "scripts/ci/test_constraint_preservation.py", "line": 21, "category": "subprocess", "detail": "subprocess.run — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}, {"file": "src/backend/base/langflow/agentic/mcp/server.py", "line": 49, "category": "MCP", "detail": "@mcp.tool() \"search_templates\" — no aegis middleware", "owasp": "ASI04: Supply Chain Vulnerabilities"}, {"file": "src/backend/base/langflow/agentic/mcp/server.py", "line": 90, "category": "MCP", "detail": "@mcp.tool() \"get_template\" — no aegis middleware", "owasp": "ASI04: Supply Chain Vulnerabilities"}]}, {"dir": "superagi", "name": "SuperAGI", "stars": "15K", "url": "https://github.com/TransformerOptimus/SuperAGI", "files": 461, "findings": 59, "grade": "F", "categories": {"subprocess": 8, "HTTP": 14, "LangChain": 37}, "examples": [{"file": "cli2.py", "line": 20, "category": "subprocess", "detail": "subprocess.run — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}, {"file": "main.py", "line": 294, "category": "HTTP", "detail": "requests.post — raw HTTP in agent code", "owasp": "ASI07: Data Leakage & Exfiltration"}, {"file": "run_gui.py", "line": 16, "category": "subprocess", "detail": "subprocess.run — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}]}, {"dir": "open-interpreter", "name": "Open Interpreter", "stars": "58K", "url": "https://github.com/OpenInterpreter/open-interpreter", "files": 144, "findings": 57, "grade": "F", "categories": {"Anthropic": 1, "HTTP": 16, "subprocess": 40}, "examples": [{"file": "interpreter/computer_use/loop.py", "line": 152, "category": "Anthropic", "detail": "messages.create with tools= — no governance wrapper", "owasp": "ASI02: Tool Misuse & Exploitation"}, {"file": "interpreter/computer_use/loop.py", "line": 484, "category": "HTTP", "detail": "requests.post — raw HTTP in agent code", "owasp": "ASI07: Data Leakage & Exfiltration"}, {"file": "interpreter/computer_use/tools/computer.py", "line": 185, "category": "subprocess", "detail": "os.system — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}]}, {"dir": "mem0", "name": "mem0", "stars": "25K", "url": "https://github.com/mem0ai/mem0", "files": 601, "findings": 54, "grade": "F", "categories": {"subprocess": 35, "HTTP": 6, "LangChain": 5, "MCP": 8}, "examples": [{"file": "cli/python/src/mem0_cli/telemetry.py", "line": 97, "category": "subprocess", "detail": "subprocess.Popen — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}, {"file": "cli/python/tests/test_cli_integration.py", "line": 56, "category": "subprocess", "detail": "subprocess.run — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}, {"file": "embedchain/embedchain/app.py", "line": 215, "category": "HTTP", "detail": "requests.post — raw HTTP in agent code", "owasp": "ASI07: Data Leakage & Exfiltration"}]}, {"dir": "embedchain", "name": "Embedchain", "stars": "10K", "url": "https://github.com/embedchain/embedchain", "files": 601, "findings": 54, "grade": "F", "categories": {"subprocess": 35, "HTTP": 6, "LangChain": 5, "MCP": 8}, "examples": [{"file": "cli/python/src/mem0_cli/telemetry.py", "line": 97, "category": "subprocess", "detail": "subprocess.Popen — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}, {"file": "cli/python/tests/test_cli_integration.py", "line": 56, "category": "subprocess", "detail": "subprocess.run — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}, {"file": "embedchain/embedchain/app.py", "line": 215, "category": "HTTP", "detail": "requests.post — raw HTTP in agent code", "owasp": "ASI07: Data Leakage & Exfiltration"}]}, {"dir": "griptape", "name": "Griptape", "stars": "2K", "url": "https://github.com/griptape-ai/griptape", "files": 1218, "findings": 51, "grade": "F", "categories": {"LangChain": 32, "HTTP": 16, "subprocess": 3}, "examples": [{"file": "docs/griptape-framework/tools/custom-tools/src/index_2.py", "line": 12, "category": "LangChain", "detail": "BaseTool subclass \"RandomTool\" — not governed", "owasp": "ASI02: Tool Misuse & Exploitation"}, {"file": "docs/griptape-framework/tools/src/index_2.py", "line": 13, "category": "LangChain", "detail": "BaseTool subclass \"RandomNumberGenerator\" — not governed", "owasp": "ASI02: Tool Misuse & Exploitation"}, {"file": "griptape/drivers/assistant/griptape_cloud_assistant_driver.py", "line": 81, "category": "HTTP", "detail": "requests.post — raw HTTP in agent code", "owasp": "ASI07: Data Leakage & Exfiltration"}]}, {"dir": "pydantic-ai", "name": "Pydantic AI", "stars": "12K", "url": "https://github.com/pydantic/pydantic-ai", "files": 490, "findings": 39, "grade": "F", "categories": {"OpenAI": 3, "MCP": 35, "Anthropic": 1}, "examples": [{"file": "pydantic_ai_slim/pydantic_ai/models/groq.py", "line": 328, "category": "OpenAI", "detail": "function call with tools= — no governance wrapper", "owasp": "ASI02: Tool Misuse & Exploitation"}, {"file": "pydantic_ai_slim/pydantic_ai/models/huggingface.py", "line": 257, "category": "OpenAI", "detail": "function call with tools= — no governance wrapper", "owasp": "ASI02: Tool Misuse & Exploitation"}, {"file": "pydantic_ai_slim/pydantic_ai/models/openai.py", "line": 802, "category": "OpenAI", "detail": "function call with tools= — no governance wrapper", "owasp": "ASI02: Tool Misuse & Exploitation"}]}, {"dir": "aider", "name": "aider", "stars": "30K", "url": "https://github.com/Aider-AI/aider", "files": 147, "findings": 38, "grade": "F", "categories": {"subprocess": 32, "HTTP": 6}, "examples": [{"file": "aider/commands.py", "line": 974, "category": "subprocess", "detail": "subprocess.run — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}, {"file": "aider/editor.py", "line": 134, "category": "subprocess", "detail": "subprocess.call — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}, {"file": "aider/io.py", "line": 1093, "category": "subprocess", "detail": "subprocess.run — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}]}, {"dir": "metagpt", "name": "MetaGPT", "stars": "48K", "url": "https://github.com/geekan/MetaGPT", "files": 890, "findings": 37, "grade": "F", "categories": {"subprocess": 29, "HTTP": 8}, "examples": [{"file": "examples/build_customized_agent.py", "line": 48, "category": "subprocess", "detail": "subprocess.run — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}, {"file": "metagpt/actions/run_code.py", "line": 106, "category": "subprocess", "detail": "subprocess.Popen — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}, {"file": "metagpt/actions/run_code.py", "line": 151, "category": "subprocess", "detail": "subprocess.run — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}]}, {"dir": "browser-use", "name": "browser-use", "stars": "55K", "url": "https://github.com/browser-use/browser-use", "files": 365, "findings": 36, "grade": "F", "categories": {"subprocess": 34, "OpenAI": 2}, "examples": [{"file": "browser_use/cli.py", "line": 28, "category": "subprocess", "detail": "subprocess.run — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}, {"file": "browser_use/cli.py", "line": 2168, "category": "subprocess", "detail": "subprocess.run — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}, {"file": "browser_use/llm/deepseek/chat.py", "line": 157, "category": "OpenAI", "detail": "function call with tools= — no governance wrapper", "owasp": "ASI02: Tool Misuse & Exploitation"}]}, {"dir": "firecrawl", "name": "Firecrawl", "stars": "25K", "url": "https://github.com/mendableai/firecrawl", "files": 146, "findings": 28, "grade": "F", "categories": {"HTTP": 28}, "examples": [{"file": "apps/python-sdk/firecrawl/__tests__/e2e/v2/conftest.py", "line": 20, "category": "HTTP", "detail": "requests.post — raw HTTP in agent code", "owasp": "ASI07: Data Leakage & Exfiltration"}, {"file": "apps/python-sdk/firecrawl/firecrawl.backup.py", "line": 591, "category": "HTTP", "detail": "requests.post — raw HTTP in agent code", "owasp": "ASI07: Data Leakage & Exfiltration"}, {"file": "apps/python-sdk/firecrawl/firecrawl.backup.py", "line": 687, "category": "HTTP", "detail": "requests.post — raw HTTP in agent code", "owasp": "ASI07: Data Leakage & Exfiltration"}]}, {"dir": "openai-agents", "name": "OpenAI Agents", "stars": "6K", "url": "https://github.com/openai/openai-agents-python", "files": 506, "findings": 24, "grade": "F", "categories": {"subprocess": 13, "MCP": 10, "OpenAI": 1}, "examples": [{"file": "docs/scripts/translate_docs.py", "line": 377, "category": "subprocess", "detail": "subprocess.run — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}, {"file": "examples/mcp/manager_example/mcp_server.py", "line": 15, "category": "MCP", "detail": "@mcp.tool() \"add\" — no aegis middleware", "owasp": "ASI04: Supply Chain Vulnerabilities"}, {"file": "examples/mcp/manager_example/mcp_server.py", "line": 20, "category": "MCP", "detail": "@mcp.tool() \"echo\" — no aegis middleware", "owasp": "ASI04: Supply Chain Vulnerabilities"}]}, {"dir": "awesome-llm-apps", "name": "awesome-llm-apps", "stars": "20K", "url": "https://github.com/Shubhamsaboo/awesome-llm-apps", "files": 453, "findings": 23, "grade": "F", "categories": {"HTTP": 8, "LangChain": 6, "subprocess": 7, "Anthropic": 2}, "examples": [{"file": "advanced_ai_agents/multi_agent_apps/agent_teams/ai_competitor_intelligence_agent_team/competitor_agent_team.py", "line": 154, "category": "HTTP", "detail": "requests.post — raw HTTP in agent code", "owasp": "ASI07: Data Leakage & Exfiltration"}, {"file": "advanced_ai_agents/multi_agent_apps/agent_teams/ai_recruitment_agent_team/ai_recruitment_agent_team.py", "line": 36, "category": "HTTP", "detail": "requests.post — raw HTTP in agent code", "owasp": "ASI07: Data Leakage & Exfiltration"}, {"file": "advanced_ai_agents/multi_agent_apps/agent_teams/ai_services_agency/agency.py", "line": 8, "category": "LangChain", "detail": "BaseTool subclass \"AnalyzeProjectRequirements\" — not governed", "owasp": "ASI02: Tool Misuse & Exploitation"}]}, {"dir": "gpt-engineer", "name": "GPT Engineer", "stars": "52K", "url": "https://github.com/AntonOsika/gpt-engineer", "files": 84, "findings": 23, "grade": "F", "categories": {"subprocess": 22, "HTTP": 1}, "examples": [{"file": "gpt_engineer/applications/cli/file_selector.py", "line": 236, "category": "subprocess", "detail": "subprocess.run — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}, {"file": "gpt_engineer/applications/cli/file_selector.py", "line": 243, "category": "subprocess", "detail": "subprocess.run — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}, {"file": "gpt_engineer/applications/cli/main.py", "line": 256, "category": "subprocess", "detail": "subprocess.run — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}]}, {"dir": "autogen", "name": "AutoGen", "stars": "42K", "url": "https://github.com/microsoft/autogen", "files": 546, "findings": 21, "grade": "F", "categories": {"subprocess": 15, "MCP": 3, "OpenAI": 2, "LangChain": 1}, "examples": [{"file": "python/check_md_code_blocks.py", "line": 61, "category": "subprocess", "detail": "subprocess.run — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}, {"file": "python/docs/src/_extension/code_lint.py", "line": 74, "category": "subprocess", "detail": "subprocess.run — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}, {"file": "python/docs/src/conf.py", "line": 199, "category": "subprocess", "detail": "subprocess.run — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}]}, {"dir": "mirascope", "name": "Mirascope", "stars": "2K", "url": "https://github.com/Mirascope/mirascope", "files": 1183, "findings": 20, "grade": "F", "categories": {"subprocess": 7, "Anthropic": 4, "OpenAI": 9}, "examples": [{"file": "python/mirascope/ops/_internal/closure.py", "line": 1046, "category": "subprocess", "detail": "subprocess.run — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}, {"file": "python/mirascope/ops/_internal/closure.py", "line": 1057, "category": "subprocess", "detail": "subprocess.run — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}, {"file": "python/scripts/generate_extra_imports.py", "line": 50, "category": "subprocess", "detail": "subprocess.run — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}]}, {"dir": "controlflow", "name": "ControlFlow", "stars": "2K", "url": "https://github.com/PrefectHQ/ControlFlow", "files": 141, "findings": 16, "grade": "F", "categories": {"subprocess": 2, "LangChain": 14}, "examples": [{"file": "src/controlflow/cli/dev.py", "line": 78, "category": "subprocess", "detail": "subprocess.run — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}, {"file": "src/controlflow/orchestration/turn_strategies.py", "line": 42, "category": "LangChain", "detail": "@tool \"end_turn\" — no policy check", "owasp": "ASI02: Tool Misuse & Exploitation"}, {"file": "src/controlflow/orchestration/turn_strategies.py", "line": 57, "category": "LangChain", "detail": "@tool \"delegate_to_agent\" — no policy check", "owasp": "ASI02: Tool Misuse & Exploitation"}]}, {"dir": "docling", "name": "Docling", "stars": "18K", "url": "https://github.com/DS4SD/docling", "files": 294, "findings": 15, "grade": "F", "categories": {"subprocess": 6, "HTTP": 9}, "examples": [{"file": "docling/backend/docx/drawingml/utils.py", "line": 31, "category": "subprocess", "detail": "subprocess.run — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}, {"file": "docling/backend/docx/drawingml/utils.py", "line": 57, "category": "subprocess", "detail": "subprocess.run — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}, {"file": "docling/models/inference_engines/common/kserve_v2_http.py", "line": 118, "category": "HTTP", "detail": "requests.post — raw HTTP in agent code", "owasp": "ASI07: Data Leakage & Exfiltration"}]}, {"dir": "dspy", "name": "DSPy", "stars": "22K", "url": "https://github.com/stanfordnlp/dspy", "files": 239, "findings": 14, "grade": "F", "categories": {"HTTP": 3, "subprocess": 4, "MCP": 5, "LangChain": 2}, "examples": [{"file": "dspy/clients/databricks.py", "line": 128, "category": "HTTP", "detail": "requests.post — raw HTTP in agent code", "owasp": "ASI07: Data Leakage & Exfiltration"}, {"file": "dspy/clients/lm_local.py", "line": 71, "category": "subprocess", "detail": "subprocess.Popen — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}, {"file": "dspy/dsp/colbertv2.py", "line": 72, "category": "HTTP", "detail": "requests.post — raw HTTP in agent code", "owasp": "ASI07: Data Leakage & Exfiltration"}]}, {"dir": "swe-agent", "name": "SWE-agent", "stars": "15K", "url": "https://github.com/SWE-agent/SWE-agent", "files": 100, "findings": 13, "grade": "F", "categories": {"subprocess": 12, "HTTP": 1}, "examples": [{"file": "sweagent/run/hooks/apply_patch.py", "line": 106, "category": "subprocess", "detail": "subprocess.run — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}, {"file": "sweagent/run/hooks/swe_bench_evaluate.py", "line": 78, "category": "subprocess", "detail": "subprocess.Popen — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}, {"file": "sweagent/run/hooks/swe_bench_evaluate.py", "line": 101, "category": "subprocess", "detail": "subprocess.run — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}]}, {"dir": "dify", "name": "Dify", "stars": "75K", "url": "https://github.com/langgenius/dify", "files": 2784, "findings": 10, "grade": "F", "categories": {"HTTP": 7, "subprocess": 3}, "examples": [{"file": "api/core/helper/marketplace.py", "line": 29, "category": "HTTP", "detail": "httpx.post — raw HTTP in agent code", "owasp": "ASI07: Data Leakage & Exfiltration"}, {"file": "api/core/helper/marketplace.py", "line": 40, "category": "HTTP", "detail": "httpx.post — raw HTTP in agent code", "owasp": "ASI07: Data Leakage & Exfiltration"}, {"file": "api/core/helper/marketplace.py", "line": 49, "category": "HTTP", "detail": "httpx.post — raw HTTP in agent code", "owasp": "ASI07: Data Leakage & Exfiltration"}]}, {"dir": "haystack", "name": "Haystack", "stars": "18K", "url": "https://github.com/deepset-ai/haystack", "files": 546, "findings": 9, "grade": "F", "categories": {"subprocess": 3, "HTTP": 1, "LangChain": 5}, "examples": [{"file": "docs-website/scripts/test_python_snippets.py", "line": 311, "category": "subprocess", "detail": "subprocess.run — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}, {"file": "haystack/components/websearch/serper_dev.py", "line": 157, "category": "HTTP", "detail": "httpx.post — raw HTTP in agent code", "owasp": "ASI07: Data Leakage & Exfiltration"}, {"file": "scripts/ruff_format_docs.py", "line": 49, "category": "subprocess", "detail": "subprocess.run — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}]}, {"dir": "chatdev", "name": "ChatDev", "stars": "26K", "url": "https://github.com/OpenBMB/ChatDev", "files": 188, "findings": 9, "grade": "F", "categories": {"subprocess": 8, "HTTP": 1}, "examples": [{"file": "functions/edge_processor/transformers.py", "line": 72, "category": "subprocess", "detail": "subprocess.Popen — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}, {"file": "functions/edge_processor/transformers.py", "line": 83, "category": "subprocess", "detail": "subprocess.Popen — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}, {"file": "functions/function_calling/code_executor.py", "line": 41, "category": "subprocess", "detail": "subprocess.run — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}]}, {"dir": "composio", "name": "Composio", "stars": "15K", "url": "https://github.com/ComposioHQ/composio", "files": 169, "findings": 5, "grade": "D", "categories": {"HTTP": 2, "Anthropic": 1, "LangChain": 1, "OpenAI": 1}, "examples": [{"file": "python/composio/core/models/_telemetry.py", "line": 139, "category": "HTTP", "detail": "httpx.post — raw HTTP in agent code", "owasp": "ASI07: Data Leakage & Exfiltration"}, {"file": "python/composio/core/models/_telemetry.py", "line": 145, "category": "HTTP", "detail": "httpx.post — raw HTTP in agent code", "owasp": "ASI07: Data Leakage & Exfiltration"}, {"file": "python/providers/anthropic/anthropic_demo.py", "line": 18, "category": "Anthropic", "detail": "messages.create with tools= — no governance wrapper", "owasp": "ASI02: Tool Misuse & Exploitation"}]}, {"dir": "instructor", "name": "Instructor", "stars": "10K", "url": "https://github.com/instructor-ai/instructor", "files": 368, "findings": 5, "grade": "D", "categories": {"HTTP": 1, "OpenAI": 2, "subprocess": 2}, "examples": [{"file": "examples/logfire-fastapi/test.py", "line": 3, "category": "HTTP", "detail": "requests.post — raw HTTP in agent code", "owasp": "ASI07: Data Leakage & Exfiltration"}, {"file": "examples/patching/pcalls.py", "line": 48, "category": "OpenAI", "detail": "function call with tools= — no governance wrapper", "owasp": "ASI02: Tool Misuse & Exploitation"}, {"file": "examples/patching/pcalls.py", "line": 69, "category": "OpenAI", "detail": "function call with tools= — no governance wrapper", "owasp": "ASI02: Tool Misuse & Exploitation"}]}, {"dir": "ell", "name": "ell", "stars": "5K", "url": "https://github.com/MadcowD/ell", "files": 150, "findings": 5, "grade": "D", "categories": {"subprocess": 5}, "examples": [{"file": "build.py", "line": 8, "category": "subprocess", "detail": "subprocess.run — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}, {"file": "examples/future/realtimewebcam.py", "line": 9, "category": "subprocess", "detail": "os.system — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}, {"file": "examples/rag/wikipedia_mini_rag.py", "line": 50, "category": "subprocess", "detail": "subprocess.run — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}]}, {"dir": "txtai", "name": "txtai", "stars": "10K", "url": "https://github.com/neuml/txtai", "files": 362, "findings": 5, "grade": "D", "categories": {"subprocess": 2, "HTTP": 3}, "examples": [{"file": "src/python/txtai/agent/tool/bash.py", "line": 53, "category": "subprocess", "detail": "subprocess.run — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}, {"file": "src/python/txtai/pipeline/data/filetohtml.py", "line": 86, "category": "subprocess", "detail": "subprocess.Popen — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}, {"file": "src/python/txtai/pipeline/llm/opencode.py", "line": 69, "category": "HTTP", "detail": "httpx.post — raw HTTP in agent code", "owasp": "ASI07: Data Leakage & Exfiltration"}]}, {"dir": "magentic", "name": "Magentic", "stars": "2K", "url": "https://github.com/jackmpcollins/magentic", "files": 49, "findings": 4, "grade": "D", "categories": {"OpenAI": 4}, "examples": [{"file": "src/magentic/chat_model/openai_chat_model.py", "line": 505, "category": "OpenAI", "detail": "function call with tools= — no governance wrapper", "owasp": "ASI02: Tool Misuse & Exploitation"}, {"file": "src/magentic/chat_model/openai_chat_model.py", "line": 554, "category": "OpenAI", "detail": "function call with tools= — no governance wrapper", "owasp": "ASI02: Tool Misuse & Exploitation"}, {"file": "src/magentic/chat_model/openrouter_chat_model.py", "line": 207, "category": "OpenAI", "detail": "function call with tools= — no governance wrapper", "owasp": "ASI02: Tool Misuse & Exploitation"}]}, {"dir": "semantic-kernel", "name": "Semantic Kernel", "stars": "24K", "url": "https://github.com/microsoft/semantic-kernel", "files": 1242, "findings": 3, "grade": "C", "categories": {"MCP": 3}, "examples": [{"file": "python/samples/demos/mcp_with_oauth/server/mcp_simple_auth/legacy_as_server.py", "line": 89, "category": "MCP", "detail": "@mcp.tool() \"get_time\" — no aegis middleware", "owasp": "ASI04: Supply Chain Vulnerabilities"}, {"file": "python/samples/demos/mcp_with_oauth/server/mcp_simple_auth/server.py", "line": 86, "category": "MCP", "detail": "@mcp.tool() \"get_time\" — no aegis middleware", "owasp": "ASI04: Supply Chain Vulnerabilities"}, {"file": "python/tests/assets/test_plugins/TestMCPPlugin/mcp_server.py", "line": 14, "category": "MCP", "detail": "@mcp.tool() \"echo_tool\" — no aegis middleware", "owasp": "ASI04: Supply Chain Vulnerabilities"}]}, {"dir": "devika", "name": "Devika", "stars": "18K", "url": "https://github.com/stitionai/devika", "files": 70, "findings": 3, "grade": "C", "categories": {"subprocess": 3}, "examples": [{"file": "src/agents/runner/runner.py", "line": 85, "category": "subprocess", "detail": "subprocess.run — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}, {"file": "src/agents/runner/runner.py", "line": 137, "category": "subprocess", "detail": "subprocess.run — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}, {"file": "src/agents/runner/runner.py", "line": 177, "category": "subprocess", "detail": "subprocess.run — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}]}, {"dir": "taskweaver", "name": "TaskWeaver", "stars": "5K", "url": "https://github.com/microsoft/TaskWeaver", "files": 167, "findings": 3, "grade": "C", "categories": {"subprocess": 2, "HTTP": 1}, "examples": [{"file": "auto_eval/evaluator.py", "line": 216, "category": "subprocess", "detail": "subprocess.check_output — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}, {"file": "auto_eval/taskweaver_eval.py", "line": 72, "category": "subprocess", "detail": "subprocess.run — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}, {"file": "taskweaver/ext_role/web_explorer/planner.py", "line": 88, "category": "HTTP", "detail": "requests.post — raw HTTP in agent code", "owasp": "ASI07: Data Leakage & Exfiltration"}]}, {"dir": "guidance", "name": "Guidance", "stars": "19K", "url": "https://github.com/guidance-ai/guidance", "files": 148, "findings": 1, "grade": "B", "categories": {"subprocess": 1}, "examples": [{"file": "tests/conftest.py", "line": 143, "category": "subprocess", "detail": "subprocess.run — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}]}, {"dir": "chainlit", "name": "Chainlit", "stars": "8K", "url": "https://github.com/Chainlit/chainlit", "files": 163, "findings": 1, "grade": "B", "categories": {"subprocess": 1}, "examples": [{"file": "backend/build.py", "line": 27, "category": "subprocess", "detail": "subprocess.run — direct shell execution", "owasp": "ASI08: Uncontrolled Code Execution"}]}, {"dir": "swarm", "name": "Swarm", "stars": "18K", "url": "https://github.com/openai/swarm", "files": 62, "findings": 0, "grade": "A", "categories": {}, "examples": []}, {"dir": "cline", "name": "Cline", "stars": "30K", "url": "https://github.com/cline/cline", "files": 8, "findings": 0, "grade": "A", "categories": {}, "examples": []}, {"dir": "outlines", "name": "Outlines", "stars": "10K", "url": "https://github.com/dottxt-ai/outlines", "files": 119, "findings": 0, "grade": "A", "categories": {}, "examples": []}, {"dir": "flowise", "name": "Flowise", "stars": "35K", "url": "https://github.com/FlowiseAI/Flowise", "files": 0, "findings": 0, "grade": "A", "categories": {}, "examples": []}];
 
-    // Sort by findings descending
     DATA.sort((a, b) => b.findings - a.findings);
 
     const totalFindings = DATA.reduce((s, r) => s + r.findings, 0);
@@ -236,57 +293,89 @@
     document.getElementById('total-files').textContent = totalFiles.toLocaleString();
 
     const tbody = document.getElementById('results-body');
+    const gradeClass = g => ({ A:'grade-a', B:'grade-b', C:'grade-c', D:'grade-d', F:'grade-f' })[g] || 'grade-f';
 
-    DATA.forEach((repo, i) => {
-      // Main row
-      const tr = document.createElement('tr');
-      tr.style.cursor = 'pointer';
-      tr.innerHTML = `
-        <td class="repo-name"><a href="${repo.url}" target="_blank" rel="noopener">${repo.name}</a></td>
-        <td class="stars">${repo.stars}</td>
-        <td>${repo.files.toLocaleString()}</td>
-        <td class="finding-count">${repo.findings}</td>
-        <td><span class="grade grade-f">F</span></td>
-        <td class="cat-tags">${Object.entries(repo.categories)
-          .sort((a,b) => b[1]-a[1])
-          .map(([c,n]) => `<span class="cat-tag">${c}: ${n}</span>`)
-          .join('')}</td>
-        <td><button class="toggle-btn" data-idx="${i}">details</button></td>
-      `;
-      tbody.appendChild(tr);
+    function renderTable(filter) {
+      tbody.innerHTML = '';
+      const filtered = filter === 'all' ? DATA : DATA.filter(r => r.grade === filter);
+      filtered.forEach((repo, i) => {
+        const tr = document.createElement('tr');
+        tr.style.cursor = 'pointer';
+        tr.dataset.grade = repo.grade;
+        const findingClass = repo.findings <= 3 ? 'finding-count low' : 'finding-count';
+        tr.innerHTML = `
+          <td class="repo-name"><a href="${repo.url}" target="_blank" rel="noopener">${repo.name}</a></td>
+          <td class="stars">${repo.stars}</td>
+          <td>${repo.files.toLocaleString()}</td>
+          <td class="${findingClass}">${repo.findings}</td>
+          <td><span class="grade ${gradeClass(repo.grade)}">${repo.grade}</span></td>
+          <td class="cat-tags">${Object.entries(repo.categories || {})
+            .sort((a,b) => b[1]-a[1])
+            .map(([c,n]) => `<span class="cat-tag">${c}: ${n}</span>`)
+            .join('')}</td>
+          <td><button class="toggle-btn" data-idx="${i}">details</button></td>
+        `;
+        tbody.appendChild(tr);
 
-      // Detail row
-      const detailTr = document.createElement('tr');
-      detailTr.className = 'detail-row';
-      detailTr.id = `detail-${i}`;
-      detailTr.innerHTML = `
-        <td colspan="7">
-          <ul class="detail-list">
-            ${repo.examples.map(ex => `
-              <li>
-                <span class="detail-file">${ex.file}:${ex.line}</span>
-                &mdash; ${ex.detail}
-                ${ex.owasp ? `<span class="detail-owasp">${ex.owasp}</span>` : ''}
-              </li>
-            `).join('')}
-            ${repo.findings > 3 ? `<li style="color:var(--text-muted)">... and ${repo.findings - 3} more findings. Run <code>aegis scan</code> to see all.</li>` : ''}
-          </ul>
-        </td>
-      `;
-      tbody.appendChild(detailTr);
+        const detailTr = document.createElement('tr');
+        detailTr.className = 'detail-row';
+        detailTr.id = `detail-${i}`;
+        detailTr.innerHTML = `
+          <td colspan="7">
+            <ul class="detail-list">
+              ${(repo.examples || []).map(ex => `
+                <li>
+                  <span class="detail-file">${ex.file}:${ex.line}</span>
+                  &mdash; ${ex.detail}
+                  ${ex.owasp ? `<span class="detail-owasp">${ex.owasp}</span>` : ''}
+                </li>
+              `).join('')}
+              ${repo.findings > 3 ? `<li style="color:var(--text-muted)">... and ${repo.findings - 3} more findings. Run <code>aegis scan</code> to see all.</li>` : ''}
+            </ul>
+          </td>
+        `;
+        tbody.appendChild(detailTr);
 
-      // Toggle
-      tr.addEventListener('click', () => {
-        detailTr.classList.toggle('open');
+        tr.addEventListener('click', () => detailTr.classList.toggle('open'));
+      });
+
+      document.querySelectorAll('.toggle-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          document.getElementById(`detail-${btn.dataset.idx}`)?.classList.toggle('open');
+        });
+      });
+    }
+
+    renderTable('all');
+
+    // Filter buttons
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderTable(btn.dataset.grade);
       });
     });
 
-    // Also handle button clicks
-    document.querySelectorAll('.toggle-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const idx = btn.dataset.idx;
-        document.getElementById(`detail-${idx}`).classList.toggle('open');
+    // Sort headers
+    let sortDir = {};
+    document.querySelectorAll('th[data-sort]').forEach(th => {
+      th.addEventListener('click', () => {
+        const key = th.dataset.sort;
+        sortDir[key] = !(sortDir[key] || false);
+        const dir = sortDir[key] ? 1 : -1;
+        DATA.sort((a, b) => {
+          let av = a[key], bv = b[key];
+          if (key === 'stars') {
+            av = parseFloat(av) * (av.includes('K') ? 1000 : 1);
+            bv = parseFloat(bv) * (bv.includes('K') ? 1000 : 1);
+          }
+          if (typeof av === 'string') return av.localeCompare(bv) * dir;
+          return (av - bv) * dir;
+        });
+        const active = document.querySelector('.filter-btn.active');
+        renderTable(active?.dataset.grade || 'all');
       });
     });
   </script>
