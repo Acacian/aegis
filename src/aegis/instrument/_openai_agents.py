@@ -110,7 +110,7 @@ def patch_openai_agents() -> FrameworkPatch:
 
             return result
 
-        Runner.run = governed_run
+        Runner.run = governed_run  # type: ignore[method-assign]
         targets.append("Runner.run")
 
         # -- Patch Runner.run_sync ------------------------------------
@@ -137,7 +137,7 @@ def patch_openai_agents() -> FrameworkPatch:
 
                 return result
 
-            Runner.run_sync = governed_run_sync
+            Runner.run_sync = governed_run_sync  # type: ignore[method-assign]
             targets.append("Runner.run_sync")
 
     except ImportError:
@@ -222,9 +222,9 @@ def unpatch_openai_agents() -> None:
         from agents import Runner
 
         if "Runner.run" in _originals:
-            Runner.run = _originals.pop("Runner.run")
+            Runner.run = _originals.pop("Runner.run")  # type: ignore[method-assign]
         if "Runner.run_sync" in _originals:
-            Runner.run_sync = _originals.pop("Runner.run_sync")
+            Runner.run_sync = _originals.pop("Runner.run_sync")  # type: ignore[method-assign]
     except ImportError:
         pass
 
