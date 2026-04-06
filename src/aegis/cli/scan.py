@@ -675,9 +675,9 @@ def format_sarif(
     directory: str = ".",
 ) -> str:
     """Build a SARIF v2.1.0 report for GitHub Code Scanning integration."""
-    rules: list[dict] = []
+    rules: list[dict[str, object]] = []
     rule_ids_seen: set[str] = set()
-    results: list[dict] = []
+    results: list[dict[str, object]] = []
 
     for f in findings:
         # Create rule ID from category + owasp
@@ -694,7 +694,7 @@ def format_sarif(
                 if owasp_info
                 else f"Ungoverned {f.category} call"
             )
-            rule_entry: dict = {
+            rule_entry: dict[str, object] = {
                 "id": rule_id,
                 "name": f"Ungoverned{f.category}Call",
                 "shortDescription": {"text": f"Ungoverned {f.category} call detected"},
@@ -712,7 +712,7 @@ def format_sarif(
         except ValueError:
             rel_path = f.file
 
-        result_entry: dict = {
+        result_entry: dict[str, object] = {
             "ruleId": rule_id,
             "level": "warning",
             "message": {"text": f"{f.detail} [{f.owasp_risk}]" if f.owasp_risk else f.detail},
