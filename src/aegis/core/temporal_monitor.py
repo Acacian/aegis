@@ -262,9 +262,14 @@ class TemporalMonitor:
         action_a, action_b = rule.actions[0], rule.actions[1]
         if event.event_type != action_b:
             return []
-        # Check if A ever occurred before this event.
+        # Check if A ever occurred before this event (use <= to handle
+        # equal timestamps from low-resolution clocks, e.g. Windows).
         prior = [
-            e for e in agent_events if e.event_type == action_a and e.timestamp < event.timestamp
+            e
+            for e in agent_events
+            if e.event_type == action_a
+            and e.timestamp <= event.timestamp
+            and e.event_id != event.event_id
         ]
         if prior:
             return []
@@ -291,9 +296,14 @@ class TemporalMonitor:
         action_a, action_b = rule.actions[0], rule.actions[1]
         if event.event_type != action_a:
             return []
-        # Check if B occurred before this event.
+        # Check if B occurred before this event (use <= to handle
+        # equal timestamps from low-resolution clocks, e.g. Windows).
         prior_b = [
-            e for e in agent_events if e.event_type == action_b and e.timestamp < event.timestamp
+            e
+            for e in agent_events
+            if e.event_type == action_b
+            and e.timestamp <= event.timestamp
+            and e.event_id != event.event_id
         ]
         if not prior_b:
             return []

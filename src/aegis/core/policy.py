@@ -273,7 +273,7 @@ class Policy:
         path = Path(path)
         if not path.exists():
             raise FileNotFoundError(f"Policy file not found: {path}")
-        with path.open() as f:
+        with path.open(encoding="utf-8") as f:
             data = yaml.safe_load(f)
         return cls.from_dict(data, semantic_evaluator=semantic_evaluator)
 

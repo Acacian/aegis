@@ -94,7 +94,7 @@ def _load_actions(path: Path) -> list[Action]:
     keys.  Optional keys: ``params``, ``description``, ``agent_id``.
     """
     actions: list[Action] = []
-    with path.open() as f:
+    with path.open(encoding="utf-8") as f:
         for line in f:
             line = line.strip()
             if not line:

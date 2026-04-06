@@ -183,7 +183,7 @@ class AgentConstitution:
         """Load a constitution from a YAML file."""
         import yaml
 
-        with open(path) as f:
+        with open(path, encoding="utf-8") as f:
             data = yaml.safe_load(f) or {}
         return cls.from_dict(data.get("constitution", data))
 

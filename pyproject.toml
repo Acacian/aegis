@@ -124,12 +124,13 @@ warn_return_any = true
 warn_unused_configs = true
 
 [[tool.mypy.overrides]]
-module = ["playwright.*", "langchain_core.*", "crewai.*", "agents.*", "httpx.*", "mcp.*", "starlette.*", "uvicorn.*", "redis.*", "asyncpg.*", "anthropic.*", "openai.*", "google.adk.*"]
+module = ["playwright.*", "langchain_core.*", "langchain.*", "langgraph.*", "crewai.*", "agents.*", "httpx.*", "mcp.*", "starlette.*", "uvicorn.*", "redis.*", "asyncpg.*", "anthropic.*", "openai.*", "google.adk.*", "google.genai.*", "google.generativeai.*", "pydantic_ai.*", "llama_index.*", "litellm.*", "instructor.*", "dspy.*", "jsonschema.*"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = ["aegis.mcp_server", "aegis.mcp_proxy", "aegis.adapters.openai_agents"]
 disallow_untyped_decorators = false
+warn_unused_ignores = false
 
 [[tool.mypy.overrides]]
 module = ["aegis.runtime.audit_redis", "aegis.core.rate_limiter_redis"]
@@ -137,4 +138,8 @@ warn_unused_ignores = false
 
 [[tool.mypy.overrides]]
 module = ["aegis.integrations.patch_openai", "aegis.integrations.patch_anthropic"]
+warn_unused_ignores = false
+
+[[tool.mypy.overrides]]
+module = ["aegis.instrument.*", "aegis.adapters.*", "aegis.contrib.*"]
 warn_unused_ignores = false

@@ -222,7 +222,7 @@ def load_events_from_jsonl(path: Path) -> list[ReplayEvent]:
     ``parent_agent_id``, ``chain_id``, ``chain_depth``.
     """
     events: list[ReplayEvent] = []
-    with Path(path).open() as f:
+    with Path(path).open(encoding="utf-8") as f:
         for line in f:
             line = line.strip()
             if not line:

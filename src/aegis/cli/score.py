@@ -182,7 +182,7 @@ def _rule_count_bonus(count: int) -> int:
 def calculate_score(policy_path: str | Path) -> ScoreResult:
     """Load a policy YAML and calculate its governance score."""
     path = Path(policy_path)
-    with path.open() as f:
+    with path.open(encoding="utf-8") as f:
         data: dict[str, Any] = yaml.safe_load(f) or {}
 
     rules: list[dict[str, Any]] = data.get("rules") or []
