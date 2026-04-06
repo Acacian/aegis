@@ -96,7 +96,7 @@ def pytest_collection_finish(session: pytest.Session) -> None:
         pytest.fail("\n".join(lines), pytrace=False)
 
 
-_aegis_key = pytest.StashKey[dict]()
+_aegis_key = pytest.StashKey[dict[str, object]]()
 
 
 def pytest_report_header(config: pytest.Config) -> list[str]:
