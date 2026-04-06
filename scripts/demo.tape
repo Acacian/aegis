@@ -37,7 +37,7 @@ Enter
 Sleep 2s
 
 # Simulate pip output
-Type "# Successfully installed agent-aegis-0.5.1"
+Type "# Successfully installed agent-aegis-0.9.1"
 Enter
 Sleep 1.5s
 

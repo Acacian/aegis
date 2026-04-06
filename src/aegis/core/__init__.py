@@ -58,6 +58,10 @@ _LAZY_IMPORTS: dict[str, str] = {
     "DriftPolicyDecision": "aegis.core.drift_policy",
     "DriftPolicyEvaluator": "aegis.core.drift_policy",
     "DriftPolicyRule": "aegis.core.drift_policy",
+    # autopolicy_llm
+    "AnthropicPolicyGenerator": "aegis.core.autopolicy_llm",
+    "OpenAIPolicyGenerator": "aegis.core.autopolicy_llm",
+    "YAMLFallbackGenerator": "aegis.core.autopolicy_llm",
     # budget
     "BudgetAction": "aegis.core.budget",
     "BudgetExhausted": "aegis.core.budget",
@@ -125,6 +129,10 @@ _LAZY_IMPORTS: dict[str, str] = {
     "JustificationGapComputer": "aegis.core.justification_gap",
     "JustificationGapResult": "aegis.core.justification_gap",
     "RuleBasedImpactScorer": "aegis.core.justification_gap",
+    # killswitch
+    "KillSwitch": "aegis.core.killswitch",
+    "KillSwitchStatus": "aegis.core.killswitch",
+    "KillSwitchTriggered": "aegis.core.killswitch",
     # leakage_detector
     "LeakageDetector": "aegis.core.leakage_detector",
     "LeakageFinding": "aegis.core.leakage_detector",
@@ -212,6 +220,8 @@ _LAZY_IMPORTS: dict[str, str] = {
     "RateLimiter": "aegis.core.rate_limiter",
     "RateLimitResult": "aegis.core.rate_limiter",
     "RateLimitRule": "aegis.core.rate_limiter",
+    # rate_limiter_redis
+    "RedisRateLimiter": "aegis.core.rate_limiter_redis",
     # result
     "Result": "aegis.core.result",
     "ResultStatus": "aegis.core.result",
@@ -248,6 +258,20 @@ _LAZY_IMPORTS: dict[str, str] = {
     "TaintSeverity": "aegis.core.taint",
     "TaintTracker": "aegis.core.taint",
     "TaintedValue": "aegis.core.taint",
+    # tenant
+    "Tenant": "aegis.core.tenant",
+    "TenantQuota": "aegis.core.tenant",
+    "TenantRegistry": "aegis.core.tenant",
+    "TenantTier": "aegis.core.tenant",
+    "get_tenant": "aegis.core.tenant",
+    "set_tenant": "aegis.core.tenant",
+    "tenant_scope": "aegis.core.tenant",
+    # tiers
+    "Feature": "aegis.core.tiers",
+    "FeatureGate": "aegis.core.tiers",
+    "FeatureNotAvailableError": "aegis.core.tiers",
+    "Tier": "aegis.core.tiers",
+    "TierInfo": "aegis.core.tiers",
     # contracts (arXiv:2601.08815 Agent Contracts)
     "ContractMonitor": "aegis.core.contracts",
     "ContractStatus": "aegis.core.contracts",
@@ -345,6 +369,15 @@ if TYPE_CHECKING:
     )
     from aegis.core.anomaly import (
         BehaviorProfile as BehaviorProfile,
+    )
+    from aegis.core.autopolicy_llm import (
+        AnthropicPolicyGenerator as AnthropicPolicyGenerator,
+    )
+    from aegis.core.autopolicy_llm import (
+        OpenAIPolicyGenerator as OpenAIPolicyGenerator,
+    )
+    from aegis.core.autopolicy_llm import (
+        YAMLFallbackGenerator as YAMLFallbackGenerator,
     )
     from aegis.core.budget import (
         BudgetAction as BudgetAction,
@@ -573,6 +606,15 @@ if TYPE_CHECKING:
     )
     from aegis.core.justification_gap import (
         RuleBasedImpactScorer as RuleBasedImpactScorer,
+    )
+    from aegis.core.killswitch import (
+        KillSwitch as KillSwitch,
+    )
+    from aegis.core.killswitch import (
+        KillSwitchStatus as KillSwitchStatus,
+    )
+    from aegis.core.killswitch import (
+        KillSwitchTriggered as KillSwitchTriggered,
     )
     from aegis.core.leakage_detector import (
         LeakageDetector as LeakageDetector,
@@ -815,6 +857,9 @@ if TYPE_CHECKING:
     from aegis.core.rate_limiter import (
         RateLimitRule as RateLimitRule,
     )
+    from aegis.core.rate_limiter_redis import (
+        RedisRateLimiter as RedisRateLimiter,
+    )
     from aegis.core.result import Result as Result
     from aegis.core.result import ResultStatus as ResultStatus
     from aegis.core.retry import RetryPolicy as RetryPolicy
@@ -894,3 +939,21 @@ if TYPE_CHECKING:
     from aegis.core.taint import (
         TaintTracker as TaintTracker,
     )
+    from aegis.core.tenant import Tenant as Tenant
+    from aegis.core.tenant import TenantQuota as TenantQuota
+    from aegis.core.tenant import (
+        TenantRegistry as TenantRegistry,
+    )
+    from aegis.core.tenant import TenantTier as TenantTier
+    from aegis.core.tenant import get_tenant as get_tenant
+    from aegis.core.tenant import set_tenant as set_tenant
+    from aegis.core.tenant import (
+        tenant_scope as tenant_scope,
+    )
+    from aegis.core.tiers import Feature as Feature
+    from aegis.core.tiers import FeatureGate as FeatureGate
+    from aegis.core.tiers import (
+        FeatureNotAvailableError as FeatureNotAvailableError,
+    )
+    from aegis.core.tiers import Tier as Tier
+    from aegis.core.tiers import TierInfo as TierInfo
