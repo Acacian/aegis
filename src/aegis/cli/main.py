@@ -1744,8 +1744,6 @@ def _cmd_uninstall_impact(args: argparse.Namespace) -> None:
 
 def _cmd_proxy(args: argparse.Namespace) -> None:
     """Start the Aegis governance proxy server."""
-    import asyncio
-
     from aegis.proxy.config import ProxyConfig, UpstreamConfig
 
     if args.proxy_config:
@@ -1784,28 +1782,31 @@ def _cmd_proxy(args: argparse.Namespace) -> None:
             claims=ClaimsConfig(enabled=args.enable_claims),
         )
 
-    from aegis.proxy.server import AegisProxy
+    from aegis.proxy.app import create_app
 
-    proxy = AegisProxy(config)
+    app = create_app(config)
 
-    async def _run() -> None:
-        await proxy.start()
-        print(
-            f"Aegis Proxy listening on {config.listen_host}:{config.listen_port} "
-            f"(mode={config.mode}, upstreams={len(config.upstreams)})"
-        )
-        print("Press Ctrl+C to stop.")
-        try:
-            # Keep running until interrupted
-            while True:
-                await asyncio.sleep(1)
-        except asyncio.CancelledError:
-            pass
+    print(
+        f"Aegis Proxy starting on {config.listen_host}:{config.listen_port} "
+        f"(mode={config.mode}, upstreams={len(config.upstreams)})"
+    )
 
     try:
-        asyncio.run(_run())
-    except KeyboardInterrupt:
-        print("\nProxy stopped.")
+        import uvicorn
+
+        uvicorn.run(
+            app,
+            host=config.listen_host,
+            port=config.listen_port,
+            log_level="info",
+        )
+    except ImportError:
+        print(
+            "Error: uvicorn is required for the proxy server.\n"
+            "Install it with: pip install 'agent-aegis[server]'",
+            file=sys.stderr,
+        )
+        sys.exit(1)
 
 
 if __name__ == "__main__":

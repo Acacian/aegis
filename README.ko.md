@@ -272,6 +272,18 @@ Claude Desktop, Cursor, VS Code, Windsurf에서 사용 가능. 툴 포이즈닝 
 | **컴플라이언스** | 수동 문서화 | 없음 | 엔터프라이즈 영업 | **EU AI Act, NIST, SOC2 내장** |
 | **비용** | 엔지니어링 시간 | 무료~$$$ | $$$$ + 인프라 | **무료 (MIT). 영원히.** |
 
+### Aegis만의 차별점
+
+다른 도구는 입출력을 검사합니다. Aegis는 결정 자체를 거버닝합니다.
+
+| 기능 | 의미 | 근거 |
+|---|---|---|
+| **Selection Governance** | 에이전트가 *제외한 것*을 감사합니다. 위험한 옵션을 "도움이 되려고" 빼는 모델은 선택 권력을 행사하는 것 — Aegis가 이를 탐지합니다. | [Santander et al., arXiv:2602.14606](https://arxiv.org/abs/2602.14606) |
+| **Justification Gap** | 6차원 비대칭 스코어링: 에이전트가 영향을 선언하면 Aegis가 독립 평가합니다. 과소 보고 시 에스컬레이션 또는 차단. | COA-MAS (Carvalho) |
+| **3분할 ActionClaim** | 모든 툴 콜이 Declared(에이전트 작성, 비신뢰), Assessed(Aegis 계산), Chain(위임) 필드로 분리. 구조적 분리로 표면적 정렬(cosmetic alignment)을 탐지 가능. | — |
+| **단조 신뢰 제약** | 위임된 에이전트는 자기 권한을 상승시킬 수 없습니다. 체인을 따라 신뢰 수준은 비증가 — 위반 시 자동 차단. | 격자 기반 접근 제어 |
+| **풀 라이프사이클** | Scan(탐지) → Instrument(보호) → Policy CI/CD(테스트) → Runtime(거버닝) → Proxy(게이트웨이) → Audit(추적). 라이브러리 하나, `pip install` 한 번. | — |
+
 ---
 
 ## CLI

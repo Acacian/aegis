@@ -11,6 +11,7 @@ from datetime import UTC, datetime
 
 from aegis.adapters.base import BaseExecutor
 from aegis.core.action import Action
+from aegis.core.action_claim import ActionClaim
 from aegis.core.plan import ExecutionPlan
 from aegis.core.policy import Approval, Policy, PolicyDecision
 from aegis.core.result import Result, ResultStatus
@@ -308,6 +309,58 @@ class Runtime:
         self.audit.log(self.session_id, decision, result=result, human_decision=human_decision)
 
         return result
+
+    async def execute_claim(
+        self,
+        claim: ActionClaim,
+        *,
+        dry_run: bool = False,
+    ) -> Result:
+        """Execute an ActionClaim through the full governance pipeline.
+
+        This is the v0.9 entry point that works directly with ActionClaim
+        objects. The claim is assessed (if not already), converted to an
+        Action via ``to_action()``, and run through the standard pipeline.
+
+        Args:
+            claim: The ActionClaim to evaluate and execute.
+            dry_run: If True, evaluate but don't execute.
+
+        Returns:
+            A Result. The claim's verdict is updated in-place.
+        """
+        from aegis.core.claim_policy import ClaimPolicy
+
+        # Assess the claim via ClaimPolicy
+        claim_policy = ClaimPolicy(self.policy, assess=True)
+        cp_decision = claim_policy.evaluate(claim)
+
+        # If claim-level governance blocks it, return immediately
+        if not cp_decision.is_allowed:
+            return Result(
+                action=claim.to_action(),
+                status=ResultStatus.BLOCKED,
+                error=cp_decision.explanation,
+                completed_at=datetime.now(UTC),
+            )
+
+        # If escalation is required, route through approval
+        if cp_decision.requires_escalation:
+            action = claim.to_action()
+            approved = await self.approval.request_approval(cp_decision.policy_decision)
+            if not approved:
+                return Result(
+                    action=action,
+                    status=ResultStatus.DENIED,
+                    error="Escalation denied by human operator",
+                    completed_at=datetime.now(UTC),
+                )
+
+        # Convert to Action and run through standard pipeline
+        action = self._with_agent_context(claim.to_action())
+        plan = self.plan([action])
+        results = await self.execute(plan, dry_run=dry_run)
+        return results[0]
 
     async def _execute_with_retry(self, action: Action) -> Result:
         """Execute an action with retry and optional rollback."""
