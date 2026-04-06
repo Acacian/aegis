@@ -16,7 +16,9 @@ keywords = [
     "langchain", "crewai", "openai", "anthropic", "safety",
     "mcp", "cost-management", "supply-chain-security", "a2a", "observability",
     "security", "compliance", "eu-ai-act", "policy-as-code", "audit-trail",
-    "runtime-security",
+    "runtime-security", "llm-security", "llm-guardrails", "toxicity-detection",
+    "prompt-leak-detection", "ai-agent-security", "pii-masking",
+    "injection-detection", "litellm", "pydantic-ai", "llamaindex",
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
