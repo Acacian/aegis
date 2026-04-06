@@ -4,8 +4,8 @@
     <strong>코드베이스에서 보호되지 않은 AI 호출을 찾으세요. 프로덕션 전에 수정하세요.</strong>
   </p>
   <p align="center">
-    <code>pip install agent-aegis && aegis scan .</code> — 30초 만에 보호되지 않은 모든 LLM 호출과 툴 호출을 찾습니다.<br/>
-    한 줄로 전부 보호: <code>aegis.auto_instrument()</code> — 11개 프레임워크에 인젝션 차단, PII 마스킹, 감사 추적을 코드 변경 없이 추가합니다.
+    <code>pip install agent-aegis && aegis scan .</code> — 30초 만에 15개 프레임워크에서 보호되지 않은 AI 호출을 탐지합니다.<br/>
+    한 줄로 전부 보호: <code>aegis.auto_instrument()</code> — 12개 프레임워크에 인젝션 차단, PII 마스킹, 감사 추적을 코드 변경 없이 추가합니다.
   </p>
 </p>
 
@@ -17,7 +17,7 @@
   <a href="https://github.com/Acacian/aegis/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License"></a>
   <a href="https://acacian.github.io/aegis/"><img src="https://img.shields.io/badge/docs-acacian.github.io%2Faegis-blue" alt="Docs"></a>
   <br/>
-  <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-6061%2B_passed-brightgreen" alt="Tests"></a>
+  <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-6100%2B_passed-brightgreen" alt="Tests"></a>
   <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/coverage-92%25-brightgreen" alt="Coverage"></a>
   <a href="https://acacian.github.io/aegis/playground/"><img src="https://img.shields.io/badge/playground-브라우저에서_체험-ff6b6b" alt="Playground"></a>
   <a href="https://acacian.github.io/aegis/playground/scan-report.html"><img src="https://img.shields.io/badge/스캔_리포트-39개_레포%2C_92%25_F-red" alt="Scan Report"></a>
@@ -49,16 +49,31 @@ aegis scan .
 ```
 
 ```
-Scanning . for ungoverned AI calls...
+Aegis Governance Scan
+=====================
+Scanned: 47 files in ./src
 
-  src/agent.py:12     openai.ChatCompletion.create()    NO GUARDRAIL
-  src/agent.py:34     langchain.ChatOpenAI.invoke()      NO GUARDRAIL
-  src/tools.py:8      anthropic.messages.create()        NO GUARDRAIL
-  src/pipeline.py:21  crew.kickoff()                     NO GUARDRAIL
+Found 5 ungoverned tool call(s):
+  agent.py:12   OpenAI        function call with tools= — no governance wrapper  [ASI02: Tool Misuse]
+    → Wrap with aegis: import aegis; aegis.auto_instrument()
+  tools.py:8    LangChain     @tool "search_db" — no policy check  [ASI02: Tool Misuse]
+    → Wrap with aegis: import aegis; aegis.auto_instrument()
+  llm.py:21     LiteLLM       litellm.completion() — no governance wrapper  [ASI02: Tool Misuse]
+    → Wrap with aegis: import aegis; aegis.auto_instrument()
+  run.py:5      subprocess    subprocess.run — direct shell execution  [ASI08: Uncontrolled Code Execution]
+    → Use aegis sandbox policy to govern shell execution
+  api.py:14     HTTP          requests.post — raw HTTP in agent code  [ASI07: Data Leakage]
+    → Route through aegis-governed HTTP client or add policy rule
 
-  4 ungoverned AI calls found in 3 files.
-  Run `aegis.auto_instrument()` to add guardrails, or create a policy with `aegis init`.
+OWASP Agentic Top 10 Risks:
+  ASI02: Tool Misuse & Exploitation: 3 finding(s)
+  ASI07: Data Leakage & Exfiltration: 1 finding(s)
+  ASI08: Uncontrolled Code Execution: 1 finding(s)
+
+Governance Score: D (5 ungoverned call(s))
 ```
+
+`--format json|sarif|suggest`, `--threshold A-F`, `--no-fixes`, `.aegisscanignore`, `# aegis: ignore` 인라인 프라그마를 지원합니다.
 
 ## CI에 추가
 
@@ -171,7 +186,7 @@ pip install agent-aegis
 ```python
 import aegis
 aegis.auto_instrument()
-# 11개 프레임워크가 즉시 보호됩니다.
+# 12개 프레임워크가 즉시 보호됩니다.
 ```
 
 ### 3. YAML 정책으로 세밀한 제어
@@ -219,7 +234,7 @@ aegis audit
 ## 설치 옵션
 
 ```bash
-pip install agent-aegis                   # 코어 (11개 프레임워크 자동 계측 포함)
+pip install agent-aegis                   # 코어 (12개 프레임워크 자동 계측 포함)
 pip install langchain-aegis               # LangChain 독립 통합
 pip install 'agent-aegis[mcp]'            # MCP 서버 + 프록시
 pip install 'agent-aegis[server]'         # REST API + 대시보드
@@ -251,7 +266,7 @@ Claude Desktop, Cursor, VS Code, Windsurf에서 사용 가능. 툴 포이즈닝 
 |---|---|---|---|---|
 | **설정** | if/else 며칠 | 벤더별 설정 | K8s + 구매 프로세스 | **`pip install` + 한 줄** |
 | **코드 변경** | 모든 호출 래핑 | SDK별 통합 | 수개월 통합 | **제로 — 런타임 자동 계측** |
-| **크로스 프레임워크** | 프레임워크별 재작성 | 자사 생태계만 | 보통 단일 벤더 | **11개 프레임워크** |
+| **크로스 프레임워크** | 프레임워크별 재작성 | 자사 생태계만 | 보통 단일 벤더 | **12개 프레임워크** |
 | **정책 CI/CD** | 없음 | 없음 | 없음 | **`aegis plan` + `aegis test`** |
 | **감사 추적** | printf 디버깅 | 플랫폼 로그만 | 클라우드 대시보드 | **SQLite + JSONL + 웹훅** |
 | **컴플라이언스** | 수동 문서화 | 없음 | 엔터프라이즈 영업 | **EU AI Act, NIST, SOC2 내장** |
