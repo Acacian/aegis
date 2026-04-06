@@ -37,6 +37,15 @@ _OWASP_MAP: dict[str, tuple[str, str]] = {
     "MCP": ("ASI04", "Supply Chain Vulnerabilities"),
     "subprocess": ("ASI08", "Uncontrolled Code Execution"),
     "HTTP": ("ASI07", "Data Leakage & Exfiltration"),
+    "CrewAI": ("ASI02", "Tool Misuse & Exploitation"),
+    "LlamaIndex": ("ASI02", "Tool Misuse & Exploitation"),
+    "LiteLLM": ("ASI02", "Tool Misuse & Exploitation"),
+    "PydanticAI": ("ASI02", "Tool Misuse & Exploitation"),
+    "OpenAI Agents": ("ASI02", "Tool Misuse & Exploitation"),
+    "Instructor": ("ASI02", "Tool Misuse & Exploitation"),
+    "Google GenAI": ("ASI02", "Tool Misuse & Exploitation"),
+    "DSPy": ("ASI02", "Tool Misuse & Exploitation"),
+    "Google ADK": ("ASI02", "Tool Misuse & Exploitation"),
 }
 
 # ---------------------------------------------------------------------------
@@ -50,6 +59,15 @@ _FIX_MAP: dict[str, str] = {
     "MCP": "Add aegis MCP middleware: from aegis.mcp_proxy import aegis_mcp_middleware",
     "subprocess": "Use aegis sandbox policy to govern shell execution",
     "HTTP": "Route through aegis-governed HTTP client or add policy rule",
+    "CrewAI": "Wrap with aegis: import aegis; aegis.auto_instrument()",
+    "LlamaIndex": "Wrap with aegis: import aegis; aegis.auto_instrument()",
+    "LiteLLM": "Wrap with aegis: import aegis; aegis.auto_instrument()",
+    "PydanticAI": "Wrap with aegis: import aegis; aegis.auto_instrument()",
+    "OpenAI Agents": "Wrap with aegis: import aegis; aegis.auto_instrument()",
+    "Instructor": "Wrap with aegis: import aegis; aegis.auto_instrument()",
+    "Google GenAI": "Wrap with aegis: import aegis; aegis.auto_instrument()",
+    "DSPy": "Wrap with aegis: import aegis; aegis.auto_instrument()",
+    "Google ADK": "Wrap with aegis: import aegis; aegis.auto_instrument()",
 }
 
 
@@ -216,13 +234,31 @@ class _ToolCallVisitor(ast.NodeVisitor):
 
     def _check_decorators(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
         for dec in node.decorator_list:
-            # @tool  (LangChain)
+            # @tool  (LangChain or OpenAI Agents SDK)
             if isinstance(dec, ast.Name) and dec.id == "tool":
-                self._add(
-                    dec,
-                    "LangChain",
-                    f'@tool "{node.name}" \u2014 no policy check',
-                )
+                resolved = self._imports.get("tool", "")
+                if "openai" in resolved.lower() or "agents" in resolved.lower():
+                    self._add(
+                        dec,
+                        "OpenAI Agents",
+                        f'@tool "{node.name}" \u2014 no policy check',
+                    )
+                else:
+                    self._add(
+                        dec,
+                        "LangChain",
+                        f'@tool "{node.name}" \u2014 no policy check',
+                    )
+            # @agent.tool  (Pydantic AI)
+            if isinstance(dec, ast.Attribute) and dec.attr == "tool":
+                root = self._dotted_name(dec.value) if isinstance(dec.value, ast.Name) else ""
+                resolved = self._imports.get(root, "")
+                if "pydantic_ai" in resolved.lower() or root == "agent":
+                    self._add(
+                        dec,
+                        "PydanticAI",
+                        f'@agent.tool "{node.name}" \u2014 no policy check',
+                    )
             # @mcp.tool()  (MCP without aegis middleware)
             if isinstance(dec, ast.Call):
                 dotted = self._dotted_name(dec.func) if isinstance(dec.func, ast.Attribute) else ""
@@ -246,7 +282,6 @@ class _ToolCallVisitor(ast.NodeVisitor):
             )
             # LangChain BaseTool subclass
             if base_name in ("BaseTool", "langchain_core.tools.BaseTool"):
-                # Ignore if it also inherits GovernedTool
                 all_bases = {
                     self._dotted_name(b) if isinstance(b, ast.Attribute | ast.Name) else ""
                     for b in node.bases
@@ -256,6 +291,15 @@ class _ToolCallVisitor(ast.NodeVisitor):
                         node,
                         "LangChain",
                         f'BaseTool subclass "{node.name}" \u2014 not governed',
+                    )
+            # DSPy Module subclass
+            if base_name in ("dspy.Module", "Module"):
+                resolved = self._imports.get("Module", "")
+                if base_name == "dspy.Module" or "dspy" in resolved:
+                    self._add(
+                        node,
+                        "DSPy",
+                        f'dspy.Module subclass "{node.name}" \u2014 not governed',
                     )
         self.generic_visit(node)
 
@@ -268,8 +312,14 @@ class _ToolCallVisitor(ast.NodeVisitor):
             self._check_anthropic(node, dotted)
             self._check_subprocess(node, dotted)
             self._check_http(node, dotted)
+            self._check_litellm(node, dotted)
+            self._check_llamaindex(node, dotted)
+            self._check_google_genai(node, dotted)
+            self._check_pydantic_ai_run(node, dotted)
+            self._check_openai_agents_runner(node, dotted)
         elif isinstance(node.func, ast.Name):
             self._check_subprocess_name(node, node.func.id)
+            self._check_bare_call(node, node.func.id)
         self.generic_visit(node)
 
     # -- individual pattern matchers ----------------------------------------
@@ -340,6 +390,132 @@ class _ToolCallVisitor(ast.NodeVisitor):
             resolved = f"{resolved_root}.{parts[1]}"
             if resolved in http_posts and dotted not in http_posts:
                 self._add(node, "HTTP", f"{resolved} \u2014 raw HTTP in agent code")
+
+    # -- CrewAI -------------------------------------------------------------
+
+    def _check_crewai(self, node: ast.Call, name: str) -> None:
+        """Detect Crew(...) instantiation from crewai."""
+        if name == "Crew":
+            resolved = self._imports.get("Crew", "")
+            if "crewai" in resolved:
+                self._add(node, "CrewAI", "Crew() \u2014 no governance wrapper")
+
+    # -- LiteLLM -----------------------------------------------------------
+
+    def _check_litellm(self, node: ast.Call, dotted: str) -> None:
+        if dotted in ("litellm.completion", "litellm.acompletion"):
+            self._add(node, "LiteLLM", f"{dotted}() \u2014 no governance wrapper")
+
+    def _check_litellm_bare(self, node: ast.Call, name: str) -> None:
+        if name in ("completion", "acompletion"):
+            resolved = self._imports.get(name, "")
+            if "litellm" in resolved:
+                self._add(node, "LiteLLM", f"litellm.{name}() \u2014 no governance wrapper")
+
+    # -- LlamaIndex --------------------------------------------------------
+
+    def _check_llamaindex(self, node: ast.Call, dotted: str) -> None:
+        llama_methods = (".chat", ".achat", ".complete", ".acomplete", ".query", ".aquery")
+        for method in llama_methods:
+            if dotted.endswith(method):
+                root = dotted.split(".")[0]
+                resolved = self._imports.get(root, root)
+                if "llama_index" in resolved or "llamaindex" in resolved.lower():
+                    self._add(
+                        node,
+                        "LlamaIndex",
+                        f"{dotted}() \u2014 no governance wrapper",
+                    )
+                    return
+
+    # -- Google GenAI / Gemini ---------------------------------------------
+
+    def _check_google_genai(self, node: ast.Call, dotted: str) -> None:
+        if dotted.endswith(".generate_content"):
+            root = dotted.split(".")[0]
+            resolved = self._imports.get(root, root)
+            if "google" in resolved.lower() or "genai" in resolved.lower():
+                self._add(
+                    node,
+                    "Google GenAI",
+                    f"{dotted}() \u2014 no governance wrapper",
+                )
+
+    # -- Pydantic AI -------------------------------------------------------
+
+    def _check_pydantic_ai_run(self, node: ast.Call, dotted: str) -> None:
+        if dotted.endswith((".run", ".run_sync")):
+            root = dotted.split(".")[0]
+            resolved = self._imports.get(root, "")
+            if "pydantic_ai" in resolved:
+                self._add(
+                    node,
+                    "PydanticAI",
+                    f"{dotted}() \u2014 no governance wrapper",
+                )
+
+    # -- OpenAI Agents SDK -------------------------------------------------
+
+    def _check_openai_agents_runner(self, node: ast.Call, dotted: str) -> None:
+        if dotted.endswith((".run", ".run_sync")) and "Runner" in dotted:
+            self._add(
+                node,
+                "OpenAI Agents",
+                f"{dotted}() \u2014 no governance wrapper",
+            )
+
+    # -- Instructor --------------------------------------------------------
+
+    def _check_instructor_bare(self, node: ast.Call, name: str) -> None:
+        if name in ("from_openai", "from_anthropic", "from_vertexai"):
+            resolved = self._imports.get(name, "")
+            if "instructor" in resolved:
+                self._add(
+                    node,
+                    "Instructor",
+                    f"instructor.{name}() \u2014 no governance wrapper",
+                )
+
+    # -- Bare call dispatcher (for `from X import Y; Y(...)`) ---------------
+
+    def _check_bare_call(self, node: ast.Call, name: str) -> None:
+        """Dispatch bare function/class calls via import resolution."""
+        self._check_litellm_bare(node, name)
+        self._check_instructor_bare(node, name)
+        self._check_crewai(node, name)
+        self._check_google_genai_bare(node, name)
+        self._check_pydantic_ai_agent(node, name)
+        self._check_openai_agents_agent(node, name)
+
+    def _check_google_genai_bare(self, node: ast.Call, name: str) -> None:
+        if name == "GenerativeModel":
+            resolved = self._imports.get("GenerativeModel", "")
+            if "google" in resolved.lower() or "generativeai" in resolved.lower():
+                self._add(
+                    node,
+                    "Google GenAI",
+                    "GenerativeModel() \u2014 no governance wrapper",
+                )
+
+    def _check_pydantic_ai_agent(self, node: ast.Call, name: str) -> None:
+        if name == "Agent":
+            resolved = self._imports.get("Agent", "")
+            if "pydantic_ai" in resolved:
+                self._add(
+                    node,
+                    "PydanticAI",
+                    "Agent() \u2014 no governance wrapper",
+                )
+
+    def _check_openai_agents_agent(self, node: ast.Call, name: str) -> None:
+        if name == "Agent":
+            resolved = self._imports.get("Agent", "")
+            if "openai.agents" in resolved or "openai_agents" in resolved:
+                self._add(
+                    node,
+                    "OpenAI Agents",
+                    "Agent() \u2014 no governance wrapper",
+                )
 
     # -- utils --------------------------------------------------------------
 
@@ -612,63 +788,33 @@ def suggest_rules(findings: list[Finding]) -> str:
             continue
         seen_categories.add(f.category)
 
-        if f.category == "LangChain":
+        _RULE_TEMPLATES: dict[str, tuple[str, str, str, str]] = {
+            # category -> (rule_name, type, risk_level, approval)
+            "LangChain": ("langchain_tool_governance", "tool_call", "medium", "approve"),
+            "OpenAI": ("openai_function_call_governance", "function_call", "medium", "approve"),
+            "Anthropic": ("anthropic_tool_use_governance", "tool_use", "medium", "approve"),
+            "MCP": ("mcp_tool_governance", "mcp_tool", "high", "approve"),
+            "subprocess": ("block_shell_execution", "shell_exec", "critical", "block"),
+            "HTTP": ("http_request_governance", "http_request", "high", "approve"),
+            "CrewAI": ("crewai_governance", "tool_call", "medium", "approve"),
+            "LlamaIndex": ("llamaindex_governance", "tool_call", "medium", "approve"),
+            "LiteLLM": ("litellm_governance", "function_call", "medium", "approve"),
+            "PydanticAI": ("pydanticai_governance", "tool_call", "medium", "approve"),
+            "OpenAI Agents": ("openai_agents_governance", "tool_call", "medium", "approve"),
+            "Instructor": ("instructor_governance", "function_call", "medium", "approve"),
+            "Google GenAI": ("google_genai_governance", "function_call", "medium", "approve"),
+            "DSPy": ("dspy_governance", "tool_call", "medium", "approve"),
+            "Google ADK": ("google_adk_governance", "tool_call", "medium", "approve"),
+        }
+        tmpl = _RULE_TEMPLATES.get(f.category)
+        if tmpl:
+            name, typ, risk, approval = tmpl
             lines.extend(
                 [
-                    "  - name: langchain_tool_governance",
-                    '    match: { type: "tool_call", target: "*" }',
-                    "    risk_level: medium",
-                    "    approval: approve",
-                    "",
-                ]
-            )
-        elif f.category == "OpenAI":
-            lines.extend(
-                [
-                    "  - name: openai_function_call_governance",
-                    '    match: { type: "function_call", target: "*" }',
-                    "    risk_level: medium",
-                    "    approval: approve",
-                    "",
-                ]
-            )
-        elif f.category == "Anthropic":
-            lines.extend(
-                [
-                    "  - name: anthropic_tool_use_governance",
-                    '    match: { type: "tool_use", target: "*" }',
-                    "    risk_level: medium",
-                    "    approval: approve",
-                    "",
-                ]
-            )
-        elif f.category == "MCP":
-            lines.extend(
-                [
-                    "  - name: mcp_tool_governance",
-                    '    match: { type: "mcp_tool", target: "*" }',
-                    "    risk_level: high",
-                    "    approval: approve",
-                    "",
-                ]
-            )
-        elif f.category == "subprocess":
-            lines.extend(
-                [
-                    "  - name: block_shell_execution",
-                    '    match: { type: "shell_exec", target: "*" }',
-                    "    risk_level: critical",
-                    "    approval: block",
-                    "",
-                ]
-            )
-        elif f.category == "HTTP":
-            lines.extend(
-                [
-                    "  - name: http_request_governance",
-                    '    match: { type: "http_request", target: "*" }',
-                    "    risk_level: high",
-                    "    approval: approve",
+                    f"  - name: {name}",
+                    f'    match: {{ type: "{typ}", target: "*" }}',
+                    f"    risk_level: {risk}",
+                    f"    approval: {approval}",
                     "",
                 ]
             )
