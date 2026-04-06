@@ -2,12 +2,24 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
 
 from aegis.cli.main import main
-from aegis.cli.scan import Finding, format_report, scan_directory, scan_file
+from aegis.cli.scan import (
+    Finding,
+    _grade,
+    _grade_meets_threshold,
+    format_json,
+    format_report,
+    format_sarif,
+    run_scan,
+    scan_directory,
+    scan_file,
+    suggest_rules,
+)
 
 # ---------------------------------------------------------------------------
 # Fixture helpers
@@ -419,28 +431,18 @@ class TestFormatReport:
 
 class TestGrading:
     def test_grade_a(self) -> None:
-        from aegis.cli.scan import _grade
-
         assert _grade(0) == "A"
 
     def test_grade_b(self) -> None:
-        from aegis.cli.scan import _grade
-
         assert _grade(1) == "B"
 
     def test_grade_c(self) -> None:
-        from aegis.cli.scan import _grade
-
         assert _grade(3) == "C"
 
     def test_grade_d(self) -> None:
-        from aegis.cli.scan import _grade
-
         assert _grade(6) == "D"
 
     def test_grade_f(self) -> None:
-        from aegis.cli.scan import _grade
-
         assert _grade(7) == "F"
         assert _grade(100) == "F"
 
@@ -569,3 +571,359 @@ requests.post("https://example.com")
         assert len(findings) == 3
         categories = {f.category for f in findings}
         assert categories == {"subprocess", "HTTP"}
+
+
+# ---------------------------------------------------------------------------
+# NEW: --format json
+# ---------------------------------------------------------------------------
+
+
+class TestFormatJSON:
+    def test_json_output_structure(self) -> None:
+        findings = [
+            Finding(
+                file="/p/agent.py",
+                line=10,
+                category="OpenAI",
+                detail="tools=",
+                owasp_risk="ASI02: Tool Misuse & Exploitation",
+                fix="Wrap with aegis: import aegis; aegis.auto_instrument()",
+            ),
+        ]
+        output = format_json(1, findings, directory="/p")
+        data = json.loads(output)
+        assert data["tool"] == "aegis-scan"
+        assert data["files_scanned"] == 1
+        assert data["findings_count"] == 1
+        assert data["grade"] == "B"
+        assert len(data["findings"]) == 1
+        assert data["findings"][0]["file"] == "/p/agent.py"
+        assert data["findings"][0]["fix"] != ""
+
+    def test_json_empty_findings(self) -> None:
+        output = format_json(5, [])
+        data = json.loads(output)
+        assert data["grade"] == "A"
+        assert data["findings_count"] == 0
+        assert data["findings"] == []
+
+    def test_json_owasp_summary(self) -> None:
+        findings = [
+            Finding(file="/p/a.py", line=1, category="OpenAI", detail="x", owasp_risk="ASI02: T"),
+            Finding(
+                file="/p/a.py", line=2, category="subprocess", detail="y", owasp_risk="ASI08: U"
+            ),
+        ]
+        output = format_json(1, findings, directory="/p")
+        data = json.loads(output)
+        assert "ASI02: T" in data["owasp_summary"]
+        assert "ASI08: U" in data["owasp_summary"]
+
+
+# ---------------------------------------------------------------------------
+# NEW: --format sarif
+# ---------------------------------------------------------------------------
+
+
+class TestFormatSARIF:
+    def test_sarif_valid_structure(self) -> None:
+        findings = [
+            Finding(
+                file="/p/agent.py",
+                line=10,
+                category="OpenAI",
+                detail="tools=",
+                owasp_risk="ASI02: Tool Misuse & Exploitation",
+                fix="Wrap with aegis",
+            ),
+        ]
+        output = format_sarif(1, findings, directory="/p")
+        data = json.loads(output)
+        assert data["version"] == "2.1.0"
+        assert len(data["runs"]) == 1
+        run = data["runs"][0]
+        assert run["tool"]["driver"]["name"] == "aegis-scan"
+        assert len(run["tool"]["driver"]["rules"]) == 1
+        assert len(run["results"]) == 1
+
+    def test_sarif_result_location(self) -> None:
+        findings = [
+            Finding(file="/p/src/agent.py", line=15, category="LangChain", detail="@tool"),
+        ]
+        output = format_sarif(1, findings, directory="/p")
+        data = json.loads(output)
+        loc = data["runs"][0]["results"][0]["locations"][0]["physicalLocation"]
+        assert loc["artifactLocation"]["uri"] == "src/agent.py"
+        assert loc["region"]["startLine"] == 15
+
+    def test_sarif_deduplicates_rules(self) -> None:
+        findings = [
+            Finding(file="/p/a.py", line=1, category="OpenAI", detail="x", owasp_risk="ASI02: T"),
+            Finding(file="/p/b.py", line=2, category="OpenAI", detail="y", owasp_risk="ASI02: T"),
+        ]
+        output = format_sarif(2, findings, directory="/p")
+        data = json.loads(output)
+        assert len(data["runs"][0]["tool"]["driver"]["rules"]) == 1
+        assert len(data["runs"][0]["results"]) == 2
+
+    def test_sarif_empty_findings(self) -> None:
+        output = format_sarif(5, [])
+        data = json.loads(output)
+        assert data["runs"][0]["results"] == []
+
+    def test_sarif_fix_in_help(self) -> None:
+        findings = [
+            Finding(file="/p/a.py", line=1, category="OpenAI", detail="x", fix="Do this"),
+        ]
+        output = format_sarif(1, findings, directory="/p")
+        data = json.loads(output)
+        rule = data["runs"][0]["tool"]["driver"]["rules"][0]
+        assert "help" in rule
+        assert "Do this" in rule["help"]["text"]
+
+
+# ---------------------------------------------------------------------------
+# NEW: --threshold
+# ---------------------------------------------------------------------------
+
+
+class TestThreshold:
+    def test_grade_meets_threshold(self) -> None:
+        assert _grade_meets_threshold("A", "A") is True
+        assert _grade_meets_threshold("A", "C") is True
+        assert _grade_meets_threshold("B", "A") is False
+        assert _grade_meets_threshold("F", "D") is False
+        assert _grade_meets_threshold("D", "F") is True
+
+    def test_threshold_pass(self, tmp_path: Path) -> None:
+        _write(tmp_path, "clean.py", "x = 1\n")
+        exit_code = run_scan(str(tmp_path), threshold="A")
+        assert exit_code == 0
+
+    def test_threshold_fail(self, tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+        _write(tmp_path, "agent.py", "import subprocess\nsubprocess.run(['ls'])\n")
+        exit_code = run_scan(str(tmp_path), threshold="A")
+        assert exit_code == 1
+        err = capsys.readouterr().err
+        assert "does not meet threshold" in err
+
+    def test_threshold_pass_with_findings(self, tmp_path: Path) -> None:
+        _write(tmp_path, "agent.py", "import subprocess\nsubprocess.run(['ls'])\n")
+        exit_code = run_scan(str(tmp_path), threshold="F")
+        assert exit_code == 0
+
+
+# ---------------------------------------------------------------------------
+# NEW: # aegis: ignore pragma
+# ---------------------------------------------------------------------------
+
+
+class TestIgnorePragma:
+    def test_ignore_pragma_skips_finding(self, tmp_path: Path) -> None:
+        _write(
+            tmp_path,
+            "agent.py",
+            """\
+import subprocess
+subprocess.run(["ls"])  # aegis: ignore
+""",
+        )
+        _, findings = scan_directory(tmp_path)
+        assert len(findings) == 0
+
+    def test_ignore_pragma_no_space(self, tmp_path: Path) -> None:
+        _write(
+            tmp_path,
+            "agent.py",
+            """\
+import subprocess
+subprocess.run(["ls"])  # aegis:ignore
+""",
+        )
+        _, findings = scan_directory(tmp_path)
+        assert len(findings) == 0
+
+    def test_without_pragma_still_found(self, tmp_path: Path) -> None:
+        _write(
+            tmp_path,
+            "agent.py",
+            """\
+import subprocess
+subprocess.run(["ls"])
+""",
+        )
+        _, findings = scan_directory(tmp_path)
+        assert len(findings) == 1
+
+    def test_pragma_on_different_line_no_effect(self, tmp_path: Path) -> None:
+        _write(
+            tmp_path,
+            "agent.py",
+            """\
+import subprocess
+# aegis: ignore
+subprocess.run(["ls"])
+""",
+        )
+        _, findings = scan_directory(tmp_path)
+        assert len(findings) == 1
+
+
+# ---------------------------------------------------------------------------
+# NEW: .aegisscanignore
+# ---------------------------------------------------------------------------
+
+
+class TestAegisscanignore:
+    def test_ignore_file_pattern(self, tmp_path: Path) -> None:
+        tests_dir = tmp_path / "tests"
+        tests_dir.mkdir()
+        _write(tests_dir, "test_agent.py", "import subprocess\nsubprocess.run(['ls'])\n")
+        _write(tmp_path, "agent.py", "import subprocess\nsubprocess.run(['ls'])\n")
+        (tmp_path / ".aegisscanignore").write_text("tests/\n")
+
+        _, findings = scan_directory(tmp_path)
+        assert len(findings) == 1
+        assert "tests" not in findings[0].file
+
+    def test_ignore_glob_pattern(self, tmp_path: Path) -> None:
+        _write(tmp_path, "test_foo.py", "import subprocess\nsubprocess.run(['ls'])\n")
+        _write(tmp_path, "agent.py", "import subprocess\nsubprocess.run(['ls'])\n")
+        (tmp_path / ".aegisscanignore").write_text("test_*.py\n")
+
+        _, findings = scan_directory(tmp_path)
+        assert len(findings) == 1
+
+    def test_ignore_comments_and_blank_lines(self, tmp_path: Path) -> None:
+        _write(tmp_path, "agent.py", "import subprocess\nsubprocess.run(['ls'])\n")
+        (tmp_path / ".aegisscanignore").write_text("# comment\n\n  \n")
+
+        _, findings = scan_directory(tmp_path)
+        assert len(findings) == 1
+
+    def test_no_ignore_file(self, tmp_path: Path) -> None:
+        _write(tmp_path, "agent.py", "import subprocess\nsubprocess.run(['ls'])\n")
+        _, findings = scan_directory(tmp_path)
+        assert len(findings) == 1
+
+
+# ---------------------------------------------------------------------------
+# NEW: quickfix suggestions
+# ---------------------------------------------------------------------------
+
+
+class TestQuickfixSuggestions:
+    def test_fix_in_finding(self, tmp_path: Path) -> None:
+        f = _write(
+            tmp_path,
+            "ai.py",
+            """\
+import openai
+client = openai.OpenAI()
+client.chat.completions.create(model="gpt-4", tools=[{"type": "function"}])
+""",
+        )
+        findings = scan_file(f)
+        assert len(findings) == 1
+        assert findings[0].fix != ""
+        assert "auto_instrument" in findings[0].fix
+
+    def test_fix_in_text_output(self) -> None:
+        findings = [
+            Finding(
+                file="/p/a.py",
+                line=1,
+                category="OpenAI",
+                detail="tools=",
+                fix="Wrap with aegis: import aegis; aegis.auto_instrument()",
+            ),
+        ]
+        report = format_report(1, findings, directory="/p", show_fixes=True)
+        assert "\u2192" in report
+        assert "auto_instrument" in report
+
+    def test_fix_hidden_when_disabled(self) -> None:
+        findings = [
+            Finding(file="/p/a.py", line=1, category="OpenAI", detail="tools=", fix="Do X"),
+        ]
+        report = format_report(1, findings, directory="/p", show_fixes=False)
+        assert "\u2192" not in report
+
+    def test_subprocess_fix(self, tmp_path: Path) -> None:
+        f = _write(tmp_path, "a.py", "import subprocess\nsubprocess.run(['ls'])\n")
+        findings = scan_file(f)
+        assert "sandbox" in findings[0].fix.lower()
+
+
+# ---------------------------------------------------------------------------
+# NEW: suggest-rules
+# ---------------------------------------------------------------------------
+
+
+class TestSuggestRules:
+    def test_suggest_from_findings(self) -> None:
+        findings = [
+            Finding(file="/p/a.py", line=1, category="OpenAI", detail="x"),
+            Finding(file="/p/a.py", line=2, category="subprocess", detail="y"),
+        ]
+        output = suggest_rules(findings)
+        assert "version:" in output
+        assert "rules:" in output
+        assert "openai_function_call_governance" in output
+        assert "block_shell_execution" in output
+
+    def test_suggest_empty(self) -> None:
+        output = suggest_rules([])
+        assert "clean" in output.lower()
+
+    def test_suggest_deduplicates(self) -> None:
+        findings = [
+            Finding(file="/p/a.py", line=1, category="OpenAI", detail="x"),
+            Finding(file="/p/b.py", line=2, category="OpenAI", detail="y"),
+        ]
+        output = suggest_rules(findings)
+        assert output.count("openai_function_call_governance") == 1
+
+
+# ---------------------------------------------------------------------------
+# NEW: CLI integration for new flags
+# ---------------------------------------------------------------------------
+
+
+class TestCLIScanNewFlags:
+    def test_scan_json_format(self, tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+        _write(tmp_path, "agent.py", "import subprocess\nsubprocess.run(['ls'])\n")
+        with pytest.raises(SystemExit):
+            main(["scan", str(tmp_path), "--format", "json"])
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert data["tool"] == "aegis-scan"
+        assert data["findings_count"] == 1
+
+    def test_scan_sarif_format(self, tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+        _write(tmp_path, "agent.py", "import subprocess\nsubprocess.run(['ls'])\n")
+        with pytest.raises(SystemExit):
+            main(["scan", str(tmp_path), "--format", "sarif"])
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert data["version"] == "2.1.0"
+
+    def test_scan_suggest_format(self, tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+        _write(tmp_path, "agent.py", "import subprocess\nsubprocess.run(['ls'])\n")
+        with pytest.raises(SystemExit):
+            main(["scan", str(tmp_path), "--format", "suggest"])
+        out = capsys.readouterr().out
+        assert "rules:" in out
+
+    def test_scan_threshold_cli(self, tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+        _write(tmp_path, "agent.py", "import subprocess\nsubprocess.run(['ls'])\n")
+        with pytest.raises(SystemExit) as exc_info:
+            main(["scan", str(tmp_path), "--threshold", "A"])
+        assert exc_info.value.code == 1
+
+    def test_scan_no_fixes_flag(self, tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+        _write(tmp_path, "agent.py", "import subprocess\nsubprocess.run(['ls'])\n")
+        with pytest.raises(SystemExit):
+            main(["scan", str(tmp_path), "--no-fixes"])
+        out = capsys.readouterr().out
+        assert "\u2192" not in out

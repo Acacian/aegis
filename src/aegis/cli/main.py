@@ -215,6 +215,25 @@ def main(argv: list[str] | None = None) -> None:
         default=".",
         help="Directory to scan (default: current directory)",
     )
+    scan_parser.add_argument(
+        "--format",
+        choices=["text", "json", "sarif", "suggest"],
+        default="text",
+        dest="fmt",
+        help="Output format: text, json, sarif (GitHub Code Scanning), suggest (policy YAML)",
+    )
+    scan_parser.add_argument(
+        "--threshold",
+        metavar="GRADE",
+        default=None,
+        help="Minimum passing grade (A/B/C/D/F). Exit 1 if below threshold",
+    )
+    scan_parser.add_argument(
+        "--no-fixes",
+        action="store_true",
+        default=False,
+        help="Hide quickfix suggestions in text output",
+    )
 
     # aegis serve
     serve_parser = subparsers.add_parser(
@@ -966,7 +985,12 @@ def _cmd_scan(args: argparse.Namespace) -> None:
     """Scan for ungoverned AI tool calls."""
     from aegis.cli.scan import run_scan
 
-    exit_code = run_scan(args.directory)
+    exit_code = run_scan(
+        args.directory,
+        fmt=getattr(args, "fmt", "text"),
+        threshold=getattr(args, "threshold", None),
+        show_fixes=not getattr(args, "no_fixes", False),
+    )
     sys.exit(exit_code)
 
 
