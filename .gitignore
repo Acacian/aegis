@@ -1,6 +1,7 @@
 # Claude Code
 .claude/
 CLAUDE.md
+context/
 
 # IDE / tooling
 .idea/
