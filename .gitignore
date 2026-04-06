@@ -40,17 +40,5 @@ _*.md
 *.tmp.*
 *.bak
 
-# Claude Code operational files (sync to private repo: Acacian/claude-settings)
-agents/
-hooks/
-loop/
-skills/
-settings.json
-scripts/loop-runner.sh
-scripts/sync-context.sh
-.cache/
-
 # Sensitive content
-.github/SOCIAL.md
-.github/DEVTO_ARTICLE.md
 security-report-*.md
