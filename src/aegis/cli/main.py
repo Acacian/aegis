@@ -398,6 +398,52 @@ def main(argv: list[str] | None = None) -> None:
         help="Output format (default: table)",
     )
 
+    # aegis proxy
+    proxy_parser = subparsers.add_parser(
+        "proxy",
+        help="Start governance proxy (intercept MCP/REST tool calls)",
+    )
+    proxy_parser.add_argument(
+        "--listen",
+        default=":8080",
+        help="Listen address (default: :8080)",
+    )
+    proxy_parser.add_argument(
+        "--upstream",
+        action="append",
+        default=[],
+        help="Upstream server URL (repeatable)",
+    )
+    proxy_parser.add_argument(
+        "--mode",
+        choices=["zero-trust", "permissive"],
+        default="zero-trust",
+        help="Governance mode (default: zero-trust)",
+    )
+    proxy_parser.add_argument(
+        "--policy",
+        default="",
+        help="Path to YAML policy file",
+    )
+    proxy_parser.add_argument(
+        "--config",
+        default="",
+        dest="proxy_config",
+        help="Path to proxy YAML config file",
+    )
+    proxy_parser.add_argument(
+        "--enable-claims",
+        action="store_true",
+        default=True,
+        help="Enable ActionClaim assessment (default: on)",
+    )
+    proxy_parser.add_argument(
+        "--no-claims",
+        action="store_false",
+        dest="enable_claims",
+        help="Disable ActionClaim assessment",
+    )
+
     # aegis uninstall-impact
     impact_parser = subparsers.add_parser(
         "uninstall-impact",
@@ -457,6 +503,8 @@ def main(argv: list[str] | None = None) -> None:
         _cmd_probe(args)
     elif args.command == "uninstall-impact":
         _cmd_uninstall_impact(args)
+    elif args.command == "proxy":
+        _cmd_proxy(args)
     else:
         parser.print_help()
 
@@ -1692,6 +1740,72 @@ def _cmd_uninstall_impact(args: argparse.Namespace) -> None:
         print(f"Governance active since: {first_date[:10]} ({days_active} days)")
     print()
     print("To proceed: pip uninstall agent-aegis")
+
+
+def _cmd_proxy(args: argparse.Namespace) -> None:
+    """Start the Aegis governance proxy server."""
+    import asyncio
+
+    from aegis.proxy.config import ProxyConfig, UpstreamConfig
+
+    if args.proxy_config:
+        config = ProxyConfig.from_yaml(args.proxy_config)
+    else:
+        # Parse --listen
+        listen = args.listen
+        host = "0.0.0.0"
+        port = 8080
+        if listen.startswith(":"):
+            port = int(listen[1:])
+        elif ":" in listen:
+            host, port_str = listen.rsplit(":", 1)
+            port = int(port_str)
+
+        # Parse --upstream
+        upstreams = []
+        for i, url in enumerate(args.upstream):
+            upstreams.append(UpstreamConfig(name=f"upstream-{i}", url=url))
+
+        if not upstreams:
+            print(
+                "Error: at least one --upstream URL is required (or use --config)",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+
+        from aegis.proxy.config import ClaimsConfig
+
+        config = ProxyConfig(
+            listen_host=host,
+            listen_port=port,
+            mode=args.mode,
+            policy_path=args.policy,
+            upstreams=upstreams,
+            claims=ClaimsConfig(enabled=args.enable_claims),
+        )
+
+    from aegis.proxy.server import AegisProxy
+
+    proxy = AegisProxy(config)
+
+    async def _run() -> None:
+        await proxy.start()
+        print(
+            f"Aegis Proxy listening on {config.listen_host}:{config.listen_port} "
+            f"(mode={config.mode}, upstreams={len(config.upstreams)})"
+        )
+        print("Press Ctrl+C to stop.")
+        try:
+            # Keep running until interrupted
+            while True:
+                await asyncio.sleep(1)
+        except asyncio.CancelledError:
+            pass
+
+    try:
+        asyncio.run(_run())
+    except KeyboardInterrupt:
+        print("\nProxy stopped.")
 
 
 if __name__ == "__main__":
