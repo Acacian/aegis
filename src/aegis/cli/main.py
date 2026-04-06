@@ -1081,7 +1081,7 @@ def _cmd_compliance(args: argparse.Namespace) -> None:
 
     # Load audit entries from JSONL
     entries: list[dict[str, object]] = []
-    with audit_path.open() as f:
+    with audit_path.open(encoding="utf-8") as f:
         for line_no, line in enumerate(f, 1):
             line = line.strip()
             if not line:

@@ -431,7 +431,7 @@ class PolicyTestRunner:
         if not filepath.exists():
             raise FileNotFoundError(f"Test suite file not found: {filepath}")
 
-        with filepath.open() as f:
+        with filepath.open(encoding="utf-8") as f:
             data = yaml.safe_load(f)
 
         if data is None:

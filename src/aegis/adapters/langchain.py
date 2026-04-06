@@ -134,7 +134,9 @@ class LangChainExecutor(BaseExecutor):
 
         try:
             # Use ainvoke for async execution
-            tool_input = action.params if action.params else action.description
+            tool_input: str | dict[str, object] = (
+                action.params if action.params else action.description
+            )
             output = await tool.ainvoke(tool_input)
             return Result(
                 action=action,

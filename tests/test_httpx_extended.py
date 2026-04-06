@@ -90,7 +90,7 @@ class TestHttpxExecutorExtended:
         with patch.dict("sys.modules", {"httpx": MagicMock()}):
             from aegis.adapters.httpx_adapter import HttpxExecutor
 
-            executor = HttpxExecutor()
+            executor = HttpxExecutor(base_url="https://api.example.com")
             mock_client = AsyncMock()
             mock_client.request = AsyncMock(side_effect=ConnectionError("Connection refused"))
             executor._client = mock_client
@@ -107,7 +107,7 @@ class TestHttpxExecutorExtended:
         with patch.dict("sys.modules", {"httpx": MagicMock()}):
             from aegis.adapters.httpx_adapter import HttpxExecutor
 
-            executor = HttpxExecutor()
+            executor = HttpxExecutor(base_url="https://api.example.com")
 
             mock_response = MagicMock()
             mock_response.status_code = 200
@@ -164,7 +164,7 @@ class TestHttpxExecutorExtended:
         with patch.dict("sys.modules", {"httpx": MagicMock()}):
             from aegis.adapters.httpx_adapter import HttpxExecutor
 
-            executor = HttpxExecutor()
+            executor = HttpxExecutor(base_url="https://api.example.com")
 
             mock_response = MagicMock()
             mock_response.status_code = 200
@@ -196,7 +196,7 @@ class TestHttpxExecutorExtended:
         with patch.dict("sys.modules", {"httpx": MagicMock()}):
             from aegis.adapters.httpx_adapter import HttpxExecutor
 
-            executor = HttpxExecutor()
+            executor = HttpxExecutor(base_url="https://api.example.com")
 
             mock_response = MagicMock()
             mock_response.status_code = 200
@@ -219,7 +219,7 @@ class TestHttpxExecutorExtended:
         with patch.dict("sys.modules", {"httpx": MagicMock()}):
             from aegis.adapters.httpx_adapter import HttpxExecutor
 
-            executor = HttpxExecutor()
+            executor = HttpxExecutor(base_url="https://api.example.com")
 
             mock_response = MagicMock()
             mock_response.status_code = 204
@@ -243,7 +243,7 @@ class TestHttpxExecutorExtended:
         with patch.dict("sys.modules", {"httpx": MagicMock()}):
             from aegis.adapters.httpx_adapter import HttpxExecutor
 
-            executor = HttpxExecutor()
+            executor = HttpxExecutor(base_url="https://api.example.com")
 
             mock_response = MagicMock()
             mock_response.status_code = 200
@@ -267,7 +267,7 @@ class TestHttpxExecutorExtended:
         with patch.dict("sys.modules", {"httpx": MagicMock()}):
             from aegis.adapters.httpx_adapter import HttpxExecutor
 
-            executor = HttpxExecutor()
+            executor = HttpxExecutor(base_url="https://api.example.com")
 
             mock_response = MagicMock()
             mock_response.status_code = 200

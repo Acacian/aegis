@@ -623,10 +623,16 @@ class SandboxPolicy:
             self._record_violation(abs_path, rule_id)
             return self._record(decision)
 
-        # Sensitive system paths
+        # Sensitive system paths (check both POSIX and Windows-resolved paths)
         sensitive = ("/etc/", "/boot/", "/sys/", "/proc/", "/dev/")
+        check_path = abs_path.replace("\\", "/")
         for sp in sensitive:
-            if abs_path.startswith(sp):
+            seg = sp.strip("/")
+            if (
+                abs_path.startswith(sp)
+                or f"/{seg}/" in check_path
+                or check_path.endswith(f"/{seg}")
+            ):
                 rule_id = "sensitive-path"
                 decision = SandboxDecision(
                     allowed=False,
