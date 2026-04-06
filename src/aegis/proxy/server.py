@@ -12,6 +12,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from aegis.proxy.config import ProxyConfig, UpstreamConfig
+from aegis.proxy.forwarder import ForwardResult, get_forwarder
 
 logger = logging.getLogger("aegis.proxy")
 
@@ -26,6 +27,7 @@ class ProxyResult:
     requires_escalation: bool = False
     claim: Any = None
     trace_id: str = field(default_factory=lambda: uuid.uuid4().hex[:16])
+    forward_result: ForwardResult | None = None
 
 
 class AegisProxy:
@@ -202,9 +204,34 @@ class AegisProxy:
                     trace_id=trace_id,
                 )
 
-        # 6. Forward (actual forwarding deferred -- returns placeholder)
+        # 6. Forward to upstream
+        try:
+            forwarder = get_forwarder(upstream.protocol)
+            fwd = await forwarder.forward(
+                url=upstream.url,
+                tool_name=tool_name,
+                arguments=arguments,
+                timeout_ms=upstream.timeout_ms,
+            )
+        except ValueError as exc:
+            return ProxyResult(
+                allowed=True,
+                reason=str(exc),
+                claim=claim,
+                trace_id=trace_id,
+            )
+
+        # Record circuit breaker outcome
+        if cb is not None:
+            if fwd.success:
+                cb.record_success()
+            else:
+                cb.record_failure()
+
         return ProxyResult(
             allowed=True,
+            data=fwd.data,
             claim=claim,
             trace_id=trace_id,
+            forward_result=fwd,
         )
