@@ -7,8 +7,9 @@ tool/function calls without Aegis governance wrappers.
 from __future__ import annotations
 
 import ast
+import json
 import sys
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
 
 
@@ -21,6 +22,7 @@ class Finding:
     category: str
     detail: str
     owasp_risk: str = ""
+    fix: str = ""
 
 
 # ---------------------------------------------------------------------------
@@ -37,6 +39,19 @@ _OWASP_MAP: dict[str, tuple[str, str]] = {
     "HTTP": ("ASI07", "Data Leakage & Exfiltration"),
 }
 
+# ---------------------------------------------------------------------------
+# Quickfix suggestions per category
+# ---------------------------------------------------------------------------
+
+_FIX_MAP: dict[str, str] = {
+    "OpenAI": "Wrap with aegis: import aegis; aegis.auto_instrument()",
+    "Anthropic": "Wrap with aegis: import aegis; aegis.auto_instrument()",
+    "LangChain": "Wrap with aegis: import aegis; aegis.auto_instrument()",
+    "MCP": "Add aegis MCP middleware: from aegis.mcp_proxy import aegis_mcp_middleware",
+    "subprocess": "Use aegis sandbox policy to govern shell execution",
+    "HTTP": "Route through aegis-governed HTTP client or add policy rule",
+}
+
 
 # ---------------------------------------------------------------------------
 # Grade thresholds
@@ -50,6 +65,8 @@ _GRADE_THRESHOLDS: list[tuple[int, str]] = [
     # anything above 6 -> F
 ]
 
+_GRADE_ORDER = ["A", "B", "C", "D", "F"]
+
 
 def _grade(count: int) -> str:
     """Return a letter grade for *count* ungoverned calls."""
@@ -59,6 +76,75 @@ def _grade(count: int) -> str:
             return letter
         result = letter
     return "F" if count > _GRADE_THRESHOLDS[-1][0] else result
+
+
+def _grade_meets_threshold(grade: str, threshold: str) -> bool:
+    """Return True if *grade* meets or exceeds *threshold*."""
+    try:
+        return _GRADE_ORDER.index(grade) <= _GRADE_ORDER.index(threshold)
+    except ValueError:
+        return False
+
+
+# ---------------------------------------------------------------------------
+# .aegisscanignore support
+# ---------------------------------------------------------------------------
+
+
+def _load_ignore_patterns(directory: Path) -> list[str]:
+    """Load ignore patterns from .aegisscanignore file."""
+    ignore_file = directory / ".aegisscanignore"
+    if not ignore_file.exists():
+        return []
+    patterns: list[str] = []
+    for line in ignore_file.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if line and not line.startswith("#"):
+            patterns.append(line)
+    return patterns
+
+
+def _is_ignored(filepath: Path, directory: Path, patterns: list[str]) -> bool:
+    """Check if *filepath* matches any ignore pattern."""
+    try:
+        rel = filepath.relative_to(directory)
+    except ValueError:
+        return False
+    rel_str = str(rel)
+    for pattern in patterns:
+        # Support both glob-style and prefix matching
+        if rel.match(pattern):
+            return True
+        # Also check if any parent directory matches
+        for part in rel.parts:
+            if Path(part).match(pattern):
+                return True
+        # Prefix match (e.g., "tests/" or "vendor/")
+        if pattern.endswith("/") and rel_str.startswith(pattern):
+            return True
+        if not pattern.endswith("/") and rel_str.startswith(pattern + "/"):
+            return True
+    return False
+
+
+# ---------------------------------------------------------------------------
+# Inline pragma support: # aegis: ignore
+# ---------------------------------------------------------------------------
+
+
+def _read_source_lines(filepath: Path) -> dict[int, str]:
+    """Read source and return {line_number: line_text} for pragma checking."""
+    try:
+        text = filepath.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        return {}
+    return {i + 1: line for i, line in enumerate(text.splitlines())}
+
+
+def _has_ignore_pragma(source_lines: dict[int, str], line: int) -> bool:
+    """Check if the given line has an ``# aegis: ignore`` pragma."""
+    text = source_lines.get(line, "")
+    return "# aegis: ignore" in text or "# aegis:ignore" in text
 
 
 # ---------------------------------------------------------------------------
@@ -80,6 +166,7 @@ class _ToolCallVisitor(ast.NodeVisitor):
     def _add(self, node: ast.AST, category: str, detail: str) -> None:
         owasp = _OWASP_MAP.get(category)
         owasp_risk = f"{owasp[0]}: {owasp[1]}" if owasp else ""
+        fix = _FIX_MAP.get(category, "")
         self.findings.append(
             Finding(
                 file=self.filepath,
@@ -87,6 +174,7 @@ class _ToolCallVisitor(ast.NodeVisitor):
                 category=category,
                 detail=detail,
                 owasp_risk=owasp_risk,
+                fix=fix,
             )
         )
 
@@ -154,13 +242,13 @@ class _ToolCallVisitor(ast.NodeVisitor):
     def visit_ClassDef(self, node: ast.ClassDef) -> None:  # noqa: N802
         for base in node.bases:
             base_name = (
-                self._dotted_name(base) if isinstance(base, (ast.Attribute, ast.Name)) else ""
+                self._dotted_name(base) if isinstance(base, ast.Attribute | ast.Name) else ""
             )
             # LangChain BaseTool subclass
             if base_name in ("BaseTool", "langchain_core.tools.BaseTool"):
                 # Ignore if it also inherits GovernedTool
                 all_bases = {
-                    self._dotted_name(b) if isinstance(b, (ast.Attribute, ast.Name)) else ""
+                    self._dotted_name(b) if isinstance(b, ast.Attribute | ast.Name) else ""
                     for b in node.bases
                 }
                 if "GovernedTool" not in all_bases:
@@ -281,22 +369,47 @@ def scan_file(filepath: str | Path) -> list[Finding]:
     return visitor.findings
 
 
-def scan_directory(directory: str | Path) -> tuple[int, list[Finding]]:
+def scan_directory(
+    directory: str | Path,
+    *,
+    ignore_patterns: list[str] | None = None,
+) -> tuple[int, list[Finding]]:
     """Recursively scan *directory* for Python files.
 
     Returns ``(file_count, findings)``.
     """
-    directory = Path(directory)
+    directory = Path(directory).resolve()
+    if ignore_patterns is None:
+        ignore_patterns = _load_ignore_patterns(directory)
     findings: list[Finding] = []
     file_count = 0
+
+    # Load source lines for pragma checking (lazy per file)
     for py_file in sorted(directory.rglob("*.py")):
         # Skip hidden dirs, venvs, __pycache__, .git
         parts = py_file.relative_to(directory).parts
         if any(p.startswith(".") or p in ("__pycache__", "node_modules") for p in parts):
             continue
+        # Skip files matching .aegisscanignore patterns
+        if ignore_patterns and _is_ignored(py_file, directory, ignore_patterns):
+            continue
         file_count += 1
-        findings.extend(scan_file(py_file))
+        file_findings = scan_file(py_file)
+
+        # Filter out findings with # aegis: ignore pragma
+        if file_findings:
+            source_lines = _read_source_lines(py_file)
+            file_findings = [
+                f for f in file_findings if not _has_ignore_pragma(source_lines, f.line)
+            ]
+
+        findings.extend(file_findings)
     return file_count, findings
+
+
+# ---------------------------------------------------------------------------
+# Output formatters
+# ---------------------------------------------------------------------------
 
 
 def format_report(
@@ -304,6 +417,7 @@ def format_report(
     findings: list[Finding],
     *,
     directory: str = ".",
+    show_fixes: bool = True,
 ) -> str:
     """Build the human-readable scan report."""
     lines: list[str] = []
@@ -322,6 +436,8 @@ def format_report(
                 rel = f.file
             owasp_tag = f"  [{f.owasp_risk}]" if f.owasp_risk else ""
             lines.append(f"  {rel}:{f.line:<8}{f.category:<14}{f.detail}{owasp_tag}")
+            if show_fixes and f.fix:
+                lines.append(f"    \u2192 {f.fix}")
         lines.append("")
 
         # OWASP Agentic Top 10 summary
@@ -348,7 +464,230 @@ def format_report(
     return "\n".join(lines)
 
 
-def run_scan(directory: str = ".") -> int:
+def format_json(
+    file_count: int,
+    findings: list[Finding],
+    *,
+    directory: str = ".",
+) -> str:
+    """Build a JSON scan report."""
+    grade = _grade(len(findings))
+
+    # OWASP summary
+    owasp_counts: dict[str, int] = {}
+    for f in findings:
+        if f.owasp_risk:
+            owasp_counts[f.owasp_risk] = owasp_counts.get(f.owasp_risk, 0) + 1
+
+    result = {
+        "tool": "aegis-scan",
+        "version": "1.0",
+        "directory": directory,
+        "files_scanned": file_count,
+        "findings_count": len(findings),
+        "grade": grade,
+        "findings": [asdict(f) for f in findings],
+        "owasp_summary": owasp_counts,
+    }
+    return json.dumps(result, indent=2, ensure_ascii=False)
+
+
+def format_sarif(
+    file_count: int,
+    findings: list[Finding],
+    *,
+    directory: str = ".",
+) -> str:
+    """Build a SARIF v2.1.0 report for GitHub Code Scanning integration."""
+    rules: list[dict] = []
+    rule_ids_seen: set[str] = set()
+    results: list[dict] = []
+
+    for f in findings:
+        # Create rule ID from category + owasp
+        owasp_code = ""
+        if f.owasp_risk:
+            owasp_code = f.owasp_risk.split(":")[0].strip()
+        rule_id = f"aegis/{owasp_code or f.category.lower()}"
+
+        if rule_id not in rule_ids_seen:
+            rule_ids_seen.add(rule_id)
+            owasp_info = _OWASP_MAP.get(f.category)
+            rule_desc = (
+                f"{owasp_info[1]} ({owasp_info[0]})"
+                if owasp_info
+                else f"Ungoverned {f.category} call"
+            )
+            rule_entry: dict = {
+                "id": rule_id,
+                "name": f"Ungoverned{f.category}Call",
+                "shortDescription": {"text": f"Ungoverned {f.category} call detected"},
+                "fullDescription": {"text": rule_desc},
+                "defaultConfiguration": {"level": "warning"},
+                "helpUri": "https://acacian.github.io/aegis/",
+            }
+            if f.fix:
+                rule_entry["help"] = {"text": f.fix, "markdown": f"**Fix:** {f.fix}"}
+            rules.append(rule_entry)
+
+        # Make path relative
+        try:
+            rel_path = str(Path(f.file).relative_to(Path(directory).resolve()))
+        except ValueError:
+            rel_path = f.file
+
+        result_entry: dict = {
+            "ruleId": rule_id,
+            "level": "warning",
+            "message": {"text": f"{f.detail} [{f.owasp_risk}]" if f.owasp_risk else f.detail},
+            "locations": [
+                {
+                    "physicalLocation": {
+                        "artifactLocation": {"uri": rel_path, "uriBaseId": "%SRCROOT%"},
+                        "region": {"startLine": f.line, "startColumn": 1},
+                    }
+                }
+            ],
+        }
+        if f.fix:
+            result_entry["fixes"] = [
+                {
+                    "description": {"text": f.fix},
+                }
+            ]
+        results.append(result_entry)
+
+    sarif = {
+        "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/main/sarif-2.1/schema/sarif-schema-2.1.0.json",
+        "version": "2.1.0",
+        "runs": [
+            {
+                "tool": {
+                    "driver": {
+                        "name": "aegis-scan",
+                        "informationUri": "https://github.com/Acacian/aegis",
+                        "version": "0.9",
+                        "rules": rules,
+                    }
+                },
+                "results": results,
+                "invocations": [
+                    {
+                        "executionSuccessful": True,
+                        "toolExecutionNotifications": [],
+                    }
+                ],
+            }
+        ],
+    }
+    return json.dumps(sarif, indent=2, ensure_ascii=False)
+
+
+# ---------------------------------------------------------------------------
+# Suggest rules
+# ---------------------------------------------------------------------------
+
+
+def suggest_rules(findings: list[Finding]) -> str:
+    """Generate YAML policy rules based on scan findings."""
+    if not findings:
+        return "# No findings — no rules needed. Your code is clean!"
+
+    lines: list[str] = [
+        "# Auto-generated policy rules based on aegis scan findings",
+        "# Review and adjust risk_level/approval as needed.",
+        "",
+        'version: "1"',
+        "",
+        "defaults:",
+        "  risk_level: medium",
+        "  approval: approve",
+        "",
+        "rules:",
+    ]
+
+    seen_categories: set[str] = set()
+    for f in findings:
+        if f.category in seen_categories:
+            continue
+        seen_categories.add(f.category)
+
+        if f.category == "LangChain":
+            lines.extend(
+                [
+                    "  - name: langchain_tool_governance",
+                    '    match: { type: "tool_call", target: "*" }',
+                    "    risk_level: medium",
+                    "    approval: approve",
+                    "",
+                ]
+            )
+        elif f.category == "OpenAI":
+            lines.extend(
+                [
+                    "  - name: openai_function_call_governance",
+                    '    match: { type: "function_call", target: "*" }',
+                    "    risk_level: medium",
+                    "    approval: approve",
+                    "",
+                ]
+            )
+        elif f.category == "Anthropic":
+            lines.extend(
+                [
+                    "  - name: anthropic_tool_use_governance",
+                    '    match: { type: "tool_use", target: "*" }',
+                    "    risk_level: medium",
+                    "    approval: approve",
+                    "",
+                ]
+            )
+        elif f.category == "MCP":
+            lines.extend(
+                [
+                    "  - name: mcp_tool_governance",
+                    '    match: { type: "mcp_tool", target: "*" }',
+                    "    risk_level: high",
+                    "    approval: approve",
+                    "",
+                ]
+            )
+        elif f.category == "subprocess":
+            lines.extend(
+                [
+                    "  - name: block_shell_execution",
+                    '    match: { type: "shell_exec", target: "*" }',
+                    "    risk_level: critical",
+                    "    approval: block",
+                    "",
+                ]
+            )
+        elif f.category == "HTTP":
+            lines.extend(
+                [
+                    "  - name: http_request_governance",
+                    '    match: { type: "http_request", target: "*" }',
+                    "    risk_level: high",
+                    "    approval: approve",
+                    "",
+                ]
+            )
+
+    return "\n".join(lines)
+
+
+# ---------------------------------------------------------------------------
+# Public API — run_scan
+# ---------------------------------------------------------------------------
+
+
+def run_scan(
+    directory: str = ".",
+    *,
+    fmt: str = "text",
+    threshold: str | None = None,
+    show_fixes: bool = True,
+) -> int:
     """Execute the scan and print the report. Returns exit code."""
     target = Path(directory).resolve()
     if not target.is_dir():
@@ -356,6 +695,28 @@ def run_scan(directory: str = ".") -> int:
         return 1
 
     file_count, findings = scan_directory(target)
-    report = format_report(file_count, findings, directory=str(target))
-    print(report)
+    grade = _grade(len(findings))
+
+    if fmt == "json":
+        output = format_json(file_count, findings, directory=str(target))
+    elif fmt == "sarif":
+        output = format_sarif(file_count, findings, directory=str(target))
+    elif fmt == "suggest":
+        output = suggest_rules(findings)
+    else:
+        output = format_report(file_count, findings, directory=str(target), show_fixes=show_fixes)
+
+    print(output)
+
+    # Exit code logic
+    if threshold:
+        if not _grade_meets_threshold(grade, threshold.upper()):
+            if fmt == "text":
+                print(
+                    f"\nFailed: grade {grade} does not meet threshold {threshold.upper()}",
+                    file=sys.stderr,
+                )
+            return 1
+        return 0
+
     return 1 if findings else 0
