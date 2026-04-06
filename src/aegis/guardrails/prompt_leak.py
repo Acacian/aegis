@@ -218,6 +218,58 @@ ALL_CATEGORIES: dict[str, list[PatternEntry]] = {
 
 DEFAULT_CATEGORIES: list[str] = list(ALL_CATEGORIES.keys())
 
+# Pre-filter keywords for fast rejection of clean text
+_PREFILTER_KEYWORDS = frozenset(
+    {
+        "instruct",
+        "system prompt",
+        "told to",
+        "configured",
+        "programmed",
+        "designed to",
+        "my role",
+        "my purpose",
+        "api_key",
+        "api-key",
+        "secret_key",
+        "access_token",
+        "bearer",
+        "auth_token",
+        "internal",
+        "staging",
+        "localhost",
+        "127.0.0.1",
+        "192.168.",
+        "gpt-4",
+        "claude-",
+        "gemini-",
+        "llama-",
+        "mistral-",
+        "OPENAI_API_KEY",
+        "ANTHROPIC_API_KEY",
+        "DATABASE_URL",
+        "BEGIN SYSTEM",
+        "END SYSTEM",
+        "<system>",
+        "</system>",
+        "[SYSTEM]",
+        "[INST]",
+        "[SYS]",
+        "You are a",
+        "You are an",
+        "AI language model",
+        "large language model",
+        "AI assistant",
+        "virtual assistant",
+        "chatbot",
+        "made by",
+        "created by",
+        "developed by",
+        "trained by",
+        "built by",
+    }
+)
+
 # ---------------------------------------------------------------------------
 # Data models
 # ---------------------------------------------------------------------------
@@ -368,12 +420,38 @@ class PromptLeakGuardrail:
 
         return None
 
+    def _has_any_pattern_match(self, content: str) -> bool:
+        """Fast check: return True on first pattern match (search, not finditer)."""
+        normalized = _normalize(content)
+
+        # Pre-filter: skip expensive regex if no relevant keywords present
+        if not any(kw in normalized for kw in _PREFILTER_KEYWORDS):
+            return False
+
+        for _category, patterns in self._patterns.items():
+            for _name, regex, _conf, _sens in patterns:
+                if regex.search(normalized):
+                    return True
+        return False
+
     def check(self, content: str) -> PromptLeakResult:
         """Check content for prompt leakage."""
-        matches = self.detect(content)
-
-        # Also check for direct prompt echoing
+        # Fast path: most content is clean
         echo_match = self._check_prompt_echo(content)
+        has_pattern = self._has_any_pattern_match(content)
+
+        if not has_pattern and echo_match is None:
+            return PromptLeakResult(
+                passed=True,
+                action="allowed",
+                details="",
+                severity=self.severity,
+                matches=[],
+                leaked_prompt_detected=False,
+            )
+
+        # Slow path: leakage detected — get full details
+        matches = self.detect(content)
         leaked = echo_match is not None
         if echo_match:
             matches.insert(0, echo_match)

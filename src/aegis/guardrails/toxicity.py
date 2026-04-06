@@ -301,6 +301,28 @@ ALL_CATEGORIES: dict[str, list[PatternEntry]] = {
 
 DEFAULT_CATEGORIES: list[str] = list(ALL_CATEGORIES.keys())
 
+
+# Pre-filter: extract literal keywords from regex patterns for fast rejection.
+# Each category maps to a set of keywords; if none match, skip that category.
+def _extract_category_keywords() -> dict[str, frozenset[str]]:
+    """Build per-category keyword sets from pattern literal fragments."""
+    import re as _re
+
+    _LITERAL_RE = _re.compile(r"[a-zA-Z][a-zA-Z\s-]{2,}")
+    result: dict[str, frozenset[str]] = {}
+    for cat, patterns in ALL_CATEGORIES.items():
+        kws: set[str] = set()
+        for _name, regex, _conf, _sens in patterns:
+            for m in _LITERAL_RE.finditer(regex.pattern):
+                word = m.group().strip().lower()
+                if len(word) >= 3:
+                    kws.add(word)
+        result[cat] = frozenset(kws)
+    return result
+
+
+_CATEGORY_KEYWORDS = _extract_category_keywords()
+
 # ---------------------------------------------------------------------------
 # Data models
 # ---------------------------------------------------------------------------
@@ -417,11 +439,45 @@ class ToxicityGuardrail:
 
         return matches
 
+    def _has_any_match(self, content: str) -> tuple[bool, str, str]:
+        """Fast check: return (found, category, pattern_name) on first match."""
+        normalized = _normalize(content)
+        texts = [normalized]
+
+        if self.leet_normalize:
+            leet_version = _normalize_leet(normalized)
+            if leet_version != normalized:
+                texts.append(leet_version)
+
+        for text in texts:
+            lower = text.lower()
+            for category, patterns in self._patterns.items():
+                # Per-category keyword pre-filter
+                cat_kws = _CATEGORY_KEYWORDS.get(category, frozenset())
+                if cat_kws and not any(kw in lower for kw in cat_kws):
+                    continue
+                for name, regex, _conf, _sens in patterns:
+                    if regex.search(text):
+                        return True, category, name
+        return False, "", ""
+
     def check(self, content: str) -> ToxicityResult:
         """Check content for toxic patterns and return a result."""
-        matches = self.detect(content)
+        # Fast path: most content is clean — use search() instead of finditer()
+        found, _category, _name = self._has_any_match(content)
+        if not found:
+            return ToxicityResult(
+                passed=True,
+                action="allowed",
+                details="",
+                severity=self.severity,
+                matches=[],
+            )
 
+        # Slow path: toxic content found — get full details
+        matches = self.detect(content)
         if not matches:
+            # Edge case: _has_any_match found something but detect didn't
             return ToxicityResult(
                 passed=True,
                 action="allowed",
