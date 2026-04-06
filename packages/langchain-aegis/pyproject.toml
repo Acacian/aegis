@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "langchain-aegis"
-version = "0.1.0"
+version = "0.1.1"
 description = "Aegis governance integration for LangChain — add policy enforcement, risk assessment, and audit logging to any LangChain tool."
 readme = "README.md"
 license = "MIT"
@@ -29,7 +29,7 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
-    "agent-aegis>=0.9.0",
+    "agent-aegis>=0.9.2",
     "langchain-core>=0.2",
 ]
 
