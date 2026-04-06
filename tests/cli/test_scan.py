@@ -890,6 +890,416 @@ class TestSuggestRules:
 # ---------------------------------------------------------------------------
 
 
+# ---------------------------------------------------------------------------
+# NEW: Framework detection — CrewAI
+# ---------------------------------------------------------------------------
+
+
+class TestCrewAIDetection:
+    def test_crew_instantiation(self, tmp_path: Path) -> None:
+        f = _write(
+            tmp_path,
+            "agent.py",
+            """\
+from crewai import Crew
+crew = Crew(agents=[], tasks=[])
+""",
+        )
+        findings = scan_file(f)
+        assert len(findings) == 1
+        assert findings[0].category == "CrewAI"
+        assert "Crew()" in findings[0].detail
+
+    def test_crew_not_from_crewai_clean(self, tmp_path: Path) -> None:
+        f = _write(
+            tmp_path,
+            "agent.py",
+            """\
+from mylib import Crew
+crew = Crew()
+""",
+        )
+        findings = scan_file(f)
+        assert len(findings) == 0
+
+
+# ---------------------------------------------------------------------------
+# NEW: Framework detection — LiteLLM
+# ---------------------------------------------------------------------------
+
+
+class TestLiteLLMDetection:
+    def test_litellm_completion(self, tmp_path: Path) -> None:
+        f = _write(
+            tmp_path,
+            "agent.py",
+            """\
+import litellm
+litellm.completion(model="gpt-4", messages=[])
+""",
+        )
+        findings = scan_file(f)
+        assert len(findings) == 1
+        assert findings[0].category == "LiteLLM"
+
+    def test_litellm_acompletion(self, tmp_path: Path) -> None:
+        f = _write(
+            tmp_path,
+            "agent.py",
+            """\
+import litellm
+litellm.acompletion(model="gpt-4", messages=[])
+""",
+        )
+        findings = scan_file(f)
+        assert len(findings) == 1
+        assert findings[0].category == "LiteLLM"
+
+    def test_litellm_bare_import(self, tmp_path: Path) -> None:
+        f = _write(
+            tmp_path,
+            "agent.py",
+            """\
+from litellm import completion
+completion(model="gpt-4", messages=[])
+""",
+        )
+        findings = scan_file(f)
+        assert len(findings) == 1
+        assert findings[0].category == "LiteLLM"
+
+
+# ---------------------------------------------------------------------------
+# NEW: Framework detection — LlamaIndex
+# ---------------------------------------------------------------------------
+
+
+class TestLlamaIndexDetection:
+    def test_llamaindex_query(self, tmp_path: Path) -> None:
+        f = _write(
+            tmp_path,
+            "agent.py",
+            """\
+from llama_index.core import VectorStoreIndex
+index = VectorStoreIndex.from_documents(docs)
+engine = index.as_query_engine()
+engine.query("what is X?")
+""",
+        )
+        # engine.query won't match because 'engine' isn't resolved to llama_index
+        # But direct import usage will
+        findings = scan_file(f)
+        assert len(findings) == 0  # can't resolve engine
+
+    def test_llamaindex_direct_import(self, tmp_path: Path) -> None:
+        f = _write(
+            tmp_path,
+            "agent.py",
+            """\
+import llama_index.core as li
+li.chat("hello")
+""",
+        )
+        findings = scan_file(f)
+        assert len(findings) == 1
+        assert findings[0].category == "LlamaIndex"
+
+
+# ---------------------------------------------------------------------------
+# NEW: Framework detection — Google GenAI / Gemini
+# ---------------------------------------------------------------------------
+
+
+class TestGoogleGenAIDetection:
+    def test_generate_content(self, tmp_path: Path) -> None:
+        f = _write(
+            tmp_path,
+            "agent.py",
+            """\
+import google.generativeai as genai
+model = genai.GenerativeModel("gemini-pro")
+model.generate_content("hello")
+""",
+        )
+        # model.generate_content — 'model' not resolved to google
+        findings = scan_file(f)
+        assert len(findings) == 0  # can't resolve local var
+
+    def test_genai_generate_content_resolved(self, tmp_path: Path) -> None:
+        f = _write(
+            tmp_path,
+            "agent.py",
+            """\
+import google.generativeai as genai
+genai.generate_content("hello")
+""",
+        )
+        findings = scan_file(f)
+        assert len(findings) == 1
+        assert findings[0].category == "Google GenAI"
+
+    def test_generative_model_bare(self, tmp_path: Path) -> None:
+        f = _write(
+            tmp_path,
+            "agent.py",
+            """\
+from google.generativeai import GenerativeModel
+m = GenerativeModel("gemini-pro")
+""",
+        )
+        findings = scan_file(f)
+        assert len(findings) == 1
+        assert findings[0].category == "Google GenAI"
+        assert "GenerativeModel()" in findings[0].detail
+
+
+# ---------------------------------------------------------------------------
+# NEW: Framework detection — PydanticAI
+# ---------------------------------------------------------------------------
+
+
+class TestPydanticAIDetection:
+    def test_agent_instantiation(self, tmp_path: Path) -> None:
+        f = _write(
+            tmp_path,
+            "agent.py",
+            """\
+from pydantic_ai import Agent
+agent = Agent("openai:gpt-4")
+""",
+        )
+        findings = scan_file(f)
+        assert len(findings) == 1
+        assert findings[0].category == "PydanticAI"
+        assert "Agent()" in findings[0].detail
+
+    def test_agent_run(self, tmp_path: Path) -> None:
+        f = _write(
+            tmp_path,
+            "agent.py",
+            """\
+from pydantic_ai import Agent
+agent = Agent("openai:gpt-4")
+agent.run_sync("hello")
+""",
+        )
+        findings = scan_file(f)
+        # Agent() bare + agent.run_sync won't match (agent not resolved)
+        assert any(f.category == "PydanticAI" for f in findings)
+
+    def test_agent_tool_decorator(self, tmp_path: Path) -> None:
+        f = _write(
+            tmp_path,
+            "agent.py",
+            """\
+from pydantic_ai import Agent
+agent = Agent("openai:gpt-4")
+
+@agent.tool
+def search(query: str) -> str:
+    return "results"
+""",
+        )
+        findings = scan_file(f)
+        # Should detect both Agent() and @agent.tool
+        cats = [f.category for f in findings]
+        assert "PydanticAI" in cats
+
+    def test_agent_not_from_pydantic_ai_clean(self, tmp_path: Path) -> None:
+        f = _write(
+            tmp_path,
+            "agent.py",
+            """\
+from mylib import Agent
+a = Agent()
+""",
+        )
+        findings = scan_file(f)
+        assert len(findings) == 0
+
+
+# ---------------------------------------------------------------------------
+# NEW: Framework detection — OpenAI Agents SDK
+# ---------------------------------------------------------------------------
+
+
+class TestOpenAIAgentsDetection:
+    def test_agent_instantiation(self, tmp_path: Path) -> None:
+        f = _write(
+            tmp_path,
+            "agent.py",
+            """\
+from openai.agents import Agent
+agent = Agent(name="helper", model="gpt-4")
+""",
+        )
+        findings = scan_file(f)
+        assert len(findings) == 1
+        assert findings[0].category == "OpenAI Agents"
+
+    def test_tool_decorator(self, tmp_path: Path) -> None:
+        f = _write(
+            tmp_path,
+            "agent.py",
+            """\
+from openai.agents import tool
+
+@tool
+def search_web(query: str) -> str:
+    return "results"
+""",
+        )
+        findings = scan_file(f)
+        assert len(findings) == 1
+        assert findings[0].category == "OpenAI Agents"
+
+    def test_runner_run(self, tmp_path: Path) -> None:
+        f = _write(
+            tmp_path,
+            "agent.py",
+            """\
+from openai.agents import Runner
+Runner.run(agent, "hello")
+""",
+        )
+        findings = scan_file(f)
+        assert len(findings) == 1
+        assert findings[0].category == "OpenAI Agents"
+
+
+# ---------------------------------------------------------------------------
+# NEW: Framework detection — Instructor
+# ---------------------------------------------------------------------------
+
+
+class TestInstructorDetection:
+    def test_from_openai(self, tmp_path: Path) -> None:
+        f = _write(
+            tmp_path,
+            "agent.py",
+            """\
+from instructor import from_openai
+client = from_openai(openai_client)
+""",
+        )
+        findings = scan_file(f)
+        assert len(findings) == 1
+        assert findings[0].category == "Instructor"
+        assert "from_openai" in findings[0].detail
+
+    def test_from_anthropic(self, tmp_path: Path) -> None:
+        f = _write(
+            tmp_path,
+            "agent.py",
+            """\
+from instructor import from_anthropic
+client = from_anthropic(anthropic_client)
+""",
+        )
+        findings = scan_file(f)
+        assert len(findings) == 1
+        assert findings[0].category == "Instructor"
+
+    def test_not_from_instructor_clean(self, tmp_path: Path) -> None:
+        f = _write(
+            tmp_path,
+            "agent.py",
+            """\
+from mylib import from_openai
+client = from_openai(x)
+""",
+        )
+        findings = scan_file(f)
+        assert len(findings) == 0
+
+
+# ---------------------------------------------------------------------------
+# NEW: Framework detection — DSPy
+# ---------------------------------------------------------------------------
+
+
+class TestDSPyDetection:
+    def test_dspy_module_subclass(self, tmp_path: Path) -> None:
+        f = _write(
+            tmp_path,
+            "agent.py",
+            """\
+import dspy
+
+class MyRAG(dspy.Module):
+    def forward(self, question):
+        return self.generate(question)
+""",
+        )
+        findings = scan_file(f)
+        assert len(findings) == 1
+        assert findings[0].category == "DSPy"
+        assert "MyRAG" in findings[0].detail
+
+    def test_bare_module_from_dspy(self, tmp_path: Path) -> None:
+        f = _write(
+            tmp_path,
+            "agent.py",
+            """\
+from dspy import Module
+
+class MyPipeline(Module):
+    pass
+""",
+        )
+        findings = scan_file(f)
+        assert len(findings) == 1
+        assert findings[0].category == "DSPy"
+
+    def test_module_not_from_dspy_clean(self, tmp_path: Path) -> None:
+        f = _write(
+            tmp_path,
+            "agent.py",
+            """\
+from torch.nn import Module
+
+class MyNet(Module):
+    pass
+""",
+        )
+        findings = scan_file(f)
+        assert len(findings) == 0
+
+
+# ---------------------------------------------------------------------------
+# NEW: suggest_rules handles new categories
+# ---------------------------------------------------------------------------
+
+
+class TestSuggestRulesNewCategories:
+    def test_suggest_crewai(self) -> None:
+        findings = [Finding(file="/p/a.py", line=1, category="CrewAI", detail="x")]
+        output = suggest_rules(findings)
+        assert "crewai_governance" in output
+
+    def test_suggest_litellm(self) -> None:
+        findings = [Finding(file="/p/a.py", line=1, category="LiteLLM", detail="x")]
+        output = suggest_rules(findings)
+        assert "litellm_governance" in output
+
+    def test_suggest_pydanticai(self) -> None:
+        findings = [Finding(file="/p/a.py", line=1, category="PydanticAI", detail="x")]
+        output = suggest_rules(findings)
+        assert "pydanticai_governance" in output
+
+    def test_suggest_openai_agents(self) -> None:
+        findings = [
+            Finding(file="/p/a.py", line=1, category="OpenAI Agents", detail="x"),
+        ]
+        output = suggest_rules(findings)
+        assert "openai_agents_governance" in output
+
+    def test_suggest_dspy(self) -> None:
+        findings = [Finding(file="/p/a.py", line=1, category="DSPy", detail="x")]
+        output = suggest_rules(findings)
+        assert "dspy_governance" in output
+
+
 class TestCLIScanNewFlags:
     def test_scan_json_format(self, tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
         _write(tmp_path, "agent.py", "import subprocess\nsubprocess.run(['ls'])\n")
