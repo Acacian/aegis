@@ -38,8 +38,3 @@ _*.md
 *.draft.*
 *.tmp.*
 *.bak
-
-# Internal marketing / social drafts
-.github/DEVTO_ARTICLE.md
-.github/SOCIAL.md
-context/
