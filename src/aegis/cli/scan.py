@@ -841,6 +841,12 @@ def run_scan(
         return 1
 
     file_count, findings = scan_directory(target)
+
+    if file_count == 0 and fmt == "text":
+        print(f"No Python files found in {target}", file=sys.stderr)
+        print("Is this the right directory? aegis scan only checks .py files.", file=sys.stderr)
+        return 0
+
     grade = _grade(len(findings))
 
     if fmt == "json":

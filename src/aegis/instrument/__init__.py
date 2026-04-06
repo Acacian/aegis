@@ -1,7 +1,7 @@
 """Zero-code auto-instrumentation for AI agent frameworks.
 
 Add governance to **any** AI framework project with a single line of
-code — no refactoring required.  Supports 9 frameworks + raw API clients.
+code — no refactoring required.  Supports 10 frameworks + 2 raw API clients.
 
 Quick start::
 
@@ -222,7 +222,14 @@ def auto_instrument(
     if report.any_patched:
         logger.info("Aegis auto-instrumentation complete: %s", report)
     else:
-        logger.info("Aegis auto-instrumentation: no frameworks detected")
+        import sys
+
+        print(
+            "aegis: no supported frameworks detected. "
+            f"Supported: {', '.join(_FRAMEWORK_REGISTRY)}. "
+            "Is your agent code imported before calling auto_instrument()?",
+            file=sys.stderr,
+        )
 
     return report
 

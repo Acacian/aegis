@@ -674,6 +674,7 @@ def _cmd_validate(args: argparse.Namespace) -> None:
             colors.red(f"File not found: {policy_path}"),
             file=sys.stderr,
         )
+        print("Create one with: aegis init", file=sys.stderr)
         sys.exit(1)
 
     try:
@@ -683,9 +684,11 @@ def _cmd_validate(args: argparse.Namespace) -> None:
             colors.red(f"Invalid policy format: {e}"),
             file=sys.stderr,
         )
+        print("Check syntax with: aegis schema", file=sys.stderr)
         sys.exit(1)
     except Exception as e:
         print(colors.red(f"Policy validation failed: {e}"), file=sys.stderr)
+        print("Check syntax with: aegis schema", file=sys.stderr)
         sys.exit(1)
 
     if not policy.rules:
@@ -765,6 +768,13 @@ def _cmd_init(args: argparse.Namespace) -> None:
         print(f"Generated {output} and {test_output}")
     else:
         print(f"Created {output}")
+
+    print("")
+    print("Next steps:")
+    print(f"  aegis validate {output}    # Check policy syntax")
+    print(f"  aegis score {output}       # Governance score")
+    if not args.with_tests:
+        print("  aegis init --with-tests    # Generate matching test suite")
 
     # Auto-run scan
     print("")
