@@ -1,0 +1,9 @@
+- id: aegis-scan
+  name: Aegis AI Security Scan
+  description: Detect ungoverned AI calls across 15 frameworks
+  entry: aegis scan
+  language: python
+  types: [python]
+  pass_filenames: false
+  require_serial: true
+  minimum_pre_commit_version: "2.9.2"
