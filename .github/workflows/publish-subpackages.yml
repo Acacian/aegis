@@ -1,0 +1,63 @@
+name: Publish Sub-packages to PyPI
+
+on:
+  workflow_dispatch:
+    inputs:
+      package:
+        description: "Package to publish"
+        required: true
+        type: choice
+        options:
+          - langchain-aegis
+          - crewai-aegis
+          - openai-agents-aegis
+          - all
+
+permissions:
+  contents: read
+  id-token: write
+  attestations: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package: ${{ fromJSON(
+          inputs.package == 'all'
+            && '["langchain-aegis","crewai-aegis","openai-agents-aegis"]'
+            || format('["{0}"]', inputs.package)
+          ) }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: "3.12"
+      - run: pip install build==1.4.0
+      - run: python -m build
+        working-directory: packages/${{ matrix.package }}
+      - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7
+        with:
+          name: dist-${{ matrix.package }}
+          path: packages/${{ matrix.package }}/dist/
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    strategy:
+      matrix:
+        package: ${{ fromJSON(
+          inputs.package == 'all'
+            && '["langchain-aegis","crewai-aegis","openai-agents-aegis"]'
+            || format('["{0}"]', inputs.package)
+          ) }}
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: dist-${{ matrix.package }}
+          path: dist/
+      - uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
+        with:
+          subject-path: "dist/*"
+      - uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc # v1.12.4

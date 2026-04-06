@@ -11,4 +11,4 @@ Add policy enforcement to any LangChain tool with one function call::
 from langchain_aegis.tools import GovernedTool, govern_tool, govern_tools
 
 __all__ = ["GovernedTool", "govern_tool", "govern_tools"]
-__version__ = "0.1.0"
+__version__ = "0.1.1"
