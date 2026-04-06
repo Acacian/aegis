@@ -273,6 +273,18 @@ Works with Claude Desktop, Cursor, VS Code, Windsurf. Tool poisoning detection, 
 | **Compliance** | Manual docs | None | Enterprise sales cycle | **EU AI Act, NIST, SOC2 built-in** |
 | **Cost** | Engineering time | Free-to-$$$ | $$$$ + infra | **Free (MIT). Forever.** |
 
+### What Only Aegis Does
+
+Other tools check inputs and outputs. Aegis governs the decision itself.
+
+| Capability | What it means | Based on |
+|---|---|---|
+| **Selection Governance** | Audits what agents *exclude*, not just what they choose. A model that "helpfully" omits risky options is exerting selection power — Aegis detects this. | [Santander et al., arXiv:2602.14606](https://arxiv.org/abs/2602.14606) |
+| **Justification Gap** | 6-dimensional asymmetric scoring: agents declare impact; Aegis independently assesses it. Under-reporting triggers escalation or block. | COA-MAS (Carvalho) |
+| **Tripartite ActionClaim** | Every tool call splits into Declared (agent-authored, untrusted), Assessed (Aegis-computed), and Chain (delegation) fields. The structural separation makes cosmetic alignment detectable. | — |
+| **Monotone Trust Constraint** | Delegated agents cannot escalate their own authority. Trust levels must be non-increasing along the chain — violations auto-block. | Lattice-based access control |
+| **Full Lifecycle** | Scan (detect) → Instrument (protect) → Policy CI/CD (test) → Runtime (govern) → Proxy (gateway) → Audit (trace). One library, one `pip install`. | — |
+
 ---
 
 ## CLI
