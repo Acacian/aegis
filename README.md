@@ -79,7 +79,7 @@ Supports `--format json|sarif|suggest`, `--threshold A-F`, `--no-fixes`, `.aegis
 ## Add to CI
 
 ```yaml
-- uses: Acacian/aegis@v0.9.2
+- uses: Acacian/aegis@v0.9.3
   with:
     command: scan
     fail-on-ungoverned: true

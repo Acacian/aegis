@@ -78,7 +78,7 @@ Governance Score: D (5 ungoverned call(s))
 ## CI에 추가
 
 ```yaml
-- uses: Acacian/aegis@v0.9.2
+- uses: Acacian/aegis@v0.9.3
   with:
     command: scan
     fail-on-ungoverned: true
