@@ -305,7 +305,8 @@
 
   <!-- Demo Tab Bar -->
   <nav class="demo-tab-bar" aria-label="Demo tabs">
-    <button class="demo-tab-btn active" data-tab="streaming" data-i18n="tab.streaming" style="background:linear-gradient(135deg,rgba(88,166,255,.15),rgba(63,185,80,.15));border:1px solid rgba(88,166,255,.3)">Streaming Guard</button>
+    <button class="demo-tab-btn active" data-tab="scan" data-i18n="tab.scanDemo" style="background:linear-gradient(135deg,rgba(63,185,80,.15),rgba(88,166,255,.15));border:1px solid rgba(63,185,80,.3)">aegis scan</button>
+    <button class="demo-tab-btn" data-tab="streaming" data-i18n="tab.streaming" style="background:linear-gradient(135deg,rgba(88,166,255,.15),rgba(63,185,80,.15));border:1px solid rgba(88,166,255,.3)">Streaming Guard</button>
     <button class="demo-tab-btn" data-tab="pii" data-i18n="tab.pii">PII Scanner</button>
     <button class="demo-tab-btn" data-tab="injection" data-i18n="tab.injection">Injection Detector</button>
     <button class="demo-tab-btn" data-tab="mcp" data-i18n="tab.mcp">MCP Security</button>
@@ -319,6 +320,47 @@
     <a href="scan-report.html" class="demo-tab-btn" data-i18n="tab.scan" style="text-decoration:none;color:var(--risk-high);border:1px solid rgba(248,81,73,.3);background:rgba(248,81,73,.08)">Scan Report (39 Repos, 92% F)</a>
     <a href="benchmark.html" class="demo-tab-btn" data-i18n="tab.benchmark" style="text-decoration:none;color:var(--accent);border:1px solid rgba(88,166,255,.3);background:rgba(88,166,255,.08)">Benchmark vs MS AGT</a>
   </nav>
+
+  <!-- Tab Panel: aegis scan -->
+  <div id="panel-scan" class="demo-tab-panel active">
+    <div class="demo-panel-inner">
+      <div class="demo-header">
+        <h2 data-i18n="scan.title">aegis scan</h2>
+        <p class="demo-desc" data-i18n="scan.desc">Find ungoverned AI calls in your codebase. Paste Python code or pick a preset to see what <code>aegis scan</code> detects.</p>
+      </div>
+
+      <div class="demo-layout-split">
+        <div class="demo-col">
+          <div class="demo-card">
+            <div class="demo-card-header">
+              <h3>Source Code</h3>
+              <select id="scan-preset" class="demo-select" style="font-size:12px;padding:4px 8px;min-width:180px">
+                <option value="mixed">Mixed agent code (4 issues)</option>
+                <option value="langchain">LangChain agent</option>
+                <option value="openai">Raw OpenAI calls</option>
+                <option value="clean">Clean (fully governed)</option>
+              </select>
+            </div>
+            <textarea id="scan-input" class="demo-textarea" style="min-height:280px;font-family:monospace;font-size:12px;resize:vertical" spellcheck="false"></textarea>
+            <div style="display:flex;gap:8px;margin-top:12px">
+              <button id="scan-run-btn" class="demo-btn demo-btn-primary">Run aegis scan</button>
+              <button id="scan-reset-btn" class="demo-btn demo-btn-secondary">Reset</button>
+            </div>
+          </div>
+        </div>
+        <div class="demo-col">
+          <div class="demo-card">
+            <div class="demo-card-header">
+              <h3>Scan Results</h3>
+            </div>
+            <div id="scan-output" class="demo-output" style="min-height:320px;max-height:500px;overflow-y:auto">
+              <span style="color:var(--text-muted)">Click "Run aegis scan" to analyze the code...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Tab Panel: aegis.auto_instrument() — Unified Quick Start -->
   <div id="panel-init" class="demo-tab-panel">
@@ -1177,7 +1219,7 @@ API Key: sk-proj-abc123def456ghi789jkl012mno345pqr678stu901vwx234yz</textarea>
   </div>
 
   <!-- Tab Panel: Streaming Guard -->
-  <div id="panel-streaming" class="demo-tab-panel active">
+  <div id="panel-streaming" class="demo-tab-panel">
     <div class="demo-panel-inner">
       <div class="demo-header">
         <h2 data-i18n="streaming.title">Streaming Guard</h2>

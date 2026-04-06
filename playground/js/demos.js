@@ -1623,6 +1623,204 @@ function debounce(fn, ms) {
 }
 
 /* ============================================================
+   DEMO 0: AEGIS SCAN
+   ============================================================ */
+
+const SCAN_PRESETS = {
+  mixed: {
+    code: `# src/agent.py
+from openai import OpenAI
+from langchain_openai import ChatOpenAI
+from anthropic import Anthropic
+
+client = OpenAI()
+
+def summarize(text):
+    # Direct OpenAI call - no guardrails
+    response = client.chat.completions.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": text}]
+    )
+    return response.choices[0].message.content
+
+def search_agent(query):
+    # LangChain call - no guardrails
+    llm = ChatOpenAI(model="gpt-4")
+    return llm.invoke(query)
+
+def classify(text):
+    # Anthropic call - no guardrails
+    anth = Anthropic()
+    msg = anth.messages.create(
+        model="claude-sonnet-4-20250514",
+        max_tokens=100,
+        messages=[{"role": "user", "content": text}]
+    )
+    return msg.content[0].text
+
+def run_crew():
+    # CrewAI call - no guardrails
+    from crewai import Crew, Agent, Task
+    crew = Crew(agents=[Agent(role="researcher")], tasks=[Task(description="research")])
+    return crew.kickoff()`,
+    findings: [
+      { line: 12, file: 'src/agent.py', call: 'client.chat.completions.create()', framework: 'OpenAI', risk: 'high' },
+      { line: 20, file: 'src/agent.py', call: 'llm.invoke(query)', framework: 'LangChain', risk: 'high' },
+      { line: 26, file: 'src/agent.py', call: 'anth.messages.create()', framework: 'Anthropic', risk: 'high' },
+      { line: 35, file: 'src/agent.py', call: 'crew.kickoff()', framework: 'CrewAI', risk: 'medium' },
+    ]
+  },
+  langchain: {
+    code: `# src/rag_agent.py
+from langchain_openai import ChatOpenAI
+from langchain.agents import create_react_agent
+from langchain_community.tools import DuckDuckGoSearchRun
+
+llm = ChatOpenAI(model="gpt-4o", temperature=0)
+search = DuckDuckGoSearchRun()
+
+# No policy, no guardrails, no audit
+agent = create_react_agent(llm, [search])
+
+def answer(question):
+    return agent.invoke({"input": question})
+
+# Tool calls are ungoverned - agent can search anything
+# LLM calls have no injection protection
+# No audit trail of what was searched or returned`,
+    findings: [
+      { line: 8, file: 'src/rag_agent.py', call: 'ChatOpenAI(model="gpt-4o")', framework: 'LangChain', risk: 'high' },
+      { line: 11, file: 'src/rag_agent.py', call: 'create_react_agent(llm, [search])', framework: 'LangChain', risk: 'high' },
+      { line: 14, file: 'src/rag_agent.py', call: 'agent.invoke()', framework: 'LangChain', risk: 'high' },
+    ]
+  },
+  openai: {
+    code: `# src/chatbot.py
+import openai
+from openai import OpenAI
+
+client = OpenAI()
+
+def chat(user_message):
+    # User input goes directly to LLM - no injection check
+    response = client.chat.completions.create(
+        model="gpt-4",
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": user_message}
+        ]
+    )
+    # Response returned without PII check
+    return response.choices[0].message.content
+
+def embed(text):
+    return client.embeddings.create(
+        model="text-embedding-3-small",
+        input=text
+    )`,
+    findings: [
+      { line: 9, file: 'src/chatbot.py', call: 'client.chat.completions.create()', framework: 'OpenAI', risk: 'high' },
+      { line: 21, file: 'src/chatbot.py', call: 'client.embeddings.create()', framework: 'OpenAI', risk: 'low' },
+    ]
+  },
+  clean: {
+    code: `# src/governed_agent.py
+import aegis
+aegis.auto_instrument()
+
+from openai import OpenAI
+from langchain_openai import ChatOpenAI
+
+# All calls below are now governed:
+#   - Prompt injection detection (blocks attacks)
+#   - PII masking (warns on personal data)
+#   - Full audit trail (every call logged)
+
+client = OpenAI()
+
+def summarize(text):
+    # Governed by aegis.auto_instrument()
+    return client.chat.completions.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": text}]
+    ).choices[0].message.content
+
+def search(query):
+    llm = ChatOpenAI(model="gpt-4")
+    return llm.invoke(query)  # Also governed`,
+    findings: []
+  }
+};
+
+function initScanDemo() {
+  const presetSel = document.getElementById('scan-preset');
+  const inputEl = document.getElementById('scan-input');
+  const outputEl = document.getElementById('scan-output');
+  const runBtn = document.getElementById('scan-run-btn');
+  const resetBtn = document.getElementById('scan-reset-btn');
+
+  if (!presetSel) return;
+
+  function loadPreset() {
+    const p = SCAN_PRESETS[presetSel.value];
+    inputEl.value = p.code;
+    outputEl.innerHTML = '<span style="color:var(--text-muted)">Click "Run aegis scan" to analyze the code...</span>';
+  }
+
+  presetSel.addEventListener('change', loadPreset);
+  loadPreset();
+
+  runBtn.addEventListener('click', () => {
+    const p = SCAN_PRESETS[presetSel.value];
+    runBtn.disabled = true;
+    outputEl.innerHTML = '<span style="color:var(--text-muted)">Scanning...</span>';
+
+    setTimeout(() => {
+      let html = '<div style="font-weight:700;font-size:14px;margin-bottom:12px;color:var(--accent);font-family:monospace">$ aegis scan .</div>';
+
+      if (p.findings.length === 0) {
+        html += '<div style="padding:16px;background:rgba(63,185,80,.1);border:1px solid rgba(63,185,80,.3);border-radius:8px;text-align:center">';
+        html += '<div style="font-size:20px;font-weight:700;color:#3fb950">All Clear</div>';
+        html += '<div style="font-size:13px;color:var(--text-secondary);margin-top:4px">No ungoverned AI calls found. aegis.auto_instrument() is active.</div>';
+        html += '</div>';
+      } else {
+        // File findings
+        p.findings.forEach(f => {
+          const riskColor = f.risk === 'high' ? '#f85149' : f.risk === 'medium' ? '#d29922' : '#8b949e';
+          const riskBadge = `<span style="padding:1px 6px;border-radius:3px;font-size:10px;font-weight:600;background:${riskColor}18;color:${riskColor};text-transform:uppercase">${f.risk}</span>`;
+          html += `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--border);font-size:12px">`;
+          html += `<span style="color:var(--text-muted);font-family:monospace;min-width:160px">${f.file}:${f.line}</span>`;
+          html += `<span style="font-family:monospace;color:var(--text-primary);flex:1">${f.call}</span>`;
+          html += `<span style="color:var(--text-muted);min-width:75px">${f.framework}</span>`;
+          html += riskBadge;
+          html += `<span style="color:#f85149;font-weight:600;font-size:11px">NO GUARDRAIL</span>`;
+          html += '</div>';
+        });
+
+        // Summary
+        const highCount = p.findings.filter(f => f.risk === 'high').length;
+        const summaryColor = highCount > 0 ? '#f85149' : '#d29922';
+        html += `<div style="margin-top:16px;padding:12px 16px;border-radius:8px;background:${summaryColor}10;border:1px solid ${summaryColor}30">`;
+        html += `<div style="font-weight:700;color:${summaryColor};font-size:14px">${p.findings.length} ungoverned AI call${p.findings.length > 1 ? 's' : ''} found</div>`;
+        html += `<div style="font-size:12px;color:var(--text-secondary);margin-top:4px">Fix: add <code style="background:var(--bg-secondary);padding:1px 4px;border-radius:3px">import aegis; aegis.auto_instrument()</code> at the top of your entry point.</div>`;
+        html += '</div>';
+
+        // GitHub Action suggestion
+        html += '<div style="margin-top:12px;padding:12px 16px;border-radius:8px;background:var(--bg-secondary);border:1px solid var(--border)">';
+        html += '<div style="font-weight:600;font-size:12px;color:var(--text-primary);margin-bottom:6px">Add to CI to catch this on every PR:</div>';
+        html += '<pre style="font-size:11px;color:var(--text-secondary);margin:0;white-space:pre">- uses: Acacian/aegis@v0.9.1\n  with:\n    command: scan\n    fail-on-ungoverned: true</pre>';
+        html += '</div>';
+      }
+
+      outputEl.innerHTML = html;
+      runBtn.disabled = false;
+    }, 400);
+  });
+
+  resetBtn.addEventListener('click', loadPreset);
+}
+
+/* ============================================================
    DEMO 7: POLICY CI/CD
    ============================================================ */
 
@@ -1978,6 +2176,7 @@ function initPolicyCICD() {
 
 document.addEventListener('DOMContentLoaded', () => {
   initDemoTabs();
+  initScanDemo();
   initMcpScanner();
   initCostBreaker();
   initAuditChain();

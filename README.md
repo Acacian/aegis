@@ -2,10 +2,11 @@
 <p align="center">
   <h1 align="center">Agent-Aegis</h1>
   <p align="center">
-    <strong>Runtime security for AI agents — the <code>terraform plan</code> for AI agent security.<br/>Auto-instrument 11 frameworks with runtime guardrails, selection governance, policy testing, and audit trail — zero code changes.</strong>
+    <strong>Find ungoverned AI calls in your codebase. Fix them before production.</strong>
   </p>
   <p align="center">
-    <code>pip install agent-aegis</code> and add <b>one line</b>. Aegis monkey-patches LangChain, CrewAI, OpenAI Agents SDK, OpenAI, Anthropic, LiteLLM, Google GenAI, Pydantic AI, LlamaIndex, Instructor, and DSPy at runtime — every LLM call and tool invocation passes through prompt-injection detection, PII masking, and a full audit trail. Preview policy changes with <code>aegis plan</code>, regression-test with <code>aegis test</code>, and gate CI/CD merges. Governs what agents <b>do</b> (actions, tool calls, data access) <em>and</em> what they <b>choose not to do</b> (selection-by-negation detection — the first open-source library in this governance category). All checks are deterministic and sub-millisecond.
+    <code>pip install agent-aegis && aegis scan .</code> — finds every unprotected LLM call and tool invocation in 30 seconds.<br/>
+    Then add one line to govern them all: <code>aegis.auto_instrument()</code> adds injection blocking, PII masking, and audit trail to 11 frameworks. No code changes.
   </p>
 </p>
 
@@ -25,17 +26,14 @@
 </p>
 
 <p align="center">
-  <a href="#auto-instrumentation"><strong>Auto-Instrumentation</strong></a> &bull;
-  <a href="#selection-governance"><strong>Selection Governance</strong></a> &bull;
-  <a href="#policy-cicd"><strong>Policy CI/CD</strong></a> &bull;
+  <a href="#try-it-30-seconds"><strong>Try It (30s)</strong></a> &bull;
+  <a href="#add-to-ci"><strong>Add to CI</strong></a> &bull;
+  <a href="#auto-instrumentation">Auto-Instrumentation</a> &bull;
+  <a href="#policy-cicd">Policy CI/CD</a> &bull;
   <a href="#quick-start">Quick Start</a> &bull;
-  <a href="#supported-frameworks">Supported Frameworks</a> &bull;
-  <a href="#three-pillars">Three Pillars</a> &bull;
-  <a href="https://acacian.github.io/aegis/">Documentation</a> &bull;
-  <a href="#integrations">Integrations</a> &bull;
-  <a href="https://acacian.github.io/aegis/playground/"><strong>Try it Live</strong></a> &bull;
-  <a href="https://acacian.github.io/aegis/playground/scan-report.html"><strong>Scan Report</strong></a> &bull;
-  <a href="https://github.com/Acacian/aegis/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22">Contributing</a>
+  <a href="https://acacian.github.io/aegis/">Docs</a> &bull;
+  <a href="https://acacian.github.io/aegis/playground/"><strong>Playground</strong></a> &bull;
+  <a href="https://acacian.github.io/aegis/playground/scan-report.html"><strong>Scan Report</strong></a>
 </p>
 
 <p align="center">
@@ -45,9 +43,45 @@
 
 ---
 
+## Try It (30 Seconds)
+
+```bash
+pip install agent-aegis
+aegis scan .
+```
+
+```
+Scanning . for ungoverned AI calls...
+
+  src/agent.py:12     openai.ChatCompletion.create()    NO GUARDRAIL
+  src/agent.py:34     langchain.ChatOpenAI.invoke()      NO GUARDRAIL
+  src/tools.py:8      anthropic.messages.create()        NO GUARDRAIL
+  src/pipeline.py:21  crew.kickoff()                     NO GUARDRAIL
+
+  4 ungoverned AI calls found in 3 files.
+  Run `aegis.auto_instrument()` to add guardrails, or create a policy with `aegis init`.
+```
+
+That's it. You now know exactly where your unprotected AI calls are.
+
+## Add to CI
+
+One line in your GitHub Actions workflow:
+
+```yaml
+- uses: Acacian/aegis@v0.9.1
+  with:
+    command: scan
+    fail-on-ungoverned: true
+```
+
+Every PR gets scanned. Ungoverned AI calls block the merge. [See all options](action.yml).
+
+---
+
 ## Auto-Instrumentation
 
-Add AI safety to any project in 30 seconds. No refactoring, no wrappers, no config files.
+Add guardrails to any project in one line. No refactoring, no wrappers, no config files.
 
 ```python
 import aegis
