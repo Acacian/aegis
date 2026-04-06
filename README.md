@@ -5,8 +5,8 @@
     <strong>Find ungoverned AI calls in your codebase. Fix them before production.</strong>
   </p>
   <p align="center">
-    <code>pip install agent-aegis && aegis scan .</code> — finds every unprotected LLM call and tool invocation in 30 seconds.<br/>
-    Then add one line to govern them all: <code>aegis.auto_instrument()</code> adds injection blocking, PII masking, and audit trail to 11 frameworks. No code changes.
+    <code>pip install agent-aegis && aegis scan .</code> — detects ungoverned AI calls across 15 frameworks in 30 seconds.<br/>
+    Then add one line to govern them all: <code>aegis.auto_instrument()</code> adds injection blocking, PII masking, and audit trail to 12 frameworks. No code changes.
   </p>
 </p>
 
@@ -18,7 +18,7 @@
   <a href="https://github.com/Acacian/aegis/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License"></a>
   <a href="https://acacian.github.io/aegis/"><img src="https://img.shields.io/badge/docs-acacian.github.io%2Faegis-blue" alt="Docs"></a>
   <br/>
-  <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-6061%2B_passed-brightgreen" alt="Tests"></a>
+  <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-6100%2B_passed-brightgreen" alt="Tests"></a>
   <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/coverage-92%25-brightgreen" alt="Coverage"></a>
   <a href="https://acacian.github.io/aegis/playground/"><img src="https://img.shields.io/badge/playground-Try_it_Live-ff6b6b" alt="Playground"></a>
   <a href="https://acacian.github.io/aegis/playground/scan-report.html"><img src="https://img.shields.io/badge/scan_report-39_Repos%2C_92%25_F-red" alt="Scan Report"></a>
@@ -50,16 +50,31 @@ aegis scan .
 ```
 
 ```
-Scanning . for ungoverned AI calls...
+Aegis Governance Scan
+=====================
+Scanned: 47 files in ./src
 
-  src/agent.py:12     openai.ChatCompletion.create()    NO GUARDRAIL
-  src/agent.py:34     langchain.ChatOpenAI.invoke()      NO GUARDRAIL
-  src/tools.py:8      anthropic.messages.create()        NO GUARDRAIL
-  src/pipeline.py:21  crew.kickoff()                     NO GUARDRAIL
+Found 5 ungoverned tool call(s):
+  agent.py:12   OpenAI        function call with tools= — no governance wrapper  [ASI02: Tool Misuse]
+    → Wrap with aegis: import aegis; aegis.auto_instrument()
+  tools.py:8    LangChain     @tool "search_db" — no policy check  [ASI02: Tool Misuse]
+    → Wrap with aegis: import aegis; aegis.auto_instrument()
+  llm.py:21     LiteLLM       litellm.completion() — no governance wrapper  [ASI02: Tool Misuse]
+    → Wrap with aegis: import aegis; aegis.auto_instrument()
+  run.py:5      subprocess    subprocess.run — direct shell execution  [ASI08: Uncontrolled Code Execution]
+    → Use aegis sandbox policy to govern shell execution
+  api.py:14     HTTP          requests.post — raw HTTP in agent code  [ASI07: Data Leakage]
+    → Route through aegis-governed HTTP client or add policy rule
 
-  4 ungoverned AI calls found in 3 files.
-  Run `aegis.auto_instrument()` to add guardrails, or create a policy with `aegis init`.
+OWASP Agentic Top 10 Risks:
+  ASI02: Tool Misuse & Exploitation: 3 finding(s)
+  ASI07: Data Leakage & Exfiltration: 1 finding(s)
+  ASI08: Uncontrolled Code Execution: 1 finding(s)
+
+Governance Score: D (5 ungoverned call(s))
 ```
+
+Supports `--format json|sarif|suggest`, `--threshold A-F`, `--no-fixes`, `.aegisscanignore`, and `# aegis: ignore` inline pragmas.
 
 ## Add to CI
 
@@ -172,7 +187,7 @@ pip install agent-aegis
 ```python
 import aegis
 aegis.auto_instrument()
-# All 11 frameworks are now governed.
+# All 12 frameworks are now governed.
 ```
 
 ### 3. Or use a YAML policy for full control
@@ -252,7 +267,7 @@ Works with Claude Desktop, Cursor, VS Code, Windsurf. Tool poisoning detection, 
 |---|---|---|---|---|
 | **Setup** | Days of if/else | Vendor-specific config | Kubernetes + procurement | **`pip install` + one line** |
 | **Code changes** | Wrap every call | SDK-specific | Months of integration | **Zero — auto-instruments** |
-| **Cross-framework** | Rewrite per framework | Their ecosystem only | Usually single-vendor | **11 frameworks** |
+| **Cross-framework** | Rewrite per framework | Their ecosystem only | Usually single-vendor | **12 frameworks** |
 | **Policy CI/CD** | None | None | None | **`aegis plan` + `aegis test`** |
 | **Audit trail** | printf debugging | Platform logs only | Cloud dashboard | **SQLite + JSONL + webhooks** |
 | **Compliance** | Manual docs | None | Enterprise sales cycle | **EU AI Act, NIST, SOC2 built-in** |
