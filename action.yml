@@ -1,5 +1,5 @@
 name: "Aegis AI Agent Security Gate"
-description: "Scan, govern, and audit AI agent actions in CI/CD. Policy enforcement, selection governance, prompt injection detection, and governance scoring — the Terraform plan for AI agent security."
+description: "Scan for ungoverned AI calls, enforce policies, and detect prompt injection in CI/CD."
 author: "Acacian"
 branding:
   icon: "shield"
