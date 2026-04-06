@@ -1623,6 +1623,356 @@ function debounce(fn, ms) {
 }
 
 /* ============================================================
+   DEMO 7: POLICY CI/CD
+   ============================================================ */
+
+const CICD_SCENARIOS = {
+  'add-pii': {
+    name: 'Add PII protection rule',
+    before: `rules:
+  - name: allow-llm-calls
+    action: llm_call
+    target: "*"
+    decision: allow
+
+  - name: block-dangerous
+    action: file_delete
+    target: "*"
+    decision: deny`,
+    after: `rules:
+  - name: allow-llm-calls
+    action: llm_call
+    target: "*"
+    decision: allow
+
+  - name: block-dangerous
+    action: file_delete
+    target: "*"
+    decision: deny
+
+  - name: block-pii-exfil        # NEW
+    action: send_message
+    target: "*"
+    decision: deny
+    conditions:
+      content_contains: [ssn, credit_card, phone]`,
+    actions: [
+      { type: 'llm_call', target: 'gpt-4', desc: 'Call GPT-4 for summary' },
+      { type: 'send_message', target: 'slack', desc: 'Send report to Slack', meta: 'contains SSN' },
+      { type: 'send_message', target: 'email', desc: 'Send clean notification' },
+      { type: 'file_delete', target: '/tmp/cache', desc: 'Delete temp file' },
+    ],
+    tests: [
+      { name: 'LLM calls still allowed', expect: 'allow', action: 'llm_call', result: 'pass' },
+      { name: 'PII message blocked', expect: 'deny', action: 'send_message(ssn)', result: 'pass' },
+      { name: 'Clean message allowed', expect: 'allow', action: 'send_message', result: 'pass' },
+      { name: 'File delete still blocked', expect: 'deny', action: 'file_delete', result: 'pass' },
+    ],
+    plan: { newly_blocked: 1, still_blocked: 1, allowed: 2, total: 4,
+            details: [
+              { action: 'send_message → slack', before: 'allow', after: 'deny', reason: 'content_contains: ssn' },
+            ]},
+  },
+  'restrict-file': {
+    name: 'Restrict file_read to read-only dirs',
+    before: `rules:
+  - name: allow-file-read
+    action: file_read
+    target: "*"
+    decision: allow
+
+  - name: allow-file-write
+    action: file_write
+    target: "/tmp/*"
+    decision: allow`,
+    after: `rules:
+  - name: allow-file-read
+    action: file_read
+    target: "/data/public/*"
+    decision: allow
+
+  - name: block-file-read-other   # CHANGED
+    action: file_read
+    target: "*"
+    decision: deny
+
+  - name: allow-file-write
+    action: file_write
+    target: "/tmp/*"
+    decision: allow`,
+    actions: [
+      { type: 'file_read', target: '/data/public/report.csv', desc: 'Read public report' },
+      { type: 'file_read', target: '/etc/passwd', desc: 'Read system file' },
+      { type: 'file_read', target: '/home/user/.env', desc: 'Read env secrets' },
+      { type: 'file_write', target: '/tmp/output.json', desc: 'Write temp output' },
+    ],
+    tests: [
+      { name: 'Public dir readable', expect: 'allow', action: 'file_read(/data/public/)', result: 'pass' },
+      { name: 'System files blocked', expect: 'deny', action: 'file_read(/etc/)', result: 'pass' },
+      { name: 'Secret files blocked', expect: 'deny', action: 'file_read(.env)', result: 'pass' },
+      { name: 'Tmp write still works', expect: 'allow', action: 'file_write(/tmp/)', result: 'pass' },
+    ],
+    plan: { newly_blocked: 2, still_blocked: 0, allowed: 2, total: 4,
+            details: [
+              { action: 'file_read → /etc/passwd', before: 'allow', after: 'deny', reason: 'target not in /data/public/*' },
+              { action: 'file_read → /home/user/.env', before: 'allow', after: 'deny', reason: 'target not in /data/public/*' },
+            ]},
+  },
+  'allow-tool': {
+    name: 'Allow new tool: web_search',
+    before: `rules:
+  - name: allow-llm
+    action: llm_call
+    target: "*"
+    decision: allow
+
+  - name: default-deny
+    action: "*"
+    target: "*"
+    decision: deny`,
+    after: `rules:
+  - name: allow-llm
+    action: llm_call
+    target: "*"
+    decision: allow
+
+  - name: allow-web-search        # NEW
+    action: web_search
+    target: "*.google.com"
+    decision: allow
+
+  - name: default-deny
+    action: "*"
+    target: "*"
+    decision: deny`,
+    actions: [
+      { type: 'llm_call', target: 'claude', desc: 'Call Claude for analysis' },
+      { type: 'web_search', target: 'www.google.com', desc: 'Search Google' },
+      { type: 'web_search', target: 'internal.corp', desc: 'Search internal site' },
+      { type: 'file_read', target: '/secrets', desc: 'Read secrets dir' },
+    ],
+    tests: [
+      { name: 'LLM calls allowed', expect: 'allow', action: 'llm_call', result: 'pass' },
+      { name: 'Google search allowed', expect: 'allow', action: 'web_search(google)', result: 'pass' },
+      { name: 'Internal search blocked', expect: 'deny', action: 'web_search(corp)', result: 'pass' },
+      { name: 'File read still denied', expect: 'deny', action: 'file_read', result: 'pass' },
+    ],
+    plan: { newly_blocked: 0, still_blocked: 2, allowed: 2, total: 4,
+            details: [
+              { action: 'web_search → www.google.com', before: 'deny', after: 'allow', reason: 'new rule: allow-web-search' },
+            ]},
+  },
+  'remove-override': {
+    name: 'Remove admin bypass rule',
+    before: `rules:
+  - name: admin-bypass
+    action: "*"
+    target: "*"
+    decision: allow
+    conditions:
+      agent_role: admin
+
+  - name: allow-read
+    action: file_read
+    target: "/data/*"
+    decision: allow
+
+  - name: default-deny
+    action: "*"
+    target: "*"
+    decision: deny`,
+    after: `rules:
+  - name: allow-read
+    action: file_read
+    target: "/data/*"
+    decision: allow
+
+  - name: admin-review             # CHANGED
+    action: file_delete
+    target: "*"
+    decision: review
+    conditions:
+      agent_role: admin
+
+  - name: default-deny
+    action: "*"
+    target: "*"
+    decision: deny`,
+    actions: [
+      { type: 'file_read', target: '/data/report', desc: 'Admin reads report' },
+      { type: 'file_delete', target: '/data/old', desc: 'Admin deletes old data' },
+      { type: 'db_drop', target: 'production', desc: 'Admin drops prod DB' },
+      { type: 'file_read', target: '/secrets', desc: 'Admin reads secrets' },
+    ],
+    tests: [
+      { name: 'Data read still allowed', expect: 'allow', action: 'file_read(/data/)', result: 'pass' },
+      { name: 'Delete needs review', expect: 'review', action: 'file_delete(admin)', result: 'pass' },
+      { name: 'DB drop now denied', expect: 'deny', action: 'db_drop', result: 'pass' },
+      { name: 'Secrets now denied', expect: 'deny', action: 'file_read(/secrets)', result: 'pass' },
+    ],
+    plan: { newly_blocked: 2, still_blocked: 0, allowed: 1, total: 4,
+            details: [
+              { action: 'db_drop → production', before: 'allow (admin-bypass)', after: 'deny', reason: 'admin-bypass removed' },
+              { action: 'file_read → /secrets', before: 'allow (admin-bypass)', after: 'deny', reason: 'admin-bypass removed' },
+              { action: 'file_delete → /data/old', before: 'allow (admin-bypass)', after: 'review', reason: 'now requires human approval' },
+            ]},
+  },
+};
+
+function initPolicyCICD() {
+  const scenarioSel = document.getElementById('cicd-scenario');
+  const beforeEl = document.getElementById('cicd-before');
+  const afterEl = document.getElementById('cicd-after');
+  const planOut = document.getElementById('cicd-plan-output');
+  const rightOut = document.getElementById('cicd-right-output');
+  const planBtn = document.getElementById('cicd-plan-btn');
+  const testBtn = document.getElementById('cicd-test-btn');
+  const commentBtn = document.getElementById('cicd-comment-btn');
+  const resetBtn = document.getElementById('cicd-reset-btn');
+
+  if (!scenarioSel) return;
+
+  function loadScenario() {
+    const s = CICD_SCENARIOS[scenarioSel.value];
+    beforeEl.textContent = s.before;
+    afterEl.textContent = s.after;
+    planOut.innerHTML = '<span style="color:var(--text-muted)">Click "Run aegis plan" to preview impact...</span>';
+    rightOut.innerHTML = '<span style="color:var(--text-muted)">Run plan first, then tests...</span>';
+    testBtn.disabled = true;
+    commentBtn.disabled = true;
+  }
+
+  scenarioSel.addEventListener('change', loadScenario);
+  loadScenario();
+
+  // --- Plan ---
+  planBtn.addEventListener('click', () => {
+    const s = CICD_SCENARIOS[scenarioSel.value];
+    const p = s.plan;
+    planBtn.disabled = true;
+    planOut.innerHTML = '<span style="color:var(--text-muted)">Running aegis plan...</span>';
+
+    setTimeout(() => {
+      let html = '<div style="font-weight:700;font-size:14px;margin-bottom:12px;color:var(--accent)">$ aegis plan old.yaml new.yaml --ci</div>';
+
+      // Summary bar
+      const nbColor = p.newly_blocked > 0 ? '#f85149' : '#3fb950';
+      html += '<div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap">';
+      html += `<div style="padding:8px 14px;border-radius:8px;background:${nbColor}18;border:1px solid ${nbColor}40;text-align:center"><div style="font-size:22px;font-weight:700;color:${nbColor}">${p.newly_blocked}</div><div style="font-size:11px;color:var(--text-muted)">Newly Blocked</div></div>`;
+      html += `<div style="padding:8px 14px;border-radius:8px;background:rgba(139,148,158,.1);border:1px solid rgba(139,148,158,.3);text-align:center"><div style="font-size:22px;font-weight:700;color:var(--text-secondary)">${p.still_blocked}</div><div style="font-size:11px;color:var(--text-muted)">Still Blocked</div></div>`;
+      html += `<div style="padding:8px 14px;border-radius:8px;background:rgba(63,185,80,.1);border:1px solid rgba(63,185,80,.3);text-align:center"><div style="font-size:22px;font-weight:700;color:#3fb950">${p.allowed}</div><div style="font-size:11px;color:var(--text-muted)">Allowed</div></div>`;
+      html += '</div>';
+
+      // Detail table
+      if (p.details.length > 0) {
+        html += '<div style="font-weight:600;font-size:13px;margin-bottom:8px">Impact Details:</div>';
+        html += '<table style="width:100%;font-size:12px;border-collapse:collapse">';
+        html += '<tr style="border-bottom:1px solid var(--border)"><th style="text-align:left;padding:4px 8px;color:var(--text-muted)">Action</th><th style="padding:4px 8px;color:var(--text-muted)">Before</th><th style="padding:4px 8px;color:var(--text-muted)">After</th><th style="text-align:left;padding:4px 8px;color:var(--text-muted)">Reason</th></tr>';
+        p.details.forEach(d => {
+          const beforeBadge = d.before.includes('allow')
+            ? `<span style="padding:2px 6px;border-radius:4px;font-size:11px;font-weight:600;background:rgba(63,185,80,.15);color:#3fb950">${d.before}</span>`
+            : `<span style="padding:2px 6px;border-radius:4px;font-size:11px;font-weight:600;background:rgba(139,148,158,.15);color:var(--text-secondary)">${d.before}</span>`;
+          const afterColor = d.after === 'deny' ? '#f85149' : d.after === 'review' ? '#d29922' : '#3fb950';
+          const afterBadge = `<span style="padding:2px 6px;border-radius:4px;font-size:11px;font-weight:600;background:${afterColor}18;color:${afterColor}">${d.after}</span>`;
+          html += `<tr style="border-bottom:1px solid var(--border)"><td style="padding:6px 8px;font-family:monospace;font-size:11px">${d.action}</td><td style="padding:6px 8px;text-align:center">${beforeBadge}</td><td style="padding:6px 8px;text-align:center">${afterBadge}</td><td style="padding:6px 8px;font-size:11px;color:var(--text-secondary)">${d.reason}</td></tr>`;
+        });
+        html += '</table>';
+      }
+
+      const exitCode = p.newly_blocked > 0 ? 1 : 0;
+      const exitColor = exitCode === 0 ? '#3fb950' : '#f85149';
+      html += `<div style="margin-top:12px;padding:8px 12px;border-radius:6px;background:${exitColor}10;border:1px solid ${exitColor}30;font-size:12px"><strong style="color:${exitColor}">Exit code: ${exitCode}</strong> — ${exitCode === 0 ? 'No breaking changes. Safe to merge.' : 'Breaking changes detected. Review required.'}</div>`;
+
+      planOut.innerHTML = html;
+      planBtn.disabled = false;
+      testBtn.disabled = false;
+    }, 600);
+  });
+
+  // --- Test ---
+  testBtn.addEventListener('click', () => {
+    const s = CICD_SCENARIOS[scenarioSel.value];
+    testBtn.disabled = true;
+    rightOut.innerHTML = '<span style="color:var(--text-muted)">Running aegis test...</span>';
+
+    setTimeout(() => {
+      let html = '<div style="font-weight:700;font-size:14px;margin-bottom:12px;color:var(--accent)">$ aegis test policy.yaml tests.yaml</div>';
+
+      const passed = s.tests.filter(t => t.result === 'pass').length;
+      const failed = s.tests.filter(t => t.result === 'fail').length;
+      const total = s.tests.length;
+      const allPass = failed === 0;
+      const summaryColor = allPass ? '#3fb950' : '#f85149';
+
+      html += `<div style="padding:8px 14px;border-radius:8px;background:${summaryColor}12;border:1px solid ${summaryColor}40;margin-bottom:12px;font-size:14px;font-weight:700;color:${summaryColor}">${allPass ? 'ALL PASSED' : `${failed} FAILED`} — ${passed}/${total} tests</div>`;
+
+      s.tests.forEach(t => {
+        const icon = t.result === 'pass' ? '<span style="color:#3fb950;font-weight:700">PASS</span>' : '<span style="color:#f85149;font-weight:700">FAIL</span>';
+        const expectColor = t.expect === 'allow' ? '#3fb950' : t.expect === 'deny' ? '#f85149' : '#d29922';
+        html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border-bottom:1px solid var(--border);font-size:12px">`;
+        html += `<div><span style="font-family:monospace">${t.name}</span> <span style="color:var(--text-muted);margin-left:8px">expect: <span style="color:${expectColor}">${t.expect}</span></span></div>`;
+        html += `<div>${icon}</div></div>`;
+      });
+
+      rightOut.innerHTML = html;
+      testBtn.disabled = false;
+      commentBtn.disabled = false;
+    }, 500);
+  });
+
+  // --- PR Comment Preview ---
+  commentBtn.addEventListener('click', () => {
+    const s = CICD_SCENARIOS[scenarioSel.value];
+    const p = s.plan;
+    const passed = s.tests.filter(t => t.result === 'pass').length;
+    const failed = s.tests.filter(t => t.result === 'fail').length;
+    const total = s.tests.length;
+
+    let md = '## Aegis Policy Report\n\n';
+    md += '| Check | Result |\n| ----- | ------ |\n';
+    if (p.newly_blocked > 0) {
+      md += `| Plan | ${p.newly_blocked} action(s) newly blocked |\n`;
+    } else {
+      md += '| Plan | No actions newly blocked |\n';
+    }
+    if (failed === 0) {
+      md += `| Test | ${passed}/${total} passed |\n`;
+    } else {
+      md += `| Test | ${passed}/${total} passed, ${failed} failed |\n`;
+    }
+    md += '\n---\n*Generated by [Aegis AI Agent Security Gate](https://github.com/Acacian/aegis)*';
+
+    // Render as styled preview
+    let html = '<div style="font-weight:700;font-size:14px;margin-bottom:12px;color:var(--accent)">PR Comment Preview</div>';
+    html += '<div style="padding:16px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;font-size:13px">';
+    html += '<div style="font-size:16px;font-weight:700;margin-bottom:12px">Aegis Policy Report</div>';
+    html += '<table style="width:100%;font-size:12px;border-collapse:collapse">';
+    html += '<tr style="border-bottom:1px solid var(--border)"><th style="text-align:left;padding:6px 8px">Check</th><th style="text-align:left;padding:6px 8px">Result</th></tr>';
+    if (p.newly_blocked > 0) {
+      html += `<tr style="border-bottom:1px solid var(--border)"><td style="padding:6px 8px">Plan</td><td style="padding:6px 8px;color:#f85149;font-weight:600">${p.newly_blocked} action(s) newly blocked</td></tr>`;
+    } else {
+      html += '<tr style="border-bottom:1px solid var(--border)"><td style="padding:6px 8px">Plan</td><td style="padding:6px 8px;color:#3fb950">No actions newly blocked</td></tr>';
+    }
+    const testColor = failed === 0 ? '#3fb950' : '#f85149';
+    const testText = failed === 0 ? `${passed}/${total} passed` : `${passed}/${total} passed, ${failed} failed`;
+    html += `<tr><td style="padding:6px 8px">Test</td><td style="padding:6px 8px;color:${testColor};font-weight:600">${testText}</td></tr>`;
+    html += '</table>';
+    html += '<hr style="border:none;border-top:1px solid var(--border);margin:12px 0">';
+    html += '<div style="font-size:11px;color:var(--text-muted);font-style:italic">Generated by <a href="https://github.com/Acacian/aegis" style="color:var(--accent)">Aegis AI Agent Security Gate</a></div>';
+    html += '</div>';
+
+    // Raw markdown toggle
+    html += '<details style="margin-top:12px"><summary style="cursor:pointer;font-size:12px;color:var(--text-muted)">View raw markdown</summary>';
+    html += `<pre style="margin-top:8px;padding:12px;background:var(--bg-primary);border:1px solid var(--border);border-radius:6px;font-size:11px;white-space:pre-wrap">${md.replace(/</g,'&lt;')}</pre></details>`;
+
+    rightOut.innerHTML = html;
+  });
+
+  // --- Reset ---
+  resetBtn.addEventListener('click', loadScenario);
+}
+
+/* ============================================================
    INIT
    ============================================================ */
 
@@ -1633,4 +1983,5 @@ document.addEventListener('DOMContentLoaded', () => {
   initAuditChain();
   initRegulatory();
   initSelectionGov();
+  initPolicyCICD();
 });

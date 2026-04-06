@@ -315,6 +315,7 @@
     <button class="demo-tab-btn" data-tab="audit-chain" data-i18n="tab.audit">Audit Chain</button>
     <button class="demo-tab-btn" data-tab="regulatory" data-i18n="tab.regulatory">Compliance</button>
     <button class="demo-tab-btn" data-tab="selection-gov" data-i18n="tab.selection" style="background:linear-gradient(135deg,rgba(210,153,34,.12),rgba(248,81,73,.12));border:1px solid rgba(210,153,34,.3)">Selection Gov</button>
+    <button class="demo-tab-btn" data-tab="policy-cicd" data-i18n="tab.cicd" style="background:linear-gradient(135deg,rgba(163,113,247,.15),rgba(88,166,255,.15));border:1px solid rgba(163,113,247,.3)">Policy CI/CD</button>
     <a href="scan-report.html" class="demo-tab-btn" data-i18n="tab.scan" style="text-decoration:none;color:var(--risk-high);border:1px solid rgba(248,81,73,.3);background:rgba(248,81,73,.08)">Scan Report (39 Repos, 92% F)</a>
     <a href="benchmark.html" class="demo-tab-btn" data-i18n="tab.benchmark" style="text-decoration:none;color:var(--accent);border:1px solid rgba(88,166,255,.3);background:rgba(88,166,255,.08)">Benchmark vs MS AGT</a>
   </nav>
@@ -995,6 +996,77 @@ aegis.auto_instrument()  # auto-patches all frameworks + activates guardrails
           </div>
           <div class="demo-col">
             <div id="gap-output" class="demo-output" style="min-height:280px"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab Panel: Policy CI/CD -->
+  <div id="panel-policy-cicd" class="demo-tab-panel">
+    <div class="demo-panel-inner">
+      <div class="demo-header">
+        <h2 data-i18n="cicd.title">Policy CI/CD</h2>
+        <p class="demo-desc" data-i18n="cicd.desc"><code>terraform plan</code> for AI agent policies. Preview how a policy change affects live actions, run regression tests, and see the PR comment — all before merging.</p>
+      </div>
+
+      <!-- Step 0: Scenario selector -->
+      <div class="demo-card" style="margin-bottom:16px">
+        <div class="demo-card-header">
+          <h3 data-i18n="cicd.scenario">Scenario</h3>
+          <select id="cicd-scenario" class="demo-select" style="font-size:12px;padding:4px 8px;min-width:200px">
+            <option value="add-pii">Add PII protection rule</option>
+            <option value="restrict-file">Restrict file_read to read-only dirs</option>
+            <option value="allow-tool">Allow new tool: web_search</option>
+            <option value="remove-override">Remove admin bypass rule</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Step 1: Policy diff -->
+      <div class="demo-layout-split" style="margin-bottom:16px">
+        <div class="demo-col">
+          <div class="demo-card">
+            <div class="demo-card-header">
+              <h3 style="color:var(--text-muted)">Before (current policy)</h3>
+            </div>
+            <pre id="cicd-before" class="demo-output" style="min-height:180px;font-size:12px;white-space:pre;overflow-x:auto"></pre>
+          </div>
+        </div>
+        <div class="demo-col">
+          <div class="demo-card">
+            <div class="demo-card-header">
+              <h3 style="color:var(--accent)">After (proposed change)</h3>
+            </div>
+            <pre id="cicd-after" class="demo-output" style="min-height:180px;font-size:12px;white-space:pre;overflow-x:auto"></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Run buttons -->
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+        <button id="cicd-plan-btn" class="demo-btn demo-btn-primary">1. Run aegis plan</button>
+        <button id="cicd-test-btn" class="demo-btn demo-btn-secondary" disabled>2. Run aegis test</button>
+        <button id="cicd-comment-btn" class="demo-btn demo-btn-secondary" disabled>3. Preview PR Comment</button>
+        <button id="cicd-reset-btn" class="demo-btn demo-btn-secondary">Reset</button>
+      </div>
+
+      <!-- Step 3: Results -->
+      <div class="demo-layout-split">
+        <div class="demo-col">
+          <div class="demo-card">
+            <div class="demo-card-header">
+              <h3 data-i18n="cicd.plan">Plan Output</h3>
+            </div>
+            <div id="cicd-plan-output" class="demo-output" style="min-height:200px;max-height:400px;overflow-y:auto"></div>
+          </div>
+        </div>
+        <div class="demo-col">
+          <div class="demo-card">
+            <div class="demo-card-header">
+              <h3 data-i18n="cicd.results">Test Results / PR Comment</h3>
+            </div>
+            <div id="cicd-right-output" class="demo-output" style="min-height:200px;max-height:400px;overflow-y:auto"></div>
           </div>
         </div>
       </div>
