@@ -1,12 +1,11 @@
 <p align="center">
   <h1 align="center">Agent-Aegis</h1>
   <p align="center">
-    <strong>AI 에이전트를 위한 런타임 보안 — AI 에이전트 보안의 <code>terraform plan</code>.<br/>11개 프레임워크에 런타임 가드레일, 선택 거버넌스, 정책 테스팅, 감사 추적을 코드 변경 없이 적용합니다.</strong>
+    <strong>코드베이스에서 보호되지 않은 AI 호출을 찾으세요. 프로덕션 전에 수정하세요.</strong>
   </p>
   <p align="center">
-    <code>pip install agent-aegis</code> &#8594; <code>aegis.auto_instrument()</code> &#8594; 모든 AI 호출에 보안 적용.<br/>
-    에이전트가 <b>하는 것</b>(액션, 툴 호출, 데이터 접근)뿐 아니라 <b>하지 않기로 선택한 것</b>(선택-부정 탐지 — 이 거버넌스 카테고리의 최초 오픈소스 라이브러리)까지 거버닝합니다.<br/>
-    <strong>LangChain, CrewAI, OpenAI, Anthropic, LiteLLM, Google GenAI, Pydantic AI, LlamaIndex, Instructor, DSPy — 11개 프레임워크 지원.</strong>
+    <code>pip install agent-aegis && aegis scan .</code> — 30초 만에 보호되지 않은 모든 LLM 호출과 툴 호출을 찾습니다.<br/>
+    한 줄로 전부 보호: <code>aegis.auto_instrument()</code> — 11개 프레임워크에 인젝션 차단, PII 마스킹, 감사 추적을 코드 변경 없이 추가합니다.
   </p>
 </p>
 
@@ -26,22 +25,56 @@
 </p>
 
 <p align="center">
-  <a href="#런타임-가드레일"><strong>런타임 가드레일</strong></a> &bull;
-  <a href="#선택-거버넌스"><strong>선택 거버넌스</strong></a> &bull;
-  <a href="#정책-cicd"><strong>정책 CI/CD</strong></a> &bull;
+  <a href="#30초-체험"><strong>30초 체험</strong></a> &bull;
+  <a href="#ci에-추가"><strong>CI에 추가</strong></a> &bull;
+  <a href="#런타임-가드레일">런타임 가드레일</a> &bull;
+  <a href="#정책-cicd">정책 CI/CD</a> &bull;
   <a href="#빠른-시작">빠른 시작</a> &bull;
-  <a href="#3대-핵심-축">3대 핵심 축</a> &bull;
   <a href="https://acacian.github.io/aegis/">문서</a> &bull;
-  <a href="#통합">통합</a> &bull;
-  <a href="https://acacian.github.io/aegis/playground/"><strong>브라우저 체험</strong></a> &bull;
-  <a href="https://acacian.github.io/aegis/playground/scan-report.html"><strong>스캔 리포트</strong></a> &bull;
-  <a href="https://github.com/Acacian/aegis/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22">기여하기</a>
+  <a href="https://acacian.github.io/aegis/playground/"><strong>Playground</strong></a> &bull;
+  <a href="https://acacian.github.io/aegis/playground/scan-report.html"><strong>스캔 리포트</strong></a>
 </p>
 
 <p align="center">
   <a href="./README.md">English</a> &bull;
   <b>한국어</b>
 </p>
+
+---
+
+## 30초 체험
+
+```bash
+pip install agent-aegis
+aegis scan .
+```
+
+```
+Scanning . for ungoverned AI calls...
+
+  src/agent.py:12     openai.ChatCompletion.create()    NO GUARDRAIL
+  src/agent.py:34     langchain.ChatOpenAI.invoke()      NO GUARDRAIL
+  src/tools.py:8      anthropic.messages.create()        NO GUARDRAIL
+  src/pipeline.py:21  crew.kickoff()                     NO GUARDRAIL
+
+  4 ungoverned AI calls found in 3 files.
+  Run `aegis.auto_instrument()` to add guardrails, or create a policy with `aegis init`.
+```
+
+보호되지 않은 AI 호출이 어디에 있는지 바로 알 수 있습니다.
+
+## CI에 추가
+
+GitHub Actions 워크플로우에 한 줄:
+
+```yaml
+- uses: Acacian/aegis@v0.9.1
+  with:
+    command: scan
+    fail-on-ungoverned: true
+```
+
+모든 PR이 스캔됩니다. 보호되지 않은 AI 호출이 있으면 머지가 차단됩니다.
 
 ---
 
