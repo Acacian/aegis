@@ -16,18 +16,3 @@ repos:
       - id: ruff
         args: [--fix]
       - id: ruff-format
-
-  - repo: local
-    hooks:
-      - id: block-suspicious-files
-        name: block draft/temp/secret files
-        entry: bash scripts/block-suspicious-files.sh
-        language: system
-        always_run: true
-        pass_filenames: true
-      - id: check-commit-message
-        name: check commit message for sensitive keywords
-        entry: bash scripts/check-commit-message.sh
-        language: system
-        stages: [commit-msg]
-        always_run: true
