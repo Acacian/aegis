@@ -31,7 +31,7 @@ description: "Find ungoverned AI calls. Fix them in one line. Prompt injection b
 
 ---
 
-![Aegis Demo](assets/demo.gif)
+![Aegis Demo](assets/demo.svg)
 
 ---
 
