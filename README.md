@@ -43,7 +43,7 @@
 ---
 
 <p align="center">
-  <img src="docs/assets/demo.gif" alt="Aegis Demo" width="880">
+  <img src="docs/assets/demo.gif?v=2" alt="Aegis Demo" width="880">
 </p>
 
 ---
