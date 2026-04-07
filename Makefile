@@ -11,6 +11,7 @@ install: ## Install package
 dev: ## Install with dev dependencies
 	pip install -e ".[dev]"
 	pre-commit install
+	@[ -f .claude/scripts/install-hooks.sh ] && bash .claude/scripts/install-hooks.sh || true
 
 test: ## Run tests
 	pytest tests/ -v
