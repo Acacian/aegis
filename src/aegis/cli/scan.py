@@ -8,9 +8,44 @@ from __future__ import annotations
 
 import ast
 import json
+import os
 import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
+
+# ---------------------------------------------------------------------------
+# ANSI color support (auto-disabled when piped or NO_COLOR is set)
+# ---------------------------------------------------------------------------
+
+
+def _use_color() -> bool:
+    """Return True if stdout supports ANSI colors."""
+    if os.environ.get("NO_COLOR"):
+        return False
+    if os.environ.get("FORCE_COLOR"):
+        return True
+    return hasattr(sys.stdout, "isatty") and sys.stdout.isatty()
+
+
+class _C:
+    """ANSI color constants. Empty strings when color is disabled."""
+
+    def __init__(self, enabled: bool) -> None:
+        if enabled:
+            self.RESET = "\033[0m"
+            self.BOLD = "\033[1m"
+            self.DIM = "\033[2m"
+            self.RED = "\033[91m"
+            self.GREEN = "\033[92m"
+            self.YELLOW = "\033[93m"
+            self.BLUE = "\033[94m"
+            self.MAGENTA = "\033[95m"
+            self.CYAN = "\033[96m"
+            self.WHITE = "\033[97m"
+        else:
+            self.RESET = self.BOLD = self.DIM = ""
+            self.RED = self.GREEN = self.YELLOW = ""
+            self.BLUE = self.MAGENTA = self.CYAN = self.WHITE = ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -655,24 +690,27 @@ def format_report(
     show_fixes: bool = True,
 ) -> str:
     """Build the human-readable scan report."""
+    c = _C(_use_color())
     lines: list[str] = []
-    lines.append("Aegis Governance Scan")
-    lines.append("=" * 21)
-    lines.append(f"Scanned: {file_count} files in {directory}")
+    lines.append(f"{c.BOLD}{c.WHITE}Aegis Governance Scan{c.RESET}")
+    lines.append(f"{c.DIM}{'=' * 21}{c.RESET}")
+    lines.append(f"Scanned: {c.CYAN}{file_count}{c.RESET} files in {directory}")
     lines.append("")
 
     if findings:
-        lines.append(f"Found {len(findings)} ungoverned tool call(s):")
+        lines.append(f"{c.RED}{c.BOLD}Found {len(findings)} ungoverned tool call(s):{c.RESET}")
         for f in findings:
-            # Make path relative for readability
             try:
                 rel = str(Path(f.file).relative_to(Path(directory).resolve()))
             except ValueError:
                 rel = f.file
-            owasp_tag = f"  [{f.owasp_risk}]" if f.owasp_risk else ""
-            lines.append(f"  {rel}:{f.line:<8}{f.category:<14}{f.detail}{owasp_tag}")
+            owasp_tag = f"  {c.MAGENTA}[{f.owasp_risk}]{c.RESET}" if f.owasp_risk else ""
+            lines.append(
+                f"  {c.CYAN}{rel}:{f.line}{c.RESET}"
+                f"  {c.YELLOW}{f.category:<14}{c.RESET}{f.detail}{owasp_tag}"
+            )
             if show_fixes and f.fix:
-                lines.append(f"    \u2192 {f.fix}")
+                lines.append(f"    {c.DIM}\u2192 {f.fix}{c.RESET}")
         lines.append("")
 
         # OWASP Agentic Top 10 summary
@@ -681,40 +719,40 @@ def format_report(
             if f.owasp_risk:
                 owasp_counts[f.owasp_risk] = owasp_counts.get(f.owasp_risk, 0) + 1
         if owasp_counts:
-            lines.append("OWASP Agentic Top 10 Risks:")
+            lines.append(f"{c.BOLD}OWASP Agentic Top 10 Risks:{c.RESET}")
             for risk, count in sorted(owasp_counts.items()):
-                lines.append(f"  {risk}: {count} finding(s)")
+                lines.append(f"  {c.MAGENTA}{risk}{c.RESET}: {count} finding(s)")
             lines.append("")
 
         grade = _grade(len(findings))
-        lines.append(f"Governance Score: {grade} ({len(findings)} ungoverned call(s))")
-
-        # Attack simulation: show what could happen without governance
-        lines.append("")
-        lines.append("Without governance, these attacks could succeed:")
-        attack_lines = _attack_simulation(findings)
-        for al in attack_lines:
-            lines.append(f"  {al}")
+        grade_color = c.GREEN if grade in ("A", "B") else (c.YELLOW if grade == "C" else c.RED)
+        lines.append(
+            f"Governance Score: {grade_color}{c.BOLD}{grade}{c.RESET}"
+            f" ({len(findings)} ungoverned call(s))"
+        )
 
         lines.append("")
-        lines.append("With aegis.auto_instrument():")
-        defense_lines = _defense_summary(findings)
-        for dl in defense_lines:
-            lines.append(f"  {dl}")
+        lines.append(f"{c.RED}{c.BOLD}Without governance, these attacks could succeed:{c.RESET}")
+        for al in _attack_simulation(findings):
+            lines.append(f"  {c.RED}X{c.RESET} {al.lstrip('X ')}")
 
-        # Actionable next steps
         lines.append("")
-        lines.append("Next steps:")
-        lines.append("  1. aegis scan --format suggest > aegis.yaml  # Generate policy")
-        lines.append("  2. Add to code: import aegis; aegis.auto_instrument()")
-        lines.append("  3. aegis scan --threshold B .               # Set CI gate")
+        lines.append(f"{c.GREEN}{c.BOLD}With aegis.auto_instrument():{c.RESET}")
+        for dl in _defense_summary(findings):
+            lines.append(f"  {c.GREEN}+{c.RESET} {dl.lstrip('+ ')}")
+
+        lines.append("")
+        lines.append(f"{c.BLUE}{c.BOLD}Next steps:{c.RESET}")
+        lines.append(f"  {c.WHITE}1.{c.RESET} aegis scan --format suggest > aegis.yaml")
+        lines.append(f"  {c.WHITE}2.{c.RESET} Add to code: import aegis; aegis.auto_instrument()")
+        lines.append(f"  {c.WHITE}3.{c.RESET} aegis scan --threshold B .")
     else:
-        lines.append("No ungoverned tool calls found.")
+        lines.append(f"{c.GREEN}{c.BOLD}No ungoverned tool calls found.{c.RESET}")
         lines.append("")
-        lines.append("Governance Score: A (clean)")
+        lines.append(f"Governance Score: {c.GREEN}{c.BOLD}A{c.RESET} (clean)")
 
     lines.append("")
-    lines.append("Docs: https://acacian.github.io/aegis/")
+    lines.append(f"{c.DIM}Docs: https://acacian.github.io/aegis/{c.RESET}")
     return "\n".join(lines)
 
 

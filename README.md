@@ -42,6 +42,12 @@
 
 ---
 
+<p align="center">
+  <img src="docs/assets/demo.gif" alt="Aegis Demo" width="880">
+</p>
+
+---
+
 ## Try It (30 Seconds)
 
 ```bash
