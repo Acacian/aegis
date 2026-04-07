@@ -368,7 +368,7 @@ class TestFormatReport:
         report = format_report(10, [])
         assert "Governance Score: A" in report
         assert "No ungoverned tool calls found" in report
-        assert "pip install agent-aegis" in report
+        assert "acacian.github.io/aegis" in report
 
     def test_findings_report(self) -> None:
         findings = [
@@ -378,7 +378,7 @@ class TestFormatReport:
         report = format_report(10, findings, directory="/project")
         assert "Found 2 ungoverned tool call(s)" in report
         assert "Governance Score:" in report
-        assert "pip install agent-aegis" in report
+        assert "Next steps:" in report
 
     def test_owasp_risk_in_report(self) -> None:
         findings = [

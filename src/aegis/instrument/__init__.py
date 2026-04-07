@@ -219,15 +219,23 @@ def auto_instrument(
 
     report = InstrumentationReport(patched=patched, skipped=skipped, errors=errors)
 
+    import sys
+
     if report.any_patched:
         logger.info("Aegis auto-instrumentation complete: %s", report)
+        print(
+            f"aegis: instrumented {len(patched)} framework(s): {', '.join(patched)}",
+            file=sys.stderr,
+        )
+        if guardrails != "none":
+            print(
+                "aegis: guardrails active — injection, PII, toxicity, prompt-leak",
+                file=sys.stderr,
+            )
     else:
-        import sys
-
         print(
             "aegis: no supported frameworks detected. "
-            f"Supported: {', '.join(_FRAMEWORK_REGISTRY)}. "
-            "Is your agent code imported before calling auto_instrument()?",
+            "Install one: pip install openai langchain crewai",
             file=sys.stderr,
         )
 

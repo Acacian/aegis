@@ -270,7 +270,7 @@ class AnthropicPolicyGenerator:
             "input_schema": _POLICY_JSON_SCHEMA,
         }
 
-        response = client.messages.create(
+        response = client.messages.create(  # aegis: ignore
             model=self._model,
             max_tokens=self._max_tokens,
             temperature=self._temperature,

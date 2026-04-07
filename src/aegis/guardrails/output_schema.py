@@ -68,6 +68,7 @@ class OutputSchemaResult:
     violations: list[SchemaViolation] = field(default_factory=list)
     parsed_output: Any = None  # The parsed JSON/dict if valid
     repair_hint: str | None = None  # Hint for LLM retry
+    guardrail_name: str = "output_schema"
 
 
 # ---------------------------------------------------------------------------

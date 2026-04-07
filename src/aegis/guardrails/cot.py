@@ -331,6 +331,7 @@ class CoTAuditResult:
     details: str
     severity: str
     matches: list[CoTMatch] = field(default_factory=list)
+    guardrail_name: str = "chain_of_thought"
 
 
 # ---------------------------------------------------------------------------

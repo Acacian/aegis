@@ -297,6 +297,7 @@ class PromptLeakResult:
     severity: str
     matches: list[PromptLeakMatch] = field(default_factory=list)
     leaked_prompt_detected: bool = False
+    guardrail_name: str = "prompt_leak"
 
 
 # ---------------------------------------------------------------------------

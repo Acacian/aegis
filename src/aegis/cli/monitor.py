@@ -445,9 +445,9 @@ def run_monitor(db_path: str, interval: float = 2.0) -> None:  # pragma: no cove
 
             # Clear + reprint
             if sys.platform == "win32":
-                os.system("cls")
+                os.system("cls")  # aegis: ignore
             else:
-                os.system("clear")
+                os.system("clear")  # aegis: ignore
 
             sys.stdout.write(monitor.render() + "\n")
             sys.stdout.flush()

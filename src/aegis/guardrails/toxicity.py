@@ -349,6 +349,7 @@ class ToxicityResult:
     details: str
     severity: str
     matches: list[ToxicityMatch] = field(default_factory=list)
+    guardrail_name: str = "toxicity"
 
 
 # ---------------------------------------------------------------------------

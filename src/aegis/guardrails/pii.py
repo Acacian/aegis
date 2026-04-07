@@ -76,6 +76,24 @@ class CheckResult:
     categories_found: set[str] = field(default_factory=set)
     severity: str = "none"
 
+    @property
+    def passed(self) -> bool:
+        """Whether the content passed (no PII found). Unified API."""
+        return not self.detected
+
+    @property
+    def guardrail_name(self) -> str:
+        """Guardrail identifier."""
+        return "pii"
+
+    @property
+    def details(self) -> str | None:
+        """Human-readable summary."""
+        if not self.detected:
+            return None
+        cats = ", ".join(sorted(self.categories_found))
+        return f"Detected PII in {len(self.categories_found)} category(ies): {cats}"
+
 
 @dataclass(frozen=True)
 class TransformResult:
@@ -94,6 +112,22 @@ class TransformResult:
     original_content: str
     matches: list[PIIMatch] = field(default_factory=list)
     action_taken: str = "none"
+
+    @property
+    def passed(self) -> bool:
+        """Whether the content passed (no PII found). Unified API."""
+        return not self.detected
+
+    @property
+    def action(self) -> str:
+        """Disposition action. Maps ``action_taken`` to unified vocabulary."""
+        _map = {"mask": "masked", "block": "blocked", "warn": "warned", "log": "allowed"}
+        return _map.get(self.action_taken, self.action_taken)
+
+    @property
+    def guardrail_name(self) -> str:
+        """Guardrail identifier."""
+        return "pii"
 
 
 # ---------------------------------------------------------------------------

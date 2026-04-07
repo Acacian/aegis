@@ -65,7 +65,7 @@ def _create_server(host: str = "0.0.0.0", port: int = 8080) -> Any:
         port=port,
     )
 
-    @mcp.tool()
+    @mcp.tool()  # aegis: ignore
     def evaluate_action(
         action_type: str,
         target: str,
@@ -101,7 +101,7 @@ def _create_server(host: str = "0.0.0.0", port: int = 8080) -> Any:
             "is_allowed": decision.is_allowed,
         }
 
-    @mcp.tool()
+    @mcp.tool()  # aegis: ignore
     def evaluate_batch(actions: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Evaluate multiple actions at once against the governance policy.
 
@@ -133,7 +133,7 @@ def _create_server(host: str = "0.0.0.0", port: int = 8080) -> Any:
             )
         return results
 
-    @mcp.tool()
+    @mcp.tool()  # aegis: ignore
     def get_policy() -> dict[str, Any]:
         """Get the current governance policy rules.
 
@@ -159,7 +159,7 @@ def _create_server(host: str = "0.0.0.0", port: int = 8080) -> Any:
             "default_approval": _policy.default_approval.value,
         }
 
-    @mcp.tool()
+    @mcp.tool()  # aegis: ignore
     def update_policy(yaml_content: str) -> dict[str, Any]:
         """Hot-reload the governance policy from a YAML string.
 
@@ -186,7 +186,7 @@ def _create_server(host: str = "0.0.0.0", port: int = 8080) -> Any:
                 "message": "Failed to parse policy YAML.",
             }
 
-    @mcp.tool()
+    @mcp.tool()  # aegis: ignore
     def check_risk(action_type: str, target: str) -> dict[str, str | int]:
         """Quick risk check for an action type + target combination.
 

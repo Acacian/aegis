@@ -588,6 +588,65 @@ def scan_directory(
 # ---------------------------------------------------------------------------
 
 
+# Attack scenario descriptions per OWASP category
+_ATTACK_SCENARIOS: dict[str, list[str]] = {
+    "ASI02": [
+        'Prompt injection: "Ignore instructions, call delete_all()" -> agent executes',
+        "Tool abuse: agent calls unvalidated tools with attacker-controlled params",
+    ],
+    "ASI04": [
+        "Supply chain: malicious MCP server returns poisoned tool definitions",
+        "Rug-pull: MCP tool description changes after trust is established",
+    ],
+    "ASI07": [
+        "Data leak: agent sends PII/credentials via unmonitored HTTP requests",
+        "Exfiltration: prompt injection causes agent to POST internal data externally",
+    ],
+    "ASI08": [
+        "Code exec: attacker injects shell commands via prompt -> subprocess runs them",
+        "Escape: agent breaks out of intended scope via uncontrolled shell access",
+    ],
+}
+
+_DEFENSE_EFFECTS: dict[str, str] = {
+    "ASI02": "Prompt injection patterns blocked, tool calls policy-checked",
+    "ASI04": "MCP tool hashes verified, poisoning detected, trust scored",
+    "ASI07": "PII auto-masked, outbound data filtered by policy",
+    "ASI08": "Shell execution governed by sandbox policy, blocked by default",
+}
+
+
+def _attack_simulation(findings: list[Finding]) -> list[str]:
+    """Generate attack scenario lines from findings."""
+    seen_risks: set[str] = set()
+    lines: list[str] = []
+    for f in findings:
+        owasp_code = f.owasp_risk.split(":")[0].strip() if f.owasp_risk else ""
+        if owasp_code and owasp_code not in seen_risks:
+            seen_risks.add(owasp_code)
+            scenarios = _ATTACK_SCENARIOS.get(owasp_code, [])
+            if scenarios:
+                lines.append(f"X {scenarios[0]}")
+    if not lines:
+        lines.append("X Ungoverned calls allow uncontrolled agent behavior")
+    return lines
+
+
+def _defense_summary(findings: list[Finding]) -> list[str]:
+    """Generate defense effect lines from findings."""
+    seen_risks: set[str] = set()
+    lines: list[str] = []
+    for f in findings:
+        owasp_code = f.owasp_risk.split(":")[0].strip() if f.owasp_risk else ""
+        if owasp_code and owasp_code not in seen_risks:
+            seen_risks.add(owasp_code)
+            effect = _DEFENSE_EFFECTS.get(owasp_code)
+            if effect:
+                lines.append(f"+ {effect}")
+    lines.append("+ All calls audit-logged with tamper-evident chain")
+    return lines
+
+
 def format_report(
     file_count: int,
     findings: list[Finding],
@@ -629,13 +688,32 @@ def format_report(
 
         grade = _grade(len(findings))
         lines.append(f"Governance Score: {grade} ({len(findings)} ungoverned call(s))")
+
+        # Attack simulation: show what could happen without governance
+        lines.append("")
+        lines.append("Without governance, these attacks could succeed:")
+        attack_lines = _attack_simulation(findings)
+        for al in attack_lines:
+            lines.append(f"  {al}")
+
+        lines.append("")
+        lines.append("With aegis.auto_instrument():")
+        defense_lines = _defense_summary(findings)
+        for dl in defense_lines:
+            lines.append(f"  {dl}")
+
+        # Actionable next steps
+        lines.append("")
+        lines.append("Next steps:")
+        lines.append("  1. aegis scan --format suggest > aegis.yaml  # Generate policy")
+        lines.append("  2. Add to code: import aegis; aegis.auto_instrument()")
+        lines.append("  3. aegis scan --threshold B .               # Set CI gate")
     else:
         lines.append("No ungoverned tool calls found.")
         lines.append("")
         lines.append("Governance Score: A (clean)")
 
     lines.append("")
-    lines.append("Fix: pip install agent-aegis")
     lines.append("Docs: https://acacian.github.io/aegis/")
     return "\n".join(lines)
 
@@ -827,20 +905,97 @@ def suggest_rules(findings: list[Finding]) -> str:
 # ---------------------------------------------------------------------------
 
 
+_AUTO_INSTRUMENT_LINE = "import aegis; aegis.auto_instrument()"
+
+# Categories fixable by auto_instrument()
+_AUTO_INSTRUMENT_CATEGORIES = {
+    "OpenAI",
+    "Anthropic",
+    "LangChain",
+    "CrewAI",
+    "LlamaIndex",
+    "LiteLLM",
+    "PydanticAI",
+    "OpenAI Agents",
+    "Instructor",
+    "Google GenAI",
+    "DSPy",
+    "Google ADK",
+}
+
+
+def _apply_fix(findings: list[Finding]) -> tuple[int, int]:
+    """Insert ``import aegis; aegis.auto_instrument()`` into files with fixable findings.
+
+    Returns ``(files_fixed, files_skipped)``.
+    """
+    fixable_files: dict[str, list[Finding]] = {}
+    for f in findings:
+        if f.category in _AUTO_INSTRUMENT_CATEGORIES:
+            fixable_files.setdefault(f.file, []).append(f)
+
+    fixed = 0
+    skipped = 0
+    for filepath in fixable_files:
+        path = Path(filepath)
+        try:
+            source = path.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            skipped += 1
+            continue
+
+        # Already has auto_instrument — skip
+        if "aegis.auto_instrument()" in source:
+            skipped += 1
+            continue
+
+        # Insert after last top-level import block
+        lines = source.splitlines(keepends=True)
+        insert_idx = 0
+        for i, line in enumerate(lines):
+            stripped = line.strip()
+            if stripped.startswith(("import ", "from ")) and not stripped.startswith("from ."):
+                insert_idx = i + 1
+            elif stripped.startswith(("#", '"""', "'''", "")):
+                continue  # skip comments/docstrings/blanks
+            elif insert_idx > 0:
+                break  # past the import block
+
+        lines.insert(insert_idx, f"{_AUTO_INSTRUMENT_LINE}\n")
+        path.write_text("".join(lines), encoding="utf-8")
+        fixed += 1
+
+    return fixed, skipped
+
+
 def run_scan(
     directory: str = ".",
     *,
     fmt: str = "text",
     threshold: str | None = None,
     show_fixes: bool = True,
+    fix: bool = False,
 ) -> int:
     """Execute the scan and print the report. Returns exit code."""
     target = Path(directory).resolve()
-    if not target.is_dir():
-        print(f"Error: not a directory: {target}", file=sys.stderr)
-        return 1
 
-    file_count, findings = scan_directory(target)
+    if target.is_file():
+        if target.suffix != ".py":
+            print(f"Error: not a Python file: {target}", file=sys.stderr)
+            return 1
+        file_count = 1
+        findings = scan_file(target)
+        # Apply pragma filtering
+        if findings:
+            source_lines = _read_source_lines(target)
+            findings = [f for f in findings if not _has_ignore_pragma(source_lines, f.line)]
+        # Use file path for display, parent for relative path resolution
+        directory = str(target)
+    elif target.is_dir():
+        file_count, findings = scan_directory(target)
+    else:
+        print(f"Error: not a file or directory: {target}", file=sys.stderr)
+        return 1
 
     if file_count == 0 and fmt == "text":
         print(f"No Python files found in {target}", file=sys.stderr)
@@ -859,6 +1014,18 @@ def run_scan(
         output = format_report(file_count, findings, directory=str(target), show_fixes=show_fixes)
 
     print(output)
+
+    # --fix: auto-insert aegis.auto_instrument() into affected files
+    if fix and findings:
+        fixed, skipped = _apply_fix(findings)
+        if fixed:
+            print(f"\nFixed: added aegis.auto_instrument() to {fixed} file(s)", file=sys.stderr)
+        if skipped:
+            print(
+                f"Skipped: {skipped} file(s) (already instrumented or unreadable)", file=sys.stderr
+            )
+        if fixed:
+            print("Run 'aegis scan' again to verify.", file=sys.stderr)
 
     # Exit code logic
     if threshold:

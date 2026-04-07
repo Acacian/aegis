@@ -257,6 +257,7 @@ class HallucinationResult:
     severity: str
     matches: list[HallucinationMatch] = field(default_factory=list)
     grounding_score: float | None = None
+    guardrail_name: str = "hallucination"
 
 
 # ---------------------------------------------------------------------------

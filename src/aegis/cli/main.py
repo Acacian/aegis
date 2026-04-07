@@ -213,7 +213,7 @@ def main(argv: list[str] | None = None) -> None:
         "directory",
         nargs="?",
         default=".",
-        help="Directory to scan (default: current directory)",
+        help="File or directory to scan (default: current directory)",
     )
     scan_parser.add_argument(
         "--format",
@@ -233,6 +233,12 @@ def main(argv: list[str] | None = None) -> None:
         action="store_true",
         default=False,
         help="Hide quickfix suggestions in text output",
+    )
+    scan_parser.add_argument(
+        "--fix",
+        action="store_true",
+        default=False,
+        help="Auto-insert 'import aegis; aegis.auto_instrument()' into files with findings",
     )
 
     # aegis serve
@@ -1048,6 +1054,7 @@ def _cmd_scan(args: argparse.Namespace) -> None:
         fmt=getattr(args, "fmt", "text"),
         threshold=getattr(args, "threshold", None),
         show_fixes=not getattr(args, "no_fixes", False),
+        fix=getattr(args, "fix", False),
     )
     sys.exit(exit_code)
 

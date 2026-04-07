@@ -47,7 +47,7 @@ class _StandaloneAdapter:
         # - InjectionGuardrailResult has .passed, .action
         # - ToxicityResult has .passed, .action
         # - PromptLeakResult has .passed, .action
-        # - PII CheckResult has .detected (no .passed, no .action)
+        # - PII CheckResult has .detected and .passed (property)
         passed = getattr(result, "passed", None)
         if passed is None:
             # PII-style: detected=True means NOT passed
