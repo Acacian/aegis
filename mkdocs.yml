@@ -91,10 +91,15 @@ nav:
       - Dashboard API: api/dashboard.md
   - Solutions:
       - LangChain Security: solutions/langchain-security.md
+      - CrewAI Security: solutions/crewai-security.md
+      - OpenAI Agents Security: solutions/openai-agents-security.md
+      - LiteLLM Security: solutions/litellm-security.md
       - MCP Security: solutions/mcp-security.md
-      - EU AI Act Compliance: solutions/eu-ai-act-compliance.md
+      - LLM Guardrails for Python: solutions/llm-guardrails-python.md
+      - AI Agent Vulnerability Scanner: solutions/ai-agent-vulnerability-scanner.md
       - Prompt Injection Detection: solutions/prompt-injection-detection.md
       - PII Detection: solutions/pii-detection-ai-agent.md
+      - EU AI Act Compliance: solutions/eu-ai-act-compliance.md
       - Audit Trail: solutions/ai-agent-audit-trail.md
       - Policy as Code: solutions/policy-as-code-ai.md
       - Cost Governance: solutions/ai-agent-cost-governance.md
