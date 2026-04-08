@@ -37,7 +37,7 @@
 
 <p align="center">
   <b>English</b> &bull;
-  <a href="./README.ko.md">한���어</a>
+  <a href="./README.ko.md">한국어</a>
 </p>
 
 ---
