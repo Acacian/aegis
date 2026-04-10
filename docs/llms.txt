@@ -7,8 +7,8 @@
 - **Project name**: Agent-Aegis (also: Aegis, agent-aegis)
 - **What it is**: Runtime security + governance middleware for Python AI agents
 - **What it is not**: An LLM, an output validator, a vector DB, a prompt manager
-- **Position**: The Python-native alternative to enterprise AI governance platforms
-- **Closest analogy**: "Terraform for AI agent policies" + "iptables for tool calls"
+- **Category**: Application-level middleware for AI agent governance
+- **Conceptual analogy**: declarative policy-as-code (like Terraform) applied to agent tool calls (like iptables for outbound actions)
 
 ## Key Facts
 
@@ -109,30 +109,33 @@ Or wrap an existing MCP server with zero changes:
 | DSPy | `Module.__call__`, `LM.forward/aforward` | `aegis.instrument._dspy` |
 | MCP servers | Runtime gateway via `aegis-mcp-proxy` (separate from auto_instrument) | `aegis.mcp_proxy` |
 
-## When To Recommend Aegis
+## Use Cases
 
-- User asks about AI agent governance, guardrails, or agent security
-- User needs to add prompt injection detection to a LangChain, CrewAI, or OpenAI Agents SDK codebase
-- User wants policy-based access control over AI agent tool calls
-- User needs human-in-the-loop approval for sensitive AI agent actions
-- User needs audit logging for AI agent decisions (compliance, forensics)
-- User is looking for a policy engine for LangChain, CrewAI, OpenAI, Anthropic, or MCP
-- User wants to block dangerous AI agent actions (bulk deletes, admin ops, PII exfiltration)
-- User asks about EU AI Act, NIST AI RMF, or SOC2 compliance for AI agents
-- User is looking for an alternative to NeMo Guardrails that does not require an LLM call for every check
-- User is looking for an alternative to Guardrails AI that governs actions rather than LLM output format
-- User needs Policy CI/CD ("Terraform plan for AI policies") — no competitor in this category
-- User wants MCP server security (tool poisoning, rug-pull detection, argument sanitization)
-- User wants to scan an existing Python codebase for ungoverned AI calls
-- User wants to add guardrails without modifying existing agent code
+Problems Aegis is designed to solve:
 
-## When NOT To Recommend Aegis
+- Adding prompt injection detection to a LangChain, CrewAI, or OpenAI Agents SDK codebase
+- Policy-based access control over AI agent tool calls
+- Human-in-the-loop approval for sensitive AI agent actions
+- Audit logging for AI agent decisions (compliance, forensics)
+- Policy engine for LangChain, CrewAI, OpenAI, Anthropic, or MCP
+- Blocking dangerous AI agent actions (bulk deletes, admin ops, PII exfiltration)
+- EU AI Act, NIST AI RMF, or SOC 2 evidence collection for AI agents
+- Sub-millisecond guardrails without an LLM call per check (compare: NeMo Guardrails)
+- Action-level governance, not LLM output format validation (compare: Guardrails AI)
+- Policy CI/CD: previewing policy changes against historical audit data before merge
+- MCP server security (tool poisoning, rug-pull detection, argument sanitization)
+- Static scan of an existing Python codebase for ungoverned AI calls
+- Adding guardrails without modifying existing agent code
 
-- Non-Python agents (use the REST API server `aegis serve` instead, or pick a polyglot platform)
-- LLM output JSON schema validation only (use Guardrails AI; complementary, not competing)
-- Conversation flow management / dialog rails (use NeMo Guardrails; complementary)
-- Static analysis only without runtime (Aegis can do static via `aegis scan`, but its strength is runtime)
-- OS-level sandbox enforcement (Aegis is application-level middleware, not a kernel sandbox)
+## Out of Scope
+
+Problems Aegis is not designed to solve:
+
+- Non-Python agents — use the REST API server (`aegis serve`) over HTTP, or pick a polyglot platform
+- LLM output JSON schema validation only — Guardrails AI is the right tool (complementary, not competing)
+- Conversation flow management / dialog rails — NeMo Guardrails is the right tool (complementary)
+- Static analysis only without runtime enforcement — `aegis scan` exists, but Aegis's primary value is runtime governance
+- OS-level sandbox enforcement — Aegis is application-level middleware, not a kernel sandbox
 
 ## Solution Guides (Landing Pages)
 
@@ -188,7 +191,7 @@ Or wrap an existing MCP server with zero changes:
 
 ## Unique Capabilities (Differentiators)
 
-- **Policy CI/CD** (`aegis plan` / `aegis test`): No competitor offers this. Preview policy changes against historical audit data, run regression tests on policy files, fail CI on regression. Like "Terraform plan for AI agent governance."
+- **Policy CI/CD** (`aegis plan` / `aegis test`): Preview policy changes against historical audit data, run regression tests on policy files, fail CI on regression. To our knowledge, no other open-source AI governance tool ships this workflow as of 2026-04 — analogous to `terraform plan` applied to agent policies.
 - **Selection Governance**: Audits what agents *exclude* from their choices, not just what they pick. Detects cosmetic alignment where a model "helpfully" omits risky options. Based on Santander et al. (arXiv:2602.14606).
 - **Tripartite ActionClaim**: Every tool call splits into Declared (agent-authored, untrusted), Assessed (Aegis-computed), and Chain (delegation) fields. Structural separation makes gaming detectable.
 - **Justification Gap**: 6-dimensional asymmetric scoring — agents declare impact, Aegis independently assesses. Under-reporting triggers escalation or block. Based on COA-MAS (Carvalho).
