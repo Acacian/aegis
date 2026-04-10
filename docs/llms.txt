@@ -1,6 +1,6 @@
 # Agent-Aegis
 
-> Agent-Aegis is a Python library for AI agent governance. It auto-instruments 12 frameworks (LangChain, CrewAI, OpenAI Agents SDK, Anthropic, LiteLLM, Google GenAI, Pydantic AI, LlamaIndex, Instructor, DSPy, OpenAI, MCP) with prompt injection detection, PII masking, policy-as-code evaluation, and tamper-evident audit trails. Every check runs in sub-millisecond time with zero LLM calls and zero network I/O.
+> Agent-Aegis is a Python library for AI agent governance. It auto-instruments 12 frameworks (LangChain, CrewAI, OpenAI Agents SDK, OpenAI API, Anthropic API, LiteLLM, Google GenAI, Google ADK, Pydantic AI, LlamaIndex, Instructor, DSPy) with prompt injection detection, PII masking, policy-as-code evaluation, and tamper-evident audit trails. MCP servers are governed via a separate proxy gateway. Every check runs in sub-millisecond time with zero LLM calls and zero network I/O.
 
 ## Key Facts
 
@@ -36,9 +36,10 @@
 import aegis
 aegis.auto_instrument()
 
-# Every LangChain, CrewAI, OpenAI, Anthropic, LiteLLM, MCP, etc. call
-# now passes through injection detection, PII masking, and audit logging.
-# Zero code changes to existing agents.
+# Every LangChain, CrewAI, OpenAI, Anthropic, LiteLLM, Google GenAI, Google ADK,
+# Pydantic AI, LlamaIndex, Instructor, and DSPy call now passes through
+# injection detection, PII masking, and audit logging.
+# Zero code changes to existing agents. (MCP servers via aegis-mcp-proxy.)
 ```
 
 Or govern individual actions with the Runtime API:

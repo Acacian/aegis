@@ -7,6 +7,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **On-site SEO infrastructure** — `overrides/main.html` injects Open Graph + Twitter Card + JSON-LD (`SoftwareApplication`, `WebSite`, `BreadcrumbList`) on every docs page; per-page-type schemas (`TechArticle` for solutions/cookbook, `Article` for comparisons, `FAQPage` for FAQ); custom `overrides/sitemap.xml` with tier-based priority (home 1.0 / solutions+comparisons 0.9 / cookbook 0.8 / guides+api 0.7) and changefreq signals across all 69 URLs
+- **5 SEO solution pages** — `crewai-security`, `openai-agents-security`, `litellm-security`, `llm-guardrails-python`, `ai-agent-vulnerability-scanner` targeting high-intent search queries
+- **Demo assets** — animated asciinema SVG (47KB, 65-row, vector-sharp) for docs and dracula-themed GIF (222KB) for README, with typing-animation → instant-results choreography
+- **Docs landing page redesign** — `docs/index.md` rewritten as a landing page with stat grid, 3-step flow, hub linking to all 14 solutions / 5 comparisons / 14 cookbook pages
+- **Attack simulation in `aegis scan`** — output now shows concrete attack scenarios (prompt injection, PII leak, code exec) and the defenses `auto_instrument()` would apply
+- **`aegis scan --fix`** — auto-inserts `import aegis; aegis.auto_instrument()` into affected files
+- **`aegis scan` single-file support** — `aegis scan myfile.py` works directly (previously directory-only)
+- **`aegis scan` actionable next steps** — 3-step guide (generate policy → instrument → set CI threshold) replaces generic footer
+- **Colored CLI output** — `aegis scan` emits ANSI colors with auto-detection (`NO_COLOR` / `FORCE_COLOR` / TTY check); pipes and CI get plain text automatically
+- **Unified guardrail result API** — `passed` and `guardrail_name` fields added to `PIIResult`, `ToxicityResult`, `HallucinationResult`, `PromptLeakResult`, `COTResult`, `OutputSchemaResult`
+- **`auto_instrument()` runtime feedback** — prints instrumented framework list to stdout; warns to stderr when no frameworks detected
+- **Search-oriented PyPI keywords** — added `llm-guardrails`, `llm-security`, `toxicity-detection`, `pii-masking`, `injection-detection`, `litellm`, `pydantic-ai`, `llamaindex`, `instructor`, `dspy`, `google-adk`, `gemini`, `selection-governance`, `policy-ci-cd`, `ai-safety`, `agent-security`, `tool-call-policy` for discoverability
+
+### Changed
+
+- **README scan output** — updated to show attack simulation, `--fix`, single-file usage, and the new 3-step next-steps block
+- **Korean README** language switcher restored after broken Hangul characters
+
+### Fixed
+
+- **7.8x faster guardrails on long text** — `ToxicityGuardrail` and `PromptLeakGuardrail` now run cheap substring keyword pre-filter before expensive regex, short-circuiting clean text. Benchmarks on 6.5K chars: Toxicity 9.6ms → 1.5ms (6.4x), PromptLeak 3.3ms → 0.14ms (23x), full engine 14ms → 1.8ms (7.8x)
+- **FAQPage schema text-mismatch** — hardcoded FAQ schema used "Agent-Aegis" while visible H3s used "Aegis"; rewrote schema to byte-match visible text so Google rich-result eligibility is preserved (8/8 Q&A now match)
+- **Stale `docs/faq.md` capability counts** — corrected "7 adapters / 10 categories / 85+ patterns" to "12 frameworks / 13 categories / 107 patterns" in line with `llms.txt`
+- **`site_description` truncation** — shortened from 297 chars to 153 chars to fit Google's ~155 char SERP limit
+- **30 pages missing frontmatter description** — added per-page descriptions (139–154 chars) across `api/`, `cookbook/`, `guides/`, `security/`, `playground/`, troubleshooting, cheatsheet, index
+- **Title length and collision issues** — duplicate `MCP Governance` titles disambiguated; long titles (`owasp-agentic-mapping` 76→31 chars) and short titles (`faq`, `api/audit`, home page) corrected for SERP CTR
+- **`aegis validate` / `init` / `scan` error messages** — now suggest the next command to run (`aegis init`, `aegis schema`) instead of generic failures
+- **`aegis init`** — prints next-step commands after generating starter policy
+- **Instrument module docstring** — corrected framework count `9 → 10`
+- **Demo GIF frame ordering** — reordered so first frame shows scan results (not blank screen) and trimmed initial blank
+- **Camo cache busting** — appended `?v=2` query to demo GIF URL so GitHub re-fetches the updated frame order
+- **Misplaced root directories removed** — `agents/`, `hooks/`, `loop/`, `skills/` deleted from repo root (correct location is `.claude/`); redundant `.gitignore` entries removed
+- **Self-scan A grade** — added `# aegis: ignore` pragmas to false-positive internal calls so the project's own `aegis scan` produces an A
+
+### Docs
+
+- **`docs/api/index.md`** — new index page linking all API reference pages
+
 ## [0.9.3] — 2026-04-06
 
 ### Added
