@@ -16,3 +16,12 @@ repos:
       - id: ruff
         args: [--fix]
       - id: ruff-format
+
+  - repo: local
+    hooks:
+      - id: seo-audit
+        name: SEO frontmatter audit (docs/**/*.md)
+        entry: python3 scripts/seo-audit.py
+        language: system
+        files: ^docs/.*\.md$
+        pass_filenames: true

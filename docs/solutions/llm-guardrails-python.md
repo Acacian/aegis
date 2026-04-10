@@ -1,5 +1,5 @@
 ---
-description: "Add LLM guardrails to any Python AI agent in 2 lines. Prompt injection blocking, PII masking, toxicity filtering. Sub-millisecond, no LLM calls, 12 frameworks supported."
+description: "Add LLM guardrails to any Python AI agent in 2 lines. Prompt injection blocking, PII masking, toxicity filtering. Sub-ms, 12 frameworks."
 ---
 
 # LLM Guardrails for Python: Add Safety to Any AI Agent
