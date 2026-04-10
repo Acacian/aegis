@@ -111,7 +111,7 @@ import aegis
 aegis.auto_instrument()
 
 # Every LangChain, CrewAI, OpenAI, Anthropic, LiteLLM, Google GenAI,
-# Pydantic AI, LlamaIndex, Instructor, and DSPy call now passes through:
+# Google ADK, Pydantic AI, LlamaIndex, Instructor, and DSPy call now passes through:
 #   - Prompt injection detection (blocks attacks)
 #   - PII detection (warns on personal data exposure)
 #   - Prompt leak detection (warns on system prompt extraction)
@@ -139,6 +139,7 @@ AEGIS_INSTRUMENT=1 python my_agent.py
 | **LlamaIndex** | `LLM.chat/achat/complete/acomplete`, `BaseQueryEngine.query/aquery` | Stable |
 | **Instructor** | `Instructor.create`, `AsyncInstructor.create` | Stable |
 | **DSPy** | `Module.__call__`, `LM.forward/aforward` | Stable |
+| **Google ADK** | `BasePlugin` lifecycle (tool calls, agent routing, sessions) | Stable |
 
 ### Default Guardrails
 

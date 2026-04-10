@@ -7,6 +7,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.3] — 2026-04-06
+
+### Added
+
+- **`aegis proxy` CLI** — external governance gateway as ASGI app. New subcommand starts the AegisProxy with configured policy, forwards governed requests downstream, and emits structured audit events
+- **`Runtime.execute_claim()`** — public runtime API to execute a fully-formed `ActionClaim` through the policy + guardrail pipeline (used by proxy forwarders)
+- **ClaimPolicy + proxy forwarders** — `aegis.runtime.proxy_forwarder` exposes async forwarder helpers; `ClaimPolicy` evaluates declared/assessed/chain fields with explicit deny precedence
+- **ASGI proxy app** — drop-in middleware/standalone app for upstream services that want pre-LLM-call governance without integrating the library directly
+- **Differentiation documentation** — comparison pages for vs MS AGT, vs NeMo Guardrails, vs Guardrails AI, vs mcp-scan, vs DIY published in `docs/comparisons/`
+- **Pre-commit hook + pytest plugin** — `aegis-precommit` and pytest11 entry point so installs automatically appear in `pre-commit-config.yaml` and pytest framework discovery
+- **15-framework scan detection** — `aegis scan` now classifies findings across 15 categories: OpenAI, Anthropic, LangChain, MCP, subprocess, HTTP, CrewAI, LlamaIndex, LiteLLM, PydanticAI, OpenAI Agents, Instructor, Google GenAI, DSPy, Google ADK
+- **Scan DX features** — `--format json|sarif|suggest`, `--threshold A-F`, `--fix`, `.aegisscanignore`, `# aegis: ignore` inline pragmas, attack-simulation output
+- **End-to-end v0.9 integration tests** — proxy forwarder, ClaimPolicy, ActionClaim execution paths covered
+
+### Fixed
+
+- **action.yml Marketplace compatibility** — description shortened to <125 chars for GitHub Marketplace publication
+- **mypy strictness** — `StashKey[dict]` now carries explicit type args; scan.py dict annotations corrected (0 mypy errors on 181 files)
+
+### Changed
+
+- **GitHub Action ref bumped to v0.9.3** — `Acacian/aegis@v0.9.3` in README/CI examples
+
+## [0.9.2] — 2026-04-05
+
+### Added
+
+- **Sub-package publish workflow** — separate publish pipeline for `langchain-aegis` and other sub-packages, dependency synced to 0.9.2 to avoid version drift
+- **PR comment from GitHub Action** — Aegis Action posts scan results as a PR comment (governance score + ungoverned counts) for visible CI feedback
+- **Policy CI/CD playground tab** — interactive `aegis plan` / `aegis test` demo in the browser playground
+- **glama.json** — MCP directory ownership verification metadata for Glama.ai listing
+
+### Fixed
+
+- **Stale versions across repo** — removed dead `MANIFEST.in`, fixed stale version pins, exported 5 missing modules from public surface
+- **Windows compatibility** — UTF-8 encoding enforcement, `pathlib` path handling, high-resolution timer fallback for Windows runners
+- **Honest dependency claim** — README "zero deps" corrected to "1 dep (PyYAML)"; "20+" papers corrected to "24 papers"
+- **Selection-by-negation positioning** — qualified from "first runtime" to "first OSS library" for accuracy
+
+### Changed
+
+- **README + playground restructured around `aegis scan`** — landing flow now leads with the scanner finding pain → auto_instrument fixing it → policy CI/CD locking it
+- **Brand consolidated to Agent-Aegis** — playground files, benchmark report, and badges updated; benchmark rewritten as honest comparison
+
 ## [0.9.1] — 2026-04-05
 
 ### Fixed

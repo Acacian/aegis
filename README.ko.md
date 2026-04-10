@@ -103,7 +103,7 @@ Next steps:
 import aegis
 aegis.auto_instrument()
 
-# LangChain, CrewAI, OpenAI, Anthropic, LiteLLM, Google GenAI,
+# LangChain, CrewAI, OpenAI, Anthropic, LiteLLM, Google GenAI, Google ADK,
 # Pydantic AI, LlamaIndex, Instructor, DSPy 호출이 자동으로:
 #   - 프롬프트 인젝션 탐지 (공격 차단)
 #   - PII 탐지 (개인정보 노출 경고)
@@ -132,6 +132,7 @@ AEGIS_INSTRUMENT=1 python my_agent.py
 | **LlamaIndex** | `LLM.chat/achat/complete/acomplete`, `BaseQueryEngine.query/aquery` | Stable |
 | **Instructor** | `Instructor.create`, `AsyncInstructor.create` | Stable |
 | **DSPy** | `Module.__call__`, `LM.forward/aforward` | Stable |
+| **Google ADK** | `BasePlugin` 라이프사이클 (툴 호출, 에이전트 라우팅, 세션) | Stable |
 
 ### 기본 가드레일
 

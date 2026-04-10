@@ -19,6 +19,8 @@ keywords = [
     "runtime-security", "llm-security", "llm-guardrails", "toxicity-detection",
     "prompt-leak-detection", "ai-agent-security", "pii-masking",
     "injection-detection", "litellm", "pydantic-ai", "llamaindex",
+    "instructor", "dspy", "google-adk", "gemini", "selection-governance",
+    "policy-ci-cd", "ai-safety", "agent-security", "tool-call-policy",
 ]
 classifiers = [
     "Development Status :: 4 - Beta",

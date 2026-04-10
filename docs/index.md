@@ -89,6 +89,7 @@ AEGIS_INSTRUMENT=1 python my_agent.py
 | **LlamaIndex** | `LLM.chat/achat/complete/acomplete`, `BaseQueryEngine.query/aquery` |
 | **Instructor** | `Instructor.create`, `AsyncInstructor.create` |
 | **DSPy** | `Module.__call__`, `LM.forward/aforward` |
+| **Google ADK** | `BasePlugin` lifecycle (tool calls, agent routing, sessions) |
 
 ### Default Guardrails
 
