@@ -33,6 +33,36 @@ _LAZY_IMPORTS: dict[str, str] = {
     "IntegrationsConfig": "aegis.config",
     "PIIConfig": "aegis.config",
     "PolicyConfig": "aegis.config",
+    # -- v0.9 selection-governance & tripartite ActionClaim (academic features) --
+    "ActionClaim": "aegis.core.action_claim",
+    "DeclaredFields": "aegis.core.action_claim",
+    "AssessedFields": "aegis.core.action_claim",
+    "ChainFields": "aegis.core.action_claim",
+    "ClaimVerdict": "aegis.core.action_claim",
+    "ImpactVector": "aegis.core.action_claim",
+    "DelegationChainEntry": "aegis.core.action_claim",
+    "ClaimPolicy": "aegis.core.claim_policy",
+    "ClaimPolicyDecision": "aegis.core.claim_policy",
+    "ClaimAssessor": "aegis.core.justification_gap",
+    "ImpactScorer": "aegis.core.justification_gap",
+    "RuleBasedImpactScorer": "aegis.core.justification_gap",
+    "SelectionAuditor": "aegis.core.selection_audit",
+    "SelectionSet": "aegis.core.selection_audit",
+    "SelectionOption": "aegis.core.selection_audit",
+    "EliminatedOption": "aegis.core.selection_audit",
+    "EliminationReason": "aegis.core.selection_audit",
+    "SelectionAuditResult": "aegis.core.selection_audit",
+    "SelectionFinding": "aegis.core.selection_audit",
+    "FindingType": "aegis.core.selection_audit",
+    "CommitRevealSelection": "aegis.core.selection_audit",
+    "audit_selection": "aegis.core.selection_audit",
+    "set_global_auditor": "aegis.core.selection_audit",
+    "A2AGovernor": "aegis.core.a2a_governance",
+    "A2AMessage": "aegis.core.a2a_governance",
+    "A2ADecision": "aegis.core.a2a_governance",
+    "GovernanceHandshake": "aegis.core.a2a_governance",
+    "GovernanceEnvelope": "aegis.core.a2a_governance",
+    "HandshakeResult": "aegis.core.a2a_governance",
     # Core types
     "Action": "aegis.core.action",
     "AgentConstitution": "aegis.core.constitution",
@@ -221,7 +251,46 @@ if TYPE_CHECKING:
     from aegis.config import (
         PolicyConfig as PolicyConfig,
     )
+    from aegis.core.a2a_governance import (
+        A2ADecision as A2ADecision,
+    )
+    from aegis.core.a2a_governance import (
+        A2AGovernor as A2AGovernor,
+    )
+    from aegis.core.a2a_governance import (
+        A2AMessage as A2AMessage,
+    )
+    from aegis.core.a2a_governance import (
+        GovernanceEnvelope as GovernanceEnvelope,
+    )
+    from aegis.core.a2a_governance import (
+        GovernanceHandshake as GovernanceHandshake,
+    )
+    from aegis.core.a2a_governance import (
+        HandshakeResult as HandshakeResult,
+    )
     from aegis.core.action import Action as Action
+    from aegis.core.action_claim import (
+        ActionClaim as ActionClaim,
+    )
+    from aegis.core.action_claim import (
+        AssessedFields as AssessedFields,
+    )
+    from aegis.core.action_claim import (
+        ChainFields as ChainFields,
+    )
+    from aegis.core.action_claim import (
+        ClaimVerdict as ClaimVerdict,
+    )
+    from aegis.core.action_claim import (
+        DeclaredFields as DeclaredFields,
+    )
+    from aegis.core.action_claim import (
+        DelegationChainEntry as DelegationChainEntry,
+    )
+    from aegis.core.action_claim import (
+        ImpactVector as ImpactVector,
+    )
     from aegis.core.agent_identity import (
         AgentIdentity as AgentIdentity,
     )
@@ -268,6 +337,12 @@ if TYPE_CHECKING:
     )
     from aegis.core.cascade_guard import (
         CascadeGuard as CascadeGuard,
+    )
+    from aegis.core.claim_policy import (
+        ClaimPolicy as ClaimPolicy,
+    )
+    from aegis.core.claim_policy import (
+        ClaimPolicyDecision as ClaimPolicyDecision,
     )
     from aegis.core.code_exec_safety import (
         CodeExecResult as CodeExecResult,
@@ -328,6 +403,15 @@ if TYPE_CHECKING:
     )
     from aegis.core.identity_binding import (
         IdentityBinding as IdentityBinding,
+    )
+    from aegis.core.justification_gap import (
+        ClaimAssessor as ClaimAssessor,
+    )
+    from aegis.core.justification_gap import (
+        ImpactScorer as ImpactScorer,
+    )
+    from aegis.core.justification_gap import (
+        RuleBasedImpactScorer as RuleBasedImpactScorer,
     )
     from aegis.core.leakage_detector import LeakageDetector as LeakageDetector
     from aegis.core.mas_monitor import MASMonitor as MASMonitor
@@ -413,6 +497,39 @@ if TYPE_CHECKING:
     )
     from aegis.core.sandbox_policy import (
         SandboxPolicy as SandboxPolicy,
+    )
+    from aegis.core.selection_audit import (
+        CommitRevealSelection as CommitRevealSelection,
+    )
+    from aegis.core.selection_audit import (
+        EliminatedOption as EliminatedOption,
+    )
+    from aegis.core.selection_audit import (
+        EliminationReason as EliminationReason,
+    )
+    from aegis.core.selection_audit import (
+        FindingType as FindingType,
+    )
+    from aegis.core.selection_audit import (
+        SelectionAuditor as SelectionAuditor,
+    )
+    from aegis.core.selection_audit import (
+        SelectionAuditResult as SelectionAuditResult,
+    )
+    from aegis.core.selection_audit import (
+        SelectionFinding as SelectionFinding,
+    )
+    from aegis.core.selection_audit import (
+        SelectionOption as SelectionOption,
+    )
+    from aegis.core.selection_audit import (
+        SelectionSet as SelectionSet,
+    )
+    from aegis.core.selection_audit import (
+        audit_selection as audit_selection,
+    )
+    from aegis.core.selection_audit import (
+        set_global_auditor as set_global_auditor,
     )
     from aegis.core.taint import (
         TaintFinding as TaintFinding,

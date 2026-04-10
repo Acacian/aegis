@@ -891,3 +891,169 @@ class TestGovernanceHandshake:
         result = hs.negotiate("orchestrator", "ghost")
         assert not result.compatible
         assert "Receiver not registered" in result.reasons
+
+
+# ---------------------------------------------------------------------------
+# A2A + MASMonitor integration (P0-2)
+# ---------------------------------------------------------------------------
+
+
+class TestA2AMASMonitorIntegration:
+    """A2AGovernor feeds MASMonitor; topology anomalies surface in decisions."""
+
+    def test_allowed_messages_recorded_in_monitor(self) -> None:
+        from aegis.core.mas_monitor import MASMonitor
+
+        registry = _make_registry()
+        monitor = MASMonitor(flood_rate=1000.0)  # effectively no flood
+        monitor.register_agent("orchestrator")
+        monitor.register_agent("worker-1")
+
+        governor = A2AGovernor(
+            registry=registry,
+            mas_monitor=monitor,
+            rate_limit_per_sender=1000,
+            rate_limit_per_pair=1000,
+        )
+
+        msg = A2AMessage(
+            sender_id="orchestrator",
+            receiver_id="worker-1",
+            message_type="task_request",
+            payload={"x": 1},
+        )
+        decision = governor.evaluate(msg)
+        assert decision.allowed is True
+        assert decision.topology_anomalies == ()
+
+        # Topology graph should now know about this edge
+        topology = monitor.get_topology()
+        assert "worker-1" in topology.get("orchestrator", [])
+
+    def test_blocked_messages_not_recorded(self) -> None:
+        from aegis.core.mas_monitor import MASMonitor
+
+        registry = _make_registry()
+        monitor = MASMonitor()
+        monitor.register_agent("orchestrator")
+        monitor.register_agent("worker-1")
+
+        # Governor with min_trust_level higher than anyone has
+        governor = A2AGovernor(
+            registry=registry,
+            mas_monitor=monitor,
+            min_trust_level=999,
+        )
+
+        msg = A2AMessage(
+            sender_id="orchestrator",
+            receiver_id="worker-1",
+            message_type="task_request",
+        )
+        decision = governor.evaluate(msg)
+        assert decision.allowed is False
+
+        # Monitor should NOT have recorded a blocked message
+        topology = monitor.get_topology()
+        assert topology.get("orchestrator", []) == []
+
+    def test_topology_flood_downgrades_decision(self) -> None:
+        from aegis.core.mas_monitor import MASMonitor
+
+        registry = _make_registry()
+        # Tight flood threshold so 3 messages already exceed the rate
+        monitor = MASMonitor(flood_rate=2.0, flood_window_s=5.0)
+        monitor.register_agent("orchestrator")
+        monitor.register_agent("worker-1")
+
+        governor = A2AGovernor(
+            registry=registry,
+            mas_monitor=monitor,
+            rate_limit_per_sender=1000,
+            rate_limit_per_pair=1000,
+        )
+
+        base_ts = 1_000_000.0
+        last_decision: A2ADecision | None = None
+        for i in range(10):
+            msg = A2AMessage(
+                sender_id="orchestrator",
+                receiver_id="worker-1",
+                message_type="task_request",
+                timestamp=base_ts + i * 0.01,
+            )
+            last_decision = governor.evaluate(msg)
+
+        assert last_decision is not None
+        # Final message should be blocked by topology flood anomaly
+        assert last_decision.allowed is False
+        assert "topology_anomaly:flood" in last_decision.violations
+        assert any(a.anomaly_type == "flood" for a in last_decision.topology_anomalies)
+        assert "Topology anomaly" in last_decision.reason
+
+    def test_ghost_anomaly_downgrades_decision(self) -> None:
+        from aegis.core.mas_monitor import MASMonitor
+
+        registry = _make_registry()
+        monitor = MASMonitor()
+        # Only register orchestrator → receiver is a "ghost" to the topology
+        monitor.register_agent("orchestrator")
+
+        governor = A2AGovernor(
+            registry=registry,
+            mas_monitor=monitor,
+            rate_limit_per_sender=1000,
+            rate_limit_per_pair=1000,
+        )
+
+        msg = A2AMessage(
+            sender_id="orchestrator",
+            receiver_id="worker-1",
+            message_type="task_request",
+        )
+        decision = governor.evaluate(msg)
+        assert decision.allowed is False
+        assert any(a.anomaly_type == "ghost" for a in decision.topology_anomalies)
+        assert "topology_anomaly:ghost" in decision.violations
+
+    def test_without_monitor_decisions_unchanged(self) -> None:
+        registry = _make_registry()
+        governor = A2AGovernor(registry=registry)  # no monitor
+
+        msg = A2AMessage(
+            sender_id="orchestrator",
+            receiver_id="worker-1",
+            message_type="task_request",
+        )
+        decision = governor.evaluate(msg)
+        assert decision.allowed is True
+        assert decision.topology_anomalies == ()
+
+    def test_low_severity_topology_anomaly_does_not_block(self) -> None:
+        """Low-severity topology findings are surfaced but do not downgrade."""
+        from aegis.core.mas_monitor import MASMonitor
+
+        registry = _make_registry()
+        # Threshold set so flood severity=high would still block; we only
+        # want to check that "low" severity wouldn't override.
+        monitor = MASMonitor(flood_rate=10.0, flood_window_s=1.0)
+        monitor.register_agent("orchestrator")
+        monitor.register_agent("worker-1")
+
+        governor = A2AGovernor(
+            registry=registry,
+            mas_monitor=monitor,
+            rate_limit_per_sender=1000,
+            rate_limit_per_pair=1000,
+            topology_block_severities=frozenset({"high"}),
+        )
+
+        # Normal single message — no anomaly at all
+        msg = A2AMessage(
+            sender_id="orchestrator",
+            receiver_id="worker-1",
+            message_type="task_request",
+        )
+        decision = governor.evaluate(msg)
+        assert decision.allowed is True
+        assert decision.topology_anomalies == ()

@@ -669,3 +669,101 @@ guardrails:
         instance = Aegis.init(config=AegisConfig())
         rep = repr(instance)
         assert "defaults" in rep
+
+
+# ---------------------------------------------------------------------------
+# Public API contract (P0-3)
+# ---------------------------------------------------------------------------
+
+# Symbols we promise to keep importable as aegis.X for v0.9+ — lock in the
+# differentiator surface so a future rename doesn't silently hide them from
+# the top-level namespace.
+_V09_DIFFERENTIATOR_SURFACE = frozenset(
+    {
+        # Tripartite ActionClaim
+        "ActionClaim",
+        "DeclaredFields",
+        "AssessedFields",
+        "ChainFields",
+        "ClaimVerdict",
+        "ImpactVector",
+        "DelegationChainEntry",
+        # ClaimPolicy evaluation
+        "ClaimPolicy",
+        "ClaimPolicyDecision",
+        "ClaimAssessor",
+        "ImpactScorer",
+        "RuleBasedImpactScorer",
+        # Selection governance (Santander arXiv:2602.14606)
+        "SelectionAuditor",
+        "SelectionSet",
+        "SelectionOption",
+        "EliminatedOption",
+        "EliminationReason",
+        "SelectionAuditResult",
+        "SelectionFinding",
+        "FindingType",
+        "CommitRevealSelection",
+        "audit_selection",
+        "set_global_auditor",
+        # A2A governance + topology
+        "A2AGovernor",
+        "A2AMessage",
+        "A2ADecision",
+        "GovernanceHandshake",
+        "GovernanceEnvelope",
+        "HandshakeResult",
+        "MASMonitor",
+    }
+)
+
+
+class TestPublicAPIContract:
+    """All v0.9 differentiators must be importable from the top-level namespace."""
+
+    def test_differentiators_in_all(self) -> None:
+        import aegis
+
+        missing = _V09_DIFFERENTIATOR_SURFACE - set(aegis.__all__)
+        assert not missing, f"Missing from aegis.__all__: {sorted(missing)}"
+
+    def test_differentiators_are_importable(self) -> None:
+        import aegis
+
+        for name in sorted(_V09_DIFFERENTIATOR_SURFACE):
+            obj = getattr(aegis, name, None)
+            assert obj is not None, f"aegis.{name} could not be resolved"
+
+    def test_top_level_end_to_end(self) -> None:
+        """Full selection-governed claim evaluation via only aegis.X."""
+        import aegis
+
+        policy = aegis.Policy()
+        claim = aegis.ActionClaim(
+            declared=aegis.DeclaredFields(proposed_transition="read_file", target="db"),
+            selection_context=aegis.SelectionSet(
+                selected=aegis.SelectionOption(
+                    option_id="safe",
+                    description="safe",
+                    action_type="read",
+                    target="db",
+                    estimated_impact=0.1,
+                ),
+                eliminated=[
+                    aegis.EliminatedOption(
+                        option=aegis.SelectionOption(
+                            option_id="risky",
+                            description="risky",
+                            action_type="read",
+                            target="db",
+                            estimated_impact=0.9,
+                        ),
+                        reason=aegis.EliminationReason.POLICY_VIOLATION,
+                        agent_explanation="blocked",
+                    ),
+                ],
+            ),
+        )
+        cp = aegis.ClaimPolicy(policy)
+        decision = cp.evaluate(claim)
+        assert decision.selection_audit_result is not None

@@ -265,3 +265,178 @@ class TestNoAssessMode:
         # Claim should NOT be assessed
         assert not claim.is_assessed
         assert claim.verdict == ClaimVerdict.PENDING
+
+
+# ---------------------------------------------------------------------------
+# Selection audit integration (P0-1)
+# ---------------------------------------------------------------------------
+
+
+def _selection_set(
+    *,
+    selected_impact: float = 0.5,
+    num_eliminated: int = 3,
+    eliminated_impact: float = 0.9,
+    reason: object | None = None,
+    explanation: str = "legitimate constraint",
+):
+    from aegis.core.selection_audit import (
+        EliminatedOption,
+        EliminationReason,
+        SelectionOption,
+        SelectionSet,
+    )
+
+    selected = SelectionOption(
+        option_id="picked",
+        description="picked",
+        action_type="read",
+        target="db",
+        estimated_impact=selected_impact,
+    )
+    eliminated = [
+        EliminatedOption(
+            option=SelectionOption(
+                option_id=f"e{i}",
+                description=f"alt_{i}",
+                action_type="read",
+                target="db",
+                estimated_impact=eliminated_impact,
+            ),
+            reason=reason or EliminationReason.POLICY_VIOLATION,
+            agent_explanation=explanation,
+        )
+        for i in range(num_eliminated)
+    ]
+    return SelectionSet(selected=selected, eliminated=eliminated)
+
+
+class TestClaimPolicySelectionAudit:
+    """Integration of SelectionAuditor with ClaimPolicy.evaluate()."""
+
+    def test_no_selection_context_leaves_result_none(self, policy_path: Path) -> None:
+        cp = ClaimPolicy(_policy_from_path(policy_path))
+        claim = _claim("read_file")
+        decision = cp.evaluate(claim)
+        assert decision.selection_audit_result is None
+
+    def test_clean_selection_does_not_raise_verdict(self, policy_path: Path) -> None:
+        # Clean: agent picks the safer (lower-impact) option and eliminates
+        # the riskier ones. No HIGH_ELIMINATION, no BETTER_OPTION_ELIMINATED.
+        cp = ClaimPolicy(_policy_from_path(policy_path))
+        claim = _claim("read_file")
+        claim.selection_context = _selection_set(
+            selected_impact=0.2,
+            num_eliminated=2,
+            eliminated_impact=0.9,
+        )
+        decision = cp.evaluate(claim)
+        assert decision.selection_audit_result is not None
+        assert decision.selection_audit_result.overall_risk <= 0.5
+        assert claim.verdict != ClaimVerdict.BLOCK
+
+    def test_high_elimination_escalates_to_block(self, policy_path: Path) -> None:
+        from aegis.core.selection_audit import EliminationReason
+
+        cp = ClaimPolicy(_policy_from_path(policy_path))
+        claim = _claim("read_file")
+        # 9/10 elimination ratio with agent_preference + no explanation →
+        # severity 0.9 → BLOCK. Eliminated impact is lower than selected,
+        # which also triggers BETTER_OPTION_ELIMINATED (severity 0.8) —
+        # this is the cosmetic-alignment / risk-maximising pattern.
+        claim.selection_context = _selection_set(
+            selected_impact=0.9,
+            num_eliminated=9,
+            eliminated_impact=0.1,
+            reason=EliminationReason.AGENT_PREFERENCE,
+            explanation="",
+        )
+        decision = cp.evaluate(claim)
+
+        assert decision.selection_audit_result is not None
+        assert decision.selection_audit_result.overall_risk >= 0.8
+        assert claim.verdict == ClaimVerdict.BLOCK
+        assert decision.claim_verdict == ClaimVerdict.BLOCK
+        assert decision.is_allowed is False
+        assert "Selection audit" in decision.explanation
+
+    def test_suspicious_selection_escalates(self, policy_path: Path) -> None:
+        from aegis.core.selection_audit import EliminationReason
+
+        cp = ClaimPolicy(
+            _policy_from_path(policy_path),
+            selection_block_threshold=0.95,  # raise bar so 0.8 ≠ block
+        )
+        claim = _claim("read_file")
+        # One better (safer) option eliminated → BETTER_OPTION_ELIMINATED
+        # severity exactly 0.8 → below the 0.95 block threshold but still
+        # > 0.5 → is_suspicious → ESCALATE.
+        claim.selection_context = _selection_set(
+            selected_impact=0.9,
+            num_eliminated=1,
+            eliminated_impact=0.1,
+            reason=EliminationReason.POLICY_VIOLATION,
+            explanation="blocked by policy",
+        )
+        decision = cp.evaluate(claim)
+
+        assert decision.selection_audit_result is not None
+        assert decision.selection_audit_result.is_suspicious
+        assert claim.verdict == ClaimVerdict.ESCALATE
+        assert decision.requires_escalation
+
+    def test_existing_block_is_not_downgraded(self, policy_path: Path) -> None:
+        from datetime import UTC, datetime
+
+        from aegis.core.action_claim import AssessedFields
+
+        cp = ClaimPolicy(_policy_from_path(policy_path))
+        claim = _claim("read_file")
+        # Mark as already assessed so ClaimPolicy skips assess() which
+        # would otherwise overwrite the verdict.
+        claim.assessed = AssessedFields(assessed_at=datetime.now(UTC))
+        claim.verdict = ClaimVerdict.BLOCK
+        # Clean selection (picks safer option) — should NOT relax the BLOCK
+        claim.selection_context = _selection_set(
+            selected_impact=0.2,
+            num_eliminated=1,
+            eliminated_impact=0.9,
+        )
+        cp.evaluate(claim)
+        assert claim.verdict == ClaimVerdict.BLOCK
+
+    def test_explicit_auditor_is_used(self, policy_path: Path) -> None:
+        from aegis.core.selection_audit import SelectionAuditor
+
+        # Very permissive auditor — threshold must be > 1.0 so ratio never
+        # triggers a finding. Use a safe-pick set so BETTER_OPTION_ELIMINATED
+        # does not fire either.
+        auditor = SelectionAuditor(elimination_threshold=1.1)
+        cp = ClaimPolicy(
+            _policy_from_path(policy_path),
+            selection_auditor=auditor,
+        )
+        claim = _claim("read_file")
+        claim.selection_context = _selection_set(
+            selected_impact=0.2,
+            num_eliminated=1,
+            eliminated_impact=0.9,
+        )
+        decision = cp.evaluate(claim)
+        assert decision.selection_audit_result is not None
+        # With the permissive threshold there should be zero findings of
+        # type HIGH_ELIMINATION.
+        from aegis.core.selection_audit import FindingType
+
+        assert not any(
+            f.finding_type == FindingType.HIGH_ELIMINATION
+            for f in decision.selection_audit_result.findings
+        )
+
+    def test_default_auditor_auto_created(self, policy_path: Path) -> None:
+        cp = ClaimPolicy(_policy_from_path(policy_path))
+        claim = _claim("read_file")
+        claim.selection_context = _selection_set(num_eliminated=1)
+        # Should not raise even though no global auditor was set.
+        decision = cp.evaluate(claim)
+        assert decision.selection_audit_result is not None

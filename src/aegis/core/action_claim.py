@@ -20,6 +20,7 @@ from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from aegis.core.action import Action
+    from aegis.core.selection_audit import SelectionSet
 
 
 # -- Impact Vector (6-dimensional) -------------------------------------------
@@ -201,6 +202,11 @@ class ActionClaim:
     )
     assessed: AssessedFields = field(default_factory=AssessedFields)
     chain: ChainFields = field(default_factory=ChainFields)
+
+    # Optional selection context: when set, ClaimPolicy auto-runs SelectionAuditor
+    # on this set and overlays the verdict onto the claim. Detects selection-by-
+    # negation and cosmetic alignment (Santander, arXiv:2602.14606).
+    selection_context: SelectionSet | None = None
 
     verdict: ClaimVerdict = ClaimVerdict.PENDING
 

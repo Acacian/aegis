@@ -52,6 +52,7 @@ from aegis.core.agent_identity import AgentRegistry, has_capability
 
 if TYPE_CHECKING:
     from aegis.core.agent_identity import AgentIdentity
+    from aegis.core.mas_monitor import MASMonitor, TopologyAnomaly
 
 # ---------------------------------------------------------------------------
 # Data models
@@ -96,6 +97,9 @@ class A2ADecision:
         filtered_payload: Modified payload (if content was redacted).
             ``None`` if no filtering was applied.
         violations: List of policy violations found.
+        topology_anomalies: Immediate topological anomalies (flood,
+            ghost) raised by a linked :class:`MASMonitor` when the
+            message was recorded. Empty when no monitor is wired.
     """
 
     allowed: bool
@@ -104,6 +108,7 @@ class A2ADecision:
     filtered_payload: dict[str, Any] | None = None
     violations: list[str] = field(default_factory=list)
     envelope: GovernanceEnvelope | None = None
+    topology_anomalies: tuple[TopologyAnomaly, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -249,7 +254,7 @@ def _flatten_payload(payload: dict[str, Any], depth: int = 0) -> str:
             parts.append(v)
         elif isinstance(v, dict):
             parts.append(_flatten_payload(v, depth + 1))
-        elif isinstance(v, (list, tuple)):
+        elif isinstance(v, list | tuple):
             for item in v:
                 if isinstance(item, str):
                     parts.append(item)
@@ -534,6 +539,12 @@ class A2AGovernor:
     4. Content filtering (scan for sensitive data)
     5. Rate limiting (per-sender and per-pair)
 
+    When a :class:`MASMonitor` is supplied, allowed messages are also
+    recorded on the monitor so that topology-level anomalies (flood,
+    domination, clique, isolation) are detected in the same pass. Any
+    immediate anomalies from ``record_message()`` are attached to the
+    returned :class:`A2ADecision` as ``topology_anomalies``.
+
     Args:
         registry: Agent registry for identity/capability lookups.
         capability_map: Message type → required capability mapping.
@@ -544,6 +555,13 @@ class A2AGovernor:
         rate_window_seconds: Rate limit window duration.
         block_on_sensitive: If True, block messages with sensitive
             content. If False, redact and allow.
+        mas_monitor: Optional :class:`MASMonitor` to receive allowed
+            messages. Pairs A2A governance with topology anomaly
+            detection (arXiv:2510.19420).
+        topology_block_severities: Topology anomaly severities that, if
+            observed in ``record_message()``, escalate the governed
+            decision to ``blocked``. Default ``frozenset({"high"})`` —
+            i.e. flood and ghost.
     """
 
     def __init__(
@@ -560,6 +578,8 @@ class A2AGovernor:
         attach_envelope: bool = False,
         policy_version: str = "",
         handshake: GovernanceHandshake | None = None,
+        mas_monitor: MASMonitor | None = None,
+        topology_block_severities: frozenset[str] = frozenset({"high"}),
     ) -> None:
         self._registry = registry
         self._capability_map = capability_map or dict(_DEFAULT_CAPABILITY_MAP)
@@ -572,6 +592,8 @@ class A2AGovernor:
         self._attach_envelope = attach_envelope
         self._policy_version = policy_version
         self._handshake = handshake
+        self._mas_monitor = mas_monitor
+        self._topology_block_severities = topology_block_severities
         self._sender_windows: dict[str, _RateWindow] = {}
         self._pair_windows: dict[str, _RateWindow] = {}
         self._log: list[A2ALogEntry] = []
@@ -710,8 +732,38 @@ class A2AGovernor:
         filtered_payload: dict[str, Any] | None = None,
         envelope: GovernanceEnvelope | None = None,
     ) -> A2ADecision:
-        """Create a decision and log it."""
+        """Create a decision, log it, and optionally feed MASMonitor.
+
+        When the decision is allowed and a :class:`MASMonitor` is
+        attached, the message is recorded in the topology graph. Any
+        immediate topology anomaly with a severity in
+        ``self._topology_block_severities`` (default: ``{"high"}``)
+        downgrades the decision to ``blocked`` and appends the reason to
+        the violation list. This is the integration point the docs
+        advertise as "A2A + topology anomaly detection wired by default"
+        (arXiv:2510.19420).
+        """
         violations = violations or []
+
+        topology_anomalies: tuple[TopologyAnomaly, ...] = ()
+        if allowed and self._mas_monitor is not None:
+            anomalies = self._mas_monitor.record_message(
+                source_id=message.sender_id,
+                target_id=message.receiver_id,
+                message_type=message.message_type,
+                timestamp=message.timestamp,
+            )
+            if anomalies:
+                topology_anomalies = tuple(anomalies)
+                severe = [a for a in anomalies if a.severity in self._topology_block_severities]
+                if severe:
+                    allowed = False
+                    severe_types = ", ".join(a.anomaly_type for a in severe)
+                    reason = f"Topology anomaly: {severe_types}"
+                    violations = list(violations) + [
+                        f"topology_anomaly:{a.anomaly_type}" for a in severe
+                    ]
+
         decision = A2ADecision(
             allowed=allowed,
             message=message,
@@ -719,6 +771,7 @@ class A2AGovernor:
             filtered_payload=filtered_payload,
             violations=violations,
             envelope=envelope,
+            topology_anomalies=topology_anomalies,
         )
         entry = A2ALogEntry(
             timestamp=time.time(),
