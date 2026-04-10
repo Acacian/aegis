@@ -187,4 +187,182 @@
   }
   </script>
   {%- endif -%}
+
+  {#- Page-type-specific schema for Google rich results eligibility.
+      Decision matrix:
+        /solutions/*  -> TechArticle (feature/how-to explainers)
+        /cookbook/*   -> TechArticle (framework integration guides)
+        /comparisons/*-> Article     (comparative opinion content)
+        /faq/         -> FAQPage     (SERP featured snippets)
+  -#}
+  {%- if page and page.url -%}
+    {%- set is_techarticle = page.url.startswith('solutions/') or page.url.startswith('cookbook/') -%}
+    {%- set is_comparison  = page.url.startswith('comparisons/') -%}
+    {%- set is_faq         = page.url == 'faq/' -%}
+
+    {%- if is_techarticle -%}
+    <!-- JSON-LD: TechArticle (solutions + cookbook pages) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "TechArticle",
+      "headline": {{ page_title | tojson }},
+      "name": {{ page_title | tojson }},
+      "description": {{ page_description | tojson }},
+      "url": "{{ page_url }}",
+      "image": "{{ og_image }}",
+      "inLanguage": "en",
+      "datePublished": "2026-04-01",
+      "dateModified": "2026-04-10",
+      "author": {
+        "@type": "Person",
+        "name": "Dongha Koo",
+        "alternateName": "Acacian",
+        "url": "https://github.com/Acacian"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Agent-Aegis",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://opengraph.githubassets.com/1/Acacian/aegis"
+        }
+      },
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "{{ page_url }}"
+      },
+      "about": {
+        "@type": "SoftwareApplication",
+        "name": "Agent-Aegis",
+        "url": "https://acacian.github.io/aegis/"
+      },
+      "proficiencyLevel": "Beginner",
+      "dependencies": "Python 3.10+",
+      "isPartOf": {
+        "@type": "WebSite",
+        "name": "Agent-Aegis Documentation",
+        "url": "https://acacian.github.io/aegis/"
+      }
+    }
+    </script>
+    {%- endif -%}
+
+    {%- if is_comparison -%}
+    <!-- JSON-LD: Article (comparisons pages) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": {{ page_title | tojson }},
+      "name": {{ page_title | tojson }},
+      "description": {{ page_description | tojson }},
+      "url": "{{ page_url }}",
+      "image": "{{ og_image }}",
+      "inLanguage": "en",
+      "datePublished": "2026-04-01",
+      "dateModified": "2026-04-10",
+      "articleSection": "Comparison",
+      "author": {
+        "@type": "Person",
+        "name": "Dongha Koo",
+        "alternateName": "Acacian",
+        "url": "https://github.com/Acacian"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Agent-Aegis",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://opengraph.githubassets.com/1/Acacian/aegis"
+        }
+      },
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "{{ page_url }}"
+      },
+      "about": {
+        "@type": "SoftwareApplication",
+        "name": "Agent-Aegis",
+        "url": "https://acacian.github.io/aegis/"
+      },
+      "isPartOf": {
+        "@type": "WebSite",
+        "name": "Agent-Aegis Documentation",
+        "url": "https://acacian.github.io/aegis/"
+      }
+    }
+    </script>
+    {%- endif -%}
+
+    {%- if is_faq -%}
+    <!-- JSON-LD: FAQPage (SERP featured snippets) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "url": "{{ page_url }}",
+      "inLanguage": "en",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is Agent-Aegis?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Agent-Aegis is a policy engine that sits between your AI agent and the systems it controls. It checks every action against your policy rules, optionally asks for human approval, and logs everything to a tamper-evident audit trail."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Why not just add if/else checks in my agent code?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "You could, but policy rules will be scattered across your codebase, hard to audit, and impossible to change without redeploying. Agent-Aegis centralizes governance into a single YAML file that security teams can review independently from application code."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Which AI frameworks does Agent-Aegis support?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Agent-Aegis auto-instruments 12 Python frameworks with one line of code: LangChain, CrewAI, OpenAI Agents SDK, Anthropic Claude, LiteLLM, Google GenAI, Pydantic AI, LlamaIndex, Instructor, DSPy, OpenAI, and MCP (Model Context Protocol). For anything else, write a custom adapter (~10 lines of code)."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does Agent-Aegis work with non-Python agents?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. Run 'aegis serve policy.yaml' to start the REST API server, then call it from Go, TypeScript, Java, or any language via HTTP."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can an agent bypass Agent-Aegis if it runs with admin privileges?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Agent-Aegis is an application-level middleware, not an OS-level sandbox. It only governs actions that go through runtime.run_one() or runtime.execute(). If agent code calls os.system() or accesses APIs directly without going through Agent-Aegis, those actions are not governed. It is the developer's responsibility to route all agent actions through Agent-Aegis."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is Agent-Aegis production-ready?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Agent-Aegis is in beta (v0.9.x). The core API is stable, but breaking changes may occur before v1.0. The project follows semantic versioning."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How fast is Agent-Aegis policy evaluation?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Sub-millisecond per action. Agent-Aegis uses deterministic regex and rule evaluation — zero LLM calls and zero network I/O in the hot path. This makes it suitable for governing high-throughput agent systems."
+          }
+        }
+      ]
+    }
+    </script>
+    {%- endif -%}
+  {%- endif -%}
 {% endblock %}

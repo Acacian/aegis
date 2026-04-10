@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+{#-
+  SEO: Custom sitemap with priority and changefreq signals per page tier.
+  Tier map (priority / changefreq):
+    /                           1.0 / weekly   (home — most important)
+    /solutions/*  /comparisons/* 0.9 / monthly  (SEO landing pages)
+    /cookbook/*                  0.8 / monthly  (framework integration guides)
+    /guides/*  /api/*            0.7 / monthly  (reference docs)
+    /getting-started/*           0.7 / monthly  (onboarding)
+    /faq/  /cheatsheet/  /enterprise/  /troubleshooting/  0.6 / monthly
+    everything else              0.5 / monthly
+-#}
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+{%- for file in pages -%}
+    {%- if not file.page.is_link and (file.page.abs_url or file.page.canonical_url) -%}
+    {%- set url = file.page.canonical_url if file.page.canonical_url else file.page.abs_url -%}
+    {%- set path = file.page.abs_url or '' -%}
+    {%- if path.endswith('/index.html') -%}
+      {%- set path = path[:-10] -%}
+    {%- endif -%}
+    {#- Determine tier based on URL path -#}
+    {%- if path == '/aegis/' or path == '/' or file.page.is_homepage -%}
+      {%- set priority = '1.0' -%}
+      {%- set changefreq = 'weekly' -%}
+    {%- elif '/solutions/' in path or '/comparisons/' in path -%}
+      {%- set priority = '0.9' -%}
+      {%- set changefreq = 'monthly' -%}
+    {%- elif '/cookbook/' in path -%}
+      {%- set priority = '0.8' -%}
+      {%- set changefreq = 'monthly' -%}
+    {%- elif '/guides/' in path or '/api/' in path or '/getting-started/' in path -%}
+      {%- set priority = '0.7' -%}
+      {%- set changefreq = 'monthly' -%}
+    {%- elif '/faq/' in path or '/cheatsheet/' in path or '/enterprise/' in path or '/troubleshooting/' in path -%}
+      {%- set priority = '0.6' -%}
+      {%- set changefreq = 'monthly' -%}
+    {%- else -%}
+      {%- set priority = '0.5' -%}
+      {%- set changefreq = 'monthly' -%}
+    {%- endif -%}
+    <url>
+         <loc>{{ url|e }}</loc>
+         {% if file.page.update_date %}<lastmod>{{ file.page.update_date }}</lastmod>{% endif %}
+         <changefreq>{{ changefreq }}</changefreq>
+         <priority>{{ priority }}</priority>
+    </url>
+    {%- endif -%}
+{% endfor %}
+</urlset>
