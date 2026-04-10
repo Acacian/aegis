@@ -1,3 +1,7 @@
+---
+description: "Aegis vs alternatives: how Aegis fits next to NeMo Guardrails, Guardrails AI, Microsoft AGT, mcp-scan, and DIY approaches. Pick the right governance tool."
+---
+
 # Aegis vs Alternatives
 
 How Aegis fits into the AI agent governance landscape — and when to use what.

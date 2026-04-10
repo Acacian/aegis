@@ -1,3 +1,7 @@
+---
+description: "Why AI agent governance matters in 2026: real incidents, OWASP Agentic Top 10 risks, EU AI Act obligations, and how policy-as-code closes the gap."
+---
+
 # Why AI Agent Governance Matters
 
 **TL;DR: AI agents are getting real-world access. Without governance, a single hallucination costs you money, data, or compliance.**

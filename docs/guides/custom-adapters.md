@@ -1,3 +1,7 @@
+---
+description: "Build a custom Aegis adapter in ~10 lines of code. Integrate policy governance with any Python AI framework, runtime, tool, or legacy system."
+---
+
 # Custom Adapters
 
 Build your own executor to connect Aegis to any system.

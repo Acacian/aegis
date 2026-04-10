@@ -1,3 +1,7 @@
+---
+description: "Dashboard API: REST endpoints for the Aegis governance dashboard. Starlette routes for real-time AI agent monitoring and policy inspection."
+---
+
 # Dashboard API
 
 REST endpoints for the Aegis governance dashboard. All routes are created via `get_dashboard_routes()` and mounted as Starlette routes.

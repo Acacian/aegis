@@ -1,3 +1,7 @@
+---
+description: "Adapters API reference: BaseExecutor interface, built-in adapters for 12 Python AI frameworks, and custom adapter API for Aegis policy governance."
+---
+
 # Adapters
 
 ## BaseExecutor

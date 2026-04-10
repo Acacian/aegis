@@ -1,3 +1,7 @@
+---
+description: "AI agent governance checklist: audit your agent's production readiness. Policy, approval, audit, incident response, and compliance coverage items."
+---
+
 # AI Agent Governance Checklist
 
 Is your AI agent production-ready? Use this checklist to audit your agent's governance posture.

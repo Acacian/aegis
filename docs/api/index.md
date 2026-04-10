@@ -1,3 +1,7 @@
+---
+description: "API Reference for Aegis — complete Python API for Runtime, Policy, Action, Result, Audit, Anomaly Detection, Compliance, and Dashboard modules."
+---
+
 # API Reference
 
 ## Core

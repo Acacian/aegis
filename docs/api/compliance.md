@@ -1,3 +1,7 @@
+---
+description: "Compliance Reports API: generate structured SOC2, GDPR, and governance reports from Aegis audit logs. Ready for third-party auditor review."
+---
+
 # Compliance Reports
 
 ## ReportGenerator

@@ -1,3 +1,8 @@
+---
+title: "Audit Logger API"
+description: "Audit Logger API: tamper-evident SHA-256 hash-chained audit trail for AI agent actions. SQLite, JSONL, and SIEM endpoints with async-safe writes."
+---
+
 # Audit Logger
 
 ## AuditLogger (SQLite)

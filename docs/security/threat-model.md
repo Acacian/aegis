@@ -1,3 +1,7 @@
+---
+description: "Aegis threat model: assumptions, trust boundaries, attacker capabilities, mitigated threats, and residual risks for AI agent policy governance."
+---
+
 # Aegis Threat Model
 
 Version: 1.0 | Date: 2026-03-24

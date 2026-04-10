@@ -1,5 +1,5 @@
 ---
-description: "Microsoft Agent Governance Toolkit vs Agent-Aegis: Enterprise governance platform vs lightweight research-grade library. Feature, performance, and architecture comparison."
+description: "Microsoft Agent Governance Toolkit vs Agent-Aegis: enterprise platform vs lightweight Python library. Feature, performance, and architecture comparison."
 ---
 
 # Microsoft Agent Governance Toolkit vs Agent-Aegis

@@ -1,5 +1,5 @@
 ---
-description: "Control what AI agents can do at runtime. Declarative allow/deny/approve rules per action, tool, agent, and time window — with human-in-the-loop approval and immutable audit trails."
+description: "Control what AI agents can do at runtime. Declarative allow/deny/approve rules per action, tool, agent, and time window with human-in-the-loop review."
 ---
 
 # AI Agent Permission Control: Allow, Deny, and Approve at Runtime

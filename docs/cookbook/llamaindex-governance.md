@@ -1,3 +1,7 @@
+---
+description: "Add policy governance to LlamaIndex RAG pipelines in 5 minutes. Block prompt injection, PII leakage, and toxic output on every query and LLM call."
+---
+
 # Add Governance to LlamaIndex in 5 Minutes
 
 LlamaIndex makes it easy to build RAG pipelines and LLM-powered applications.

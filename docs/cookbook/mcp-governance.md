@@ -1,4 +1,5 @@
 ---
+title: "MCP Governance in 5 Minutes"
 description: "Govern MCP tool calls with per-server, per-tool policies. Add approval gates and audit trails to Model Context Protocol in 5 minutes."
 ---
 

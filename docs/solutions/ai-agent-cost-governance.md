@@ -1,5 +1,5 @@
 ---
-description: "Control AI agent LLM costs with per-call, session, daily, and per-minute budget limits. Multi-agent cost attribution, loop detection, and built-in pricing for OpenAI, Anthropic, Google models."
+description: "Control AI agent LLM costs with per-call, session, daily, and per-minute budget limits. Cost attribution and built-in pricing for OpenAI, Anthropic, Google."
 ---
 
 # AI Agent Cost Governance

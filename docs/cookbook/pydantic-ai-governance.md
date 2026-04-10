@@ -1,3 +1,7 @@
+---
+description: "Add policy governance to Pydantic AI agents in 5 minutes. Block dangerous tool calls, detect prompt injection, and audit every agent run end-to-end."
+---
+
 # Add Governance to Pydantic AI Agents in 5 Minutes
 
 Pydantic AI agents execute autonomously, calling tools and generating

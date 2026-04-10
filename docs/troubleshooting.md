@@ -1,3 +1,7 @@
+---
+description: "Troubleshooting Aegis: common issues with PyPI install, adapter compatibility, policy evaluation, dashboard setup, audit log access, and upgrades."
+---
+
 # Troubleshooting
 
 ## Installation Issues

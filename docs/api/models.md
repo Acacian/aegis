@@ -1,3 +1,7 @@
+---
+description: "Action and Result data models: Aegis core types for policy evaluation. Action, Decision, Approval, Risk levels, and Result field reference."
+---
+
 # Action & Result
 
 ## Action

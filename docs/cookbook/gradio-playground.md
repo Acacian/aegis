@@ -1,3 +1,7 @@
+---
+description: "Deploy an Aegis policy playground on HuggingFace Spaces with Gradio. Zero-backend browser UI for interactive YAML policy testing and sharing."
+---
+
 # Deploy an Aegis Playground on HuggingFace Spaces
 
 Want to let your team -- or the whole internet -- try Aegis policies in a

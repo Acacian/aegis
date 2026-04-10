@@ -1,3 +1,7 @@
+---
+description: "Govern browser automation agents with Playwright and Aegis. Control what pages agents visit, what forms they fill, and what JavaScript they can run."
+---
+
 # Govern Browser Automation with Playwright in 5 Minutes
 
 Browser agents can navigate pages, fill forms, click buttons, and execute JavaScript. Aegis ensures they stay within policy.

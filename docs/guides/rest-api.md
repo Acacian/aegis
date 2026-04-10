@@ -1,3 +1,7 @@
+---
+description: "Aegis REST API server guide: govern AI agent actions from Go, TypeScript, Java, Rust, or any language via HTTP. Hot-reload policies, audit export."
+---
+
 # REST API Server
 
 Aegis includes a built-in REST API server for governing actions from any language -- Go, TypeScript, Java, Rust, or anything that can make HTTP calls.

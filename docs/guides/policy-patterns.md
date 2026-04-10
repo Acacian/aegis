@@ -1,3 +1,7 @@
+---
+description: "Practical Aegis policy recipes: risk-based approval, time windows, budget limits, PII redaction, and framework-specific patterns from real policies."
+---
+
 # Policy Patterns
 
 Practical recipes for writing Aegis policies. Each pattern is drawn from real-world policy files in the `policies/` directory.

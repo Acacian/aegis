@@ -1,3 +1,7 @@
+---
+description: "Anomaly Detection API: stateful behavioral detector for AI agents. Flags rate spikes, bursts, unknown actions, unusual targets, and high block rates."
+---
+
 # Anomaly Detection
 
 ## AnomalyDetector

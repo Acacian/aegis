@@ -1,4 +1,5 @@
 ---
+description: "Aegis security challenge: interactive CTF-style policy puzzles. Bypass intentionally weak policies, harden them, and learn governance patterns by doing."
 title: "Aegis Challenge: Can You Stop a Rogue AI Agent?"
 hide:
   - navigation

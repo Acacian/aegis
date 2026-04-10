@@ -1,3 +1,7 @@
+---
+description: "Govern REST API calls from AI agents with httpx and Aegis. Policy-check every external request, approve sensitive endpoints, and log the full chain."
+---
+
 # Govern REST API Calls with httpx in 5 Minutes
 
 Your agent calls external APIs. Aegis ensures those calls are policy-checked, approved, and logged.

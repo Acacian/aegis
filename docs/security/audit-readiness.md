@@ -1,3 +1,7 @@
+---
+description: "Aegis security audit readiness pack: what third-party auditors need, where to find it, known areas of concern, and threat model references."
+---
+
 # Security Audit Readiness
 
 This document prepares Aegis for an independent security audit. It describes what an auditor needs, where to find it, and known areas of concern.

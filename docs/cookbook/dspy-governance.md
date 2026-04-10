@@ -1,3 +1,7 @@
+---
+description: "Add policy governance to DSPy language programs in 5 minutes. Block dangerous LM calls, detect prompt injection, and audit every compile step."
+---
+
 # Add Governance to DSPy in 5 Minutes
 
 DSPy compiles declarative language programs into optimized prompts. Every

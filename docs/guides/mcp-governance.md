@@ -1,4 +1,5 @@
 ---
+title: "MCP Governance Guide"
 description: "Add policy enforcement, approval gates, and audit trails to MCP tool calls. Govern Model Context Protocol servers with YAML rules."
 ---
 

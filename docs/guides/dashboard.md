@@ -1,3 +1,7 @@
+---
+description: "Aegis governance dashboard: built-in web UI for real-time AI agent monitoring. No frontend build, no npm, no webpack — just start the Python server."
+---
+
 # Governance Dashboard
 
 Aegis includes a built-in web dashboard for real-time monitoring of AI agent governance. No separate frontend build, no npm, no webpack — just start the server.

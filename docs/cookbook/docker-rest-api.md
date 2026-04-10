@@ -1,3 +1,7 @@
+---
+description: "Deploy Aegis as a policy evaluation REST API in Docker. Language-agnostic governance for Go, TypeScript, Java, or any service via HTTP in 5 minutes."
+---
+
 # Deploy Aegis as a REST API via Docker
 
 Run Aegis as a standalone governance server in Docker. Any service --

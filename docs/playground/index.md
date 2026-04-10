@@ -1,4 +1,5 @@
 ---
+description: "Interactive Aegis policy playground: write YAML policies, fire test actions, and see real-time governance decisions in your browser. No install needed."
 title: Policy Playground
 hide:
   - navigation

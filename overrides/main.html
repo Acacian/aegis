@@ -296,7 +296,9 @@
     {%- endif -%}
 
     {%- if is_faq -%}
-    <!-- JSON-LD: FAQPage (SERP featured snippets) -->
+    <!-- JSON-LD: FAQPage (SERP featured snippets)
+         Question and answer text MUST match visible page content exactly —
+         Google rejects FAQPage schema if there is any divergence. -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -306,10 +308,10 @@
       "mainEntity": [
         {
           "@type": "Question",
-          "name": "What is Agent-Aegis?",
+          "name": "What is Aegis?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Agent-Aegis is a policy engine that sits between your AI agent and the systems it controls. It checks every action against your policy rules, optionally asks for human approval, and logs everything to a tamper-evident audit trail."
+            "text": "Aegis is a policy engine that sits between your AI agent and the systems it controls. It checks every action against your policy rules, optionally asks for human approval, and logs everything."
           }
         },
         {
@@ -317,47 +319,55 @@
           "name": "Why not just add if/else checks in my agent code?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "You could, but policy rules will be scattered across your codebase, hard to audit, and impossible to change without redeploying. Agent-Aegis centralizes governance into a single YAML file that security teams can review independently from application code."
+            "text": "You could, but policy rules will be scattered across your codebase, hard to audit, and impossible to change without redeploying. Aegis centralizes governance into a single YAML file."
           }
         },
         {
           "@type": "Question",
-          "name": "Which AI frameworks does Agent-Aegis support?",
+          "name": "Does Aegis work with my framework?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Agent-Aegis auto-instruments 12 Python frameworks with one line of code: LangChain, CrewAI, OpenAI Agents SDK, Anthropic Claude, LiteLLM, Google GenAI, Pydantic AI, LlamaIndex, Instructor, DSPy, OpenAI, and MCP (Model Context Protocol). For anything else, write a custom adapter (~10 lines of code)."
+            "text": "Aegis auto-instruments 12 Python frameworks with one line of code: LangChain, CrewAI, OpenAI Agents SDK, Anthropic Claude, LiteLLM, Google GenAI, Pydantic AI, LlamaIndex, Instructor, DSPy, OpenAI, and MCP (Model Context Protocol). For anything else, write a custom adapter (~10 lines of code)."
           }
         },
         {
           "@type": "Question",
-          "name": "Does Agent-Aegis work with non-Python agents?",
+          "name": "Does Aegis work with non-Python agents?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Yes. Run 'aegis serve policy.yaml' to start the REST API server, then call it from Go, TypeScript, Java, or any language via HTTP."
+            "text": "Yes. Run aegis serve policy.yaml to start the REST API server, then call it from Go, TypeScript, Java, or any language via HTTP. See the REST API Server guide."
           }
         },
         {
           "@type": "Question",
-          "name": "Can an agent bypass Agent-Aegis if it runs with admin privileges?",
+          "name": "Can an agent bypass Aegis if it runs with admin privileges?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Agent-Aegis is an application-level middleware, not an OS-level sandbox. It only governs actions that go through runtime.run_one() or runtime.execute(). If agent code calls os.system() or accesses APIs directly without going through Agent-Aegis, those actions are not governed. It is the developer's responsibility to route all agent actions through Agent-Aegis."
+            "text": "Aegis is an application-level middleware, not an OS-level sandbox. It only governs actions that go through runtime.run_one() or runtime.execute(). If agent code calls os.system() or accesses APIs directly without going through Aegis, those actions are not governed. It's the developer's responsibility to route all agent actions through Aegis. Think of it as a team rule (always go through sudo) rather than a kernel-enforced permission."
           }
         },
         {
           "@type": "Question",
-          "name": "Is Agent-Aegis production-ready?",
+          "name": "Is Aegis production-ready?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Agent-Aegis is in beta (v0.9.x). The core API is stable, but breaking changes may occur before v1.0. The project follows semantic versioning."
+            "text": "Aegis is in beta (v0.9.x). The core API is stable, but breaking changes may occur before v1.0. We follow semantic versioning."
           }
         },
         {
           "@type": "Question",
-          "name": "How fast is Agent-Aegis policy evaluation?",
+          "name": "What's the latency overhead?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Sub-millisecond per action. Agent-Aegis uses deterministic regex and rule evaluation — zero LLM calls and zero network I/O in the hot path. This makes it suitable for governing high-throughput agent systems."
+            "text": "Policy evaluation takes < 1ms (in-process regex/glob matching). For auto-approved actions, total overhead is < 5ms. Human approval adds variable latency (seconds to minutes) depending on the handler."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can Aegis prevent prompt injection?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. Since v0.4, Aegis includes built-in runtime guardrails that inspect and filter LLM prompts and responses. Prompt injection detection (13 attack categories, 107 patterns, multi-language), PII detection and masking (13 categories including Luhn-validated credit cards, SSNs, IBAN, API keys), and toxicity filtering all run automatically on every input and output when auto-instrumentation is active."
           }
         }
       ]

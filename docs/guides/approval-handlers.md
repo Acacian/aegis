@@ -1,3 +1,7 @@
+---
+description: "Approval handlers guide: connect human-in-the-loop review to Slack, Discord, Telegram, CLI, email, and webhooks. Full configuration reference."
+---
+
 # Approval Handlers
 
 Approval handlers control how humans are asked to approve or deny actions.

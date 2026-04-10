@@ -1,3 +1,7 @@
+---
+description: "Add policy governance to LiteLLM in 5 minutes. Unified governance across 100+ LLM providers — OpenAI, Anthropic, Google, Azure, Cohere, Mistral."
+---
+
 # Add Governance to LiteLLM in 5 Minutes
 
 LiteLLM provides a unified interface to 100+ LLM providers -- OpenAI,

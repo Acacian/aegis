@@ -1,3 +1,7 @@
+---
+description: "Aegis cheatsheet: quick reference for common policy YAML patterns, runtime APIs, audit queries, and one-line framework integration for 12 frameworks."
+---
+
 # Cheatsheet
 
 Quick reference for common Aegis patterns.

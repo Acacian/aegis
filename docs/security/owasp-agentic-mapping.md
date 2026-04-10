@@ -1,3 +1,8 @@
+---
+title: "OWASP Agentic AI Top 10 Mapping"
+description: "Aegis coverage of OWASP Top 10 for Agentic AI (2025): detailed mapping of each OWASP risk category to Aegis capabilities and example policies."
+---
+
 # Aegis Coverage of OWASP Top 10 for Agentic Applications (2025)
 
 This document maps Aegis capabilities to each OWASP Agentic AI risk category. It serves as both user documentation and as the basis for potential OWASP project contributions.

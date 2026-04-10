@@ -1,4 +1,5 @@
 ---
+title: "Agent-Aegis — AI Agent Governance for Python"
 description: "Find ungoverned AI calls. Fix them in one line. Prompt injection blocking, PII masking, audit trail for 12 frameworks."
 ---
 

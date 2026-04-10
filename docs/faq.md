@@ -1,5 +1,6 @@
 ---
-description: "Frequently asked questions about Aegis AI agent governance. Framework support, performance, security model, and policy configuration."
+title: "Frequently Asked Questions"
+description: "Frequently asked questions about Agent-Aegis: framework support, latency, security model, policy config, SOC2/GDPR/HIPAA audit trails."
 ---
 
 # FAQ
@@ -13,7 +14,7 @@ Aegis is a policy engine that sits between your AI agent and the systems it cont
 You could, but policy rules will be scattered across your codebase, hard to audit, and impossible to change without redeploying. Aegis centralizes governance into a single YAML file.
 
 ### Does Aegis work with my framework?
-Aegis has 7 built-in adapters: **LangChain**, **CrewAI**, **OpenAI Agents SDK**, **Anthropic Claude**, **Playwright**, **httpx** (REST APIs), and **MCP** (Model Context Protocol). For anything else, write a custom adapter (it's ~10 lines of code).
+Aegis auto-instruments 12 Python frameworks with one line of code: **LangChain**, **CrewAI**, **OpenAI Agents SDK**, **Anthropic Claude**, **LiteLLM**, **Google GenAI**, **Pydantic AI**, **LlamaIndex**, **Instructor**, **DSPy**, **OpenAI**, and **MCP** (Model Context Protocol). For anything else, write a custom adapter (~10 lines of code).
 
 ### Does Aegis work with non-Python agents?
 Yes. Run `aegis serve policy.yaml` to start the REST API server, then call it from Go, TypeScript, Java, or any language via HTTP. See the [REST API Server guide](guides/rest-api.md).
@@ -137,7 +138,7 @@ Minimal. Aegis keeps the policy rules in memory (typically < 1KB for 100 rules) 
 Policies are loaded from trusted YAML files, not user input. The YAML parser rejects custom tags and constructors. If you load policies from external sources, validate them with `aegis validate` first.
 
 ### Can Aegis prevent prompt injection?
-Yes. Since v0.4, Aegis includes built-in runtime guardrails that inspect and filter LLM prompts and responses. Prompt injection detection (10 attack categories, 85+ patterns, multi-language), PII detection and masking (12 categories), and toxicity filtering all run automatically on every input and output when auto-instrumentation is active. Aegis also governs **actions** (API calls, database queries, file operations), so it provides defense in depth at both the prompt level and the action level.
+Yes. Since v0.4, Aegis includes built-in runtime guardrails that inspect and filter LLM prompts and responses. Prompt injection detection (13 attack categories, 107 patterns, multi-language), PII detection and masking (13 categories including Luhn-validated credit cards, SSNs, IBAN, API keys), and toxicity filtering all run automatically on every input and output when auto-instrumentation is active. Aegis also governs **actions** (API calls, database queries, file operations), so it provides defense in depth at both the prompt level and the action level.
 
 ### Is there a way to enforce Aegis in production?
 Aegis is a library — it relies on the developer routing all agent actions through `runtime.run_one()`. For stronger enforcement in containerized environments, see the [Security Model guide](guides/security-model.md) which covers Docker defense-in-depth patterns.
