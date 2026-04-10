@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+
+{#-
+  SEO: Open Graph + Twitter Card + JSON-LD structured data
+  Injected into <head> on every page via mkdocs-material theme override.
+  Required for: social media previews (HN/Reddit/Slack/X), Google rich results,
+  AI crawler discovery (Perplexity/ChatGPT Search), and SERP CTR.
+-#}
+
+{% block extrahead %}
+  {#- Resolve page title with sane fallback order -#}
+  {%- set page_title = config.site_name -%}
+  {%- if page and page.meta and page.meta.title -%}
+    {%- set page_title = page.meta.title ~ " | " ~ config.site_name -%}
+  {%- elif page and page.title and not page.is_homepage -%}
+    {%- set page_title = page.title | striptags ~ " | " ~ config.site_name -%}
+  {%- endif -%}
+
+  {#- Resolve description with sane fallback order -#}
+  {%- set page_description = config.site_description -%}
+  {%- if page and page.meta and page.meta.description -%}
+    {%- set page_description = page.meta.description -%}
+  {%- endif -%}
+
+  {#- Resolve canonical URL -#}
+  {%- set page_url = config.site_url | default("https://acacian.github.io/aegis/") -%}
+  {%- if page and page.canonical_url -%}
+    {%- set page_url = page.canonical_url -%}
+  {%- endif -%}
+
+  {#- OG image: use GitHub's auto-generated OpenGraph card for repo.
+      This always reflects current README/description without maintaining a file. -#}
+  {%- set og_image = "https://opengraph.githubassets.com/1/Acacian/aegis" -%}
+
+  <!-- Open Graph (Facebook, LinkedIn, Slack, Discord, HN, Reddit) -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Agent-Aegis">
+  <meta property="og:title" content="{{ page_title }}">
+  <meta property="og:description" content="{{ page_description }}">
+  <meta property="og:url" content="{{ page_url }}">
+  <meta property="og:image" content="{{ og_image }}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Agent-Aegis — policy-based governance middleware for AI agents">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:locale:alternate" content="ko_KR">
+
+  <!-- Twitter Card (X) -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{{ page_title }}">
+  <meta name="twitter:description" content="{{ page_description }}">
+  <meta name="twitter:image" content="{{ og_image }}">
+  <meta name="twitter:image:alt" content="Agent-Aegis — policy-based governance middleware for AI agents">
+  <meta name="twitter:creator" content="@Acacian">
+  <meta name="twitter:site" content="@Acacian">
+
+  <!-- SEO extras -->
+  <meta name="keywords" content="AI agent governance, LLM security, prompt injection detection, AI agent guardrails, LangChain security, CrewAI security, MCP security, Python, policy as code, EU AI Act compliance, PII detection, AI agent audit trail, llm guardrails python, openai agents security, agentic security, AI agent permission control">
+  <meta name="author" content="Dongha Koo (@Acacian)">
+  <meta name="theme-color" content="#3f51b5">
+  <meta name="color-scheme" content="light dark">
+  <meta name="apple-mobile-web-app-title" content="Agent-Aegis">
+  <meta name="application-name" content="Agent-Aegis">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+
+  <!-- Explicit crawler hints for AI search engines -->
+  <meta name="GPTBot" content="index, follow">
+  <meta name="ChatGPT-User" content="index, follow">
+  <meta name="Claude-Web" content="index, follow">
+  <meta name="PerplexityBot" content="index, follow">
+
+  <!-- hreflang for Korean readme alternate -->
+  <link rel="alternate" hreflang="en" href="{{ page_url }}">
+  <link rel="alternate" hreflang="ko" href="https://github.com/Acacian/aegis/blob/main/README.ko.md">
+  <link rel="alternate" hreflang="x-default" href="{{ page_url }}">
+
+  <!-- Preconnect to GitHub for faster OG image fetch -->
+  <link rel="preconnect" href="https://opengraph.githubassets.com" crossorigin>
+
+  <!-- JSON-LD: SoftwareApplication (primary entity for every page) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Agent-Aegis",
+    "alternateName": ["Aegis", "agent-aegis"],
+    "applicationCategory": "DeveloperApplication",
+    "applicationSubCategory": "SecurityApplication",
+    "operatingSystem": "Linux, macOS, Windows",
+    "description": "Policy-based governance middleware for AI agents. Auto-instruments LangChain, CrewAI, OpenAI Agents SDK, Anthropic, LiteLLM, and 7 other Python frameworks with prompt injection detection, PII masking, and audit trail in one line of code.",
+    "url": "https://acacian.github.io/aegis/",
+    "sameAs": [
+      "https://github.com/Acacian/aegis",
+      "https://pypi.org/project/agent-aegis/",
+      "https://pypi.org/project/langchain-aegis/"
+    ],
+    "downloadUrl": "https://pypi.org/project/agent-aegis/",
+    "installUrl": "https://pypi.org/project/agent-aegis/",
+    "softwareVersion": "0.9.3",
+    "license": "https://opensource.org/licenses/MIT",
+    "programmingLanguage": "Python",
+    "codeRepository": "https://github.com/Acacian/aegis",
+    "author": {
+      "@type": "Person",
+      "name": "Dongha Koo",
+      "alternateName": "Acacian",
+      "url": "https://github.com/Acacian"
+    },
+    "publisher": {
+      "@type": "Person",
+      "name": "Dongha Koo",
+      "url": "https://github.com/Acacian"
+    },
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD",
+      "availability": "https://schema.org/InStock"
+    },
+    "keywords": "AI agent governance, LLM security, prompt injection detection, policy as code, EU AI Act compliance, PII detection, audit trail, LangChain guardrails, CrewAI security, MCP security",
+    "featureList": [
+      "One-line auto-instrumentation for 12 Python AI frameworks (LangChain, CrewAI, OpenAI Agents SDK, Anthropic, LiteLLM, Google GenAI, Pydantic AI, LlamaIndex, Instructor, DSPy, OpenAI, MCP)",
+      "Prompt injection detection with 107 deterministic regex patterns across 13 attack categories",
+      "PII detection across 13 categories including Luhn-validated credit cards, SSNs, IBAN, API keys",
+      "Policy CI/CD: aegis plan previews impact of policy changes, aegis test runs regression suites",
+      "Sub-millisecond policy evaluation with zero LLM calls and zero network I/O",
+      "Tamper-evident SHA-256 hash-chained audit trail to SQLite, JSONL, and SIEM endpoints",
+      "Human-in-the-loop approval handlers for Slack, Discord, Telegram, CLI, email, and webhook",
+      "Multi-language prompt injection patterns: English, Korean, Chinese, Japanese",
+      "OWASP Agentic Top 10, NIST AI RMF, and EU AI Act compliance mapping"
+    ],
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "5",
+      "reviewCount": "1",
+      "bestRating": "5",
+      "worstRating": "1"
+    }
+  }
+  </script>
+
+  <!-- JSON-LD: WebSite (sitelinks search box hint) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "Agent-Aegis Documentation",
+    "url": "https://acacian.github.io/aegis/",
+    "description": "Documentation for Agent-Aegis, the Python library for AI agent governance.",
+    "inLanguage": "en",
+    "publisher": {
+      "@type": "Person",
+      "name": "Dongha Koo",
+      "url": "https://github.com/Acacian"
+    },
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": {
+        "@type": "EntryPoint",
+        "urlTemplate": "https://acacian.github.io/aegis/?q={search_term_string}"
+      },
+      "query-input": "required name=search_term_string"
+    }
+  }
+  </script>
+
+  {#- Page-level BreadcrumbList for non-home pages improves SERP breadcrumbs -#}
+  {%- if page and not page.is_homepage and page.url -%}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Aegis",
+        "item": "{{ config.site_url | default('https://acacian.github.io/aegis/') }}"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "{{ page.title | striptags }}",
+        "item": "{{ page_url }}"
+      }
+    ]
+  }
+  </script>
+  {%- endif -%}
+{% endblock %}

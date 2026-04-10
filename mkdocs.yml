@@ -1,12 +1,16 @@
-site_name: Aegis
+site_name: Agent-Aegis
 site_url: https://acacian.github.io/aegis/
-site_description: The simplest way to govern AI agent actions. No infra. No lock-in. Just Python.
+site_description: Agent-Aegis is a Python library for AI agent governance — auto-instruments LangChain, CrewAI, OpenAI Agents SDK, Anthropic, LiteLLM, and 7 other frameworks with prompt injection detection, PII masking, policy-as-code, and tamper-evident audit trails. Sub-millisecond, zero LLM calls, MIT licensed.
+site_author: Dongha Koo (@Acacian)
 repo_url: https://github.com/Acacian/aegis
 repo_name: Acacian/aegis
 edit_uri: edit/main/docs/
+copyright: Copyright &copy; 2026 Dongha Koo — MIT License
 
 theme:
   name: material
+  custom_dir: overrides
+  language: en
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
@@ -36,17 +40,40 @@ theme:
     repo: fontawesome/brands/github
 
 plugins:
-  - search
-  - social
+  - search:
+      lang: en
+  - social:
+      cards: false  # Disabled: requires Pillow/CairoSVG. OG images injected via overrides/main.html instead.
 
 extra:
+  generator: false  # Remove "Made with Material for MkDocs" from footer
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/Acacian/aegis
+      name: Agent-Aegis on GitHub
     - icon: fontawesome/brands/python
       link: https://pypi.org/project/agent-aegis/
+      name: Agent-Aegis on PyPI
+  alternate:
+    - name: English
+      link: /aegis/
+      lang: en
+    - name: 한국어
+      link: https://github.com/Acacian/aegis/blob/main/README.ko.md
+      lang: ko
+  analytics:
+    feedback:
+      title: Was this page helpful?
+      ratings:
+        - icon: material/emoticon-happy-outline
+          name: Helpful
+          data: 1
+        - icon: material/emoticon-sad-outline
+          name: Needs work
+          data: 0
 
 markdown_extensions:
+  - meta  # Enables page-level metadata (title, description, keywords) for SEO
   - pymdownx.highlight:
       anchor_linenums: true
   - pymdownx.superfences
@@ -58,6 +85,7 @@ markdown_extensions:
   - md_in_html
   - toc:
       permalink: true
+      title: On this page
 
 nav:
   - Home: index.md

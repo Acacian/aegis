@@ -179,12 +179,56 @@ pip install 'agent-aegis[server]'         # REST API + dashboard
 pip install 'agent-aegis[all]'            # Everything
 ```
 
+---
+
+## Solutions by Use Case
+
+Framework and problem-specific guides. Each page is a drop-in recipe for one concrete task.
+
+### By Framework
+
+- [**LangChain Security**](solutions/langchain-security.md) — add guardrails to `BaseChatModel` and `BaseTool` in 2 lines
+- [**CrewAI Security**](solutions/crewai-security.md) — govern every crew task and tool call with one hook
+- [**OpenAI Agents SDK Security**](solutions/openai-agents-security.md) — wrap `Runner.run` with injection/PII checks
+- [**LiteLLM Security**](solutions/litellm-security.md) — governance for `completion`/`acompletion`
+- [**MCP Security**](solutions/mcp-security.md) — protect MCP servers from tool poisoning and rug-pulls
+- [**LLM Guardrails for Python**](solutions/llm-guardrails-python.md) — framework-agnostic guardrails overview
+
+### By Problem
+
+- [**Prompt Injection Detection**](solutions/prompt-injection-detection.md) — 107 patterns, 13 categories, 4 languages
+- [**PII Detection for AI Agents**](solutions/pii-detection-ai-agent.md) — Luhn-validated cards, SSN, API keys, 12 categories
+- [**AI Agent Vulnerability Scanner**](solutions/ai-agent-vulnerability-scanner.md) — find ungoverned calls in any Python codebase
+- [**AI Agent Permission Control**](solutions/ai-agent-permission-control.md) — declarative allow/deny/approve rules
+- [**AI Agent Cost Governance**](solutions/ai-agent-cost-governance.md) — per-call/session/daily LLM budget caps
+- [**AI Agent Audit Trail**](solutions/ai-agent-audit-trail.md) — SHA-256 hash-chained tamper-evident logging
+- [**Policy as Code for AI**](solutions/policy-as-code-ai.md) — Terraform plan for AI agent policies
+- [**EU AI Act Compliance**](solutions/eu-ai-act-compliance.md) — automatic evidence packages for Article 16+
+
+## Compare Aegis
+
+Side-by-side comparisons with the closest alternatives. Use these to decide between tools or combine them.
+
+- [**vs Microsoft Agent Governance Toolkit**](comparisons/vs-ms-agt.md) — library vs enterprise platform
+- [**vs NeMo Guardrails**](comparisons/vs-nemo-guardrails.md) — deterministic regex vs LLM-based dialog rails
+- [**vs Guardrails AI**](comparisons/vs-guardrails-ai.md) — action security vs output validation (complementary)
+- [**vs mcp-scan**](comparisons/vs-mcp-scan.md) — runtime MCP governance vs static configuration scanning
+- [**vs DIY (if/else)**](comparisons/vs-diy.md) — 30+ lines per framework vs 2 lines total
+
+## Framework Cookbook
+
+End-to-end recipes for every supported framework:
+
+- [LangChain](cookbook/langchain-governance.md) · [CrewAI](cookbook/crewai-governance.md) · [OpenAI Agents](cookbook/openai-agents-governance.md) · [Anthropic](cookbook/anthropic-governance.md) · [MCP](cookbook/mcp-governance.md)
+- [LlamaIndex](cookbook/llamaindex-governance.md) · [Pydantic AI](cookbook/pydantic-ai-governance.md) · [DSPy](cookbook/dspy-governance.md) · [LiteLLM](cookbook/litellm-governance.md)
+- [httpx REST API](cookbook/httpx-governance.md) · [Playwright Browser](cookbook/playwright-governance.md) · [CI/CD Integration](cookbook/ci-governance.md) · [Gradio Playground](cookbook/gradio-playground.md) · [Docker REST API](cookbook/docker-rest-api.md)
+
+---
+
 ## Links
 
-- [Getting Started](getting-started/quickstart.md) -- install and configure in 5 minutes
-- [Solutions](solutions/llm-guardrails-python.md) -- framework-specific security guides
-- [Cookbook](cookbook/langchain-governance.md) -- integration examples
-- [API Reference](api/runtime.md) -- full API docs
-- [Playground](playground/) -- try in browser, no install
-- [GitHub](https://github.com/Acacian/aegis) -- source, issues, contributions
-- [PyPI](https://pypi.org/project/agent-aegis/) -- package page
+- [Getting Started](getting-started/quickstart.md) — install and configure in 5 minutes
+- [API Reference](api/runtime.md) — full API docs
+- [Playground](playground/) — try in browser, no install
+- [GitHub](https://github.com/Acacian/aegis) — source, issues, contributions
+- [PyPI](https://pypi.org/project/agent-aegis/) — package page
