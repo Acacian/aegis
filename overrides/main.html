@@ -87,7 +87,7 @@
     "applicationCategory": "DeveloperApplication",
     "applicationSubCategory": "SecurityApplication",
     "operatingSystem": "Linux, macOS, Windows",
-    "description": "Policy-based governance middleware for AI agents. Auto-instruments LangChain, CrewAI, OpenAI Agents SDK, Anthropic, LiteLLM, and 7 other Python frameworks with prompt injection detection, PII masking, and audit trail in one line of code.",
+    "description": "Policy-based governance middleware for AI agents. Auto-instruments LangChain, CrewAI, OpenAI Agents SDK, OpenAI API, Anthropic API, LiteLLM, Google GenAI, Google ADK, Pydantic AI, LlamaIndex, Instructor, and DSPy with prompt injection detection, PII masking, and audit trail in one line of code. MCP servers via aegis-mcp-proxy.",
     "url": "https://acacian.github.io/aegis/",
     "sameAs": [
       "https://github.com/Acacian/aegis",
@@ -119,7 +119,7 @@
     },
     "keywords": "AI agent governance, LLM security, prompt injection detection, policy as code, EU AI Act compliance, PII detection, audit trail, LangChain guardrails, CrewAI security, MCP security",
     "featureList": [
-      "One-line auto-instrumentation for 12 Python AI frameworks (LangChain, CrewAI, OpenAI Agents SDK, Anthropic, LiteLLM, Google GenAI, Pydantic AI, LlamaIndex, Instructor, DSPy, OpenAI, MCP)",
+      "One-line auto-instrumentation for 12 Python AI frameworks (LangChain, CrewAI, OpenAI Agents SDK, OpenAI API, Anthropic API, LiteLLM, Google GenAI, Google ADK, Pydantic AI, LlamaIndex, Instructor, DSPy). MCP servers governed via aegis-mcp-proxy gateway.",
       "Prompt injection detection with 107 deterministic regex patterns across 13 attack categories",
       "PII detection across 13 categories including Luhn-validated credit cards, SSNs, IBAN, API keys",
       "Policy CI/CD: aegis plan previews impact of policy changes, aegis test runs regression suites",
@@ -129,13 +129,7 @@
       "Multi-language prompt injection patterns: English, Korean, Chinese, Japanese",
       "OWASP Agentic Top 10, NIST AI RMF, and EU AI Act compliance mapping"
     ],
-    "aggregateRating": {
-      "@type": "AggregateRating",
-      "ratingValue": "5",
-      "reviewCount": "1",
-      "bestRating": "5",
-      "worstRating": "1"
-    }
+    "softwareRequirements": "Python 3.11+"
   }
   </script>
 
@@ -164,8 +158,28 @@
   }
   </script>
 
-  {#- Page-level BreadcrumbList for non-home pages improves SERP breadcrumbs -#}
+  {#- Page-level BreadcrumbList for non-home pages improves SERP breadcrumbs.
+      3-level structure (Aegis > Category > Page) when the URL has a known
+      section prefix; 2-level fallback for top-level pages like faq, cheatsheet. -#}
   {%- if page and not page.is_homepage and page.url -%}
+    {%- set site_root = config.site_url | default('https://acacian.github.io/aegis/') -%}
+    {%- set section_name = "" -%}
+    {%- set section_slug = "" -%}
+    {%- if page.url.startswith('solutions/') -%}
+      {%- set section_name = "Solutions" -%}{%- set section_slug = "solutions/" -%}
+    {%- elif page.url.startswith('cookbook/') -%}
+      {%- set section_name = "Cookbook" -%}{%- set section_slug = "cookbook/" -%}
+    {%- elif page.url.startswith('comparisons/') -%}
+      {%- set section_name = "Comparisons" -%}{%- set section_slug = "comparisons/" -%}
+    {%- elif page.url.startswith('guides/') -%}
+      {%- set section_name = "Guides" -%}{%- set section_slug = "guides/" -%}
+    {%- elif page.url.startswith('api/') -%}
+      {%- set section_name = "API Reference" -%}{%- set section_slug = "api/" -%}
+    {%- elif page.url.startswith('getting-started/') -%}
+      {%- set section_name = "Getting Started" -%}{%- set section_slug = "getting-started/" -%}
+    {%- elif page.url.startswith('security/') -%}
+      {%- set section_name = "Security" -%}{%- set section_slug = "security/" -%}
+    {%- endif -%}
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -175,14 +189,28 @@
         "@type": "ListItem",
         "position": 1,
         "name": "Aegis",
-        "item": "{{ config.site_url | default('https://acacian.github.io/aegis/') }}"
+        "item": "{{ site_root }}"
+      }{%- if section_name %},
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "{{ section_name }}",
+        "item": "{{ site_root }}{{ section_slug }}"
       },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": "{{ page.title | striptags }}",
+        "item": "{{ page_url }}"
+      }
+      {%- else %},
       {
         "@type": "ListItem",
         "position": 2,
         "name": "{{ page.title | striptags }}",
         "item": "{{ page_url }}"
       }
+      {%- endif %}
     ]
   }
   </script>
@@ -212,8 +240,8 @@
       "url": "{{ page_url }}",
       "image": "{{ og_image }}",
       "inLanguage": "en",
-      "datePublished": "2026-04-01",
-      "dateModified": "2026-04-10",
+      "datePublished": {{ (page.meta.date_published | default("2026-04-01")) | tojson }},
+      "dateModified": {{ (page.meta.date_modified | default("2026-04-11")) | tojson }},
       "author": {
         "@type": "Person",
         "name": "Dongha Koo",
@@ -238,7 +266,7 @@
         "url": "https://acacian.github.io/aegis/"
       },
       "proficiencyLevel": "Beginner",
-      "dependencies": "Python 3.10+",
+      "dependencies": "Python 3.11+",
       "isPartOf": {
         "@type": "WebSite",
         "name": "Agent-Aegis Documentation",
@@ -260,8 +288,8 @@
       "url": "{{ page_url }}",
       "image": "{{ og_image }}",
       "inLanguage": "en",
-      "datePublished": "2026-04-01",
-      "dateModified": "2026-04-10",
+      "datePublished": {{ (page.meta.date_published | default("2026-04-01")) | tojson }},
+      "dateModified": {{ (page.meta.date_modified | default("2026-04-11")) | tojson }},
       "articleSection": "Comparison",
       "author": {
         "@type": "Person",
@@ -327,7 +355,7 @@
           "name": "Does Aegis work with my framework?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Aegis auto-instruments 12 Python frameworks with one line of code: LangChain, CrewAI, OpenAI Agents SDK, Anthropic Claude, LiteLLM, Google GenAI, Pydantic AI, LlamaIndex, Instructor, DSPy, OpenAI, and MCP (Model Context Protocol). For anything else, write a custom adapter (~10 lines of code)."
+            "text": "Aegis auto-instruments 12 Python frameworks with one line of code: LangChain, CrewAI, OpenAI Agents SDK, OpenAI API, Anthropic API, LiteLLM, Google GenAI, Google ADK, Pydantic AI, LlamaIndex, Instructor, and DSPy. MCP (Model Context Protocol) servers are governed via the separate aegis-mcp-proxy gateway. For anything else, write a custom adapter (~10 lines of code)."
           }
         },
         {

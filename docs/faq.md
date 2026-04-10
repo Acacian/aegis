@@ -14,7 +14,7 @@ Aegis is a policy engine that sits between your AI agent and the systems it cont
 You could, but policy rules will be scattered across your codebase, hard to audit, and impossible to change without redeploying. Aegis centralizes governance into a single YAML file.
 
 ### Does Aegis work with my framework?
-Aegis auto-instruments 12 Python frameworks with one line of code: **LangChain**, **CrewAI**, **OpenAI Agents SDK**, **Anthropic Claude**, **LiteLLM**, **Google GenAI**, **Pydantic AI**, **LlamaIndex**, **Instructor**, **DSPy**, **OpenAI**, and **MCP** (Model Context Protocol). For anything else, write a custom adapter (~10 lines of code).
+Aegis auto-instruments 12 Python frameworks with one line of code: **LangChain**, **CrewAI**, **OpenAI Agents SDK**, **OpenAI API**, **Anthropic API**, **LiteLLM**, **Google GenAI**, **Google ADK**, **Pydantic AI**, **LlamaIndex**, **Instructor**, and **DSPy**. MCP (Model Context Protocol) servers are governed via the separate `aegis-mcp-proxy` gateway. For anything else, write a custom adapter (~10 lines of code).
 
 ### Does Aegis work with non-Python agents?
 Yes. Run `aegis serve policy.yaml` to start the REST API server, then call it from Go, TypeScript, Java, or any language via HTTP. See the [REST API Server guide](guides/rest-api.md).

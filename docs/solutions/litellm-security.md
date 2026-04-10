@@ -99,6 +99,14 @@ response = litellm.completion(
 AEGIS_INSTRUMENT=1 python my_litellm_app.py
 ```
 
+## Related Pages
+
+- [**LiteLLM Governance Cookbook**](../cookbook/litellm-governance.md) — `completion`/`acompletion` recipe
+- [**Prompt Injection Detection**](prompt-injection-detection.md) — 107 patterns, multi-language
+- [**PII Detection for AI Agents**](pii-detection-ai-agent.md) — 13 categories
+- [**LLM Guardrails for Python**](llm-guardrails-python.md) — framework-agnostic reference
+- [**AI Agent Cost Governance**](ai-agent-cost-governance.md) — per-provider budget caps
+
 ## Try It Now
 
 - [**Interactive Playground**](https://acacian.github.io/aegis/playground/) -- try Aegis in your browser, no install needed

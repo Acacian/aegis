@@ -1,6 +1,6 @@
 site_name: Agent-Aegis
 site_url: https://acacian.github.io/aegis/
-site_description: Python library for AI agent governance. Policy-as-code for LangChain, CrewAI, OpenAI Agents and 9 more — with prompt injection detection and PII masking.
+site_description: Python library for AI agent governance. Auto-instruments LangChain, CrewAI, OpenAI, Anthropic, LiteLLM, Google ADK, DSPy + 5 more with prompt injection blocking, PII masking, policy CI/CD, audit trail.
 site_author: Dongha Koo (@Acacian)
 repo_url: https://github.com/Acacian/aegis
 repo_name: Acacian/aegis

@@ -164,6 +164,24 @@ aegis scan ./src/
 
 This scans Python files for ungoverned LLM calls, tool definitions, subprocess calls, and raw HTTP requests. Output includes a governance score (A-F) and specific fix suggestions.
 
+## Related Pages
+
+### By Framework
+- [**LangChain Security**](langchain-security.md) — `BaseChatModel`/`BaseTool` guardrails
+- [**CrewAI Security**](crewai-security.md) — multi-agent crew governance
+- [**OpenAI Agents SDK Security**](openai-agents-security.md) — `Runner.run` guardrails
+- [**LiteLLM Security**](litellm-security.md) — multi-provider LLM call guardrails
+
+### By Concern
+- [**Prompt Injection Detection**](prompt-injection-detection.md) — 107 patterns, 13 categories
+- [**PII Detection for AI Agents**](pii-detection-ai-agent.md) — 13 categories with Luhn validation
+- [**AI Agent Audit Trail**](ai-agent-audit-trail.md) — SHA-256 hash-chained logging
+- [**AI Agent Vulnerability Scanner**](ai-agent-vulnerability-scanner.md) — `aegis scan` for any codebase
+
+### Comparisons
+- [**Aegis vs NeMo Guardrails**](../comparisons/vs-nemo-guardrails.md)
+- [**Aegis vs Guardrails AI**](../comparisons/vs-guardrails-ai.md)
+
 ## Try It Now
 
 - [**Interactive Playground**](https://acacian.github.io/aegis/playground/) -- try Aegis in your browser, no install needed

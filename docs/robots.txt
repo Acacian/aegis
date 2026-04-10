@@ -1,23 +1,64 @@
 User-agent: *
 Allow: /
 
-# AI crawlers — explicitly welcome
+# AI crawlers — explicitly welcome (GEO: Generative Engine Optimization)
+# OpenAI / ChatGPT
 User-agent: GPTBot
 Allow: /
 
 User-agent: ChatGPT-User
 Allow: /
 
+User-agent: OAI-SearchBot
+Allow: /
+
+# Anthropic / Claude (ClaudeBot is the official current ID)
+User-agent: ClaudeBot
+Allow: /
+
 User-agent: Claude-Web
 Allow: /
 
+User-agent: anthropic-ai
+Allow: /
+
+# Google AI (Gemini, AI Overviews)
+User-agent: Google-Extended
+Allow: /
+
+# Apple Intelligence
+User-agent: Applebot-Extended
+Allow: /
+
+# Perplexity
 User-agent: PerplexityBot
 Allow: /
 
+# Amazon Alexa / Rufus
 User-agent: Amazonbot
 Allow: /
 
+# Cohere
 User-agent: cohere-ai
+Allow: /
+
+# Meta Llama crawler
+User-agent: FacebookBot
+Allow: /
+
+User-agent: Meta-ExternalAgent
+Allow: /
+
+# Bytedance / Doubao
+User-agent: Bytespider
+Allow: /
+
+# DiffBot (knowledge graph)
+User-agent: Diffbot
+Allow: /
+
+# CommonCrawl (training data, used by most LLMs)
+User-agent: CCBot
 Allow: /
 
 Sitemap: https://acacian.github.io/aegis/sitemap.xml
