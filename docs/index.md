@@ -225,6 +225,12 @@ End-to-end recipes for every supported framework:
 - [LlamaIndex](cookbook/llamaindex-governance.md) · [Pydantic AI](cookbook/pydantic-ai-governance.md) · [DSPy](cookbook/dspy-governance.md) · [LiteLLM](cookbook/litellm-governance.md)
 - [httpx REST API](cookbook/httpx-governance.md) · [Playwright Browser](cookbook/playwright-governance.md) · [CI/CD Integration](cookbook/ci-governance.md) · [Gradio Playground](cookbook/gradio-playground.md) · [Docker REST API](cookbook/docker-rest-api.md)
 
+## Research
+
+Original measurements on public agent trace datasets. Stdlib-only, reproducible in 30 seconds.
+
+- [**Tool Distribution Drift in 1,960 Tau-Bench Trajectories**](research/tau-bench-tool-distribution-drift.md) — Shannon entropy on tool name sequences across GPT-4o and Sonnet 3.5 New. 39.8% of scored trajectories collapse onto one or two tools by the end. Bimodal distribution, 1.7× cross-model gap. All scripts and raw data included.
+
 ---
 
 ## Links

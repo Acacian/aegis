@@ -179,6 +179,8 @@
       {%- set section_name = "Getting Started" -%}{%- set section_slug = "getting-started/" -%}
     {%- elif page.url.startswith('security/') -%}
       {%- set section_name = "Security" -%}{%- set section_slug = "security/" -%}
+    {%- elif page.url.startswith('research/') -%}
+      {%- set section_name = "Research" -%}{%- set section_slug = "research/" -%}
     {%- endif -%}
   <script type="application/ld+json">
   {
@@ -227,6 +229,7 @@
     {%- set is_techarticle = page.url.startswith('solutions/') or page.url.startswith('cookbook/') -%}
     {%- set is_comparison  = page.url.startswith('comparisons/') -%}
     {%- set is_faq         = page.url == 'faq/' -%}
+    {%- set is_research    = page.url.startswith('research/') -%}
 
     {%- if is_techarticle -%}
     <!-- JSON-LD: TechArticle (solutions + cookbook pages) -->
@@ -319,6 +322,103 @@
         "name": "Agent-Aegis Documentation",
         "url": "https://acacian.github.io/aegis/"
       }
+    }
+    </script>
+    {%- endif -%}
+
+    {%- if is_research -%}
+    <!-- JSON-LD: ScholarlyArticle (research posts)
+         Strongest schema for LLM crawlers (GPTBot, PerplexityBot, Claude-Web)
+         when the page reports empirical measurement. Fields matter:
+         - citation: link to the underlying dataset
+         - measurementTechnique: one-liner of the method
+         - abstract: machine-readable summary for RAG chunking
+         - isBasedOn: upstream dataset
+         - creativeWorkStatus: "Published" signals stable cite-ability
+    -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "ScholarlyArticle",
+      "headline": {{ page_title | tojson }},
+      "name": {{ page_title | tojson }},
+      "description": {{ page_description | tojson }},
+      "abstract": {{ page_description | tojson }},
+      "url": "{{ page_url }}",
+      "image": [
+        "https://acacian.github.io/aegis/assets/research/drift-histogram.png",
+        "https://acacian.github.io/aegis/assets/research/drift-by-model.png",
+        "https://acacian.github.io/aegis/assets/research/drift-by-trajectory-length.png",
+        "https://acacian.github.io/aegis/assets/research/drift-cumulative.png"
+      ],
+      "inLanguage": "en",
+      "datePublished": {{ (page.meta.date_published | default("2026-04-11")) | tojson }},
+      "dateModified": {{ (page.meta.date_modified | default("2026-04-11")) | tojson }},
+      "creativeWorkStatus": "Published",
+      "learningResourceType": "Research report",
+      "articleSection": "Research",
+      "author": {
+        "@type": "Person",
+        "name": "Dongha Koo",
+        "alternateName": "Acacian",
+        "url": "https://github.com/Acacian",
+        "affiliation": {
+          "@type": "Organization",
+          "name": "Agent-Aegis (independent)"
+        }
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Agent-Aegis",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://opengraph.githubassets.com/1/Acacian/aegis"
+        }
+      },
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "{{ page_url }}"
+      },
+      "about": [
+        {
+          "@type": "Thing",
+          "name": "AI agent tool distribution drift"
+        },
+        {
+          "@type": "SoftwareApplication",
+          "name": "Agent-Aegis",
+          "url": "https://acacian.github.io/aegis/"
+        }
+      ],
+      "isBasedOn": {
+        "@type": "Dataset",
+        "name": "tau-bench historical trajectories",
+        "url": "https://github.com/sierra-research/tau-bench/tree/main/historical_trajectories",
+        "creator": {
+          "@type": "Organization",
+          "name": "Sierra Research"
+        }
+      },
+      "citation": [
+        {
+          "@type": "CreativeWork",
+          "name": "sierra-research/tau-bench",
+          "url": "https://github.com/sierra-research/tau-bench"
+        }
+      ],
+      "variableMeasured": [
+        "Shannon entropy of tool call distribution",
+        "Early-window vs late-window entropy delta (nats)",
+        "Normalized delta (delta / log W)",
+        "Bimodal mode classification (stable / midband / collapse)"
+      ],
+      "measurementTechnique": "Shannon entropy on non-overlapping early and late windows of tool name sequences (window size W=4), stdlib-only computation",
+      "isPartOf": {
+        "@type": "WebSite",
+        "name": "Agent-Aegis Documentation",
+        "url": "https://acacian.github.io/aegis/"
+      },
+      "keywords": "tau-bench, tool distribution drift, agent evaluation, entropy, GPT-4o, Claude Sonnet, deterministic measurement, privacy-preserving metric"
     }
     </script>
     {%- endif -%}

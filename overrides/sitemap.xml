@@ -4,7 +4,7 @@
   Tier map (priority / changefreq):
     /                           1.0 / weekly   (home — most important)
     /solutions/*  /comparisons/* 0.9 / monthly  (SEO landing pages)
-    /cookbook/*                  0.8 / monthly  (framework integration guides)
+    /research/*  /cookbook/*     0.8 / monthly  (original research + framework integration guides)
     /guides/*  /api/*            0.7 / monthly  (reference docs)
     /getting-started/*           0.7 / monthly  (onboarding)
     /faq/  /cheatsheet/  /enterprise/  /troubleshooting/  0.6 / monthly
@@ -25,7 +25,7 @@
     {%- elif '/solutions/' in path or '/comparisons/' in path -%}
       {%- set priority = '0.9' -%}
       {%- set changefreq = 'monthly' -%}
-    {%- elif '/cookbook/' in path -%}
+    {%- elif '/research/' in path or '/cookbook/' in path -%}
       {%- set priority = '0.8' -%}
       {%- set changefreq = 'monthly' -%}
     {%- elif '/guides/' in path or '/api/' in path or '/getting-started/' in path -%}

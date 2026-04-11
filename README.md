@@ -316,6 +316,20 @@ aegis probe policy.yaml                 # Adversarial policy testing
 aegis autopolicy "block deletes"        # Natural language → YAML
 ```
 
+## Research
+
+Original measurements on public agent trace datasets. Stdlib-only, reproducible in 30 seconds.
+
+- [**Tool Distribution Drift in 1,960 Tau-Bench Trajectories**](https://acacian.github.io/aegis/research/tau-bench-tool-distribution-drift/) — Shannon entropy on tool name sequences across GPT-4o and Sonnet 3.5 New. 39.8% of scored trajectories collapse onto one or two tools by the end. Bimodal distribution, 1.7× cross-model gap. All scripts and raw data included.
+
+Run the same signal on your own trace:
+
+```bash
+aegis check drift --trace path/to/trace.jsonl
+```
+
+The CLI reads only the `tool_name` field — never args, CoT, or prompts — so enterprise users can score prod traces without exfiltrating PII.
+
 ## Documentation
 
 Full documentation at **[acacian.github.io/aegis](https://acacian.github.io/aegis/)**:

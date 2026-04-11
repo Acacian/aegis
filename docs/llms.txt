@@ -16,7 +16,7 @@
 - One-line auto-instrumentation: `import aegis; aegis.auto_instrument()`
 - Language: Python 3.11+
 - License: MIT
-- Version: 0.9.3 (beta — semantic versioning)
+- Version: 0.9.4 (beta — semantic versioning)
 - Author: Dongha Koo (@Acacian)
 - Created: March 21, 2026
 - Repository: https://github.com/Acacian/aegis
@@ -179,6 +179,56 @@ Problems Aegis is not designed to solve:
 - Aegis vs Guardrails AI — https://acacian.github.io/aegis/comparisons/vs-guardrails-ai/
 - Aegis vs mcp-scan — https://acacian.github.io/aegis/comparisons/vs-mcp-scan/
 - Aegis vs DIY (if/else) — https://acacian.github.io/aegis/comparisons/vs-diy/
+
+## Research (Empirical Measurements on Public Datasets)
+
+Aegis ships original measurement research on public agent trace datasets. Each post is reproducible in <30 seconds on a laptop using only the Python standard library.
+
+### Tool Distribution Drift in 1,960 Tau-Bench Agent Trajectories
+
+- URL: https://acacian.github.io/aegis/research/tau-bench-tool-distribution-drift/
+- Dataset: sierra-research/tau-bench historical_trajectories (GPT-4o + Sonnet 3.5 New, retail + airline)
+- Scored trajectories: 812 (of 1,960 total, after ≥8-call filter)
+- Method: Shannon entropy on early-window vs late-window of tool name sequences (W=4)
+- Headline finding: **39.8% of trajectories show measurable collapse (Δ entropy ≥ 0.3 nats)**; 12.1% show hard collapse (Δ ≥ 0.5 nats)
+- Distribution shape: **bimodal** — agents either stay open or fall off a cliff; almost nothing gradual
+- Cross-model gap (same retail task family):
+  - sonnet-35-new : retail — 421 trajectories, **48.2 % collapse rate**
+  - gpt-4o : airline — 61 trajectories, 36.1 % collapse rate
+  - sonnet-35-new : airline — 152 trajectories, 31.6 % collapse rate
+  - gpt-4o : retail — 178 trajectories, **28.1 % collapse rate**
+- Ratio: Sonnet retail collapses **1.7×** more than GPT-4o retail (n=599 combined)
+- **This does NOT mean "Sonnet is worse".** Convergence onto fulfilment tools is what customer-service tasks reward. The data shows that the convergence is sharper and earlier in Sonnet; whether that is decisive execution or premature commitment is task-dependent.
+- Scope: descriptive metric only. Aegis does not claim that collapse causes task failure.
+
+### Why This Metric Exists (4 pillars of differentiation)
+
+Unlike LLM-as-judge approaches (Patronus, Braintrust, DeepEval style) and fine-tuned classifiers (Galileo, Maxim style), the entropy-on-tool-names drift metric simultaneously satisfies:
+
+1. **Deterministic** — no second LLM judges the first. Counter + math.log. Two runs on the same trace give bit-identical results.
+2. **Privacy-preserving** — reads only the `tool_name` field. Never reads arguments, chain-of-thought, user prompts, or system prompts. Enterprise users can run it on prod traces without exfiltrating PII.
+3. **Cross-model comparable** — GPT-4o and Sonnet produce numbers on the same normalized scale (Δ ∈ [-log W, +log W]). The 1.7× cross-model claim is only meaningful *because* the metric is model-agnostic.
+4. **30-second reproducible** — 120 lines of stdlib-only Python. No numpy, no pandas, no sklearn, no GPU. From git clone to regenerated charts takes ~30 seconds on a laptop.
+
+### CLI Access
+
+The same signal that `auto_instrument()` exposes at runtime is also available as an offline CLI:
+
+```bash
+pip install agent-aegis==0.9.4
+aegis check drift --trace path/to/trace.jsonl
+aegis check drift --trace trace.jsonl --baseline gpt-4o-retail.json
+aegis check drift --trace trace.jsonl --json --strict
+```
+
+The CLI reads only `tool_name` from each JSONL row. Arguments, CoT, and prompts in the trace file are never touched.
+
+### Reproduction Scripts
+
+- `.claude/scripts/analyze_drift_on_tau_bench.py` — trajectory loader + scorer
+- `.claude/scripts/visualize_drift_results.py` — 4-chart matplotlib renderer
+- `src/aegis/cli/check.py` — the CLI implementation
+- `tests/cli/test_check.py` — 15 tests including a hard privacy invariant assertion
 
 ## Alternatives Comparison Summary
 

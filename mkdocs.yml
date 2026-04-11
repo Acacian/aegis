@@ -153,6 +153,8 @@ nav:
       - CI/CD Integration: cookbook/ci-governance.md
       - Gradio Playground: cookbook/gradio-playground.md
       - Docker REST API: cookbook/docker-rest-api.md
+  - Research:
+      - Tool Distribution Drift (tau-bench): research/tau-bench-tool-distribution-drift.md
   - Playground: playground/index.md
   - Challenge: playground/challenge.md
   - Enterprise: enterprise.md
