@@ -335,7 +335,44 @@
          - abstract: machine-readable summary for RAG chunking
          - isBasedOn: upstream dataset
          - creativeWorkStatus: "Published" signals stable cite-ability
+
+         Per-post assets (images, variableMeasured, measurementTechnique, keywords, about[0])
+         are dispatched on page.url so a new research page can be added by extending
+         the if/elif chain below without duplicating the shared schema envelope.
     -->
+    {%- if page.url.startswith('research/tripartite-action-claim') -%}
+      {%- set research_images = [
+        "https://acacian.github.io/aegis/assets/research/jg-histogram.png",
+        "https://acacian.github.io/aegis/assets/research/jg-radar.png",
+        "https://acacian.github.io/aegis/assets/research/jg-verdict-by-group.png",
+        "https://acacian.github.io/aegis/assets/research/jg-top-tools.png"
+      ] -%}
+      {%- set research_topic = "AI agent justification gap — declared vs Aegis-assessed tool impact" -%}
+      {%- set research_variables = [
+        "Asymmetric justification gap per tool call (L2-normalized, sqrt(6))",
+        "6-dimensional assessed ImpactVector (destructivity, data_exposure, resource_consumption, privilege_escalation, reversibility, autonomy_depth)",
+        "Claim verdict share per model:domain group (approve / escalate / block)",
+        "Per-tool mean gap ranking"
+      ] -%}
+      {%- set research_method = "Silent-baseline Tripartite ActionClaim assessment — declared ImpactVector fixed at zero and gap = max(0, assessed - declared) computed via RuleBasedImpactScorer on stdlib-only code path" -%}
+      {%- set research_keywords = "tau-bench, justification gap, tripartite ActionClaim, 6D impact vector, silent baseline, GPT-4o, Claude Sonnet 3.5 New, AI agent governance, cosmetic alignment, monotone trust" -%}
+    {%- else -%}
+      {%- set research_images = [
+        "https://acacian.github.io/aegis/assets/research/drift-histogram.png",
+        "https://acacian.github.io/aegis/assets/research/drift-by-model.png",
+        "https://acacian.github.io/aegis/assets/research/drift-by-trajectory-length.png",
+        "https://acacian.github.io/aegis/assets/research/drift-cumulative.png"
+      ] -%}
+      {%- set research_topic = "AI agent tool distribution drift" -%}
+      {%- set research_variables = [
+        "Shannon entropy of tool call distribution",
+        "Early-window vs late-window entropy delta (nats)",
+        "Normalized delta (delta / log W)",
+        "Bimodal mode classification (stable / midband / collapse)"
+      ] -%}
+      {%- set research_method = "Shannon entropy on non-overlapping early and late windows of tool name sequences (window size W=4), stdlib-only computation" -%}
+      {%- set research_keywords = "tau-bench, tool distribution drift, agent evaluation, entropy, GPT-4o, Claude Sonnet, deterministic measurement, privacy-preserving metric" -%}
+    {%- endif -%}
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -345,12 +382,7 @@
       "description": {{ page_description | tojson }},
       "abstract": {{ page_description | tojson }},
       "url": "{{ page_url }}",
-      "image": [
-        "https://acacian.github.io/aegis/assets/research/drift-histogram.png",
-        "https://acacian.github.io/aegis/assets/research/drift-by-model.png",
-        "https://acacian.github.io/aegis/assets/research/drift-by-trajectory-length.png",
-        "https://acacian.github.io/aegis/assets/research/drift-cumulative.png"
-      ],
+      "image": {{ research_images | tojson }},
       "inLanguage": "en",
       "datePublished": {{ (page.meta.date_published | default("2026-04-11")) | tojson }},
       "dateModified": {{ (page.meta.date_modified | default("2026-04-11")) | tojson }},
@@ -382,7 +414,7 @@
       "about": [
         {
           "@type": "Thing",
-          "name": "AI agent tool distribution drift"
+          "name": {{ research_topic | tojson }}
         },
         {
           "@type": "SoftwareApplication",
@@ -406,19 +438,14 @@
           "url": "https://github.com/sierra-research/tau-bench"
         }
       ],
-      "variableMeasured": [
-        "Shannon entropy of tool call distribution",
-        "Early-window vs late-window entropy delta (nats)",
-        "Normalized delta (delta / log W)",
-        "Bimodal mode classification (stable / midband / collapse)"
-      ],
-      "measurementTechnique": "Shannon entropy on non-overlapping early and late windows of tool name sequences (window size W=4), stdlib-only computation",
+      "variableMeasured": {{ research_variables | tojson }},
+      "measurementTechnique": {{ research_method | tojson }},
       "isPartOf": {
         "@type": "WebSite",
         "name": "Agent-Aegis Documentation",
         "url": "https://acacian.github.io/aegis/"
       },
-      "keywords": "tau-bench, tool distribution drift, agent evaluation, entropy, GPT-4o, Claude Sonnet, deterministic measurement, privacy-preserving metric"
+      "keywords": {{ research_keywords | tojson }}
     }
     </script>
     {%- endif -%}

@@ -34,6 +34,9 @@ site/
 # Runtime artifacts
 *.db
 
+# Local research cache (raw datasets, measurement results — large, not for remote)
+.cache/
+
 # Temp / scratch
 _*.md
 *.draft.*
