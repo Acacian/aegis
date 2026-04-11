@@ -293,6 +293,11 @@ def main(argv: list[str] | None = None) -> None:
 
     _register_compliance_report(subparsers)
 
+    # aegis check  (offline drift check on saved JSONL traces)
+    from aegis.cli.check import register as _register_check
+
+    _register_check(subparsers)
+
     # aegis compliance
     compliance_parser = subparsers.add_parser(
         "compliance",
@@ -497,6 +502,10 @@ def main(argv: list[str] | None = None) -> None:
         from aegis.cli.compliance_cmd import run as _run_compliance_report
 
         _run_compliance_report(args)
+    elif args.command == "check":
+        from aegis.cli.check import run as _run_check
+
+        sys.exit(_run_check(args))
     elif args.command == "compliance":
         _cmd_compliance(args)
     elif args.command == "stats":

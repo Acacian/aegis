@@ -1,0 +1,8 @@
+{"tool_name": "find_user_id_by_name_zip", "tool_args": {"SHOULD_NEVER_BE_READ": "pii"}, "cot_text": "INTERNAL THOUGHTS \u2014 should not surface", "user_message": "sensitive prompt content"}
+{"tool_name": "list_all_product_types", "tool_args": {"SHOULD_NEVER_BE_READ": "pii"}, "cot_text": "INTERNAL THOUGHTS \u2014 should not surface", "user_message": "sensitive prompt content"}
+{"tool_name": "get_product_details", "tool_args": {"SHOULD_NEVER_BE_READ": "pii"}, "cot_text": "INTERNAL THOUGHTS \u2014 should not surface", "user_message": "sensitive prompt content"}
+{"tool_name": "get_user_details", "tool_args": {"SHOULD_NEVER_BE_READ": "pii"}, "cot_text": "INTERNAL THOUGHTS \u2014 should not surface", "user_message": "sensitive prompt content"}
+{"tool_name": "get_order_details", "tool_args": {"SHOULD_NEVER_BE_READ": "pii"}, "cot_text": "INTERNAL THOUGHTS \u2014 should not surface", "user_message": "sensitive prompt content"}
+{"tool_name": "get_order_details", "tool_args": {"SHOULD_NEVER_BE_READ": "pii"}, "cot_text": "INTERNAL THOUGHTS \u2014 should not surface", "user_message": "sensitive prompt content"}
+{"tool_name": "get_order_details", "tool_args": {"SHOULD_NEVER_BE_READ": "pii"}, "cot_text": "INTERNAL THOUGHTS \u2014 should not surface", "user_message": "sensitive prompt content"}
+{"tool_name": "get_order_details", "tool_args": {"SHOULD_NEVER_BE_READ": "pii"}, "cot_text": "INTERNAL THOUGHTS \u2014 should not surface", "user_message": "sensitive prompt content"}
