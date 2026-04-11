@@ -156,6 +156,7 @@ nav:
   - Research:
       - Tool Distribution Drift (tau-bench): research/tau-bench-tool-distribution-drift.md
       - Justification Gap (tau-bench): research/tripartite-action-claim.md
+  - Architecture: architecture.md
   - Playground: playground/index.md
   - Challenge: playground/challenge.md
   - Enterprise: enterprise.md

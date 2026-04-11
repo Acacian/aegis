@@ -95,7 +95,7 @@ Optional (user opt-in):
 | AGP protocol spec | `specs/agp/v1/` |
 | Threat model | `docs/security/threat-model.md` |
 | OWASP mapping | `docs/security/owasp-agentic-mapping.md` |
-| Architecture | `.claude/context/architecture.md` |
+| Architecture | [`docs/architecture.md`](../architecture.md) |
 | CI pipeline | `.github/workflows/ci.yml` |
 | Conformance tests | `tests/conformance/` |
 

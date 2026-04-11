@@ -161,8 +161,9 @@ A CLI wrapper (`aegis check drift --tool-distribution <trace.jsonl>`) lands in v
 
 ## Data and code
 
-- Measurement script: `.claude/scripts/analyze_drift_on_tau_bench.py`
-- Visualization script: `.claude/scripts/visualize_drift_results.py`
+- Measurement script: [`research/tau_bench_drift/analyze.py`](https://github.com/Acacian/aegis/blob/main/research/tau_bench_drift/analyze.py)
+- Visualization script: [`research/tau_bench_drift/visualize.py`](https://github.com/Acacian/aegis/blob/main/research/tau_bench_drift/visualize.py)
+- Reproduction guide: [`research/tau_bench_drift/README.md`](https://github.com/Acacian/aegis/blob/main/research/tau_bench_drift/README.md)
 - Drift detector source: `src/aegis/core/drift.py` (Aegis core)
 - Raw tau-bench data: [sierra-research/tau-bench historical_trajectories](https://github.com/sierra-research/tau-bench/tree/main/historical_trajectories)
 - Aegis repo: [github.com/Acacian/aegis](https://github.com/Acacian/aegis)

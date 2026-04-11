@@ -225,8 +225,10 @@ The CLI reads only `tool_name` from each JSONL row. Arguments, CoT, and prompts 
 
 ### Reproduction Scripts
 
-- `.claude/scripts/analyze_drift_on_tau_bench.py` — trajectory loader + scorer
-- `.claude/scripts/visualize_drift_results.py` — 4-chart matplotlib renderer
+- `research/tau_bench_drift/analyze.py` — trajectory loader + entropy scorer, stdlib only
+- `research/tau_bench_drift/visualize.py` — 4-chart matplotlib renderer
+- `research/tau_bench_drift/README.md` — reproduction guide
+- `src/aegis/core/drift.py` — the drift detector source shipped in the library
 - `src/aegis/cli/check.py` — the CLI implementation
 - `tests/cli/test_check.py` — 15 tests including a hard privacy invariant assertion
 
