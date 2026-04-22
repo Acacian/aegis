@@ -135,6 +135,25 @@ aegis.auto_instrument()
 
 또는 코드 변경 제로 — `AEGIS_INSTRUMENT=1 python my_agent.py`. 인젝션 차단, PII 마스킹, 프롬프트 유출 경고, 감사 추적, 정책 집행이 모든 LangChain / CrewAI / OpenAI / Anthropic / LiteLLM / ADK / DSPy / LlamaIndex / Pydantic AI 호출에 즉시 적용됩니다.
 
+**Pydantic AI 네이티브 capability** — 몽키패칭 없이 에이전트별 명시적 제어:
+
+```python
+from pydantic_ai import Agent
+from aegis.contrib.pydantic_ai import AegisCapability
+from aegis.guardrails import GuardrailEngine, InjectionGuardrail
+
+engine = GuardrailEngine()
+engine.add(InjectionGuardrail())
+
+agent = Agent(
+    "openai:gpt-4o-mini",
+    capabilities=[AegisCapability(engine)],
+)
+result = await agent.run("What is AI governance?")
+```
+
+[Pydantic AI 통합 가이드 →](https://acacian.github.io/aegis/cookbook/pydantic-ai-governance/)
+
 ### 2. 프로덕션 전 스캔
 
 배포 전에 보호되지 않은 AI 호출을 찾습니다.

@@ -142,6 +142,25 @@ aegis.auto_instrument()
 
 Or zero code changes — `AEGIS_INSTRUMENT=1 python my_agent.py`. Injection blocking, PII masking, prompt-leak warnings, audit trail, and policy enforcement become active for every LangChain / CrewAI / OpenAI / Anthropic / LiteLLM / ADK / DSPy / LlamaIndex / Pydantic AI call.
 
+**Pydantic AI native capability** — no monkey-patching, explicit per-agent control:
+
+```python
+from pydantic_ai import Agent
+from aegis.contrib.pydantic_ai import AegisCapability
+from aegis.guardrails import GuardrailEngine, InjectionGuardrail
+
+engine = GuardrailEngine()
+engine.add(InjectionGuardrail())
+
+agent = Agent(
+    "openai:gpt-4o-mini",
+    capabilities=[AegisCapability(engine)],
+)
+result = await agent.run("What is AI governance?")
+```
+
+[Full Pydantic AI integration guide →](https://acacian.github.io/aegis/cookbook/pydantic-ai-governance/)
+
 ### 2. Pre-production scanning
 
 Find ungoverned AI calls before they ship.
