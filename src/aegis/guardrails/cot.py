@@ -396,7 +396,7 @@ class CoTAuditGuardrail:
 
         return matches
 
-    def check(self, content: str) -> CoTAuditResult:
+    def check(self, content: str, *, context: dict[str, object] | None = None) -> CoTAuditResult:
         """Check reasoning content and return an audit result."""
         matches = self.detect(content)
 

@@ -75,6 +75,7 @@ class CheckResult:
     matches: list[PIIMatch] = field(default_factory=list)
     categories_found: set[str] = field(default_factory=set)
     severity: str = "none"
+    _action: str = ""
 
     @property
     def passed(self) -> bool:
@@ -85,6 +86,13 @@ class CheckResult:
     def guardrail_name(self) -> str:
         """Guardrail identifier."""
         return "pii"
+
+    @property
+    def action(self) -> str:
+        """Unified action for GuardrailEngine compatibility."""
+        if not self.detected:
+            return "allowed"
+        return self._action if self._action else "blocked"
 
     @property
     def details(self) -> str | None:
@@ -681,7 +689,7 @@ class PIIGuardrail:
 
     # -- Guardrail interface --------------------------------------------------
 
-    def check(self, content: str) -> CheckResult:
+    def check(self, content: str, *, context: dict[str, object] | None = None) -> CheckResult:
         """Check whether PII is present in the content.
 
         Returns a :class:`CheckResult` indicating whether PII was detected
@@ -702,14 +710,21 @@ class PIIGuardrail:
             if _severity_rank(cat_sev) > _severity_rank(max_sev):
                 max_sev = cat_sev
 
+        # Map PIIGuardrail action to unified action vocabulary
+        action_map = {"mask": "masked", "block": "blocked", "warn": "warned", "log": "allowed"}
+        unified = action_map.get(self._action, "blocked")
+
         return CheckResult(
             detected=True,
             matches=matches,
             categories_found=categories_found,
             severity=max_sev,
+            _action=unified,
         )
 
-    def check_and_transform(self, content: str) -> TransformResult:
+    def check_and_transform(
+        self, content: str, *, context: dict[str, object] | None = None
+    ) -> TransformResult:
         """Check for PII and apply the configured action.
 
         Depending on the action:

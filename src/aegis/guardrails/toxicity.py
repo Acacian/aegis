@@ -462,7 +462,7 @@ class ToxicityGuardrail:
                         return True, category, name
         return False, "", ""
 
-    def check(self, content: str) -> ToxicityResult:
+    def check(self, content: str, *, context: dict[str, object] | None = None) -> ToxicityResult:
         """Check content for toxic patterns and return a result."""
         # Fast path: most content is clean — use search() instead of finditer()
         found, _category, _name = self._has_any_match(content)

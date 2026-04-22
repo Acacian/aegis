@@ -228,7 +228,9 @@ class OutputSchemaGuardrail:
             repair_hint=repair_hint,
         )
 
-    def check(self, content: str) -> OutputSchemaResult:
+    def check(
+        self, content: str, *, context: dict[str, object] | None = None
+    ) -> OutputSchemaResult:
         """Alias for :meth:`validate` — matches guardrail API convention."""
         return self.validate(content)
 

@@ -435,7 +435,7 @@ class PromptLeakGuardrail:
                     return True
         return False
 
-    def check(self, content: str) -> PromptLeakResult:
+    def check(self, content: str, *, context: dict[str, object] | None = None) -> PromptLeakResult:
         """Check content for prompt leakage."""
         # Fast path: most content is clean
         echo_match = self._check_prompt_echo(content)

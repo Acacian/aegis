@@ -330,7 +330,9 @@ class HallucinationGuardrail:
 
         return matches
 
-    def check(self, content: str) -> HallucinationResult:
+    def check(
+        self, content: str, *, context: dict[str, object] | None = None
+    ) -> HallucinationResult:
         """Check content for hallucination patterns."""
         matches = self.detect(content)
 
