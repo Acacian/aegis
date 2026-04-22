@@ -105,6 +105,6 @@ def test_webhook_missing_approved_field(decision: PolicyDecision) -> None:
 
     with patch("aegis.runtime.approval_webhook._require_httpx") as mock_httpx:
         mock_httpx.return_value.AsyncClient.return_value = mock_client
-        result = asyncio.get_event_loop().run_until_complete(handler.request_approval(decision))
+        result = asyncio.run(handler.request_approval(decision))
 
     assert result is False

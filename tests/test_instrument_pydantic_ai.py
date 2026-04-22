@@ -377,6 +377,10 @@ class TestPatchPydanticAi:
         assert r2.patched is True
         assert r1.targets == r2.targets
 
+    @pytest.mark.skipif(
+        "pydantic_ai" in sys.modules or importlib.util.find_spec("pydantic_ai") is not None,
+        reason="pydantic-ai is installed; this test requires it to be absent",
+    )
     def test_patch_without_pydantic_ai_installed(self):
         """When pydantic_ai is not importable, patch returns not-patched."""
         from aegis.instrument._pydantic_ai import patch_pydantic_ai
@@ -385,6 +389,10 @@ class TestPatchPydanticAi:
         assert result.patched is False
         assert result.error == "pydantic-ai not installed"
 
+    @pytest.mark.skipif(
+        "pydantic_ai" in sys.modules or importlib.util.find_spec("pydantic_ai") is not None,
+        reason="pydantic-ai is installed; this test requires it to be absent",
+    )
     def test_patch_registers_even_on_failure(self):
         from aegis.instrument._pydantic_ai import patch_pydantic_ai
 
@@ -484,7 +492,7 @@ class TestGovernedRun:
         _pa.patch_pydantic_ai()
 
         agent = fake_agent_class()
-        result = asyncio.get_event_loop().run_until_complete(agent.run("hello"))
+        result = asyncio.run(agent.run("hello"))
         assert result.output == "original output"
 
     def test_governed_run_with_passing_guardrails(self, fake_agent_class):
@@ -498,7 +506,7 @@ class TestGovernedRun:
 
         _pa.patch_pydantic_ai()
         agent = fake_agent_class()
-        result = asyncio.get_event_loop().run_until_complete(agent.run("hello"))
+        result = asyncio.run(agent.run("hello"))
         assert result.output == "original output"
         # Engine was called for both input and output
         assert engine.check.call_count == 2
@@ -515,7 +523,7 @@ class TestGovernedRun:
         _pa.patch_pydantic_ai()
         agent = fake_agent_class()
         with pytest.raises(AegisGuardrailError, match="Aegis blocked input"):
-            asyncio.get_event_loop().run_until_complete(agent.run("bad input"))
+            asyncio.run(agent.run("bad input"))
 
     def test_governed_run_blocks_on_output(self, fake_agent_class):
         import aegis.instrument._pydantic_ai as _pa
@@ -541,7 +549,7 @@ class TestGovernedRun:
         _pa.patch_pydantic_ai()
         agent = fake_agent_class()
         with pytest.raises(AegisGuardrailError, match="Aegis blocked output"):
-            asyncio.get_event_loop().run_until_complete(agent.run("hello"))
+            asyncio.run(agent.run("hello"))
 
     def test_governed_run_with_user_prompt_kwarg(self, fake_agent_class):
         import aegis.instrument._pydantic_ai as _pa
@@ -554,7 +562,7 @@ class TestGovernedRun:
 
         _pa.patch_pydantic_ai()
         agent = fake_agent_class()
-        asyncio.get_event_loop().run_until_complete(agent.run(user_prompt="hello via kwarg"))
+        asyncio.run(agent.run(user_prompt="hello via kwarg"))
         # The first call should have been with "hello via kwarg"
         engine.check.assert_any_call("hello via kwarg")
 
@@ -572,7 +580,7 @@ class TestGovernedRun:
         _pa.patch_pydantic_ai()
         agent = fake_agent_class()
         with caplog.at_level("WARNING", logger="aegis.instrument.pydantic_ai"):
-            result = asyncio.get_event_loop().run_until_complete(agent.run("hello"))
+            result = asyncio.run(agent.run("hello"))
         # Should not raise, result should be returned
         assert result.output == "original output"
         assert "Aegis blocked" in caplog.text

@@ -557,7 +557,7 @@ class TestPatchOpenAI:
         mod.patch_openai(audit=False)
 
         client = completions_mod.AsyncCompletions()
-        response = asyncio.get_event_loop().run_until_complete(
+        response = asyncio.run(
             client.create(
                 messages=[{"role": "user", "content": "async hi"}],
                 model="gpt-4",
@@ -579,7 +579,7 @@ class TestPatchOpenAI:
         client = completions_mod.AsyncCompletions()
 
         with pytest.raises(AegisGuardrailError, match="input"):
-            asyncio.get_event_loop().run_until_complete(
+            asyncio.run(
                 client.create(
                     messages=[{"role": "user", "content": "bad stuff"}],
                     model="gpt-4",
@@ -609,7 +609,7 @@ class TestPatchOpenAI:
         client = completions_mod.AsyncCompletions()
 
         with pytest.raises(AegisGuardrailError, match="output"):
-            asyncio.get_event_loop().run_until_complete(
+            asyncio.run(
                 client.create(
                     messages=[{"role": "user", "content": "hello"}],
                     model="gpt-4",

@@ -173,7 +173,7 @@ class TestResourceContractDecorator:
             _contract_monitor.record_call()
             return x * 3
 
-        result = asyncio.get_event_loop().run_until_complete(my_async(10))
+        result = asyncio.run(my_async(10))
         assert result == 30
 
     def test_async_timeout(self) -> None:
@@ -185,7 +185,7 @@ class TestResourceContractDecorator:
             return "done"
 
         with pytest.raises(ContractViolation) as exc_info:
-            asyncio.get_event_loop().run_until_complete(slow_task())
+            asyncio.run(slow_task())
         assert exc_info.value.dimension == "max_duration_s"
 
     def test_preserves_function_name(self) -> None:

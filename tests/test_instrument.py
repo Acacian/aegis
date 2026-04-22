@@ -1207,6 +1207,6 @@ class TestFrameworkRegistry:
                 "dspy",
             ]
         )
-        # They should all be skipped (not installed)
-        assert len(report.skipped) == 6
+        # Frameworks that aren't installed should be skipped; installed ones patched
+        assert len(report.skipped) + len(report.patched) == 6
         assert len(report.errors) == 0

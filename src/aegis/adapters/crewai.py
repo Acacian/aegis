@@ -103,7 +103,7 @@ class AegisCrewAITool:
 
     def __call__(self, *args: Any, **kwargs: Any) -> str:
         """Execute the tool through Aegis governance."""
-        return asyncio.get_event_loop().run_until_complete(self._run(*args, **kwargs))
+        return asyncio.run(self._run(*args, **kwargs))
 
     async def _run(self, *args: Any, **kwargs: Any) -> str:
         action = Action(

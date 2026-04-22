@@ -118,6 +118,6 @@ def test_works_with_runtime():
     import asyncio
 
     plan = runtime.plan([Action("read", "test")])
-    results = asyncio.get_event_loop().run_until_complete(runtime.execute(plan))
+    results = asyncio.run(runtime.execute(plan))
     assert results[0].ok
     assert len(audit.get_log()) == 1

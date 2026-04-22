@@ -674,9 +674,7 @@ class TestGovernedAsyncCreate:
         _ins.patch_instructor()
 
         inst = AsyncCls()
-        result = asyncio.get_event_loop().run_until_complete(
-            inst.create(messages=[{"role": "user", "content": "hi"}])
-        )
+        result = asyncio.run(inst.create(messages=[{"role": "user", "content": "hi"}]))
         assert result == "async_result"
 
     def test_async_create_with_guardrails_pass(self):
@@ -694,9 +692,7 @@ class TestGovernedAsyncCreate:
         state.configure(guardrail_engine=engine, on_block="raise")
 
         inst = AsyncCls()
-        result = asyncio.get_event_loop().run_until_complete(
-            inst.create(messages=[{"role": "user", "content": "hello async"}])
-        )
+        result = asyncio.run(inst.create(messages=[{"role": "user", "content": "hello async"}]))
         assert result == "async_result"
         assert engine.check.call_count == 2
 
@@ -717,9 +713,7 @@ class TestGovernedAsyncCreate:
 
         inst = AsyncCls()
         with pytest.raises(AegisGuardrailError, match="Aegis blocked input"):
-            asyncio.get_event_loop().run_until_complete(
-                inst.create(messages=[{"role": "user", "content": "danger"}])
-            )
+            asyncio.run(inst.create(messages=[{"role": "user", "content": "danger"}]))
 
     def test_async_create_output_blocked(self):
         """Guardrails pass input but block output on async create."""
@@ -749,9 +743,7 @@ class TestGovernedAsyncCreate:
 
         inst = AsyncCls()
         with pytest.raises(AegisGuardrailError, match="Aegis blocked output"):
-            asyncio.get_event_loop().run_until_complete(
-                inst.create(messages=[{"role": "user", "content": "ok"}])
-            )
+            asyncio.run(inst.create(messages=[{"role": "user", "content": "ok"}]))
 
     def test_async_create_warn_mode(self, caplog):
         """On block=warn, async create returns result + logs warning."""
@@ -770,9 +762,7 @@ class TestGovernedAsyncCreate:
 
         inst = AsyncCls()
         with caplog.at_level(logging.WARNING, logger="aegis.instrument.instructor"):
-            result = asyncio.get_event_loop().run_until_complete(
-                inst.create(messages=[{"role": "user", "content": "test"}])
-            )
+            result = asyncio.run(inst.create(messages=[{"role": "user", "content": "test"}]))
 
         assert result == "async_result"
         assert any("Aegis blocked" in msg for msg in caplog.messages)
@@ -784,9 +774,7 @@ class TestGovernedAsyncCreate:
         _ins.patch_instructor()
 
         inst = AsyncCls()
-        result = asyncio.get_event_loop().run_until_complete(
-            inst.create(messages=[{"role": "user", "content": "hello"}])
-        )
+        result = asyncio.run(inst.create(messages=[{"role": "user", "content": "hello"}]))
         assert result == "async_result"
 
 

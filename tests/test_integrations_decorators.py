@@ -74,7 +74,7 @@ def test_guard_async_allowed(mock_load):
     async def my_async_func(x):
         return x * 2
 
-    result = asyncio.get_event_loop().run_until_complete(my_async_func(5))
+    result = asyncio.run(my_async_func(5))
     assert result == 10
 
 
@@ -88,7 +88,7 @@ def test_guard_async_blocked_raises(mock_load):
         return "nope"
 
     with pytest.raises(AegisBlockedError):
-        asyncio.get_event_loop().run_until_complete(my_async_func())
+        asyncio.run(my_async_func())
 
 
 # -- Parenthesized vs bare usage ----------------------------------------
@@ -190,7 +190,7 @@ def test_async_function_result_preserved(mock_load):
     async def compute_async():
         return [1, 2, 3]
 
-    result = asyncio.get_event_loop().run_until_complete(compute_async())
+    result = asyncio.run(compute_async())
     assert result == [1, 2, 3]
 
 

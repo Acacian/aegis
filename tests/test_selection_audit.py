@@ -459,7 +459,7 @@ class TestAuditSelectionDecorator:
                 eliminated=[_elim()],
             )
 
-        result = asyncio.get_event_loop().run_until_complete(select())
+        result = asyncio.run(select())
         assert isinstance(result, SelectionSet)
         assert result.agent_id == "test-agent"
         assert result.context == "test"
@@ -471,7 +471,7 @@ class TestAuditSelectionDecorator:
         async def not_selection() -> dict:
             return {"key": "value"}
 
-        result = asyncio.get_event_loop().run_until_complete(not_selection())
+        result = asyncio.run(not_selection())
         assert result == {"key": "value"}
 
     def test_decorator_with_global_auditor(self) -> None:
@@ -486,7 +486,7 @@ class TestAuditSelectionDecorator:
                     eliminated=[_elim()],
                 )
 
-            result = asyncio.get_event_loop().run_until_complete(select())
+            result = asyncio.run(select())
             assert isinstance(result, SelectionSet)
             assert result.context == "global-test"
         finally:
@@ -502,7 +502,7 @@ class TestAuditSelectionDecorator:
                 selected=_opt("sel"),
             )
 
-        result = asyncio.get_event_loop().run_until_complete(select())
+        result = asyncio.run(select())
         assert result.agent_id == "original-agent"
 
     def test_decorator_with_to_selection_set(self) -> None:
@@ -518,7 +518,7 @@ class TestAuditSelectionDecorator:
         async def select() -> CustomResult:
             return CustomResult()
 
-        result = asyncio.get_event_loop().run_until_complete(select())
+        result = asyncio.run(select())
         assert isinstance(result, CustomResult)
 
 
@@ -537,7 +537,7 @@ class TestCommitRevealSelection:
         cr = self._make_cr()
         ss = SelectionSet(selected=_opt("sel"))
 
-        sid = asyncio.get_event_loop().run_until_complete(cr.commit(ss))
+        sid = asyncio.run(cr.commit(ss))
         assert sid == ss.selection_id
 
     def test_commit_reveal_flow(self) -> None:
@@ -547,8 +547,8 @@ class TestCommitRevealSelection:
             eliminated=[_elim()],
         )
 
-        sid = asyncio.get_event_loop().run_until_complete(cr.commit(ss))
-        result = asyncio.get_event_loop().run_until_complete(cr.reveal(sid))
+        sid = asyncio.run(cr.commit(ss))
+        result = asyncio.run(cr.reveal(sid))
         assert isinstance(result, SelectionAuditResult)
         assert result.selection_id == ss.selection_id
 
@@ -556,29 +556,29 @@ class TestCommitRevealSelection:
         cr = self._make_cr()
         ss = SelectionSet(selected=_opt("sel"))
 
-        sid = asyncio.get_event_loop().run_until_complete(cr.commit(ss))
-        asyncio.get_event_loop().run_until_complete(cr.reveal(sid))
+        sid = asyncio.run(cr.commit(ss))
+        asyncio.run(cr.reveal(sid))
 
         # Second reveal should raise
         with pytest.raises(ValueError, match="No committed selection"):
-            asyncio.get_event_loop().run_until_complete(cr.reveal(sid))
+            asyncio.run(cr.reveal(sid))
 
     def test_reveal_unknown_id_raises(self) -> None:
         cr = self._make_cr()
         with pytest.raises(ValueError, match="No committed selection"):
-            asyncio.get_event_loop().run_until_complete(cr.reveal("nonexistent"))
+            asyncio.run(cr.reveal("nonexistent"))
 
     def test_multiple_commits(self) -> None:
         cr = self._make_cr()
         ss1 = SelectionSet(selected=_opt("s1"))
         ss2 = SelectionSet(selected=_opt("s2"))
 
-        sid1 = asyncio.get_event_loop().run_until_complete(cr.commit(ss1))
-        sid2 = asyncio.get_event_loop().run_until_complete(cr.commit(ss2))
+        sid1 = asyncio.run(cr.commit(ss1))
+        sid2 = asyncio.run(cr.commit(ss2))
         assert sid1 != sid2
 
-        r1 = asyncio.get_event_loop().run_until_complete(cr.reveal(sid1))
-        r2 = asyncio.get_event_loop().run_until_complete(cr.reveal(sid2))
+        r1 = asyncio.run(cr.reveal(sid1))
+        r2 = asyncio.run(cr.reveal(sid2))
         assert r1.selection_id == ss1.selection_id
         assert r2.selection_id == ss2.selection_id
 
@@ -589,12 +589,12 @@ class TestCommitRevealSelection:
 
         for i in range(3):
             ss = SelectionSet(selected=_opt(f"s{i}"))
-            asyncio.get_event_loop().run_until_complete(cr.commit(ss))
+            asyncio.run(cr.commit(ss))
 
         # 4th commit should fail
         ss4 = SelectionSet(selected=_opt("s3"))
         with pytest.raises(RuntimeError, match="Too many pending commits"):
-            asyncio.get_event_loop().run_until_complete(cr.commit(ss4))
+            asyncio.run(cr.commit(ss4))
 
     def test_ttl_expiry(self) -> None:
         """Expired committed entries are pruned on next commit."""
@@ -606,13 +606,13 @@ class TestCommitRevealSelection:
         )
 
         ss1 = SelectionSet(selected=_opt("s1"))
-        sid1 = asyncio.get_event_loop().run_until_complete(cr.commit(ss1))
+        sid1 = asyncio.run(cr.commit(ss1))
 
         time.sleep(0.05)  # wait for TTL to expire
 
         # Reveal should fail — entry expired
         with pytest.raises(ValueError, match="No committed selection"):
-            asyncio.get_event_loop().run_until_complete(cr.reveal(sid1))
+            asyncio.run(cr.reveal(sid1))
 
     def test_ttl_prune_frees_capacity(self) -> None:
         """Expired entries are pruned, freeing capacity for new commits."""
@@ -626,13 +626,13 @@ class TestCommitRevealSelection:
 
         for i in range(2):
             ss = SelectionSet(selected=_opt(f"s{i}"))
-            asyncio.get_event_loop().run_until_complete(cr.commit(ss))
+            asyncio.run(cr.commit(ss))
 
         time.sleep(0.05)  # TTL expires
 
         # Should succeed because expired entries were pruned
         ss_new = SelectionSet(selected=_opt("new"))
-        sid = asyncio.get_event_loop().run_until_complete(cr.commit(ss_new))
+        sid = asyncio.run(cr.commit(ss_new))
         assert sid == ss_new.selection_id
 
 
@@ -700,7 +700,7 @@ class TestAuditSelectionSyncDecorator:
                 eliminated=[_elim(_opt("rejected"))],
             )
 
-        result = asyncio.get_event_loop().run_until_complete(async_select())
+        result = asyncio.run(async_select())
         assert isinstance(result, SelectionSet)
         assert result.context == "async_test"
 

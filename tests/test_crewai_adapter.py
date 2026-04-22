@@ -110,7 +110,7 @@ class TestAegisCrewAITool:
         # __call__ runs the event loop synchronously
         import asyncio
 
-        result = asyncio.get_event_loop().run_until_complete(tool._run("test query"))
+        result = asyncio.run(tool._run("test query"))
         assert "found" in result
 
     @pytest.mark.asyncio

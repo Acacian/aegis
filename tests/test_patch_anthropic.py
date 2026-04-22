@@ -524,7 +524,7 @@ class TestPatchAnthropic:
 
         messages_mod = fake_anthropic["anthropic.resources.messages"]
         client = messages_mod.AsyncMessages()
-        response = asyncio.get_event_loop().run_until_complete(
+        response = asyncio.run(
             client.create(
                 messages=[{"role": "user", "content": "async hi"}],
                 model="claude-3-opus",
@@ -545,7 +545,7 @@ class TestPatchAnthropic:
         client = messages_mod.AsyncMessages()
 
         with pytest.raises(AegisGuardrailError, match="input"):
-            asyncio.get_event_loop().run_until_complete(
+            asyncio.run(
                 client.create(
                     messages=[{"role": "user", "content": "bad stuff"}],
                     model="claude-3-opus",
@@ -574,7 +574,7 @@ class TestPatchAnthropic:
         client = messages_mod.AsyncMessages()
 
         with pytest.raises(AegisGuardrailError, match="output"):
-            asyncio.get_event_loop().run_until_complete(
+            asyncio.run(
                 client.create(
                     messages=[{"role": "user", "content": "hello"}],
                     model="claude-3-opus",

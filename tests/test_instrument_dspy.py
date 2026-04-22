@@ -75,7 +75,7 @@ def _invoke_method(obj, method_name, kwargs):
     """Invoke a method by name, handling async for aforward."""
     method = getattr(obj, method_name)
     if method_name == "aforward":
-        return asyncio.get_event_loop().run_until_complete(method(**kwargs))
+        return asyncio.run(method(**kwargs))
     if method_name == "__call__":
         return obj(**kwargs)
     return method(**kwargs)

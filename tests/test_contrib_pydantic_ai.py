@@ -369,16 +369,14 @@ class TestBeforeModelRequest:
         cap = cls(engine)
         ctx = FakeRequestContext(messages=[FakeMessage(parts=[FakeUserPromptPart("bad input")])])
         with pytest.raises(AegisGuardrailError):
-            asyncio.get_event_loop().run_until_complete(cap.before_model_request(MagicMock(), ctx))
+            asyncio.run(cap.before_model_request(MagicMock(), ctx))
 
     def test_passes_clean_input(self) -> None:
         cls = _import_capability()
         engine = _make_engine(action="allowed")
         cap = cls(engine)
         ctx = FakeRequestContext(messages=[FakeMessage(parts=[FakeUserPromptPart("hello")])])
-        result = asyncio.get_event_loop().run_until_complete(
-            cap.before_model_request(MagicMock(), ctx)
-        )
+        result = asyncio.run(cap.before_model_request(MagicMock(), ctx))
         assert result is ctx
 
     def test_skip_when_check_input_false(self) -> None:
@@ -386,9 +384,7 @@ class TestBeforeModelRequest:
         engine = _make_engine(action="blocked")
         cap = cls(engine, check_input=False)
         ctx = FakeRequestContext(messages=[FakeMessage(parts=[FakeUserPromptPart("bad")])])
-        result = asyncio.get_event_loop().run_until_complete(
-            cap.before_model_request(MagicMock(), ctx)
-        )
+        result = asyncio.run(cap.before_model_request(MagicMock(), ctx))
         assert result is ctx
         engine.check.assert_not_called()
 
@@ -397,9 +393,7 @@ class TestBeforeModelRequest:
         engine = _make_engine(action="blocked")
         cap = cls(engine)
         ctx = FakeRequestContext(messages=[])
-        result = asyncio.get_event_loop().run_until_complete(
-            cap.before_model_request(MagicMock(), ctx)
-        )
+        result = asyncio.run(cap.before_model_request(MagicMock(), ctx))
         assert result is ctx
         engine.check.assert_not_called()
 
@@ -416,7 +410,7 @@ class TestAfterModelRequest:
         cap = cls(engine)
         resp = FakeModelResponse(parts=[FakeTextPart("bad output")], text="bad output")
         with pytest.raises(AegisGuardrailError):
-            asyncio.get_event_loop().run_until_complete(
+            asyncio.run(
                 cap.after_model_request(MagicMock(), request_context=MagicMock(), response=resp)
             )
 
@@ -425,7 +419,7 @@ class TestAfterModelRequest:
         engine = _make_engine(action="allowed")
         cap = cls(engine)
         resp = FakeModelResponse(parts=[FakeTextPart("ok")], text="ok")
-        result = asyncio.get_event_loop().run_until_complete(
+        result = asyncio.run(
             cap.after_model_request(MagicMock(), request_context=MagicMock(), response=resp)
         )
         assert result is resp
@@ -435,7 +429,7 @@ class TestAfterModelRequest:
         engine = _make_engine(action="blocked")
         cap = cls(engine, check_output=False)
         resp = FakeModelResponse(parts=[FakeTextPart("bad")], text="bad")
-        result = asyncio.get_event_loop().run_until_complete(
+        result = asyncio.run(
             cap.after_model_request(MagicMock(), request_context=MagicMock(), response=resp)
         )
         assert result is resp
@@ -446,7 +440,7 @@ class TestAfterModelRequest:
         engine = _make_engine(action="blocked")
         cap = cls(engine)
         resp = FakeModelResponse(parts=[], text=None)
-        result = asyncio.get_event_loop().run_until_complete(
+        result = asyncio.run(
             cap.after_model_request(MagicMock(), request_context=MagicMock(), response=resp)
         )
         assert result is resp
