@@ -102,7 +102,7 @@ nav:
       - Aegis vs Alternatives: guides/alternatives.md
       - Custom Adapters: guides/custom-adapters.md
       - Approval Handlers: guides/approval-handlers.md
-      - REST API Server: guides/rest-api.md
+      - Governance Server: guides/rest-api.md
       - Security Model: guides/security-model.md
       - Deployment: guides/deployment.md
       - Policy Patterns: guides/policy-patterns.md

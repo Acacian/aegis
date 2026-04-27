@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Governance Framework Server** — `aegis-server` CLI launches a centralized governance server with 37 REST endpoints (13 core + 24 extended). Supports config-driven setup via `aegis-server.yaml`.
+- **Extended API endpoints** — policy versioning (commit/diff/rollback/tag), crypto audit verification, behavioral drift detection (5-axis), trust scoring (5-level per-agent), cost governance (budget tracking), session replay (forensic rescan), compliance reports (SOC2/GDPR/governance), and regulatory gap analysis (EU AI Act/NIST).
+- **AsyncAegisClient** — async client SDK using `httpx.AsyncClient` with `async with` context manager, background heartbeat, and full API parity with the sync `AegisClient`.
+- **Webhooks** — config-driven fire-and-forget notifications (Slack, PagerDuty) on block/rate-limit events.
+- **Rate limiting** — sliding-window per-agent/global rate limits with glob-based rule matching, configurable via `aegis-server.yaml`.
+- **Policy hot-reload** — `PolicyWatcher` monitors policy file changes and applies updates with zero downtime.
 - **MCP STDIO Injection Guard** — 3-layer defense against the [OX Security MCP STDIO vulnerability](https://www.oxsecurity.io/blog/mcp-security-research) (2026-04-15). Detects JSON-RPC injection in tool responses, frame concatenation attacks, unicode escape bypass, double-encoded payloads, and Content-Length smuggling. Enabled by default in `aegis-mcp-proxy`.
 - **Dashless SSN/RRN detection** — PII guardrail now catches Social Security Numbers and 주민등록번호 without dashes (keyword context required to prevent false positives)
 - **NFKC normalization in PII detection** — catches fullwidth digit evasion (e.g., `４１１１` matching credit card patterns)
