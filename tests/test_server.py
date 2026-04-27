@@ -31,8 +31,10 @@ def policy() -> Policy:
 
 
 @pytest.fixture()
-def app(policy: Policy, tmp_path: Path):
+def app(policy: Policy, tmp_path: Path, monkeypatch):
     """Create a test app. Skip if starlette not installed."""
+    # Set admin key so policy PUT tests can authenticate
+    monkeypatch.setenv("AEGIS_ADMIN_KEY", "test-admin-key")
     try:
         from aegis.server.app import create_app
 
@@ -143,7 +145,11 @@ def test_update_policy(client) -> None:
             }
         ]
     }
-    resp = client.put("/api/v1/policy", json=new_policy)
+    resp = client.put(
+        "/api/v1/policy",
+        json=new_policy,
+        headers={"X-API-Key": "test-admin-key"},
+    )
     assert resp.status_code == 200
     data = resp.json()
     assert data["status"] == "updated"
@@ -166,13 +172,21 @@ rules:
     risk_level: low
     approval: auto
 """
-    resp = client.put("/api/v1/policy", json={"yaml": yaml_str})
+    resp = client.put(
+        "/api/v1/policy",
+        json={"yaml": yaml_str},
+        headers={"X-API-Key": "test-admin-key"},
+    )
     assert resp.status_code == 200
     assert resp.json()["rule_count"] == 1
 
 
 def test_update_policy_bad_request(client) -> None:
-    resp = client.put("/api/v1/policy", json={"invalid": True})
+    resp = client.put(
+        "/api/v1/policy",
+        json={"invalid": True},
+        headers={"X-API-Key": "test-admin-key"},
+    )
     assert resp.status_code == 400
 
 

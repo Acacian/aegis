@@ -1049,11 +1049,17 @@ class InjectionGuardrail:
     # Core detection
     # ------------------------------------------------------------------
 
+    # Max content length eligible for LRU caching. Strings larger than this
+    # are scanned without caching to prevent memory exhaustion via adversarial
+    # input (attacker sending many unique large payloads).
+    _MAX_CACHE_CONTENT_LEN = 50_000
+
     def detect(self, content: str) -> list[InjectionMatch]:
         """Scan *content* for injection patterns and return all matches.
 
         Results are cached (LRU, 256 entries) so repeated checks on the
-        same content are O(1).
+        same content are O(1). Content larger than 50KB bypasses the cache
+        to prevent memory exhaustion.
 
         Args:
             content: The text to scan for injection patterns.
@@ -1062,11 +1068,17 @@ class InjectionGuardrail:
             A list of :class:`InjectionMatch` objects for each detected
             pattern. Empty list when no injections are found.
         """
+        if len(content) > self._MAX_CACHE_CONTENT_LEN:
+            return list(self._detect_uncached(content))
         return list(self._detect_cached(content))
 
     @functools.lru_cache(maxsize=256)  # noqa: B019
     def _detect_cached(self, content: str) -> tuple[InjectionMatch, ...]:
         """Internal cached detection — returns a tuple for hashability."""
+        return self._detect_uncached(content)
+
+    def _detect_uncached(self, content: str) -> tuple[InjectionMatch, ...]:
+        """Internal detection logic (no caching)."""
         normalized = _normalize_text(content)
         matches: list[InjectionMatch] = []
 

@@ -11,6 +11,7 @@ entry, forming a verifiable chain of custody for all agent actions.
 from __future__ import annotations
 
 import hashlib
+import hmac
 import json
 import threading
 from dataclasses import asdict, dataclass, field
@@ -291,9 +292,9 @@ class CryptoAuditChain:
             )
 
         for i, entry in enumerate(self._chain):
-            # Check previous_hash linkage
+            # Check previous_hash linkage (timing-safe comparison)
             expected_prev = self._chain[i - 1].entry_hash if i > 0 else _GENESIS_HASH
-            if entry.previous_hash != expected_prev:
+            if not hmac.compare_digest(entry.previous_hash, expected_prev):
                 return self._build_result(
                     valid=False,
                     chain_length=length,
@@ -305,9 +306,9 @@ class CryptoAuditChain:
                     ),
                 )
 
-            # Check entry_hash integrity
+            # Check entry_hash integrity (timing-safe comparison)
             expected_hash = _hash_entry(entry, self._algorithm)
-            if entry.entry_hash != expected_hash:
+            if not hmac.compare_digest(entry.entry_hash, expected_hash):
                 return self._build_result(
                     valid=False,
                     chain_length=length,
@@ -355,15 +356,15 @@ class CryptoAuditChain:
                 return False
             entry = self._chain[sequence_id]
 
-            # Check previous_hash linkage
+            # Check previous_hash linkage (timing-safe comparison)
             expected_prev = (
                 self._chain[sequence_id - 1].entry_hash if sequence_id > 0 else _GENESIS_HASH
             )
-            if entry.previous_hash != expected_prev:
+            if not hmac.compare_digest(entry.previous_hash, expected_prev):
                 return False
 
-            # Check entry_hash integrity
-            return entry.entry_hash == _hash_entry(entry, self._algorithm)
+            # Check entry_hash integrity (timing-safe comparison)
+            return hmac.compare_digest(entry.entry_hash, _hash_entry(entry, self._algorithm))
 
     # -- serialization -------------------------------------------------------
 

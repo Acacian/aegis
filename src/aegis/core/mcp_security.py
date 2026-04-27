@@ -31,6 +31,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import os
 import re
 import time
 import unicodedata
@@ -428,7 +429,18 @@ class RugPullDetector:
                 "description_preview": entry.description_preview,
                 "version": entry.version,
             }
-        self._path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+        # Atomic write: write to temp file, then rename to avoid TOCTOU
+        # corruption if the process crashes mid-write.
+        import tempfile
+
+        tmp_fd, tmp_path = tempfile.mkstemp(dir=str(self._path.parent), suffix=".tmp")
+        try:
+            with os.fdopen(tmp_fd, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2)
+            Path(tmp_path).replace(self._path)
+        except BaseException:
+            Path(tmp_path).unlink(missing_ok=True)
+            raise
 
     def _load(self) -> None:
         if not self._path or not self._path.exists():
@@ -536,6 +548,10 @@ class ArgumentSanitizer:
         tool_name: str,
         server_name: str,
     ) -> None:
+        # Normalize Unicode before pattern matching to prevent bypass via
+        # fullwidth characters, NFKC-equivalent sequences, or confusables.
+        value = _normalize_text(value)
+
         # Path traversal (always checked)
         for pattern in _PATH_TRAVERSAL:
             match = pattern.search(value)
@@ -783,7 +799,7 @@ class MCPSecurityGate:
 
         if isinstance(response, str):
             return list(self._response_scanner.scan(response, tool_name=tool_name))
-        elif isinstance(response, (dict, list)):
+        elif isinstance(response, dict | list):
             return list(self._response_scanner.scan_structured(response, tool_name=tool_name))
         return []
 

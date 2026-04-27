@@ -249,6 +249,14 @@ def patch_openai(
         messages = kwargs.get("messages") or (args[0] if args else [])
         model = kwargs.get("model") or (args[1] if len(args) > 1 else None)
 
+        # Warn when streaming is enabled — output guardrails cannot inspect
+        # streamed chunks, so only input guardrails are effective.
+        if kwargs.get("stream"):
+            logger.warning(
+                "Aegis: stream=True detected — output guardrails are INEFFECTIVE "
+                "on streaming responses. Only input guardrails will be applied."
+            )
+
         # Input guardrails
         input_text = _extract_messages_text(messages)
         input_results = _run_guardrails(
@@ -293,6 +301,14 @@ def patch_openai(
         async def governed_async_create(self: Any, *args: Any, **kwargs: Any) -> Any:
             messages = kwargs.get("messages") or (args[0] if args else [])
             model = kwargs.get("model") or (args[1] if len(args) > 1 else None)
+
+            # Warn when streaming is enabled — output guardrails cannot inspect
+            # streamed chunks, so only input guardrails are effective.
+            if kwargs.get("stream"):
+                logger.warning(
+                    "Aegis: stream=True detected — output guardrails are INEFFECTIVE "
+                    "on streaming responses. Only input guardrails will be applied."
+                )
 
             # Input guardrails
             input_text = _extract_messages_text(messages)

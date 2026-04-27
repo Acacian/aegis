@@ -11,6 +11,7 @@ import json
 import logging
 import re
 import sqlite3
+import threading
 from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
@@ -86,6 +87,7 @@ class AuditLogger:
 
     def __init__(self, db_path: str | Path = "aegis_audit.db") -> None:
         self._db_path = Path(db_path)
+        self._lock = threading.Lock()
         self._conn = sqlite3.connect(str(self._db_path), check_same_thread=False)
         self._conn.execute("PRAGMA journal_mode=WAL")
         self._conn.executescript(_SCHEMA)
@@ -170,6 +172,19 @@ class AuditLogger:
         Returns:
             The row ID of the inserted entry.
         """
+        with self._lock:
+            return self._log_unlocked(
+                session_id, decision, result=result, human_decision=human_decision
+            )
+
+    def _log_unlocked(
+        self,
+        session_id: str,
+        decision: PolicyDecision,
+        *,
+        result: Result | None = None,
+        human_decision: str | None = None,
+    ) -> int:
         cursor = self._conn.execute(
             """
             INSERT INTO audit_log
@@ -285,9 +300,10 @@ class AuditLogger:
             query += " LIMIT ?"
             params.append(int(limit))
 
-        cursor = self._conn.execute(query, params)
-        columns = [desc[0] for desc in cursor.description]
-        return [dict(zip(columns, row, strict=True)) for row in cursor.fetchall()]
+        with self._lock:
+            cursor = self._conn.execute(query, params)
+            columns = [desc[0] for desc in cursor.description]
+            return [dict(zip(columns, row, strict=True)) for row in cursor.fetchall()]
 
     def count(
         self,
@@ -321,9 +337,10 @@ class AuditLogger:
         if clauses:
             query += " WHERE " + " AND ".join(clauses)
 
-        cursor = self._conn.execute(query, params)
-        row = cursor.fetchone()
-        return int(row[0]) if row else 0
+        with self._lock:
+            cursor = self._conn.execute(query, params)
+            row = cursor.fetchone()
+            return int(row[0]) if row else 0
 
     def export_jsonl(self, path: str | Path, session_id: str | None = None) -> int:
         """Export audit entries as JSON Lines (one JSON object per line).

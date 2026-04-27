@@ -521,6 +521,8 @@ class AegisMCPProxy:
             )
         return tools
 
+    _MAX_ARGUMENT_SIZE = 1_048_576  # 1 MB max serialized argument size
+
     async def handle_call_tool(
         self, name: str, arguments: dict[str, Any] | None = None
     ) -> list[Any]:
@@ -528,6 +530,22 @@ class AegisMCPProxy:
         from mcp import types
 
         arguments = arguments or {}
+
+        # Input size limit: reject oversized arguments to prevent DoS
+        try:
+            arg_size = len(json.dumps(arguments, default=str))
+        except (TypeError, ValueError):
+            arg_size = 0
+        if arg_size > self._MAX_ARGUMENT_SIZE:
+            return [
+                types.TextContent(
+                    type="text",
+                    text=(
+                        f"[aegis] Tool call rejected: arguments too large"
+                        f" ({arg_size} bytes, max 1MB)"
+                    ),
+                )
+            ]
 
         # 1. Look up tool
         entry = self._tool_registry.get(name)

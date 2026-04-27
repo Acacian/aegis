@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import functools
 import re
+import unicodedata
 from dataclasses import dataclass, field
 
 # ---------------------------------------------------------------------------
@@ -209,7 +210,7 @@ def _build_patterns() -> list[_PIIPattern]:
     )
 
     # -- 4. US Social Security Number -----------------------------------------
-    # Format: AAA-GG-SSSS.  Area (AAA) cannot be 000, 666, or 900-999.
+    # Format: AAA-GG-SSSS (with dashes).  Area (AAA) cannot be 000, 666, or 900-999.
     # Group (GG) and serial (SSSS) cannot be all zeros.
     patterns.append(
         (
@@ -226,6 +227,24 @@ def _build_patterns() -> list[_PIIPattern]:
             ),
             "critical",
             "US Social Security Number",
+        )
+    )
+
+    # -- 4b. US SSN without dashes (9 consecutive digits) ----------------------
+    # Requires keyword context to reduce false positives on bare 9-digit numbers.
+    patterns.append(
+        (
+            "ssn",
+            re.compile(
+                r"(?i)(?:ssn|social\s*security)\s*(?:number|no|#|num)?[\s:]*"
+                r"(?!000|666|9\d{2})"
+                r"[0-9]{3}"
+                r"(?!00)[0-9]{2}"
+                r"(?!0000)[0-9]{4}"
+                r"(?!\d)",
+            ),
+            "critical",
+            "US Social Security Number (no dashes, keyword context)",
         )
     )
 
@@ -248,6 +267,25 @@ def _build_patterns() -> list[_PIIPattern]:
             ),
             "critical",
             "Korean Resident Registration Number (주민등록번호)",
+        )
+    )
+
+    # -- 5b. Korean RRN without dash (13 consecutive digits) -------------------
+    # Requires keyword context to reduce false positives.
+    patterns.append(
+        (
+            "korean_rrn",
+            re.compile(
+                r"(?i)(?:주민등록|주민번호|resident\s*registration)\s*(?:번호|number|no|#)?[\s:]*"
+                r"(?:[0-9]{2})"  # YY
+                r"(?:0[1-9]|1[0-2])"  # MM
+                r"(?:0[1-9]|[12][0-9]|3[01])"  # DD
+                r"[1-8]"  # gender/century digit
+                r"[0-9]{6}"
+                r"(?!\d)",
+            ),
+            "critical",
+            "Korean RRN without dash (주민등록번호, keyword context)",
         )
     )
 
@@ -646,7 +684,8 @@ class PIIGuardrail:
         position. Overlapping matches are deduplicated (longest match wins).
 
         Results are cached (LRU, 256 entries) so repeated checks on the
-        same content are O(1).
+        same content are O(1). Content larger than 50KB bypasses the cache
+        to prevent memory exhaustion.
 
         Args:
             content: The text to scan for PII.
@@ -654,15 +693,26 @@ class PIIGuardrail:
         Returns:
             List of PII matches found, ordered by position.
         """
+        if len(content) > self._MAX_CACHE_CONTENT_LEN:
+            return list(self._detect_uncached(content))
         return list(self._detect_cached(content))
+
+    # Max content length eligible for LRU caching (prevent memory exhaustion).
+    _MAX_CACHE_CONTENT_LEN = 50_000
 
     @functools.lru_cache(maxsize=256)  # noqa: B019
     def _detect_cached(self, content: str) -> tuple[PIIMatch, ...]:
         """Internal cached detection — returns a tuple for hashability."""
+        return self._detect_uncached(content)
+
+    def _detect_uncached(self, content: str) -> tuple[PIIMatch, ...]:
+        """Internal detection logic (no caching)."""
+        # Apply NFKC normalization to catch fullwidth digit evasion
+        normalized = unicodedata.normalize("NFKC", content)
         raw_matches: list[PIIMatch] = []
 
         for cat, pattern, _sev, _desc in self._active_patterns:
-            for m in pattern.finditer(content):
+            for m in pattern.finditer(normalized):
                 matched_text = m.group()
 
                 # Extra validation for credit cards: Luhn check.
@@ -674,10 +724,15 @@ class PIIGuardrail:
                     continue
 
                 masked = self._mask_text(matched_text, cat)
+
+                # Security: never store full credit card number in matched_text.
+                # Store the masked version instead to prevent log exposure.
+                stored_text = masked if cat == "credit_card" else matched_text
+
                 raw_matches.append(
                     PIIMatch(
                         category=cat,
-                        matched_text=matched_text,
+                        matched_text=stored_text,
                         start=m.start(),
                         end=m.end(),
                         masked_text=masked,

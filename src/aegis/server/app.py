@@ -238,7 +238,7 @@ def create_app(
     async def handle_error(request: Request, exc: Exception) -> JSONResponse:
         if isinstance(exc, json.JSONDecodeError):
             return JSONResponse({"error": "Invalid JSON"}, status_code=400)
-        if isinstance(exc, (KeyError, ValueError, TypeError)):
+        if isinstance(exc, KeyError | ValueError | TypeError):
             return JSONResponse({"error": "Bad request"}, status_code=400)
         # Do not leak internal exception details to clients
         return JSONResponse({"error": "Internal server error"}, status_code=500)
@@ -285,26 +285,58 @@ def create_app(
         500: handle_error,
     }
 
-    # Optional API key authentication middleware
+    # API key authentication middleware
+    # SECURITY: Without AEGIS_API_KEY, server binds to localhost only.
+    # The policy PUT endpoint requires a separate admin key or the main key.
     _api_key = os.environ.get("AEGIS_API_KEY")
+    _admin_key = os.environ.get("AEGIS_ADMIN_KEY", _api_key)
     middleware: list[Any] = []
-    if _api_key:
-        from starlette.middleware import Middleware
-        from starlette.middleware.base import BaseHTTPMiddleware
 
-        class ApiKeyAuthMiddleware(BaseHTTPMiddleware):
-            """Require X-API-Key header when AEGIS_API_KEY is set."""
+    from starlette.middleware import Middleware
+    from starlette.middleware.base import BaseHTTPMiddleware
 
-            async def dispatch(self, request: Request, call_next: Any) -> Any:
-                if request.url.path == "/health":
-                    return await call_next(request)
-                key = request.headers.get("X-API-Key", "")
-                if key != _api_key:
-                    return JSONResponse({"error": "Invalid or missing API key"}, status_code=401)
+    class ApiKeyAuthMiddleware(BaseHTTPMiddleware):
+        """Require X-API-Key header for all mutating endpoints."""
+
+        async def dispatch(self, request: Request, call_next: Any) -> Any:
+            import hmac as _hmac
+
+            if request.url.path == "/health":
                 return await call_next(request)
 
-        middleware.append(Middleware(ApiKeyAuthMiddleware))
+            key = request.headers.get("X-API-Key", "")
+
+            # Policy update requires admin key
+            if request.url.path == "/api/v1/policy" and request.method == "PUT":
+                if not _admin_key:
+                    return JSONResponse(
+                        {"error": "Policy updates require AEGIS_ADMIN_KEY"},
+                        status_code=403,
+                    )
+                if not _hmac.compare_digest(key, _admin_key):
+                    return JSONResponse(
+                        {"error": "Invalid admin API key"},
+                        status_code=401,
+                    )
+                return await call_next(request)
+
+            # All other endpoints require the standard API key (if set)
+            if _api_key and not _hmac.compare_digest(key, _api_key):
+                return JSONResponse(
+                    {"error": "Invalid or missing API key"},
+                    status_code=401,
+                )
+
+            return await call_next(request)
+
+    middleware.append(Middleware(ApiKeyAuthMiddleware))
+    if _api_key:
         _server_logger.info("API key authentication enabled via AEGIS_API_KEY")
+    else:
+        _server_logger.warning(
+            "AEGIS_API_KEY not set — server will only accept connections "
+            "from localhost. Set AEGIS_API_KEY for remote access."
+        )
 
     return Starlette(
         routes=routes,
