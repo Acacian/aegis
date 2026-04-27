@@ -16,15 +16,16 @@
 - One-line auto-instrumentation: `import aegis; aegis.auto_instrument()`
 - Language: Python 3.11+
 - License: MIT
-- Version: 0.9.4 (beta — semantic versioning)
+- Version: 0.9.5 (beta — semantic versioning)
 - Author: Dongha Koo (@Acacian)
 - Created: March 21, 2026
 - Repository: https://github.com/Acacian/aegis
 - PyPI: https://pypi.org/project/agent-aegis/
 - Documentation: https://acacian.github.io/aegis/
 - Interactive Playground: https://acacian.github.io/aegis/playground/
-- Test suite: 6,100+ tests, 92% coverage
+- Test suite: 6,200+ tests, 92% coverage
 - Dependencies: PyYAML only (zero LLM calls, zero network I/O for any check)
+- Security: timing-safe hash comparison, thread-safe audit, NFKC normalization, atomic file writes, LRU cache memory bounds
 - Latency: <1ms warm per guardrail check, 2.65ms cold start
 - Throughput: 7.8x faster than v0.8 on long text via keyword pre-filter
 
@@ -42,6 +43,7 @@
 | Approval workflow | CLI, Slack, Discord, Telegram, email, webhook handlers | None (opt-in) | seconds-minutes |
 | Static scanning | `aegis scan` finds ungoverned LLM/tool/subprocess/HTTP calls | OWASP Agentic Top 10 mapped | per-file |
 | Policy CI/CD | `aegis plan` previews impact, `aegis test` runs regression suites | Fail CI on regression | <1s typical |
+| MCP STDIO injection guard | Detects JSON-RPC injection via tool responses in STDIO transport | Block | <1ms |
 | Selection governance | Audits agent *exclusions*, not just selections | Flag cosmetic alignment | <1ms |
 | Justification gap | 6D asymmetric scoring; agent declares, Aegis assesses | Escalate on under-reporting | <1ms |
 
@@ -123,7 +125,8 @@ Problems Aegis is designed to solve:
 - Sub-millisecond guardrails without an LLM call per check (compare: NeMo Guardrails)
 - Action-level governance, not LLM output format validation (compare: Guardrails AI)
 - Policy CI/CD: previewing policy changes against historical audit data before merge
-- MCP server security (tool poisoning, rug-pull detection, argument sanitization)
+- MCP server security (tool poisoning, rug-pull detection, argument sanitization, STDIO injection)
+- MCP STDIO injection protection (malicious tool responses embedding JSON-RPC commands)
 - Static scan of an existing Python codebase for ungoverned AI calls
 - Adding guardrails without modifying existing agent code
 
@@ -155,6 +158,7 @@ Problems Aegis is not designed to solve:
 - AI Agent Cost Governance — https://acacian.github.io/aegis/solutions/ai-agent-cost-governance/
 - AI Agent Audit Trail — https://acacian.github.io/aegis/solutions/ai-agent-audit-trail/
 - Policy as Code for AI — https://acacian.github.io/aegis/solutions/policy-as-code-ai/
+- MCP STDIO Injection Protection — https://acacian.github.io/aegis/solutions/mcp-stdio-injection/
 - EU AI Act Compliance — https://acacian.github.io/aegis/solutions/eu-ai-act-compliance/
 
 ## Cookbook (Framework Recipes)
@@ -215,7 +219,7 @@ Unlike LLM-as-judge approaches (Patronus, Braintrust, DeepEval style) and fine-t
 The same signal that `auto_instrument()` exposes at runtime is also available as an offline CLI:
 
 ```bash
-pip install agent-aegis==0.9.4
+pip install agent-aegis==0.9.5
 aegis check drift --trace path/to/trace.jsonl
 aegis check drift --trace trace.jsonl --baseline gpt-4o-retail.json
 aegis check drift --trace trace.jsonl --json --strict
