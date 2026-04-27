@@ -66,6 +66,7 @@ class ServerSection:
 @dataclass
 class PolicySection:
     path: str = "policy.yaml"
+    watch: bool = False
 
 
 @dataclass
@@ -116,6 +117,44 @@ class AgentsSection:
 
 
 @dataclass
+class WebhookEntry:
+    url: str
+    name: str = ""
+    events: list[str] = field(default_factory=list)
+    min_severity: str = "warning"
+    format: str = "json"
+
+
+@dataclass
+class WebhooksSection:
+    enabled: bool = False
+    endpoints: list[WebhookEntry] = field(default_factory=list)
+
+
+@dataclass
+class RateLimitRuleConfig:
+    name: str = ""
+    match_type: str = "*"
+    match_target: str = "*"
+    max_requests: int = 100
+    window_seconds: int = 60
+    per_agent: bool = True
+    action_on_limit: str = "block"
+
+
+@dataclass
+class RateLimitSection:
+    enabled: bool = False
+    rules: list[RateLimitRuleConfig] = field(default_factory=list)
+
+
+@dataclass
+class CostSection:
+    enabled: bool = False
+    max_budget: float = 0.0
+
+
+@dataclass
 class ServerConfig:
     """Top-level server configuration."""
 
@@ -126,6 +165,9 @@ class ServerConfig:
     guardrails: GuardrailsSection = field(default_factory=GuardrailsSection)
     dashboard: DashboardSection = field(default_factory=DashboardSection)
     agents: AgentsSection = field(default_factory=AgentsSection)
+    webhooks: WebhooksSection = field(default_factory=WebhooksSection)
+    rate_limit: RateLimitSection = field(default_factory=RateLimitSection)
+    cost: CostSection = field(default_factory=CostSection)
 
     @classmethod
     def from_yaml(cls, path: str | Path) -> ServerConfig:
@@ -148,7 +190,10 @@ class ServerConfig:
 
         if "policy" in data:
             p = data["policy"]
-            cfg.policy = PolicySection(path=str(p.get("path", cfg.policy.path)))
+            cfg.policy = PolicySection(
+                path=str(p.get("path", cfg.policy.path)),
+                watch=bool(p.get("watch", cfg.policy.watch)),
+            )
 
         if "audit" in data:
             a = data["audit"]
@@ -192,6 +237,51 @@ class ServerConfig:
             ag = data["agents"]
             cfg.agents = AgentsSection(
                 heartbeat_timeout=int(ag.get("heartbeat_timeout", cfg.agents.heartbeat_timeout)),
+            )
+
+        if "webhooks" in data:
+            w = data["webhooks"]
+            endpoints = []
+            for ep in w.get("endpoints", []):
+                endpoints.append(
+                    WebhookEntry(
+                        url=str(ep.get("url", "")),
+                        name=str(ep.get("name", "")),
+                        events=ep.get("events", []),
+                        min_severity=str(ep.get("min_severity", "warning")),
+                        format=str(ep.get("format", "json")),
+                    )
+                )
+            cfg.webhooks = WebhooksSection(
+                enabled=bool(w.get("enabled", bool(endpoints))),
+                endpoints=endpoints,
+            )
+
+        if "rate_limit" in data:
+            rl = data["rate_limit"]
+            rules = []
+            for r in rl.get("rules", []):
+                rules.append(
+                    RateLimitRuleConfig(
+                        name=str(r.get("name", "")),
+                        match_type=str(r.get("match_type", "*")),
+                        match_target=str(r.get("match_target", "*")),
+                        max_requests=int(r.get("max_requests", 100)),
+                        window_seconds=int(r.get("window_seconds", 60)),
+                        per_agent=bool(r.get("per_agent", True)),
+                        action_on_limit=str(r.get("action_on_limit", "block")),
+                    )
+                )
+            cfg.rate_limit = RateLimitSection(
+                enabled=bool(rl.get("enabled", bool(rules))),
+                rules=rules,
+            )
+
+        if "cost" in data:
+            c = data["cost"]
+            cfg.cost = CostSection(
+                enabled=bool(c.get("enabled", False)),
+                max_budget=float(c.get("max_budget", 0.0)),
             )
 
         return cfg

@@ -37,3 +37,27 @@ dashboard:
 
 agents:
   heartbeat_timeout: 60      # Seconds before agent is considered stale
+
+# webhooks:
+#   enabled: true
+#   endpoints:
+#     - url: https://hooks.slack.com/services/xxx/yyy/zzz
+#       name: slack-alerts
+#       events: [action_blocked, anomaly_detected, rate_limited]
+#       min_severity: warning     # info | warning | critical
+#       format: json              # json | slack | pagerduty
+
+# rate_limit:
+#   enabled: true
+#   rules:
+#     - name: default
+#       match_type: "*"           # Glob pattern for action type
+#       match_target: "*"         # Glob pattern for target
+#       max_requests: 100
+#       window_seconds: 60
+#       per_agent: true
+#       action_on_limit: block    # block | throttle | warn
+
+# cost:
+#   enabled: true
+#   max_budget: 100.0             # Maximum budget in USD (0 = unlimited)

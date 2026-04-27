@@ -63,6 +63,14 @@ def create_app(
     audit_logger: Any | None = None,
     agent_heartbeat_timeout: int = 60,
     guardrail_engine: Any | None = None,
+    webhook_manager: Any | None = None,
+    rate_limiter: Any | None = None,
+    policy_store: Any | None = None,
+    crypto_chain: Any | None = None,
+    drift_detector: Any | None = None,
+    trust_scorer: Any | None = None,
+    cost_tracker: Any | None = None,
+    enable_policy_watcher: bool = False,
 ) -> Any:
     """Create the Aegis ASGI application.
 
@@ -136,12 +144,66 @@ def create_app(
             return JSONResponse({"error": "Request body too large (max 1MB)"}, status_code=413)
         return json.loads(body_bytes)
 
+    def _check_rate_limit(action: Action) -> JSONResponse | None:
+        """Check rate limit for an action. Returns 429 response if exceeded."""
+        if rate_limiter is None:
+            return None
+        agent_id = action.agent_id or "anonymous"
+        result = rate_limiter.check(action, agent_id=agent_id)
+        if not result.allowed:
+            if webhook_manager is not None:
+                from aegis.core.webhooks import WebhookEvent
+
+                webhook_manager.notify_async(
+                    WebhookEvent(
+                        event_type="rate_limited",
+                        severity="warning",
+                        agent_id=agent_id,
+                        action_type=action.type,
+                        action_target=action.target,
+                        message=f"Rate limited: {result.rule_name}",
+                    )
+                )
+            return JSONResponse(
+                {
+                    "error": "Rate limit exceeded",
+                    "rule": result.rule_name,
+                    "retry_after_seconds": result.retry_after_seconds,
+                },
+                status_code=429,
+            )
+        rate_limiter.record(action, agent_id=agent_id)
+        return None
+
+    def _fire_block_webhook(action: Action, reason: str) -> None:
+        """Fire a webhook notification when an action is blocked."""
+        if webhook_manager is None:
+            return
+        from aegis.core.webhooks import WebhookEvent
+
+        webhook_manager.notify_async(
+            WebhookEvent(
+                event_type="action_blocked",
+                severity="critical",
+                agent_id=action.agent_id or "unknown",
+                action_type=action.type,
+                action_target=action.target,
+                message=reason,
+            )
+        )
+
     async def evaluate(request: Request) -> JSONResponse:
         """Evaluate action(s) against policy without executing."""
         body = await _read_json(request)
         if isinstance(body, JSONResponse):
             return body
         actions = _parse_actions(body)
+
+        # Rate limit check (first action only for batch)
+        if actions:
+            rl_resp = _check_rate_limit(actions[0])
+            if rl_resp is not None:
+                return rl_resp
 
         results = []
         for action in actions:
@@ -229,8 +291,39 @@ def create_app(
             return body
         actions = _parse_actions(body)
 
+        # Rate limit check
+        if actions:
+            rl_resp = _check_rate_limit(actions[0])
+            if rl_resp is not None:
+                return rl_resp
+
         results = []
         for action in actions:
+            # Pre-execution guardrail check
+            if guardrail_engine is not None and action.description:
+                gr_results = guardrail_engine.check(action.description)
+                if any(not r.passed for r in gr_results):
+                    _fire_block_webhook(action, "Blocked by guardrail")
+                    results.append(
+                        {
+                            "action_type": action.type,
+                            "target": action.target,
+                            "status": "blocked",
+                            "data": None,
+                            "error": "Blocked by guardrail",
+                            "guardrails": [
+                                {
+                                    "name": r.guardrail_name,
+                                    "passed": r.passed,
+                                    "severity": getattr(r, "severity", "medium"),
+                                    "details": r.details,
+                                }
+                                for r in gr_results
+                            ],
+                        }
+                    )
+                    continue
+
             result = await runtime.run_one(action)
             results.append(
                 {
@@ -402,6 +495,32 @@ def create_app(
         Route("/api/v1/guardrails/check", check_guardrails, methods=["POST"]),
     ]
 
+    # Extended API endpoints (versioning, crypto, drift, trust, cost, sessions, compliance)
+    from aegis.server.extended_api import get_extended_routes
+
+    routes.extend(
+        get_extended_routes(
+            policy_store=policy_store,
+            crypto_chain=crypto_chain,
+            drift_detector=drift_detector,
+            trust_scorer=trust_scorer,
+            cost_tracker=cost_tracker,
+            runtime=runtime,
+        )
+    )
+
+    # Policy watcher (auto-reload on file change)
+    if enable_policy_watcher and policy_path is not None:
+        from aegis.runtime.watcher import PolicyWatcher
+
+        _watcher = PolicyWatcher(runtime, str(policy_path))
+
+        async def _on_startup() -> None:
+            await _watcher.start()
+
+        async def _on_shutdown() -> None:
+            await _watcher.stop()
+
     # WebSocket for real-time audit streaming
     from aegis.server.ws import AuditBroadcaster, get_ws_route
 
@@ -488,10 +607,16 @@ def create_app(
             "from localhost. Set AEGIS_API_KEY for remote access."
         )
 
+    lifecycle_handlers: dict[str, Any] = {}
+    if enable_policy_watcher and policy_path is not None:
+        lifecycle_handlers["on_startup"] = [_on_startup]
+        lifecycle_handlers["on_shutdown"] = [_on_shutdown]
+
     return Starlette(
         routes=routes,
         exception_handlers=exception_handlers,
         middleware=middleware,
+        **lifecycle_handlers,
     )
 
 
@@ -549,12 +674,33 @@ def create_app_from_config(config: Any) -> Any:
     # Build guardrail engine from config
     guardrail_engine = _build_guardrail_engine(config.guardrails)
 
+    # Build webhook manager from config
+    webhook_manager = _build_webhook_manager(config.webhooks)
+
+    # Build rate limiter from config
+    rate_limiter = _build_rate_limiter(config.rate_limit)
+
+    # Build extended feature objects
+    policy_store = _build_policy_store(config)
+    crypto_chain = _build_crypto_chain(config)
+    drift_detector = _build_drift_detector(config)
+    trust_scorer = _build_trust_scorer(config)
+    cost_tracker = _build_cost_tracker(config)
+
     return create_app(
         policy_path=policy_path,
         audit_logger=audit_logger,
         enable_dashboard=config.dashboard.enabled,
         agent_heartbeat_timeout=config.agents.heartbeat_timeout,
         guardrail_engine=guardrail_engine,
+        webhook_manager=webhook_manager,
+        rate_limiter=rate_limiter,
+        policy_store=policy_store,
+        crypto_chain=crypto_chain,
+        drift_detector=drift_detector,
+        trust_scorer=trust_scorer,
+        cost_tracker=cost_tracker,
+        enable_policy_watcher=config.policy.watch,
     )
 
 
@@ -588,6 +734,96 @@ def _build_guardrail_engine(cfg: Any) -> Any:
         return None
 
     return GuardrailEngine(guardrails=guardrails)
+
+
+def _build_webhook_manager(cfg: Any) -> Any:
+    """Build a WebhookManager from webhooks config section."""
+    if not cfg.enabled or not cfg.endpoints:
+        return None
+
+    from aegis.core.webhooks import WebhookConfig, WebhookManager
+
+    configs = []
+    for ep in cfg.endpoints:
+        configs.append(
+            WebhookConfig(
+                url=ep.url,
+                name=ep.name or ep.url,
+                events=frozenset(ep.events) if ep.events else frozenset(),
+                min_severity=ep.min_severity,
+                format=ep.format,
+            )
+        )
+    return WebhookManager(configs=configs)
+
+
+def _build_rate_limiter(cfg: Any) -> Any:
+    """Build a RateLimiter from rate_limit config section."""
+    if not cfg.enabled or not cfg.rules:
+        return None
+
+    from aegis.core.rate_limiter import RateLimiter, RateLimitRule
+
+    rules = []
+    for r in cfg.rules:
+        rules.append(
+            RateLimitRule(
+                name=r.name or f"rule_{len(rules)}",
+                match_type=r.match_type,
+                match_target=r.match_target,
+                max_requests=r.max_requests,
+                window_seconds=float(r.window_seconds),
+                per_agent=r.per_agent,
+                action_on_limit=r.action_on_limit,
+            )
+        )
+    return RateLimiter(rules=rules)
+
+
+def _build_policy_store(config: Any) -> Any:
+    """Build PolicyStore for versioning if enabled."""
+    if not getattr(config, "_versioning_enabled", True):
+        return None
+    from aegis.core.versioning import PolicyStore
+
+    return PolicyStore()
+
+
+def _build_crypto_chain(config: Any) -> Any:
+    """Build CryptoAuditChain if enabled."""
+    if not getattr(config, "_crypto_enabled", True):
+        return None
+    from aegis.core.crypto_audit import CryptoAuditChain
+
+    return CryptoAuditChain()
+
+
+def _build_drift_detector(config: Any) -> Any:
+    """Build DriftDetector if enabled."""
+    if not getattr(config, "_drift_enabled", True):
+        return None
+    from aegis.core.behavioral_drift import DriftDetector
+
+    return DriftDetector()
+
+
+def _build_trust_scorer(config: Any) -> Any:
+    """Build TrustScorer if enabled."""
+    if not getattr(config, "_trust_enabled", True):
+        return None
+    from aegis.core.trust_score import TrustScorer
+
+    return TrustScorer()
+
+
+def _build_cost_tracker(config: Any) -> Any:
+    """Build CostTracker if enabled in config."""
+    cost_cfg = getattr(config, "cost", None)
+    if cost_cfg is None or not cost_cfg.enabled:
+        return None
+    from aegis.core.budget import CostTracker
+
+    return CostTracker(max_budget=cost_cfg.max_budget)
 
 
 def _get_version() -> str:

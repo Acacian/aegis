@@ -238,3 +238,200 @@ class AegisClient:
 
     def __exit__(self, *exc: object) -> None:
         self.disconnect()
+
+
+class AsyncAegisClient:
+    """Async client for communicating with an Aegis governance server.
+
+    Async equivalent of :class:`AegisClient`. Uses ``httpx.AsyncClient``
+    and ``asyncio.Task`` for background heartbeat.
+
+    Usage::
+
+        async with AsyncAegisClient(
+            server_url="http://localhost:8000",
+            agent_id="my-agent",
+        ) as client:
+            result = await client.evaluate("read", "user_data")
+    """
+
+    def __init__(
+        self,
+        server_url: str,
+        *,
+        agent_id: str,
+        name: str = "",
+        framework: str = "",
+        version: str = "",
+        api_key: str = "",
+        heartbeat_interval: int = 30,
+        auto_register: bool = True,
+    ) -> None:
+        try:
+            import httpx
+        except ImportError:
+            msg = "httpx is required for AsyncAegisClient: pip install 'agent-aegis[httpx]'"
+            raise ImportError(msg) from None
+
+        self._base_url = server_url.rstrip("/")
+        self._agent_id = agent_id
+        self._name = name or agent_id
+        self._framework = framework
+        self._version = version
+        self._heartbeat_interval = heartbeat_interval
+        self._auto_register = auto_register
+
+        headers: dict[str, str] = {}
+        if api_key:
+            headers["X-API-Key"] = api_key
+
+        self._http = httpx.AsyncClient(
+            base_url=self._base_url,
+            headers=headers,
+            timeout=10.0,
+        )
+        self._heartbeat_task: Any | None = None
+        self._registered = False
+
+    @property
+    def agent_id(self) -> str:
+        return self._agent_id
+
+    @property
+    def server_url(self) -> str:
+        return self._base_url
+
+    @property
+    def is_registered(self) -> bool:
+        return self._registered
+
+    # ------------------------------------------------------------------
+    # Registration & heartbeat
+    # ------------------------------------------------------------------
+
+    async def register(self) -> dict[str, Any]:
+        """Register this agent with the server."""
+        resp = await self._http.post(
+            "/api/v1/agents",
+            json={
+                "agent_id": self._agent_id,
+                "name": self._name,
+                "framework": self._framework,
+                "version": self._version,
+            },
+        )
+        resp.raise_for_status()
+        self._registered = True
+        self._start_heartbeat()
+        return resp.json()
+
+    def _start_heartbeat(self) -> None:
+        import asyncio
+
+        if self._heartbeat_task is not None:
+            return
+        self._heartbeat_task = asyncio.create_task(self._heartbeat_loop())
+
+    async def _heartbeat_loop(self) -> None:
+        import asyncio
+
+        while True:
+            await asyncio.sleep(self._heartbeat_interval)
+            with contextlib.suppress(Exception):
+                await self._http.post(f"/api/v1/agents/{self._agent_id}/heartbeat")
+
+    async def disconnect(self) -> None:
+        """Unregister from the server and stop heartbeat."""
+        if self._heartbeat_task is not None:
+            self._heartbeat_task.cancel()
+            with contextlib.suppress(BaseException):
+                await self._heartbeat_task
+            self._heartbeat_task = None
+        if self._registered:
+            with contextlib.suppress(Exception):
+                await self._http.delete(f"/api/v1/agents/{self._agent_id}")
+            self._registered = False
+
+    # ------------------------------------------------------------------
+    # Governance API
+    # ------------------------------------------------------------------
+
+    async def evaluate(
+        self,
+        action_type: str,
+        target: str = "",
+        params: dict[str, Any] | None = None,
+        description: str = "",
+    ) -> dict[str, Any]:
+        """Evaluate an action against the server's policy (dry-run)."""
+        resp = await self._http.post(
+            "/api/v1/evaluate",
+            json={
+                "action_type": action_type,
+                "target": target,
+                "params": params or {},
+                "description": description,
+            },
+        )
+        resp.raise_for_status()
+        return resp.json()
+
+    async def execute(
+        self,
+        action_type: str,
+        target: str = "",
+        params: dict[str, Any] | None = None,
+        description: str = "",
+    ) -> dict[str, Any]:
+        """Execute an action through the full governance pipeline."""
+        resp = await self._http.post(
+            "/api/v1/execute",
+            json={
+                "action_type": action_type,
+                "target": target,
+                "params": params or {},
+                "description": description,
+            },
+        )
+        resp.raise_for_status()
+        return resp.json()
+
+    async def check_guardrails(self, content: str) -> dict[str, Any]:
+        """Check content against the server's guardrail engine."""
+        resp = await self._http.post(
+            "/api/v1/guardrails/check",
+            json={"content": content},
+        )
+        resp.raise_for_status()
+        return resp.json()
+
+    async def get_policy(self) -> dict[str, Any]:
+        """Retrieve the current policy from the server."""
+        resp = await self._http.get("/api/v1/policy")
+        resp.raise_for_status()
+        return resp.json()
+
+    async def get_audit(self, **filters: Any) -> dict[str, Any] | list[dict[str, Any]]:
+        """Query audit log from the server."""
+        resp = await self._http.get("/api/v1/audit", params=filters)
+        resp.raise_for_status()
+        return resp.json()
+
+    async def status(self) -> dict[str, Any]:
+        """Get this agent's status from the server."""
+        resp = await self._http.get(f"/api/v1/agents/{self._agent_id}")
+        resp.raise_for_status()
+        return resp.json()
+
+    # ------------------------------------------------------------------
+    # Context manager
+    # ------------------------------------------------------------------
+
+    async def __aenter__(self) -> AsyncAegisClient:
+        if self._auto_register:
+            await self.register()
+        return self
+
+    async def __aexit__(self, *exc: object) -> None:
+        await self.disconnect()
+        await self._http.aclose()
