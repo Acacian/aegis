@@ -18,7 +18,7 @@
   <a href="https://github.com/Acacian/aegis/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License"></a>
   <a href="https://acacian.github.io/aegis/"><img src="https://img.shields.io/badge/docs-acacian.github.io%2Faegis-blue" alt="Docs"></a>
   <br/>
-  <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-6100%2B_passed-brightgreen" alt="Tests"></a>
+  <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-6200%2B_passed-brightgreen" alt="Tests"></a>
   <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/coverage-92%25-brightgreen" alt="Coverage"></a>
   <a href="https://acacian.github.io/aegis/playground/"><img src="https://img.shields.io/badge/playground-Try_it_Live-ff6b6b" alt="Playground"></a>
   <a href="https://acacian.github.io/aegis/playground/scan-report.html"><img src="https://img.shields.io/badge/scan_report-39_Repos%2C_92%25_F-red" alt="Scan Report"></a>
@@ -122,6 +122,7 @@ One API. 12 agent frameworks + 3 protocol-level adapters.
 | **PII detection** | Warn | 13 categories (email, credit card, SSN, IBAN, API keys, etc.) |
 | **Prompt leak** | Warn | System prompt extraction attempts |
 | **Toxicity** | Warn | Harmful, violent, or abusive content |
+| **MCP STDIO injection** | Block | JSON-RPC injection, frame concatenation, unicode escape bypass ([OX Security advisory](https://www.oxsecurity.io/blog/mcp-security-research)) |
 
 Deterministic regex — no LLM calls, no network. **2.65ms cold / <1µs warm** per check.
 
@@ -218,7 +219,7 @@ aegis test new.yaml tests.yaml --regression old.yaml   # Regression check
 Or block ungoverned calls at PR time:
 
 ```yaml
-- uses: Acacian/aegis@v0.9.3
+- uses: Acacian/aegis@v0.9.5
   with:
     command: scan
     fail-on-ungoverned: true
@@ -310,7 +311,7 @@ pip install 'agent-aegis[all]'            # Everything
 }
 ```
 
-Works with Claude Desktop, Cursor, VS Code, Windsurf. Tool poisoning detection, rug-pull detection, argument sanitization, policy evaluation, full audit trail.
+Works with Claude Desktop, Cursor, VS Code, Windsurf. STDIO injection protection, tool poisoning detection, rug-pull detection, argument sanitization, policy evaluation, full audit trail.
 
 ---
 

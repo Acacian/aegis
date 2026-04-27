@@ -17,7 +17,7 @@
   <a href="https://github.com/Acacian/aegis/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License"></a>
   <a href="https://acacian.github.io/aegis/"><img src="https://img.shields.io/badge/docs-acacian.github.io%2Faegis-blue" alt="Docs"></a>
   <br/>
-  <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-6100%2B_passed-brightgreen" alt="Tests"></a>
+  <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-6200%2B_passed-brightgreen" alt="Tests"></a>
   <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/coverage-92%25-brightgreen" alt="Coverage"></a>
   <a href="https://acacian.github.io/aegis/playground/"><img src="https://img.shields.io/badge/playground-브라우저에서_체험-ff6b6b" alt="Playground"></a>
   <a href="https://acacian.github.io/aegis/playground/scan-report.html"><img src="https://img.shields.io/badge/스캔_리포트-39개_레포%2C_92%25_F-red" alt="Scan Report"></a>
@@ -115,6 +115,7 @@ Aegis의 모든 거버넌스 기능 — 이상 탐지, 비용 예산, 드리프�
 | **PII 탐지** | 경고 | 13개 카테고리 (이메일, 신용카드, SSN, IBAN, API 키 등) |
 | **프롬프트 유출** | 경고 | 시스템 프롬프트 추출 시도 |
 | **유해 콘텐츠** | 경고 | 유해, 폭력적, 학대적 콘텐츠 |
+| **MCP STDIO 인젝션** | 차단 | JSON-RPC 삽입, 프레임 연결 공격, 유니코드 이스케이프 우회 ([OX Security 어드바이저리](https://www.oxsecurity.io/blog/mcp-security-research)) |
 
 결정론적 regex — LLM 호출 없음, 네트워크 없음. **콜드 2.65ms / 웜 <1µs**.
 
@@ -211,7 +212,7 @@ aegis test new.yaml tests.yaml --regression old.yaml   # 회귀 검사
 또는 PR 시점에 보호되지 않은 호출을 차단:
 
 ```yaml
-- uses: Acacian/aegis@v0.9.3
+- uses: Acacian/aegis@v0.9.5
   with:
     command: scan
     fail-on-ungoverned: true
@@ -303,7 +304,7 @@ pip install 'agent-aegis[all]'            # 전부
 }
 ```
 
-Claude Desktop, Cursor, VS Code, Windsurf에서 사용 가능. 툴 포이즈닝 탐지, 러그풀 탐지, 인자 살균, 정책 평가, 전체 감사 추적.
+Claude Desktop, Cursor, VS Code, Windsurf에서 사용 가능. STDIO 인젝션 방어, 툴 포이즈닝 탐지, 러그풀 탐지, 인자 살균, 정책 평가, 전체 감사 추적.
 
 ---
 
