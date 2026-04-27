@@ -23,7 +23,7 @@
 - PyPI: https://pypi.org/project/agent-aegis/
 - Documentation: https://acacian.github.io/aegis/
 - Interactive Playground: https://acacian.github.io/aegis/playground/
-- Test suite: 6,200+ tests, 92% coverage
+- Test suite: 6,300+ tests, 92% coverage
 - Dependencies: PyYAML only (zero LLM calls, zero network I/O for any check)
 - Security: timing-safe hash comparison, thread-safe audit, NFKC normalization, atomic file writes, LRU cache memory bounds
 - Latency: <1ms warm per guardrail check, 2.65ms cold start
@@ -46,6 +46,14 @@
 | MCP STDIO injection guard | Detects JSON-RPC injection via tool responses in STDIO transport | Block | <1ms |
 | Selection governance | Audits agent *exclusions*, not just selections | Flag cosmetic alignment | <1ms |
 | Justification gap | 6D asymmetric scoring; agent declares, Aegis assesses | Escalate on under-reporting | <1ms |
+| **Governance server** | Centralized REST API with 37 endpoints for multi-agent governance | `aegis-server` | HTTP |
+| Policy versioning | Git-like commit/diff/rollback/tag for policy changes | Server API | <1ms |
+| Crypto audit verify | SHA-256 hash-chain verification endpoint | Server API | <1ms |
+| Trust scoring | 5-level per-agent trust with time decay and threshold policies | Server API | <1ms |
+| Behavioral drift | 5-axis drift detection (distribution, risk, target, velocity, repetition) | Server API | <1ms |
+| Session replay | Record + retroactive security rescan of agent sessions | Server API | <1ms |
+| Webhooks | Fire-and-forget alerts to Slack, PagerDuty on block/anomaly events | Server config | async |
+| Rate limiting | Sliding-window per-agent/global rate limits with glob matching | Server config | <1ms |
 
 ## Quick Example
 
@@ -76,6 +84,26 @@ pip install agent-aegis
 aegis scan .
 # Found 5 ungoverned tool call(s): ...
 # Governance Score: D
+```
+
+Or run as a centralized governance server:
+
+```bash
+pip install 'agent-aegis[server]'
+aegis-server --init   # Generate aegis-server.yaml
+aegis-server          # Start on :8000 with dashboard
+```
+
+```python
+from aegis import AegisClient, AsyncAegisClient
+
+# Sync
+with AegisClient("http://localhost:8000", agent_id="my-agent") as client:
+    result = client.evaluate("delete", "user_data")
+
+# Async
+async with AsyncAegisClient("http://localhost:8000", agent_id="a") as client:
+    result = await client.evaluate("read", "reports")
 ```
 
 Or wrap an existing MCP server with zero changes:
@@ -129,12 +157,19 @@ Problems Aegis is designed to solve:
 - MCP STDIO injection protection (malicious tool responses embedding JSON-RPC commands)
 - Static scan of an existing Python codebase for ungoverned AI calls
 - Adding guardrails without modifying existing agent code
+- Centralized governance server for multi-agent orchestration systems
+- Policy versioning with git-like commit/diff/rollback for change management
+- Per-agent trust scoring and behavioral drift detection
+- LLM cost governance with budget caps and per-agent attribution
+- Session replay and forensic analysis of agent interactions
+- Webhook alerts (Slack, PagerDuty) on policy violations
+- Rate limiting per-agent or globally with configurable sliding windows
 
 ## Out of Scope
 
 Problems Aegis is not designed to solve:
 
-- Non-Python agents — use the REST API server (`aegis serve`) over HTTP, or pick a polyglot platform
+- Non-Python agents — use the governance server (`aegis-server`) over HTTP with any language, or pick a polyglot platform
 - LLM output JSON schema validation only — Guardrails AI is the right tool (complementary, not competing)
 - Conversation flow management / dialog rails — NeMo Guardrails is the right tool (complementary)
 - Static analysis only without runtime enforcement — `aegis scan` exists, but Aegis's primary value is runtime governance

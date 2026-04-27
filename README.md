@@ -18,7 +18,7 @@
   <a href="https://github.com/Acacian/aegis/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License"></a>
   <a href="https://acacian.github.io/aegis/"><img src="https://img.shields.io/badge/docs-acacian.github.io%2Faegis-blue" alt="Docs"></a>
   <br/>
-  <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-6200%2B_passed-brightgreen" alt="Tests"></a>
+  <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-6300%2B_passed-brightgreen" alt="Tests"></a>
   <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/coverage-92%25-brightgreen" alt="Coverage"></a>
   <a href="https://acacian.github.io/aegis/playground/"><img src="https://img.shields.io/badge/playground-Try_it_Live-ff6b6b" alt="Playground"></a>
   <a href="https://acacian.github.io/aegis/playground/scan-report.html"><img src="https://img.shields.io/badge/scan_report-39_Repos%2C_92%25_F-red" alt="Scan Report"></a>
@@ -130,7 +130,7 @@ Deterministic regex — no LLM calls, no network. **2.65ms cold / <1µs warm** p
 
 ## Use Cases
 
-The same primitives, four different entry points. Pick whichever matches your workflow.
+The same primitives, five different entry points. Pick whichever matches your workflow.
 
 ### 1. Runtime protection (most common)
 
@@ -242,6 +242,17 @@ aegis audit
 
 SQLite + JSONL + webhook sinks. Ed25519 signing for long-term evidence. See the [Compliance guide](https://acacian.github.io/aegis/api/compliance/).
 
+### 5. Governance server (multi-agent)
+
+Centralized governance for multiple agents. Each agent connects via SDK, server handles policy, guardrails, audit, and compliance.
+
+```bash
+pip install 'agent-aegis[server]'
+aegis-server
+```
+
+37 REST endpoints + WebSocket audit streaming + web dashboard. Agents auto-register, send heartbeats, and query policy over HTTP. See [Governance Framework Server](#governance-framework-server).
+
 ---
 
 ## 30-Second Start
@@ -312,6 +323,49 @@ pip install 'agent-aegis[all]'            # Everything
 ```
 
 Works with Claude Desktop, Cursor, VS Code, Windsurf. STDIO injection protection, tool poisoning detection, rug-pull detection, argument sanitization, policy evaluation, full audit trail.
+
+### Governance Framework Server
+
+Run Aegis as a dedicated governance server with REST API, WebSocket streaming, and web dashboard.
+
+```bash
+pip install 'agent-aegis[server]'
+aegis-server --init          # Generate aegis-server.yaml
+aegis-server                 # Start server on :8000
+```
+
+**37 REST endpoints** covering the full governance lifecycle:
+
+| API Group | Endpoints | Purpose |
+|-----------|-----------|---------|
+| **Core** | evaluate, execute, audit, policy | Policy evaluation + execution pipeline |
+| **Agents** | register, heartbeat, list, status | Agent lifecycle management |
+| **Guardrails** | check, list | Content safety checks |
+| **Policy Versioning** | commit, diff, rollback, tag | Git-like policy change management |
+| **Crypto Audit** | verify, entries, evidence | Tamper-proof audit chain verification |
+| **Trust & Drift** | trust score, drift detection | Per-agent behavioral analysis |
+| **Cost** | budget check, reports | LLM cost governance |
+| **Compliance** | reports, regulatory gaps | SOC2 / GDPR / EU AI Act reports |
+| **Sessions** | list, replay | Session recording + forensic replay |
+
+Connect with the Python SDK (sync or async):
+
+```python
+from aegis import AegisClient
+
+with AegisClient("http://localhost:8000", agent_id="my-agent") as client:
+    result = client.evaluate("delete", "user_data")
+    # result["risk_level"] == "CRITICAL", result["is_allowed"] == False
+```
+
+```python
+from aegis import AsyncAegisClient
+
+async with AsyncAegisClient("http://localhost:8000", agent_id="my-agent") as client:
+    result = await client.evaluate("read", "reports")
+```
+
+Config-driven via `aegis-server.yaml` — guardrails, webhooks (Slack/PagerDuty), rate limiting, cost budgets, and auth all declarative. See [`aegis-server.example.yaml`](aegis-server.example.yaml).
 
 ---
 

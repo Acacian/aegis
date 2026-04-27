@@ -45,3 +45,5 @@ _*.md
 
 # Sensitive content
 security-report-*.md
+aegis-server.yaml
+aegis-server.yml
