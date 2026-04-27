@@ -123,6 +123,7 @@ nav:
       - OpenAI Agents Security: solutions/openai-agents-security.md
       - LiteLLM Security: solutions/litellm-security.md
       - MCP Security: solutions/mcp-security.md
+      - MCP STDIO Injection Protection: solutions/mcp-stdio-injection.md
       - LLM Guardrails for Python: solutions/llm-guardrails-python.md
       - AI Agent Vulnerability Scanner: solutions/ai-agent-vulnerability-scanner.md
       - Prompt Injection Detection: solutions/prompt-injection-detection.md

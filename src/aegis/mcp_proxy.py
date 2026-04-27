@@ -130,6 +130,8 @@ class AegisMCPProxy:
         escalation_detection: bool = True,
         shadow_detection: bool = True,
         rate_limit_config: dict[str, Any] | None = None,
+        # STDIO injection protection
+        stdio_guard: bool = True,
     ) -> None:
         self._targets = targets
         self._policy_path = policy_path or os.environ.get("AEGIS_POLICY_PATH")
@@ -144,6 +146,7 @@ class AegisMCPProxy:
         self._escalation_detection = escalation_detection
         self._shadow_detection = shadow_detection
         self._rate_limit_config = rate_limit_config
+        self._stdio_guard_enabled = stdio_guard
 
         # Populated at start()
         self._connections: list[_TargetConnection] = []
@@ -159,6 +162,7 @@ class AegisMCPProxy:
         self._security_gate: Any = None
         self._guardrail_engine: Any = None
         self._audit_logger: Any = None
+        self._stdio_guard: Any = None
 
     # ------------------------------------------------------------------
     # Governance component initialization
@@ -166,6 +170,12 @@ class AegisMCPProxy:
 
     def _init_governance(self) -> None:
         """Initialize governance components."""
+        # STDIO injection guard
+        if self._stdio_guard_enabled:
+            from aegis.core.mcp_stdio_guard import StdioGuard
+
+            self._stdio_guard = StdioGuard()
+
         # Policy
         from aegis.core.policy import Policy
 
@@ -631,6 +641,29 @@ class AegisMCPProxy:
         try:
             result = await conn.session.call_tool(entry.tool.name, arguments)
 
+            # 5a. STDIO injection guard (BEFORE any other response processing)
+            if self._stdio_guard and result.content:
+                response_text = " ".join(
+                    getattr(c, "text", "") for c in result.content if hasattr(c, "text")
+                )
+                if response_text:
+                    stdio_result = self._stdio_guard.scan_content(
+                        response_text, tool_name=entry.tool.name
+                    )
+                    if stdio_result.has_injection and stdio_result.critical_count > 0:
+                        reason = (
+                            f"STDIO injection detected: {stdio_result.critical_count} critical "
+                            f"finding(s) in tool response"
+                        )
+                        self._audit_decision(entry, arguments, decision, blocked_reason=reason)
+                        logger.error("[aegis] BLOCKED %s: %s", name, reason)
+                        return [
+                            types.TextContent(
+                                type="text",
+                                text=f"[aegis] Tool response blocked: {reason}",
+                            )
+                        ]
+
             # 5b. Response scanning (AFTER getting response from target)
             if self._security_gate and result.content:
                 response_text = " ".join(
@@ -916,6 +949,12 @@ def main(argv: list[str] | None = None) -> None:
         help="Disable shadow detection.",
     )
     parser.add_argument(
+        "--no-stdio-guard",
+        action="store_true",
+        default=False,
+        help="Disable STDIO injection protection (not recommended).",
+    )
+    parser.add_argument(
         "--rate-limit-rpm",
         type=int,
         default=None,
@@ -985,6 +1024,7 @@ def main(argv: list[str] | None = None) -> None:
         escalation_detection=not args.no_escalation,
         shadow_detection=not args.no_shadow,
         rate_limit_config=rate_limit_config,
+        stdio_guard=not args.no_stdio_guard,
     )
 
     import anyio

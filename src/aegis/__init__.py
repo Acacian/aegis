@@ -143,6 +143,11 @@ _LAZY_IMPORTS: dict[str, str] = {
     "DriftDetector": "aegis.core.behavioral_drift",
     "DriftFinding": "aegis.core.behavioral_drift",
     # -- Paper-based modules (v0.11+) --
+    # MCP STDIO injection guard (OX Security advisory 2026-04-15)
+    "StdioGuard": "aegis.core.mcp_stdio_guard",
+    "StdioInjectionScanner": "aegis.core.mcp_stdio_guard",
+    "StdioFrameValidator": "aegis.core.mcp_stdio_guard",
+    "StdioScanResult": "aegis.core.mcp_stdio_guard",
     # MCP manifest signing (arXiv:2512.06556)
     "ManifestSigner": "aegis.core.mcp_manifest",
     "ManifestVerifier": "aegis.core.mcp_manifest",
