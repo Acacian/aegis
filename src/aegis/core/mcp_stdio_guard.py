@@ -200,6 +200,21 @@ _CONTENT_LENGTH_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
+# JSON unicode escape pattern (used for normalization before scanning)
+_JSON_UNICODE_ESCAPE = re.compile(r"\\u([0-9a-fA-F]{4})")
+
+
+def _decode_json_unicode_escapes(text: str) -> str:
+    """Decode JSON \\uXXXX escape sequences to actual characters.
+
+    This prevents bypass via unicode-escaped keys like \\u006asonrpc
+    which JSON parsers will decode but regex patterns won't match.
+    """
+    try:
+        return _JSON_UNICODE_ESCAPE.sub(lambda m: chr(int(m.group(1), 16)), text)
+    except (ValueError, OverflowError):
+        return text
+
 
 # ---------------------------------------------------------------------------
 # StdioInjectionScanner
@@ -265,10 +280,13 @@ class StdioInjectionScanner:
                 )
             )
 
+        # 0. Normalize JSON unicode escapes to prevent bypass via \u006asonrpc
+        normalized = _decode_json_unicode_escapes(scan_content)
+
         # 1. JSON-RPC injection detection
         if not self._allow_jsonrpc:
             for pattern_name, severity, regex in _JSONRPC_PATTERNS:
-                for match in regex.finditer(scan_content):
+                for match in regex.finditer(normalized):
                     findings.append(
                         StdioFinding(
                             category="jsonrpc_injection",
@@ -283,7 +301,7 @@ class StdioInjectionScanner:
                     )
 
         # 2. Frame boundary injection (newline + JSON-RPC start)
-        for match in _FRAME_BOUNDARY_PATTERN.finditer(scan_content):
+        for match in _FRAME_BOUNDARY_PATTERN.finditer(normalized):
             findings.append(
                 StdioFinding(
                     category="frame_injection",
@@ -344,24 +362,36 @@ class StdioInjectionScanner:
     def _sanitize(self, content: str) -> str:
         """Neutralize injection patterns in content.
 
-        Escapes JSON-RPC-like structures so they cannot be parsed
-        as valid messages by downstream consumers.
+        Breaks ALL JSON-RPC-identifiable patterns so they cannot be
+        parsed as valid messages by ANY downstream consumer.
         """
-        # Escape the "jsonrpc" key so it won't match JSON-RPC parsers
+        sanitized = content
+
+        # 1. Break "jsonrpc" key (literal and unicode-escaped variants)
+        sanitized = sanitized.replace('"jsonrpc"', '"_blocked_jsonrpc"')
         sanitized = re.sub(
-            r'("jsonrpc")',
-            r'"_jsonrpc_escaped"',
-            content,
-        )
-        # Neutralize frame boundaries (replace bare newlines before { with escaped)
-        sanitized = re.sub(
-            r"(\r?\n)(\s*\{)",
-            r"\1/* aegis-sanitized */\2",
+            r"\\u006[aA]sonrpc",
+            "_blocked_jsonrpc",
             sanitized,
         )
-        # Remove null bytes
+
+        # 2. Break MCP method patterns that could trigger client actions
+        sanitized = re.sub(
+            r'"method"\s*:\s*"(tools/|resources/|prompts/|notifications/|initialize)',
+            '"_blocked_method": "_\\1',
+            sanitized,
+        )
+
+        # 3. Neutralize frame boundaries (newline + opening brace)
+        sanitized = re.sub(
+            r"(\r?\n)(\s*\{)",
+            r"\1/* aegis-blocked */\2",
+            sanitized,
+        )
+
+        # 4. Remove null bytes
         sanitized = sanitized.replace("\x00", "")
-        # Replace unicode line separators with standard newlines
+        # 5. Replace unicode line separators with standard newlines
         sanitized = sanitized.replace("\u2028", "\n").replace("\u2029", "\n")
         return sanitized
 
@@ -469,17 +499,9 @@ class StdioFrameValidator:
                 reason='Frame missing or invalid "jsonrpc": "2.0" field',
             )
 
-        # Check for multiple messages concatenated (the core attack)
-        # After the first valid JSON object, there should be nothing else
-        # This catches: {"jsonrpc":"2.0",...}{"jsonrpc":"2.0",...}
-        injected = self._count_json_objects(text)
-        if injected > 1:
-            return FrameValidation(
-                valid=False,
-                reason=f"Frame contains {injected} concatenated JSON objects — injection detected",
-                message_count=1,
-                injected_count=injected - 1,
-            )
+        # NOTE: If json.loads succeeded without "Extra data" error,
+        # the frame contains exactly 1 JSON object — no need to re-count.
+        # Concatenated objects are caught in the JSONDecodeError handler above.
 
         # Burst detection
         now = time.time()
