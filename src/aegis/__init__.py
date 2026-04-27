@@ -208,6 +208,8 @@ _LAZY_IMPORTS: dict[str, str] = {
     # Data isolation (arXiv:2403.04960)
     "DataIsolator": "aegis.core.data_isolation",
     "IsolationViolation": "aegis.core.data_isolation",
+    # Framework client SDK
+    "AegisClient": "aegis.client",
 }
 
 __all__ = [

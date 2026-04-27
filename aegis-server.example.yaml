@@ -1,0 +1,39 @@
+# Aegis Governance Framework Server Configuration
+# Copy to aegis-server.yaml and customize for your deployment.
+# Docs: https://acacian.github.io/aegis/guides/framework/
+#
+# Start server:
+#   aegis-server                              # auto-detects ./aegis-server.yaml
+#   aegis-server --config /etc/aegis.yaml     # explicit path
+
+server:
+  host: 127.0.0.1          # Use 0.0.0.0 for remote access (requires api_key)
+  port: 8000
+
+policy:
+  path: policy.yaml         # Path to YAML policy file
+
+audit:
+  backend: sqlite            # sqlite | redis | postgres
+  sqlite:
+    path: aegis_audit.db
+  # redis:
+  #   url: redis://localhost:6379/0
+  # postgres:
+  #   dsn: postgresql://user:pass@localhost/aegis
+
+auth:
+  api_key: ${AEGIS_API_KEY}          # Set env var for API auth
+  admin_key: ${AEGIS_ADMIN_KEY}      # Required for policy updates
+
+guardrails:
+  injection: true            # Prompt injection detection
+  pii: true                  # PII masking (SSN, credit cards, etc.)
+  toxicity: false            # Toxicity classification
+  prompt_leak: false         # System prompt exfiltration detection
+
+dashboard:
+  enabled: true              # Serve web dashboard at /dashboard
+
+agents:
+  heartbeat_timeout: 60      # Seconds before agent is considered stale

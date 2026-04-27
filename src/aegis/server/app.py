@@ -60,6 +60,9 @@ def create_app(
     audit_db_path: str | Path | None = None,
     enable_dashboard: bool = True,
     anomaly_detector: Any | None = None,
+    audit_logger: Any | None = None,
+    agent_heartbeat_timeout: int = 60,
+    guardrail_engine: Any | None = None,
 ) -> Any:
     """Create the Aegis ASGI application.
 
@@ -70,6 +73,9 @@ def create_app(
         audit_db_path: Path for SQLite audit DB. Defaults to in-memory.
         enable_dashboard: Serve the web dashboard at ``/``. Default ``True``.
         anomaly_detector: Optional :class:`AnomalyDetector` for dashboard anomaly pages.
+        audit_logger: Pre-configured audit logger instance (overrides audit_db_path).
+        agent_heartbeat_timeout: Seconds before an agent is considered stale.
+        guardrail_engine: Pre-configured :class:`GuardrailEngine` for content checks.
 
     Returns:
         A Starlette ASGI application.
@@ -86,7 +92,8 @@ def create_app(
     elif policy is None:
         policy = Policy()
 
-    audit_logger = AuditLogger(db_path=audit_db_path) if audit_db_path else AuditLogger()
+    if audit_logger is None:
+        audit_logger = AuditLogger(db_path=audit_db_path) if audit_db_path else AuditLogger()
     import logging as _logging
 
     _server_logger = _logging.getLogger("aegis.server")
@@ -104,7 +111,21 @@ def create_app(
     )
 
     async def health(request: Request) -> JSONResponse:
-        return JSONResponse({"status": "ok", "version": _get_version()})
+        data: dict[str, Any] = {
+            "status": "ok",
+            "version": _get_version(),
+            "agents": {
+                "total": agent_registry.count,
+                "alive": agent_registry.alive_count,
+            },
+            "guardrails": {
+                "enabled": guardrail_engine is not None,
+                "active": [g.name for g in guardrail_engine._guardrails]
+                if guardrail_engine is not None
+                else [],
+            },
+        }
+        return JSONResponse(data)
 
     _MAX_BODY_BYTES = 1_048_576  # 1 MB
 
@@ -125,20 +146,81 @@ def create_app(
         results = []
         for action in actions:
             decision = runtime.policy.evaluate(action)
-            results.append(
-                {
-                    "action_type": action.type,
-                    "target": action.target,
-                    "risk_level": decision.risk_level.name,
-                    "approval": decision.approval.value,
-                    "is_allowed": decision.is_allowed,
-                    "matched_rule": decision.matched_rule,
-                }
-            )
+            entry: dict[str, Any] = {
+                "action_type": action.type,
+                "target": action.target,
+                "risk_level": decision.risk_level.name,
+                "approval": decision.approval.value,
+                "is_allowed": decision.is_allowed,
+                "matched_rule": decision.matched_rule,
+            }
+
+            # Run guardrails on action description/params if engine is available
+            if guardrail_engine is not None and action.description:
+                gr_results = guardrail_engine.check(action.description)
+                entry["guardrails"] = [
+                    {
+                        "name": r.guardrail_name,
+                        "passed": r.passed,
+                        "severity": getattr(r, "severity", "medium"),
+                        "details": r.details,
+                    }
+                    for r in gr_results
+                ]
+                if any(not r.passed for r in gr_results):
+                    entry["is_allowed"] = False
+                    entry["blocked_by_guardrail"] = True
+
+            results.append(entry)
 
         if len(results) == 1:
             return JSONResponse(results[0])
         return JSONResponse(results)
+
+    async def check_guardrails(request: Request) -> JSONResponse:
+        """Run guardrail checks on arbitrary content."""
+        if guardrail_engine is None:
+            return JSONResponse({"error": "No guardrails configured"}, status_code=501)
+        body = await _read_json(request)
+        if isinstance(body, JSONResponse):
+            return body
+        content = body.get("content", "")
+        if not content:
+            return JSONResponse({"error": "content is required"}, status_code=400)
+
+        gr_results = guardrail_engine.check(content)
+        return JSONResponse(
+            {
+                "content_length": len(content),
+                "passed": all(r.passed for r in gr_results),
+                "results": [
+                    {
+                        "name": r.guardrail_name,
+                        "passed": r.passed,
+                        "severity": getattr(r, "severity", "medium"),
+                        "details": r.details,
+                    }
+                    for r in gr_results
+                ],
+            }
+        )
+
+    async def list_guardrails(request: Request) -> JSONResponse:
+        """List active guardrails and their configuration."""
+        if guardrail_engine is None:
+            return JSONResponse({"enabled": False, "guardrails": []})
+        return JSONResponse(
+            {
+                "enabled": True,
+                "guardrails": [
+                    {
+                        "name": g.name,
+                        "description": getattr(g, "description", ""),
+                    }
+                    for g in guardrail_engine._guardrails
+                ],
+            }
+        )
 
     async def execute_action(request: Request) -> JSONResponse:
         """Execute action through full governance pipeline."""
@@ -243,6 +325,65 @@ def create_app(
         # Do not leak internal exception details to clients
         return JSONResponse({"error": "Internal server error"}, status_code=500)
 
+    # --- Agent registry ---
+    from aegis.server.agents import AgentRegistry
+
+    agent_registry = AgentRegistry(heartbeat_timeout=agent_heartbeat_timeout)
+
+    async def register_agent(request: Request) -> JSONResponse:
+        """Register or re-register an agent."""
+        body = await _read_json(request)
+        if isinstance(body, JSONResponse):
+            return body
+        agent_id = body.get("agent_id", "")
+        if not agent_id:
+            return JSONResponse({"error": "agent_id is required"}, status_code=400)
+        rec = agent_registry.register(
+            agent_id=agent_id,
+            name=body.get("name", agent_id),
+            framework=body.get("framework", ""),
+            version=body.get("version", ""),
+            metadata=body.get("metadata"),
+        )
+        timeout = agent_registry._heartbeat_timeout
+        return JSONResponse(rec.to_dict(timeout=timeout), status_code=201)
+
+    async def list_agents(request: Request) -> JSONResponse:
+        """List all registered agents."""
+        alive_only = request.query_params.get("alive", "").lower() in ("1", "true")
+        agents = agent_registry.list_alive() if alive_only else agent_registry.list_all()
+        timeout = agent_registry._heartbeat_timeout
+        return JSONResponse(
+            {
+                "agents": [a.to_dict(timeout=timeout) for a in agents],
+                "total": agent_registry.count,
+                "alive": agent_registry.alive_count,
+            }
+        )
+
+    async def get_agent(request: Request) -> JSONResponse:
+        """Get a single agent's status."""
+        agent_id = request.path_params["agent_id"]
+        rec = agent_registry.get(agent_id)
+        if rec is None:
+            return JSONResponse({"error": "Agent not found"}, status_code=404)
+        return JSONResponse(rec.to_dict(timeout=agent_registry._heartbeat_timeout))
+
+    async def agent_heartbeat(request: Request) -> JSONResponse:
+        """Update agent heartbeat."""
+        agent_id = request.path_params["agent_id"]
+        rec = agent_registry.heartbeat(agent_id)
+        if rec is None:
+            return JSONResponse({"error": "Agent not found"}, status_code=404)
+        return JSONResponse({"status": "ok", "agent_id": agent_id})
+
+    async def unregister_agent(request: Request) -> JSONResponse:
+        """Unregister an agent."""
+        agent_id = request.path_params["agent_id"]
+        if agent_registry.unregister(agent_id):
+            return JSONResponse({"status": "removed", "agent_id": agent_id})
+        return JSONResponse({"error": "Agent not found"}, status_code=404)
+
     routes: list[Route | Mount | WebSocketRoute] = [
         Route("/health", health, methods=["GET"]),
         Route("/api/v1/evaluate", evaluate, methods=["POST"]),
@@ -250,6 +391,15 @@ def create_app(
         Route("/api/v1/audit", get_audit, methods=["GET"]),
         Route("/api/v1/policy", get_policy, methods=["GET"]),
         Route("/api/v1/policy", update_policy, methods=["PUT"]),
+        # Agent management
+        Route("/api/v1/agents", register_agent, methods=["POST"]),
+        Route("/api/v1/agents", list_agents, methods=["GET"]),
+        Route("/api/v1/agents/{agent_id}", get_agent, methods=["GET"]),
+        Route("/api/v1/agents/{agent_id}", unregister_agent, methods=["DELETE"]),
+        Route("/api/v1/agents/{agent_id}/heartbeat", agent_heartbeat, methods=["POST"]),
+        # Guardrail checks
+        Route("/api/v1/guardrails", list_guardrails, methods=["GET"]),
+        Route("/api/v1/guardrails/check", check_guardrails, methods=["POST"]),
     ]
 
     # WebSocket for real-time audit streaming
@@ -368,6 +518,76 @@ def _parse_actions(body: dict[str, Any] | list[dict[str, Any]]) -> list[Action]:
             )
         )
     return actions
+
+
+def create_app_from_config(config: Any) -> Any:
+    """Create an ASGI app from a :class:`ServerConfig` instance.
+
+    This is the primary entry point for the Aegis governance framework.
+
+    Args:
+        config: A :class:`~aegis.server.config.ServerConfig` instance.
+
+    Returns:
+        A Starlette ASGI application.
+    """
+    from aegis.server.config import ServerConfig
+
+    if not isinstance(config, ServerConfig):
+        msg = f"Expected ServerConfig, got {type(config).__name__}"
+        raise TypeError(msg)
+
+    policy_path = config.policy.path
+    audit_logger = config.create_audit_logger()
+
+    # Override env vars for auth middleware if config provides them
+    if config.auth.api_key:
+        os.environ.setdefault("AEGIS_API_KEY", config.auth.api_key)
+    if config.auth.admin_key:
+        os.environ.setdefault("AEGIS_ADMIN_KEY", config.auth.admin_key)
+
+    # Build guardrail engine from config
+    guardrail_engine = _build_guardrail_engine(config.guardrails)
+
+    return create_app(
+        policy_path=policy_path,
+        audit_logger=audit_logger,
+        enable_dashboard=config.dashboard.enabled,
+        agent_heartbeat_timeout=config.agents.heartbeat_timeout,
+        guardrail_engine=guardrail_engine,
+    )
+
+
+def _build_guardrail_engine(cfg: Any) -> Any:
+    """Build a GuardrailEngine from guardrails config section."""
+    from aegis.guardrails.engine import GuardrailEngine
+
+    guardrails = []
+
+    if cfg.injection:
+        from aegis.guardrails.injection import InjectionGuardrail
+
+        guardrails.append(InjectionGuardrail())
+
+    if cfg.pii:
+        from aegis.guardrails.pii import PIIGuardrail
+
+        guardrails.append(PIIGuardrail())
+
+    if cfg.toxicity:
+        from aegis.guardrails.toxicity import ToxicityGuardrail
+
+        guardrails.append(ToxicityGuardrail())
+
+    if cfg.prompt_leak:
+        from aegis.guardrails.prompt_leak import PromptLeakGuardrail
+
+        guardrails.append(PromptLeakGuardrail())
+
+    if not guardrails:
+        return None
+
+    return GuardrailEngine(guardrails=guardrails)
 
 
 def _get_version() -> str:

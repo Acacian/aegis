@@ -92,6 +92,7 @@ dev = [
 
 [project.scripts]
 aegis = "aegis.cli.main:main"
+aegis-server = "aegis.server.cli:main"
 aegis-mcp-server = "aegis.mcp_server:main"
 aegis-mcp-proxy = "aegis.mcp_proxy:main"
 
