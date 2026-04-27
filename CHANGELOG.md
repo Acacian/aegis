@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.5] - 2026-04-27
+
+### Added
+
+- **MCP STDIO Injection Guard** — 3-layer defense against the [OX Security MCP STDIO vulnerability](https://www.oxsecurity.io/blog/mcp-security-research) (2026-04-15). Detects JSON-RPC injection in tool responses, frame concatenation attacks, unicode escape bypass, double-encoded payloads, and Content-Length smuggling. Enabled by default in `aegis-mcp-proxy`.
+- **Dashless SSN/RRN detection** — PII guardrail now catches Social Security Numbers and 주민등록번호 without dashes (keyword context required to prevent false positives)
+- **NFKC normalization in PII detection** — catches fullwidth digit evasion (e.g., `４１１１` matching credit card patterns)
+
+### Security
+
+- **CRITICAL: Server API auth hardening** — `server/app.py` now requires `AEGIS_API_KEY` for all endpoints and `AEGIS_ADMIN_KEY` for policy updates, with `hmac.compare_digest` for timing-safe comparison
+- **HIGH: ArgumentSanitizer unicode bypass** — NFKC normalization applied before pattern matching in `mcp_security.py`
+- **HIGH: MCP proxy input size limit** — tool arguments exceeding 1MB are rejected (DoS prevention)
+- **HIGH: OpenAI stream=True warning** — `patch_openai` now logs a warning when streaming is enabled (output guardrails are ineffective on streamed responses)
+- **HIGH: AuditLogger thread safety** — added `threading.Lock` around all SQLite operations
+- **HIGH: CryptoAuditChain timing attack** — hash comparisons now use `hmac.compare_digest`
+- **MEDIUM: LRU cache memory exhaustion** — injection and PII guardrails skip caching for content >50KB
+- **MEDIUM: Credit card log exposure** — `PIIMatch.matched_text` no longer stores full card numbers
+- **MEDIUM: Pin store TOCTOU** — `RugPullDetector` uses atomic write (tempfile + rename)
+
+### Changed
+
+- Version bump: 0.9.4 → 0.9.5
+
 ## [Unreleased]
 
 ### Added

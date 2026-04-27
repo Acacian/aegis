@@ -665,6 +665,38 @@ await watcher.start()
 
 Call `runtime.update_policy(new_policy)` directly if you load policies from a source other than local files (API, database, config service).
 
+## STDIO Injection Protection
+
+MCP's STDIO transport is vulnerable to injection attacks where a malicious MCP server embeds hidden JSON-RPC messages inside tool responses. This can trick the client into executing unauthorized tool calls (file writes, data exfiltration, etc.).
+
+Aegis includes a built-in STDIO injection guard that detects:
+
+- **JSON-RPC injection** — `{"jsonrpc": "2.0", "method": "tools/call", ...}` embedded in text responses
+- **Frame concatenation** — multiple JSON-RPC messages in a single STDIO frame
+- **Unicode escape bypass** — `\u006asonrpc` evading naive regex but decoded by JSON parsers
+- **Double-encoded payloads** — escaped JSON-RPC inside string values
+
+The guard is enabled by default in `aegis-mcp-proxy`. To disable (not recommended):
+
+```bash
+aegis-mcp-proxy --no-stdio-guard --wrap npx -y @modelcontextprotocol/server-filesystem /home
+```
+
+For programmatic use:
+
+```python
+from aegis import StdioGuard
+
+guard = StdioGuard()
+result = guard.scan_content(tool_response_text, tool_name="read_file")
+if result.has_injection:
+    print(f"Blocked: {result.critical_count} critical findings")
+```
+
+See the [MCP STDIO Injection Protection](../solutions/mcp-stdio-injection.md) page for full details on the vulnerability and defense architecture.
+
+---
+
 ## How Aegis Maps MCP Concepts
 
 Understanding the mapping between MCP and Aegis helps you write precise policies:
