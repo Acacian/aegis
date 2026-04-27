@@ -46,7 +46,9 @@ from __future__ import annotations
 import json
 import logging
 import re
+import threading
 import time
+from collections import deque
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -263,11 +265,15 @@ class StdioInjectionScanner:
         start = time.perf_counter()
         findings: list[StdioFinding] = []
 
-        # Length check
+        # Length check — scan head AND tail to prevent truncation bypass
         truncated = False
         scan_content = content
         if len(content) > self._max_length:
-            scan_content = content[: self._max_length]
+            # Scan first 90% + last 10% of the budget to catch injections
+            # hidden after the truncation boundary
+            head_size = int(self._max_length * 0.9)
+            tail_size = self._max_length - head_size
+            scan_content = content[:head_size] + content[-tail_size:]
             truncated = True
             findings.append(
                 StdioFinding(
@@ -275,7 +281,7 @@ class StdioInjectionScanner:
                     severity="medium",
                     detail=(
                         f"Content exceeds {self._max_length} bytes "
-                        f"(actual: {len(content)}). Truncated for scanning."
+                        f"(actual: {len(content)}). Head+tail scanning applied."
                     ),
                 )
             )
@@ -341,6 +347,27 @@ class StdioInjectionScanner:
                     position=match.start(),
                 )
             )
+
+        # 5. Double-encoded JSON detection — catch JSON-RPC hidden inside
+        # escaped string values (e.g., {"result": "{\"jsonrpc\":\"2.0\",...}"})
+        if not self._allow_jsonrpc:
+            # Look for escaped JSON-RPC patterns: \"jsonrpc\" or \\\"jsonrpc\\\"
+            _DOUBLE_ENCODED = re.compile(
+                r'\\+"jsonrpc\\*"\s*:\\*\s*\\*"2\.0\\*"',
+            )
+            for match in _DOUBLE_ENCODED.finditer(scan_content):
+                findings.append(
+                    StdioFinding(
+                        category="double_encoded_injection",
+                        severity="high",
+                        detail=(
+                            "Double-encoded JSON-RPC detected in string value"
+                            " — possible nested injection"
+                        ),
+                        matched_text=match.group(0)[:200],
+                        position=match.start(),
+                    )
+                )
 
         has_injection = len(findings) > 0
         elapsed_ms = (time.perf_counter() - start) * 1000
@@ -429,7 +456,10 @@ class StdioFrameValidator:
         self._max_size = max_message_size
         self._burst_window = burst_window_seconds
         self._burst_threshold = burst_threshold
-        self._message_times: list[float] = []
+        # Bounded deque prevents unbounded growth regardless of window size.
+        # Lock ensures thread-safety for concurrent frame validation.
+        self._message_times: deque[float] = deque(maxlen=burst_threshold + 1)
+        self._burst_lock = threading.Lock()
 
     def validate_frame(self, raw: bytes | str) -> FrameValidation:
         """Validate a single STDIO frame (one line from the stream).
@@ -503,17 +533,20 @@ class StdioFrameValidator:
         # the frame contains exactly 1 JSON object — no need to re-count.
         # Concatenated objects are caught in the JSONDecodeError handler above.
 
-        # Burst detection
+        # Burst detection (thread-safe)
         now = time.time()
-        self._message_times.append(now)
-        # Prune old entries
-        cutoff = now - self._burst_window
-        self._message_times = [t for t in self._message_times if t > cutoff]
-        if len(self._message_times) > self._burst_threshold:
+        with self._burst_lock:
+            self._message_times.append(now)
+            # Prune old entries from left (deque is time-ordered)
+            cutoff = now - self._burst_window
+            while self._message_times and self._message_times[0] <= cutoff:
+                self._message_times.popleft()
+            burst_count = len(self._message_times)
+        if burst_count > self._burst_threshold:
             return FrameValidation(
                 valid=False,
                 reason=(
-                    f"Message burst detected: {len(self._message_times)} messages "
+                    f"Message burst detected: {burst_count} messages "
                     f"in {self._burst_window}s (threshold: {self._burst_threshold})"
                 ),
             )
@@ -566,7 +599,8 @@ class StdioFrameValidator:
 
     def reset_burst_counter(self) -> None:
         """Reset the burst detection counter."""
-        self._message_times.clear()
+        with self._burst_lock:
+            self._message_times.clear()
 
 
 # ---------------------------------------------------------------------------
