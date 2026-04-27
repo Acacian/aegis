@@ -473,10 +473,19 @@ class TestUnpatchPydanticAi:
         _pa._originals["Agent.run"] = lambda: None
         _remove_fake_pydantic_ai()
 
-        # Should not raise
-        _pa.unpatch_pydantic_ai()
-        assert _pa._patched is False
-        assert len(_pa._originals) == 0
+        # Block the real pydantic_ai import so unpatch hits ImportError
+        real_mod = sys.modules.get("pydantic_ai")
+        sys.modules["pydantic_ai"] = None  # type: ignore[assignment]
+        try:
+            # Should not raise
+            _pa.unpatch_pydantic_ai()
+            assert _pa._patched is False
+            assert len(_pa._originals) == 0
+        finally:
+            if real_mod is not None:
+                sys.modules["pydantic_ai"] = real_mod
+            else:
+                sys.modules.pop("pydantic_ai", None)
 
 
 # =========================================================================
