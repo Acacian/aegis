@@ -103,8 +103,15 @@ _LAZY_IMPORTS: dict[str, str] = {
     "User": "aegis.core.rbac",
     "WebhookManager": "aegis.core.webhooks",
     # Integrations
+    "AegisError": "aegis.integrations.errors",
     "AegisBlockedError": "aegis.integrations.errors",
     "AegisGuardrailError": "aegis.integrations.errors",
+    "AegisPolicyError": "aegis.integrations.errors",
+    "AegisConfigError": "aegis.integrations.errors",
+    "AegisConnectionError": "aegis.integrations.errors",
+    "AegisApprovalTimeout": "aegis.integrations.errors",
+    "AegisExecutionError": "aegis.integrations.errors",
+    "AegisAuditError": "aegis.integrations.errors",
     "guard": "aegis.integrations.decorators",
     "patch_anthropic": "aegis.integrations.patch_anthropic",
     "patch_openai": "aegis.integrations.patch_openai",
@@ -599,10 +606,31 @@ if TYPE_CHECKING:
     )
     from aegis.integrations.decorators import guard as guard
     from aegis.integrations.errors import (
+        AegisApprovalTimeout as AegisApprovalTimeout,
+    )
+    from aegis.integrations.errors import (
+        AegisAuditError as AegisAuditError,
+    )
+    from aegis.integrations.errors import (
         AegisBlockedError as AegisBlockedError,
     )
     from aegis.integrations.errors import (
+        AegisConfigError as AegisConfigError,
+    )
+    from aegis.integrations.errors import (
+        AegisConnectionError as AegisConnectionError,
+    )
+    from aegis.integrations.errors import (
+        AegisError as AegisError,
+    )
+    from aegis.integrations.errors import (
+        AegisExecutionError as AegisExecutionError,
+    )
+    from aegis.integrations.errors import (
         AegisGuardrailError as AegisGuardrailError,
+    )
+    from aegis.integrations.errors import (
+        AegisPolicyError as AegisPolicyError,
     )
     from aegis.integrations.patch_anthropic import (
         patch_anthropic as patch_anthropic,
