@@ -33,7 +33,7 @@ from __future__ import annotations
 import atexit
 import contextlib
 import threading
-from typing import Any
+from typing import Any, cast
 
 
 class AegisClient:
@@ -116,7 +116,7 @@ class AegisClient:
         resp.raise_for_status()
         self._registered = True
         self._start_heartbeat()
-        return resp.json()
+        return cast(dict[str, Any], resp.json())
 
     def _start_heartbeat(self) -> None:
         if self._heartbeat_thread is not None:
@@ -177,7 +177,7 @@ class AegisClient:
             },
         )
         resp.raise_for_status()
-        return resp.json()
+        return cast(dict[str, Any], resp.json())
 
     def execute(
         self,
@@ -197,7 +197,7 @@ class AegisClient:
             },
         )
         resp.raise_for_status()
-        return resp.json()
+        return cast(dict[str, Any], resp.json())
 
     def check_guardrails(self, content: str) -> dict[str, Any]:
         """Check content against the server's guardrail engine.
@@ -209,25 +209,25 @@ class AegisClient:
             json={"content": content},
         )
         resp.raise_for_status()
-        return resp.json()
+        return cast(dict[str, Any], resp.json())
 
     def get_policy(self) -> dict[str, Any]:
         """Retrieve the current policy from the server."""
         resp = self._http.get("/api/v1/policy")
         resp.raise_for_status()
-        return resp.json()
+        return cast(dict[str, Any], resp.json())
 
     def get_audit(self, **filters: Any) -> dict[str, Any] | list[dict[str, Any]]:
         """Query audit log from the server."""
         resp = self._http.get("/api/v1/audit", params=filters)
         resp.raise_for_status()
-        return resp.json()
+        return cast(dict[str, Any] | list[dict[str, Any]], resp.json())
 
     def status(self) -> dict[str, Any]:
         """Get this agent's status from the server."""
         resp = self._http.get(f"/api/v1/agents/{self._agent_id}")
         resp.raise_for_status()
-        return resp.json()
+        return cast(dict[str, Any], resp.json())
 
     # ------------------------------------------------------------------
     # Context manager
@@ -323,7 +323,7 @@ class AsyncAegisClient:
         resp.raise_for_status()
         self._registered = True
         self._start_heartbeat()
-        return resp.json()
+        return cast(dict[str, Any], resp.json())
 
     def _start_heartbeat(self) -> None:
         import asyncio
@@ -374,7 +374,7 @@ class AsyncAegisClient:
             },
         )
         resp.raise_for_status()
-        return resp.json()
+        return cast(dict[str, Any], resp.json())
 
     async def execute(
         self,
@@ -394,7 +394,7 @@ class AsyncAegisClient:
             },
         )
         resp.raise_for_status()
-        return resp.json()
+        return cast(dict[str, Any], resp.json())
 
     async def check_guardrails(self, content: str) -> dict[str, Any]:
         """Check content against the server's guardrail engine."""
@@ -403,25 +403,25 @@ class AsyncAegisClient:
             json={"content": content},
         )
         resp.raise_for_status()
-        return resp.json()
+        return cast(dict[str, Any], resp.json())
 
     async def get_policy(self) -> dict[str, Any]:
         """Retrieve the current policy from the server."""
         resp = await self._http.get("/api/v1/policy")
         resp.raise_for_status()
-        return resp.json()
+        return cast(dict[str, Any], resp.json())
 
     async def get_audit(self, **filters: Any) -> dict[str, Any] | list[dict[str, Any]]:
         """Query audit log from the server."""
         resp = await self._http.get("/api/v1/audit", params=filters)
         resp.raise_for_status()
-        return resp.json()
+        return cast(dict[str, Any] | list[dict[str, Any]], resp.json())
 
     async def status(self) -> dict[str, Any]:
         """Get this agent's status from the server."""
         resp = await self._http.get(f"/api/v1/agents/{self._agent_id}")
         resp.raise_for_status()
-        return resp.json()
+        return cast(dict[str, Any], resp.json())
 
     # ------------------------------------------------------------------
     # Context manager

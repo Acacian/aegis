@@ -102,7 +102,7 @@ def patch_pydantic_ai() -> FrameworkPatch:
 
             return result
 
-        Agent.run = governed_run
+        Agent.run = governed_run  # type: ignore[method-assign]
         targets.append("Agent.run")
 
         # -- Patch Agent.run_sync ---------------------------------------
@@ -124,7 +124,7 @@ def patch_pydantic_ai() -> FrameworkPatch:
 
                 return result
 
-            Agent.run_sync = governed_run_sync
+            Agent.run_sync = governed_run_sync  # type: ignore[method-assign]
             targets.append("Agent.run_sync")
 
     except ImportError:
@@ -156,9 +156,9 @@ def unpatch_pydantic_ai() -> None:
         from pydantic_ai import Agent
 
         if "Agent.run" in _originals:
-            Agent.run = _originals.pop("Agent.run")
+            Agent.run = _originals.pop("Agent.run")  # type: ignore[method-assign]
         if "Agent.run_sync" in _originals:
-            Agent.run_sync = _originals.pop("Agent.run_sync")
+            Agent.run_sync = _originals.pop("Agent.run_sync")  # type: ignore[method-assign]
     except ImportError:
         pass
 

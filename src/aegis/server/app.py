@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import json
 import os
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -158,6 +159,7 @@ def create_app(
                     WebhookEvent(
                         event_type="rate_limited",
                         severity="warning",
+                        timestamp=datetime.now(UTC).isoformat(),
                         agent_id=agent_id,
                         action_type=action.type,
                         action_target=action.target,
@@ -185,6 +187,7 @@ def create_app(
             WebhookEvent(
                 event_type="action_blocked",
                 severity="critical",
+                timestamp=datetime.now(UTC).isoformat(),
                 agent_id=action.agent_id or "unknown",
                 action_type=action.type,
                 action_target=action.target,
@@ -708,7 +711,7 @@ def _build_guardrail_engine(cfg: Any) -> Any:
     """Build a GuardrailEngine from guardrails config section."""
     from aegis.guardrails.engine import GuardrailEngine
 
-    guardrails = []
+    guardrails: list[Any] = []
 
     if cfg.injection:
         from aegis.guardrails.injection import InjectionGuardrail
@@ -764,7 +767,7 @@ def _build_rate_limiter(cfg: Any) -> Any:
 
     from aegis.core.rate_limiter import RateLimiter, RateLimitRule
 
-    rules = []
+    rules: list[RateLimitRule] = []
     for r in cfg.rules:
         rules.append(
             RateLimitRule(

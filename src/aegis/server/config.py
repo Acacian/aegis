@@ -293,7 +293,7 @@ class ServerConfig:
         if backend == "redis":
             from aegis.runtime.audit_redis import RedisAuditLogger
 
-            return RedisAuditLogger(url=self.audit.redis.url)
+            return RedisAuditLogger(redis_url=self.audit.redis.url)
 
         if backend == "postgres":
             from aegis.runtime.audit_postgres import PostgresAuditLogger

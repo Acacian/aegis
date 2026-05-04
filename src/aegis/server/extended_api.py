@@ -332,8 +332,8 @@ def get_extended_routes(
                 "clean": report.clean,
                 "findings": [_safe_dict(f) for f in report.findings],
                 "summary": {
-                    "total_events": report.total_events,
-                    "scanned_events": report.scanned_events,
+                    "total_events": report.events_scanned,
+                    "scanned_events": report.events_scanned,
                     "finding_count": len(report.findings),
                 },
             }
