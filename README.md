@@ -148,14 +148,10 @@ Or zero code changes — `AEGIS_INSTRUMENT=1 python my_agent.py`. Injection bloc
 ```python
 from pydantic_ai import Agent
 from aegis.contrib.pydantic_ai import AegisCapability
-from aegis.guardrails import GuardrailEngine, InjectionGuardrail
-
-engine = GuardrailEngine()
-engine.add(InjectionGuardrail())
 
 agent = Agent(
     "openai:gpt-4o-mini",
-    capabilities=[AegisCapability(engine)],
+    capabilities=[AegisCapability.default()],  # injection, PII, toxicity, prompt-leak, hallucination
 )
 result = await agent.run("What is AI governance?")
 ```
