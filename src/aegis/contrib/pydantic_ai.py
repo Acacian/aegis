@@ -89,6 +89,86 @@ class AegisCapability(_get_base_class()):  # type: ignore[misc]
         return "Aegis"
 
     @classmethod
+    def default(
+        cls,
+        *,
+        on_block: str = "raise",
+        check_input: bool = True,
+        check_output: bool = True,
+    ) -> AegisCapability:
+        """Create with all built-in guardrails enabled.
+
+        Includes: injection, PII, toxicity, prompt-leak, hallucination.
+
+        Usage::
+
+            from aegis.contrib.pydantic_ai import AegisCapability
+
+            agent = Agent("openai:gpt-4o-mini", capabilities=[AegisCapability.default()])
+        """
+        return cls.from_guards(
+            "injection",
+            "pii",
+            "toxicity",
+            "prompt_leak",
+            "hallucination",
+            on_block=on_block,
+            check_input=check_input,
+            check_output=check_output,
+        )
+
+    @classmethod
+    def from_guards(
+        cls,
+        *guards: str,
+        on_block: str = "raise",
+        check_input: bool = True,
+        check_output: bool = True,
+    ) -> AegisCapability:
+        """Create with specific guardrails by name.
+
+        Available guards: ``"injection"``, ``"pii"``, ``"toxicity"``,
+        ``"prompt_leak"``, ``"hallucination"``, ``"keyword"``, ``"cot"``.
+
+        Usage::
+
+            from aegis.contrib.pydantic_ai import AegisCapability
+
+            agent = Agent("openai:gpt-4o-mini", capabilities=[
+                AegisCapability.from_guards("injection", "pii")
+            ])
+        """
+        from aegis.guardrails import GuardrailEngine, InjectionGuardrail
+        from aegis.guardrails.hallucination import HallucinationGuardrail
+        from aegis.guardrails.pii import PIIGuardrail
+        from aegis.guardrails.prompt_leak import PromptLeakGuardrail
+        from aegis.guardrails.toxicity import ToxicityGuardrail
+
+        registry: dict[str, type] = {
+            "injection": InjectionGuardrail,
+            "pii": PIIGuardrail,
+            "toxicity": ToxicityGuardrail,
+            "prompt_leak": PromptLeakGuardrail,
+            "hallucination": HallucinationGuardrail,
+        }
+
+        engine = GuardrailEngine()
+        for name in guards:
+            guardrail_cls = registry.get(name)
+            if guardrail_cls is None:
+                raise ValueError(
+                    f"Unknown guardrail {name!r}. Available: {sorted(registry.keys())}"
+                )
+            engine.add(guardrail_cls())  # type: ignore[arg-type]
+
+        return cls(
+            engine,
+            on_block=on_block,
+            check_input=check_input,
+            check_output=check_output,
+        )
+
+    @classmethod
     def from_spec(
         cls,
         *,
