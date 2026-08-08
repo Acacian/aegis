@@ -411,3 +411,68 @@ class TestSeverityMapping:
         assert _severity_from_score(0.4) == "medium"
         assert _severity_from_score(0.6) == "high"
         assert _severity_from_score(0.9) == "critical"
+
+
+class TestVelocityWindowResolution:
+    """Rapid observations must not read as a velocity spike.
+
+    Signals recorded back to back can span zero wall-clock time. The rate
+    helper used to return a raw count in that case and a rate otherwise, so a
+    ratio between the two windows compared incommensurable units — any tight
+    burst of observations intermittently flagged a steady agent as drifting.
+    """
+
+    def test_burst_of_observations_is_not_a_velocity_anomaly(self) -> None:
+        d = DriftDetector(drift_threshold=0.2)
+        # Everything in one tight loop: both windows span ~0 seconds.
+        for _ in range(MIN_OBS * 3):
+            d.observe("agent-1", "read", "database", "low")
+
+        findings = d.check_drift("agent-1")
+
+        assert [f for f in findings if f.drift_type == "velocity_anomaly"] == []
+
+    def test_mixed_agents_report_is_stable_under_repetition(self) -> None:
+        """The stable agent stays out of the drifting count every time."""
+        for _ in range(50):
+            d = DriftDetector(drift_threshold=0.2)
+            _populate_baseline(d, "stable")
+            for _ in range(MIN_OBS):
+                d.observe("stable", "read", "database", "low")
+            _populate_baseline(d, "drifter", action_type="read")
+            for _ in range(MIN_OBS):
+                d.observe("drifter", "delete", "admin_panel", "critical")
+
+            r = d.report()
+            assert r.total_agents == 2
+            assert r.drifting_agents == 1
+
+    def test_real_velocity_spike_still_detected(self) -> None:
+        """Clamping must not blunt a genuine spike against a measurable baseline."""
+        d = DriftDetector(min_observations=10, drift_threshold=0.2)
+        for i in range(10):
+            sig = BehaviorSignal(
+                agent_id="agent-1",
+                action_type="read",
+                target="database",
+                timestamp=1000.0 + i * 0.1,
+            )
+            with d._lock:
+                buf = d._signals.setdefault("agent-1", [])
+                buf.append(sig)
+                if len(buf) == d._min_observations:
+                    d._build_baseline("agent-1")
+        # Burst far tighter than the clock floor.
+        for i in range(20):
+            sig = BehaviorSignal(
+                agent_id="agent-1",
+                action_type="read",
+                target="database",
+                timestamp=1001.0 + i * 1e-9,
+            )
+            with d._lock:
+                d._signals["agent-1"].append(sig)
+
+        findings = d.check_drift("agent-1")
+
+        assert [f for f in findings if f.drift_type == "velocity_anomaly"]

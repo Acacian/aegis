@@ -30,6 +30,12 @@ _RISK_MAP: dict[str, int] = {
     "critical": 4,
 }
 
+# Floor for the wall-clock window used to compute action velocity. Observations
+# recorded back to back can span zero, and a rate derived from such a window is
+# noise. One millisecond is far below any real agent's call rate, so clamping
+# there loses no signal while keeping the arithmetic well defined.
+_MIN_MEASURABLE_SPAN_SECONDS = 1e-3
+
 # ---------------------------------------------------------------------------
 # Data models
 # ---------------------------------------------------------------------------
@@ -351,9 +357,12 @@ class DriftDetector:
             if len(sigs) < 2:
                 return 0.0
             span = sigs[-1].timestamp - sigs[0].timestamp
-            if span <= 0:
-                return float(len(sigs))
-            return len(sigs) / span
+            # Spans at or below clock resolution carry no rate information.
+            # Clamping keeps both windows in the same unit (actions/second);
+            # returning a raw count for one of them, as this used to, compared
+            # a count against a rate and flagged any tight burst of
+            # observations as a velocity anomaly.
+            return len(sigs) / max(span, _MIN_MEASURABLE_SPAN_SECONDS)
 
         baseline_rate = _rate(baseline_signals)
         current_rate = _rate(recent_signals)
