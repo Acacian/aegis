@@ -121,7 +121,7 @@ async def main() -> None:
 
         # Export audit trail
         print("--- Audit Trail (JSONL export) ---\n")
-        audit_entries = runtime.audit_log.entries
+        audit_entries = runtime.audit.get_log()
         for entry in audit_entries:
             record = {
                 "timestamp": str(entry.get("timestamp", "")),

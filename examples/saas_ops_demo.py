@@ -176,7 +176,7 @@ async def main() -> None:
             print()
 
         print("---")
-        print(f"  Audit trail: {len(runtime.audit_log.entries)} entries logged")
+        print(f"  Audit trail: {runtime.audit.count()} entries logged")
         print("  The support agent handled the ticket safely — dangerous actions were blocked.")
 
     Path(policy_path).unlink(missing_ok=True)

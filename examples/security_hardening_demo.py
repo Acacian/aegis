@@ -83,17 +83,13 @@ async def main() -> None:
     print("  Fail-closed + time-based + parameter validation")
     print("=" * 60)
 
-    with tempfile.NamedTemporaryFile(
-        mode="w", suffix=".yaml", delete=False
-    ) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
         f.write(HARDENED_POLICY)
         policy_path = f.name
 
     policy = Policy.from_yaml(policy_path)
 
-    async with Runtime(
-        executor=SecureExecutor(), policy=policy
-    ) as runtime:
+    async with Runtime(executor=SecureExecutor(), policy=policy) as runtime:
         test_actions = [
             ("Read data (whitelisted)", Action("read", "db")),
             ("List resources (whitelisted)", Action("list", "resources")),
@@ -129,21 +125,16 @@ async def main() -> None:
             plan = runtime.plan([action])
             results = await runtime.execute(plan)
             r = results[0]
-            status = (
-                "ALLOWED"
-                if r.status == ResultStatus.SUCCESS
-                else "BLOCKED"
-            )
-            risk = r.decision.risk_level if r.decision else "N/A"
+            status = "ALLOWED" if r.status == ResultStatus.SUCCESS else "BLOCKED"
+            # Risk lives on the PolicyDecision the plan produced, not on Result.
+            risk = plan.decisions[0].risk_level if plan.decisions else "N/A"
             print(f"    → {status} (risk: {risk})")
             print()
 
         print("---")
         print("  Key principle: fail-closed default (block)")
         print("  Only explicitly whitelisted actions are allowed.")
-        print(
-            f"  Audit trail: {len(runtime.audit_log.entries)} entries"
-        )
+        print(f"  Audit trail: {runtime.audit.count()} entries")
 
     Path(policy_path).unlink(missing_ok=True)
 

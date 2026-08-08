@@ -123,3 +123,33 @@ async def test_cli_no_params_no_description(capsys):
     assert "APPROVAL REQUIRED" in captured.out
     # Should not print params line when empty
     # Should not print description line when empty
+
+
+@pytest.mark.asyncio
+async def test_cli_denies_when_stdin_is_closed(capsys):
+    """EOF on the prompt denies instead of raising.
+
+    An interactive approval gate reached under CI, a service manager or a
+    closed pipe used to raise EOFError out of the runtime. There is nobody to
+    answer, and an unanswerable approval is a denied one.
+    """
+    handler = CLIApprovalHandler()
+    decision = _make_decision()
+
+    with patch("builtins.input", side_effect=EOFError):
+        result = await handler.request_approval(decision)
+
+    assert result is False
+    assert "fail-closed" in capsys.readouterr().out
+
+
+@pytest.mark.asyncio
+async def test_cli_reprompts_then_denies_on_eof():
+    """An invalid answer re-prompts; EOF on the retry still denies."""
+    handler = CLIApprovalHandler()
+    decision = _make_decision()
+
+    with patch("builtins.input", side_effect=["maybe", EOFError]):
+        result = await handler.request_approval(decision)
+
+    assert result is False

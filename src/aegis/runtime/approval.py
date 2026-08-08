@@ -39,7 +39,14 @@ class CLIApprovalHandler(ApprovalHandler):
         print(f"{'=' * 60}")
 
         while True:
-            response = input("  Approve? [y/n]: ").strip().lower()
+            try:
+                response = input("  Approve? [y/n]: ").strip().lower()
+            except EOFError:
+                # No one is there to answer — running under CI, a service
+                # manager, or a closed pipe.  Deny rather than propagate:
+                # an unanswerable approval prompt is a denied approval.
+                print("  No input available — denying (fail-closed).")
+                return False
             if response in ("y", "yes"):
                 return True
             if response in ("n", "no"):
