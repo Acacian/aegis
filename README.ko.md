@@ -10,18 +10,15 @@
 </p>
 
 <p align="center">
+  <a href="https://www.bestpractices.dev/projects/12253"><img src="https://www.bestpractices.dev/projects/12253/badge" alt="OpenSSF Best Practices"></a>
   <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://github.com/Acacian/aegis/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://pypi.org/project/agent-aegis/"><img src="https://img.shields.io/pypi/v/agent-aegis?color=blue&cacheSeconds=3600" alt="PyPI"></a>
-  <a href="https://pypi.org/project/langchain-aegis/"><img src="https://img.shields.io/pypi/v/langchain-aegis?label=langchain-aegis&color=blue&cacheSeconds=3600" alt="langchain-aegis"></a>
   <a href="https://pypi.org/project/agent-aegis/"><img src="https://img.shields.io/pypi/pyversions/agent-aegis?cacheSeconds=3600" alt="Python"></a>
   <a href="https://github.com/Acacian/aegis/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License"></a>
-  <a href="https://acacian.github.io/aegis/"><img src="https://img.shields.io/badge/docs-acacian.github.io%2Faegis-blue" alt="Docs"></a>
   <br/>
-  <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-6200%2B_passed-brightgreen" alt="Tests"></a>
+  <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-6400%2B_passed-brightgreen" alt="Tests"></a>
   <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/coverage-92%25-brightgreen" alt="Coverage"></a>
   <a href="https://acacian.github.io/aegis/playground/"><img src="https://img.shields.io/badge/playground-브라우저에서_체험-ff6b6b" alt="Playground"></a>
-  <a href="https://acacian.github.io/aegis/playground/scan-report.html"><img src="https://img.shields.io/badge/스캔_리포트-39개_레포%2C_92%25_F-red" alt="Scan Report"></a>
-  <a href="https://www.bestpractices.dev/projects/12253"><img src="https://www.bestpractices.dev/projects/12253/badge" alt="OpenSSF Best Practices"></a>
 </p>
 
 <p align="center">
@@ -58,7 +55,11 @@ import aegis
 aegis.auto_instrument()    # 12개 프레임워크 거버닝. 다른 코드 변경 불필요.
 ```
 
-Redis가 인메모리 자료구조에 대한 **하나의 서버, 모든 primitive, 하나의 API**였듯, Aegis는 에이전트 거버넌스에 대한 그것입니다. LangChain 가드레일과 CrewAI 가드레일과 OpenAI 가드레일을 따로 쓰는 게 아니라 — **하나의 `Policy`를 쓰면 모든 프레임워크가 상속**받습니다.
+LangChain 가드레일과 CrewAI 가드레일과 OpenAI 가드레일을 따로 쓰는 게 아니라 — **하나의 `Policy`를 쓰면 모든 프레임워크가 상속**받습니다.
+
+### 기존 가드레일 라이브러리와 다른 점
+
+푸는 문제가 다릅니다. 대부분 텍스트를 다루는 도구입니다. [Guardrails AI](https://github.com/guardrails-ai/guardrails)는 hub의 validator로 모델 출력을 검증하고, [NeMo Guardrails](https://github.com/NVIDIA/NeMo-Guardrails)는 Colang DSL로 대화·툴 정책을 작성합니다. [Snyk Agent Scan](https://github.com/snyk/agent-scan)(Snyk 인수 이후의 Invariant Labs `mcp-scan`)은 MCP 서버와 에이전트 스킬을 알려진 위험 패턴으로 스캔하고 런타임 프록시도 제공합니다. [LLM Guard](https://github.com/protectai/llm-guard)는 입출력 스캐너를 체인으로 엮었지만 2026년 7월 아카이브됐습니다. 이들은 모두 **직접 배선하는** 도구입니다 — 가드를 어디에 둘지 개발자가 정합니다. Aegis는 반대쪽에서 출발합니다. `auto_instrument()`가 이미 설치된 프레임워크를 찾아 그 자리에서 계측하므로, 에이전트 코드를 한 줄도 고치지 않고 하나의 `Policy`가 전부에 적용됩니다. 그리고 집행 대상이 프롬프트가 아니라 **에이전트의 행위**입니다 — 단조 신뢰 제약이 걸린 위임 체인, 에이전트가 선택한 것이 아니라 **배제한 것**에 대한 감사, 선언한 의도와 측정된 영향 사이의 간극, 변조 방지 감사 체인. 전부 결정론적이라 요청 경로에 두 번째 모델이 끼지 않습니다. 배타적 선택이 아닙니다 — semantic·모델 기반 디텍터는 `GuardrailEngine.add()`로 내장 가드레일과 함께 쓸 수 있습니다.
 
 ---
 
@@ -105,7 +106,9 @@ Aegis의 모든 거버넌스 기능 — 이상 탐지, 비용 예산, 드리프�
 | **httpx** | 원시 HTTP 이그레스 미들웨어 (REST 에이전트, 웹훅) | Stable |
 | **Playwright** | 브라우징 에이전트를 위한 브라우저 컨텍스트 계측 | Stable |
 
-`auto_instrument()`는 설치된 프레임워크만 감지해 패치합니다 — 하드 의존성 없음. [커스텀 adapter](https://acacian.github.io/aegis/guides/custom-adapters/)는 동일한 `BaseAdapter` 인터페이스를 사용합니다.
+`auto_instrument()`는 설치된 프레임워크만 감지해 패치합니다 — 하드 의존성 없음. [커스텀 adapter](https://acacian.github.io/aegis/guides/custom-adapters/)는 동일한 `BaseAdapter` 인터페이스를 사용합니다. 위 adapter는 전부 [통합 워크플로](.github/workflows/integration.yml)가 매일 최신 업스트림 릴리스에 대해 실제 진입점을 호출하고 가드레일 발화를 검증합니다 — 유닛 테스트는 프레임워크를 가짜로 대체하므로 업스트림 드리프트를 스스로 볼 수 없습니다.
+
+프레임워크가 네이티브 확장 지점을 제공하면 패치 대신 그것을 씁니다. Pydantic AI 통합은 코어 메인테이너 DouweM이 monkey-patch 설계를 반박한 뒤 이 방식으로 재구현됐고, 지금은 `AbstractCapability` 서브클래스([`src/aegis/contrib/pydantic_ai.py`](src/aegis/contrib/pydantic_ai.py))로 제공됩니다 — [pydantic-ai#4888](https://github.com/pydantic/pydantic-ai/pull/4888) 머지.
 
 ### 기본 가드레일
 
@@ -208,7 +211,7 @@ aegis test new.yaml tests.yaml --regression old.yaml   # 회귀 검사
 또는 PR 시점에 보호되지 않은 호출을 차단:
 
 ```yaml
-- uses: Acacian/aegis@v0.9.5
+- uses: Acacian/aegis@v1.0.0
   with:
     command: scan
     fail-on-ungoverned: true
@@ -347,6 +350,8 @@ aegis check drift --trace path/to/trace.jsonl
 
 CLI는 `tool_name` 필드만 읽습니다 — args, CoT, prompt는 절대 읽지 않으므로 엔터프라이즈 사용자가 PII 유출 없이 프로덕션 트레이스를 점수화할 수 있습니다.
 
+공개 에이전트 레포 39개를 `aegis scan`으로 훑어 거버넌스 상태를 채점하기도 했습니다 — [92%가 F를 받았습니다](https://acacian.github.io/aegis/playground/scan-report.html). 특정 프로젝트가 아니라 생태계 전반에 대한 관찰입니다. 대부분의 에이전트 코드에는 툴 콜 정책이 아예 없습니다.
+
 ---
 
 ## CLI
@@ -371,6 +376,7 @@ aegis autopolicy "삭제 차단"             # 자연어 → YAML
 - [통합 가이드](https://acacian.github.io/aegis/) — LangChain, CrewAI, OpenAI, MCP 등
 - [정책 레퍼런스](https://acacian.github.io/aegis/) — 조건, 템플릿, 베스트 프랙티스
 - [보안 기능](https://acacian.github.io/aegis/) — 가드레일, 이상 탐지, 컴플라이언스
+- [API 안정성](https://acacian.github.io/aegis/api/stability/) — 1.x가 보장하는 범위와 breaking change의 정의
 - [아키텍처](ARCHITECTURE.md) — 코드베이스 구조
 - [인터랙티브 Playground](https://acacian.github.io/aegis/playground/) — 브라우저에서 체험
 

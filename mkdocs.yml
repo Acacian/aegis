@@ -117,6 +117,7 @@ nav:
       - Anomaly Detection: api/anomaly.md
       - Compliance: api/compliance.md
       - Dashboard API: api/dashboard.md
+      - API Stability: api/stability.md
   - Solutions:
       - LangChain Security: solutions/langchain-security.md
       - CrewAI Security: solutions/crewai-security.md

@@ -11,18 +11,15 @@
 </p>
 
 <p align="center">
+  <a href="https://www.bestpractices.dev/projects/12253"><img src="https://www.bestpractices.dev/projects/12253/badge" alt="OpenSSF Best Practices"></a>
   <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://github.com/Acacian/aegis/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://pypi.org/project/agent-aegis/"><img src="https://img.shields.io/pypi/v/agent-aegis?color=blue&cacheSeconds=3600" alt="PyPI"></a>
-  <a href="https://pypi.org/project/langchain-aegis/"><img src="https://img.shields.io/pypi/v/langchain-aegis?label=langchain-aegis&color=blue&cacheSeconds=3600" alt="langchain-aegis"></a>
   <a href="https://pypi.org/project/agent-aegis/"><img src="https://img.shields.io/pypi/pyversions/agent-aegis?cacheSeconds=3600" alt="Python"></a>
   <a href="https://github.com/Acacian/aegis/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License"></a>
-  <a href="https://acacian.github.io/aegis/"><img src="https://img.shields.io/badge/docs-acacian.github.io%2Faegis-blue" alt="Docs"></a>
   <br/>
-  <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-6300%2B_passed-brightgreen" alt="Tests"></a>
+  <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/tests-6400%2B_passed-brightgreen" alt="Tests"></a>
   <a href="https://github.com/Acacian/aegis/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/coverage-92%25-brightgreen" alt="Coverage"></a>
   <a href="https://acacian.github.io/aegis/playground/"><img src="https://img.shields.io/badge/playground-Try_it_Live-ff6b6b" alt="Playground"></a>
-  <a href="https://acacian.github.io/aegis/playground/scan-report.html"><img src="https://img.shields.io/badge/scan_report-39_Repos%2C_92%25_F-red" alt="Scan Report"></a>
-  <a href="https://www.bestpractices.dev/projects/12253"><img src="https://www.bestpractices.dev/projects/12253/badge" alt="OpenSSF Best Practices"></a>
 </p>
 
 <p align="center">
@@ -65,7 +62,11 @@ import aegis
 aegis.auto_instrument()    # 12 frameworks governed. No other code changes.
 ```
 
-Redis is to in-memory data structures what Aegis is to agent governance: **one library, every primitive, every framework, one API**. You don't write a LangChain guardrail and a CrewAI guardrail and an OpenAI guardrail — you write one `Policy` and every framework inherits it.
+You don't write a LangChain guardrail and a CrewAI guardrail and an OpenAI guardrail — you write one `Policy` and every framework inherits it.
+
+### How this differs from the guardrail libraries
+
+They solve a different problem, and mostly a text-shaped one. [Guardrails AI](https://github.com/guardrails-ai/guardrails) validates model output against a hub of validators; [NeMo Guardrails](https://github.com/NVIDIA/NeMo-Guardrails) scripts conversational and tool policy in the Colang DSL; [Snyk Agent Scan](https://github.com/snyk/agent-scan) — Invariant Labs' `mcp-scan`, since the Snyk acquisition — scans MCP servers and agent skills for known risk patterns and can proxy them at runtime; [LLM Guard](https://github.com/protectai/llm-guard) chained input/output scanners until it was archived in July 2026. Each one you wire in yourself, at a call site you choose. Aegis starts from the other end: `auto_instrument()` finds the frameworks already installed and instruments them in place, so one `Policy` covers all of them without a line of agent code changing. What it enforces is agent-shaped rather than prompt-shaped — delegation chains under a monotone trust constraint, audits of what an agent *excluded* rather than what it picked, the distance between an agent's declared intent and its measured impact, and a tamper-evident audit chain. All of it is deterministic, so there is no second model sitting in the request path. These are not exclusive choices: a semantic or model-based detector drops into `GuardrailEngine.add()` alongside the built-ins.
 
 ---
 
@@ -112,7 +113,9 @@ One API. 12 agent frameworks + 3 protocol-level adapters.
 | **httpx** | Middleware for raw HTTP egress (REST agents, webhooks) | Stable |
 | **Playwright** | Browser context instrumentation for browsing agents | Stable |
 
-`auto_instrument()` detects what's installed and patches only those — no hard dependencies. [Custom adapters](https://acacian.github.io/aegis/guides/custom-adapters/) use the same `BaseAdapter` interface.
+`auto_instrument()` detects what's installed and patches only those — no hard dependencies. [Custom adapters](https://acacian.github.io/aegis/guides/custom-adapters/) use the same `BaseAdapter` interface. Every adapter above is exercised against the current upstream release daily by the [integration workflow](.github/workflows/integration.yml), which drives each framework's real entrypoint and asserts a guardrail fires — the unit suite fakes these frameworks, so it cannot see upstream drift on its own.
+
+Where a framework offers a native extension point, Aegis uses it instead of patching. The Pydantic AI integration was rewritten this way after core maintainer DouweM pushed back on the monkey-patch design — it now ships as an `AbstractCapability` subclass ([`src/aegis/contrib/pydantic_ai.py`](src/aegis/contrib/pydantic_ai.py)), merged as [pydantic-ai#4888](https://github.com/pydantic/pydantic-ai/pull/4888).
 
 ### Default Guardrails
 
@@ -215,7 +218,7 @@ aegis test new.yaml tests.yaml --regression old.yaml   # Regression check
 Or block ungoverned calls at PR time:
 
 ```yaml
-- uses: Acacian/aegis@v0.9.5
+- uses: Acacian/aegis@v1.0.0
   with:
     command: scan
     fail-on-ungoverned: true
@@ -423,6 +426,8 @@ aegis check drift --trace path/to/trace.jsonl
 
 The CLI reads only the `tool_name` field — never args, CoT, or prompts — so enterprise users can score prod traces without exfiltrating PII.
 
+We also ran `aegis scan` across 39 public agent repositories and graded their governance posture: [92% scored an F](https://acacian.github.io/aegis/playground/scan-report.html). That is a finding about the ecosystem, not about any one project — most agent code has no tool-call policy at all.
+
 ## Documentation
 
 Full documentation at **[acacian.github.io/aegis](https://acacian.github.io/aegis/)**:
@@ -430,6 +435,7 @@ Full documentation at **[acacian.github.io/aegis](https://acacian.github.io/aegi
 - [Integration guides](https://acacian.github.io/aegis/) — LangChain, CrewAI, OpenAI, MCP, and more
 - [Policy reference](https://acacian.github.io/aegis/) — conditions, templates, best practices
 - [Security features](https://acacian.github.io/aegis/) — guardrails, anomaly detection, compliance
+- [API stability](https://acacian.github.io/aegis/api/stability/) — what 1.x guarantees, and what counts as a breaking change
 - [Architecture](ARCHITECTURE.md) — how the codebase is structured
 - [Interactive playground](https://acacian.github.io/aegis/playground/) — try in browser, no install
 

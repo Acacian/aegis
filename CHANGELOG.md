@@ -5,6 +5,66 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] — 2026-08-09
+
+First stable release. Nothing here is a new feature — 1.0.0 is a statement about
+what the existing surface guarantees, backed by verification that the surface
+still works.
+
+### API stability
+
+- **[API Stability](https://acacian.github.io/aegis/api/stability/) is now
+  defined and binding.** The 161 names in `aegis.__all__`, the documented modules
+  under API Reference, every `aegis` subcommand and its exit codes, the
+  `version: "1"` policy format, and the audit record / AGEF event schema are
+  stable for the life of 1.x. The same page states what is deliberately *not*
+  stable — underscore-prefixed internals, guardrail pattern contents, and tuned
+  scores — and defines exactly which changes require a major version.
+- Nothing in `aegis.__all__` will be removed or moved during 1.x. Removal of a
+  public name is preceded by at least one minor release emitting
+  `DeprecationWarning`.
+
+### Verified
+
+- **Every adapter now runs against current upstream releases**, not against test
+  doubles. The unit suite fakes all twelve frameworks through `sys.modules`
+  injection, so a green run never said anything about whether the adapters still
+  worked. A new integration suite drives each framework's real entrypoint with an
+  injection payload and asserts a guardrail fires. Confirmed against
+  langchain-core 1.5.3, crewai 0.134.0, pydantic-ai-slim 2.27.0, openai-agents
+  0.19.4, anthropic 0.121.0, openai 2.53.0, dspy 3.3.0, litellm 1.72.0, instructor
+  1.15.4, google-adk 2.6.3, google-genai 2.17.0 and llama-index-core 0.14.23.
+- The `integration` workflow reruns that suite daily against whatever upstream has
+  published, so adapter drift surfaces within a day instead of at the next
+  release.
+
+### Fixed
+
+- **Instructor governance was silently absent.** Instructor 1.15 moved
+  `Instructor` / `AsyncInstructor` out of `instructor.client`; the adapter still
+  imported the old path and swallowed the resulting `ModuleNotFoundError` as
+  "not installed". Every Instructor call ran ungoverned with no error, no warning,
+  and a report claiming the framework simply was not present. Resolved from the
+  package root now, and an installed-but-unbindable framework reports an error
+  instead of masquerading as missing.
+- **LlamaIndex governance was bypassed.** The adapter patched `chat`/`complete`
+  on the `LLM` base class, but every concrete LlamaIndex LLM overrides those
+  methods in its own module, so the governed method was never reached and prompts
+  went to the provider unchecked. The adapter now governs the overrides
+  themselves and hooks `__init_subclass__` so classes imported after
+  `auto_instrument()` are covered too.
+- **`CLIApprovalHandler` crashed instead of deciding when no TTY was attached.**
+  An approval gate reached under CI, a service manager, or a closed pipe raised
+  `EOFError` out of the runtime. It now denies, matching the fail-closed default
+  the policy layer documents.
+- **Velocity drift produced false positives on rapid tool calls.**
+  `_check_velocity` returned a raw count when a window spanned zero wall-clock
+  time and a rate otherwise, so the ratio between windows compared incommensurable
+  units and intermittently flagged steady agents as drifting. Window spans are
+  clamped to a 1 ms floor, keeping both windows in actions per second.
+- Two examples were still written against a pre-0.9 API (`Result.decision`,
+  `Runtime.audit_log`).
+
 ## [0.9.5] - 2026-04-27
 
 ### Added
@@ -35,7 +95,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Version bump: 0.9.4 → 0.9.5
 
-## [Unreleased]
+## [0.9.4] — 2026-04-11
 
 ### Added
 

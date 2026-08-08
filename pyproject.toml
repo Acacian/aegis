@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "agent-aegis"
-version = "0.9.5"
+version = "1.0.0"
 description = "Auto-instrument AI agent frameworks with runtime security. One line to govern LangChain, CrewAI, OpenAI, Anthropic — injection blocking, PII masking, action policy, audit trail. Zero code changes."
 readme = "README.md"
 license = "MIT"
@@ -23,7 +23,7 @@ keywords = [
     "policy-ci-cd", "ai-safety", "agent-security", "tool-call-policy",
 ]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",

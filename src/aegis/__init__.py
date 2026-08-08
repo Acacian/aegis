@@ -19,7 +19,7 @@ init = Aegis.init
 shutdown = Aegis.shutdown
 get = Aegis.get
 
-__version__ = "0.9.5"
+__version__ = "1.0.0"
 
 # ---- Lazy imports ----------------------------------------------------------
 
