@@ -1,0 +1,45 @@
+name: Integration
+
+# The main CI job installs only [dev], which contains none of the twelve
+# instrumented frameworks — the unit suite fakes them via sys.modules. That
+# makes upstream drift invisible: an adapter can stop governing anything while
+# CI stays green. This workflow installs the real frameworks at their latest
+# releases and drives each adapter end to end.
+#
+# It does not run on pull requests: an upstream release must not block unrelated
+# PRs. The daily schedule bounds how long drift can go unnoticed.
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  upstream:
+    name: Adapters vs latest upstream
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: "3.12"
+
+      # dspy / litellm / llama-index / instructor are instrumented but are not
+      # declared in [all], so they have to be named explicitly here.
+      - name: Install Aegis and every instrumented framework at latest
+        run: |
+          pip install -e ".[all,dev]"
+          pip install dspy litellm llama-index-core llama-index-llms-openai \
+                      instructor google-adk
+
+      # Printed so a failing run shows which upstream release broke the adapter.
+      - name: Record resolved versions
+        run: pip freeze
+
+      - name: Run upstream smoke tests
+        run: pytest tests/integration/ -v --tb=short

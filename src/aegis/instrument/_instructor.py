@@ -22,6 +22,40 @@ _originals: dict[str, Any] = {}
 _patched = False
 
 
+def _instructor_installed() -> bool:
+    """True if the ``instructor`` package is importable."""
+    try:
+        import instructor  # noqa: F401
+    except ImportError:
+        return False
+    return True
+
+
+def _resolve_client_class(name: str) -> Any:
+    """Return ``instructor.Instructor`` / ``AsyncInstructor``, or ``None``.
+
+    Instructor 1.15 moved these classes out of ``instructor.client`` (they now
+    live in ``instructor.v2.core.client``), so resolving through the old
+    submodule silently reports the framework as "not installed".  Both layouts
+    re-export the classes at the package root, so resolve from there first and
+    keep the legacy path as a fallback.
+    """
+    try:
+        import instructor
+    except ImportError:
+        return None
+
+    cls = getattr(instructor, name, None)
+    if cls is not None:
+        return cls
+
+    try:
+        from instructor import client as legacy_client
+    except ImportError:
+        return None
+    return getattr(legacy_client, name, None)
+
+
 def _extract_input(kwargs: dict[str, Any]) -> str:
     """Extract text from Instructor.create messages argument."""
     messages = kwargs.get("messages", [])
@@ -91,9 +125,10 @@ def patch_instructor() -> FrameworkPatch:
 
     targets: list[str] = []
 
-    try:
-        from instructor.client import Instructor
+    Instructor = _resolve_client_class("Instructor")
+    AsyncInstructor = _resolve_client_class("AsyncInstructor")
 
+    if Instructor is not None:
         _originals["Instructor.create"] = Instructor.create
 
         @functools.wraps(Instructor.create)
@@ -114,12 +149,7 @@ def patch_instructor() -> FrameworkPatch:
         Instructor.create = governed_create
         targets.append("Instructor.create")
 
-    except ImportError:
-        pass
-
-    try:
-        from instructor.client import AsyncInstructor
-
+    if AsyncInstructor is not None:
         _originals["AsyncInstructor.create"] = AsyncInstructor.create
 
         @functools.wraps(AsyncInstructor.create)
@@ -140,14 +170,16 @@ def patch_instructor() -> FrameworkPatch:
         AsyncInstructor.create = governed_async_create
         targets.append("AsyncInstructor.create")
 
-    except ImportError:
-        pass
-
     if not targets:
         patch = FrameworkPatch(
             name="instructor",
             patched=False,
-            error="instructor not installed",
+            error=(
+                "instructor not installed"
+                if not _instructor_installed()
+                else "instructor installed but Instructor/AsyncInstructor could not be "
+                "resolved — unsupported version"
+            ),
         )
     else:
         _patched = True
@@ -165,21 +197,13 @@ def unpatch_instructor() -> None:
     if not _patched:
         return
 
-    try:
-        from instructor.client import Instructor
+    Instructor = _resolve_client_class("Instructor")
+    if Instructor is not None and "Instructor.create" in _originals:
+        Instructor.create = _originals.pop("Instructor.create")
 
-        if "Instructor.create" in _originals:
-            Instructor.create = _originals.pop("Instructor.create")
-    except ImportError:
-        pass
-
-    try:
-        from instructor.client import AsyncInstructor
-
-        if "AsyncInstructor.create" in _originals:
-            AsyncInstructor.create = _originals.pop("AsyncInstructor.create")
-    except ImportError:
-        pass
+    AsyncInstructor = _resolve_client_class("AsyncInstructor")
+    if AsyncInstructor is not None and "AsyncInstructor.create" in _originals:
+        AsyncInstructor.create = _originals.pop("AsyncInstructor.create")
 
     _originals.clear()
     _patched = False

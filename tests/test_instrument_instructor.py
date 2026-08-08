@@ -913,3 +913,97 @@ class TestEdgeCases:
         kwargs = {"messages": 42}
         result = _extract_input(kwargs)
         assert result == "42"
+
+
+def _make_fake_instructor_modern():
+    """Fake instructor with the >=1.15 layout: no ``instructor.client`` submodule.
+
+    Instructor 1.15 moved the client classes to ``instructor.v2.core.client`` and
+    re-exports them from the package root only.  Resolving through the old
+    submodule raises ``ModuleNotFoundError``, which used to be swallowed as
+    "instructor not installed".
+    """
+    InstructorClass = type(
+        "Instructor",
+        (),
+        {"create": lambda self, *a, **kw: "sync_result"},
+    )
+
+    async def _async_create(self, *a, **kw):
+        return "async_result"
+
+    AsyncInstructorClass = type(
+        "AsyncInstructor",
+        (),
+        {"create": _async_create},
+    )
+
+    instructor_mod = types.ModuleType("instructor")
+    instructor_mod.Instructor = InstructorClass
+    instructor_mod.AsyncInstructor = AsyncInstructorClass
+
+    sys.modules["instructor"] = instructor_mod
+    sys.modules.pop("instructor.client", None)
+
+    return InstructorClass, AsyncInstructorClass
+
+
+class TestModernInstructorLayout:
+    """Regression: instructor >=1.15 dropped the ``instructor.client`` submodule."""
+
+    def test_patches_without_client_submodule(self):
+        """Both classes are patched when only the package root exports them."""
+        InstructorCls, AsyncCls = _make_fake_instructor_modern()
+        _ins = _reload_instructor()
+
+        patch = _ins.patch_instructor()
+
+        assert patch.patched is True
+        assert patch.targets == ["Instructor.create", "AsyncInstructor.create"]
+        assert patch.error is None
+        assert InstructorCls.create is not None
+        assert hasattr(InstructorCls.create, "__wrapped__")
+        assert hasattr(AsyncCls.create, "__wrapped__")
+
+    def test_guardrail_fires_without_client_submodule(self):
+        """A blocked prompt raises even though ``instructor.client`` is absent."""
+        InstructorCls, _ = _make_fake_instructor_modern()
+        _ins = _reload_instructor()
+
+        blocked = MagicMock()
+        blocked.action = "blocked"
+        blocked.details = "injection"
+        engine = MagicMock()
+        engine.check.return_value = [blocked]
+        InstrumentationState.get().configure(guardrail_engine=engine, on_block="raise")
+
+        _ins.patch_instructor()
+
+        with pytest.raises(AegisGuardrailError):
+            InstructorCls().create(messages=[{"role": "user", "content": "bad"}])
+
+    def test_unpatch_without_client_submodule(self):
+        """Unpatch restores the original create when resolved from the root."""
+        InstructorCls, AsyncCls = _make_fake_instructor_modern()
+        _ins = _reload_instructor()
+
+        original = InstructorCls.create
+        _ins.patch_instructor()
+        assert InstructorCls.create is not original
+
+        _ins.unpatch_instructor()
+        assert InstructorCls.create is original
+        assert not hasattr(AsyncCls.create, "__wrapped__")
+
+    def test_installed_but_unresolvable_is_not_reported_as_missing(self):
+        """An instructor without either layout reports an unsupported version."""
+        sys.modules["instructor"] = types.ModuleType("instructor")
+        sys.modules.pop("instructor.client", None)
+        _ins = _reload_instructor()
+
+        patch = _ins.patch_instructor()
+
+        assert patch.patched is False
+        assert patch.error is not None
+        assert "not installed" not in patch.error
+        assert "unsupported version" in patch.error
