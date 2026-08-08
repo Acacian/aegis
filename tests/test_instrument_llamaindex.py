@@ -124,6 +124,7 @@ def _clean_state():
 
     _li._patched = False
     _li._originals.clear()
+    _li._patched_methods.clear()
 
     yield
 
@@ -794,3 +795,102 @@ class TestEdgeCases:
         ]
         with pytest.raises(AegisGuardrailError, match="detail1; detail2"):
             _run_guardrails(engine, "bad text", direction="input", on_block="raise")
+
+
+class TestSubclassOverrideGovernance:
+    """Concrete LlamaIndex LLMs override chat/complete, bypassing a base patch.
+
+    ``llama_index.llms.openai.OpenAI`` defines both methods in its own module,
+    so attribute lookup never reaches the governed base method and prompts went
+    out ungoverned.  The adapter walks the subclass tree and installs an
+    ``__init_subclass__`` hook to cover classes defined later.
+    """
+
+    def test_existing_override_is_governed(self, fake_llamaindex):
+        """A subclass defined before patching has its override wrapped."""
+
+        class OverridingLLM(FakeLLM):
+            def complete(self, *args: Any, **kwargs: Any) -> FakeCompletionResponse:
+                return FakeCompletionResponse(text="subclass reply")
+
+        result = fake_llamaindex.patch_llamaindex()
+
+        key = f"{OverridingLLM.__module__}.{OverridingLLM.__qualname__}.complete"
+        assert key in result.targets
+
+        InstrumentationState.get().configure(
+            guardrail_engine=_make_engine(action="blocked"), on_block="raise"
+        )
+        with pytest.raises(AegisGuardrailError):
+            OverridingLLM().complete("bad prompt")
+
+    def test_override_defined_after_patching_is_governed(self, fake_llamaindex):
+        """The __init_subclass__ hook covers classes imported after instrumenting.
+
+        This is the documented usage: ``aegis.auto_instrument()`` at the top of
+        the file, framework imports below it.
+        """
+        fake_llamaindex.patch_llamaindex()
+
+        class LateLLM(FakeLLM):
+            def complete(self, *args: Any, **kwargs: Any) -> FakeCompletionResponse:
+                return FakeCompletionResponse(text="late reply")
+
+        InstrumentationState.get().configure(
+            guardrail_engine=_make_engine(action="blocked"), on_block="raise"
+        )
+        with pytest.raises(AegisGuardrailError):
+            LateLLM().complete("bad prompt")
+
+    def test_benign_call_through_override_still_works(self, fake_llamaindex):
+        """Governance must not change the result of an allowed call."""
+
+        class OverridingLLM(FakeLLM):
+            def complete(self, *args: Any, **kwargs: Any) -> FakeCompletionResponse:
+                return FakeCompletionResponse(text="subclass reply")
+
+        fake_llamaindex.patch_llamaindex()
+        InstrumentationState.get().configure(
+            guardrail_engine=_make_engine(action="allowed"), on_block="raise"
+        )
+
+        assert OverridingLLM().complete("hello").text == "subclass reply"
+
+    def test_unpatch_restores_overrides_and_hook(self, fake_llamaindex):
+        """Unpatch restores subclass overrides and stops governing new classes."""
+
+        class OverridingLLM(FakeLLM):
+            def complete(self, *args: Any, **kwargs: Any) -> FakeCompletionResponse:
+                return FakeCompletionResponse(text="subclass reply")
+
+        original = OverridingLLM.__dict__["complete"]
+        fake_llamaindex.patch_llamaindex()
+        assert OverridingLLM.__dict__["complete"] is not original
+
+        fake_llamaindex.unpatch_llamaindex()
+        assert OverridingLLM.__dict__["complete"] is original
+        assert fake_llamaindex._patched_methods == []
+
+        InstrumentationState.get().configure(
+            guardrail_engine=_make_engine(action="blocked"), on_block="raise"
+        )
+
+        class AfterUnpatchLLM(FakeLLM):
+            def complete(self, *args: Any, **kwargs: Any) -> FakeCompletionResponse:
+                return FakeCompletionResponse(text="not governed")
+
+        assert AfterUnpatchLLM().complete("bad prompt").text == "not governed"
+
+    def test_double_patch_does_not_rewrap(self, fake_llamaindex):
+        """Re-patching must not stack wrappers on the same override."""
+
+        class OverridingLLM(FakeLLM):
+            def complete(self, *args: Any, **kwargs: Any) -> FakeCompletionResponse:
+                return FakeCompletionResponse(text="subclass reply")
+
+        r1 = fake_llamaindex.patch_llamaindex()
+        wrapped_once = OverridingLLM.__dict__["complete"]
+        r2 = fake_llamaindex.patch_llamaindex()
+
+        assert r1.targets == r2.targets
+        assert OverridingLLM.__dict__["complete"] is wrapped_once

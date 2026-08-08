@@ -151,22 +151,40 @@ def test_instructor_blocks_injection():
         )
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "Known gap: the adapter patches LLM.chat/LLM.complete on the base class, "
-        "but every concrete LlamaIndex LLM overrides those methods in its own "
-        "module, so the patched base method is never reached. LlamaIndex's native "
-        "instrumentation dispatcher emits the events but swallows handler "
-        "exceptions, so it cannot block either. Remove this marker once the "
-        "adapter enforces on concrete subclasses."
-    ),
-)
 def test_llamaindex_blocks_injection():
     llms = pytest.importorskip("llama_index.core.llms")
 
     with pytest.raises(AegisGuardrailError):
         llms.MockLLM().complete(PAYLOAD)
+
+    with pytest.raises(AegisGuardrailError):
+        llms.MockLLM().chat([llms.ChatMessage(role="user", content=PAYLOAD)])
+
+
+def test_llamaindex_governs_concrete_llm_overrides():
+    """Concrete LLMs override chat/complete, so the base patch never runs.
+
+    ``llama_index.llms.openai.OpenAI`` defines both methods in its own module.
+    Before the adapter walked the subclass tree, this payload reached the
+    network ungoverned.
+    """
+    li_openai = pytest.importorskip("llama_index.llms.openai")
+    llms = pytest.importorskip("llama_index.core.llms")
+
+    llm = li_openai.OpenAI(model="gpt-4o-mini", api_key="sk-test")
+
+    with pytest.raises(AegisGuardrailError):
+        llm.complete(PAYLOAD)
+
+    with pytest.raises(AegisGuardrailError):
+        llm.chat([llms.ChatMessage(role="user", content=PAYLOAD)])
+
+
+def test_llamaindex_allows_benign_prompt():
+    """Governance must not break ordinary calls."""
+    llms = pytest.importorskip("llama_index.core.llms")
+
+    assert str(llms.MockLLM().complete("What is 2+2?"))
 
 
 def test_google_adk_runner_is_patched():
