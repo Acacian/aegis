@@ -173,7 +173,7 @@ This scans Python files for ungoverned LLM calls, tool definitions, subprocess c
 - [**LiteLLM Security**](litellm-security.md) — multi-provider LLM call guardrails
 
 ### By Concern
-- [**Prompt Injection Detection**](prompt-injection-detection.md) — 107 patterns, 13 categories
+- [**Prompt Injection Detection**](prompt-injection-detection.md) — 101 patterns, 13 categories
 - [**PII Detection for AI Agents**](pii-detection-ai-agent.md) — 13 categories with Luhn validation
 - [**AI Agent Audit Trail**](ai-agent-audit-trail.md) — SHA-256 hash-chained logging
 - [**AI Agent Vulnerability Scanner**](ai-agent-vulnerability-scanner.md) — `aegis scan` for any codebase

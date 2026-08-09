@@ -43,7 +43,7 @@ Aegis uses the same approach as OpenTelemetry (observability) and Sentry (error 
 
 Every LLM call and tool invocation passes through four guardrail checks before execution:
 
-1. **Prompt injection detection** -- 107 patterns across 13 categories, multi-language (EN/KO/ZH/JA)
+1. **Prompt injection detection** -- 101 patterns across 13 categories, multi-language (EN/KO/ZH/JA)
 2. **PII detection** -- 12 categories including credit cards (Luhn-validated), SSNs, API keys
 3. **Toxicity filtering** -- harmful/abusive content detection
 4. **Prompt leak detection** -- system prompt extraction attempts
@@ -134,7 +134,7 @@ Each entry captures: timestamp, action type, target, parameters, risk level, mat
 | Feature | Aegis | DIY if/else | NeMo Guardrails |
 |---------|-------|-------------|-----------------|
 | **Integration effort** | 2 lines | Grows per tool/framework | Config + Colang files |
-| **Detection method** | Deterministic regex (107 patterns) | Manual rules | LLM-based classification |
+| **Detection method** | Deterministic regex (101 patterns) | Manual rules | LLM-based classification |
 | **Latency** | Sub-millisecond | Near-zero | 200-2000ms (LLM call) |
 | **LLM dependency** | None | None | Requires LLM for every check |
 | **Policy format** | YAML (declarative) | Python code | Colang DSL |

@@ -73,7 +73,7 @@ for rec in analysis.recommendations:
 | **Article 12** | Automatic logging | SHA-256 tamper-evident audit chain, SQLite + JSONL + SIEM export | Full |
 | **Article 13** | Transparency | Decision audit trail with matched rule, risk level, full context | Full |
 | **Article 14** | Human oversight | 7 approval handlers (CLI, Slack, Discord, Telegram, email, webhook, custom) | Full |
-| **Article 15** | Accuracy, robustness | Prompt injection detection (107 patterns), guardrail engine | Partial |
+| **Article 15** | Accuracy, robustness | Prompt injection detection (101 patterns), guardrail engine | Partial |
 
 ### Tamper-Evident Audit Chain (Article 12)
 

@@ -121,7 +121,7 @@ Aegis auto-instruments when imported. Your crew script stays completely untouche
 ## Related Pages
 
 - [**CrewAI Governance Cookbook**](../cookbook/crewai-governance.md) — end-to-end recipe for `Crew.kickoff` policy hooks
-- [**Prompt Injection Detection**](prompt-injection-detection.md) — 107 patterns, 13 categories, 4 languages
+- [**Prompt Injection Detection**](prompt-injection-detection.md) — 101 patterns, 13 categories, 4 languages
 - [**PII Detection for AI Agents**](pii-detection-ai-agent.md) — Luhn-validated cards, SSN, IBAN, API keys
 - [**LLM Guardrails for Python**](llm-guardrails-python.md) — framework-agnostic guardrails reference
 - [**Aegis vs NeMo Guardrails**](../comparisons/vs-nemo-guardrails.md) — deterministic regex vs LLM-based dialog rails

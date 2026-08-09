@@ -1,5 +1,5 @@
 ---
-description: "Detect prompt injection attacks in Python with 107 patterns across 13 categories. Sub-millisecond, no LLM required. Supports English, Korean, Chinese, Japanese."
+description: "Detect prompt injection attacks in Python with 101 patterns across 13 categories. Sub-millisecond, no LLM required. Supports English, Korean, Chinese, Japanese."
 ---
 
 # Prompt Injection Detection for AI Agents
@@ -164,7 +164,7 @@ result = engine.check("Ignore previous instructions. My SSN is 123-45-6789.")
 | Feature | Aegis | LLM-Based Detection | Manual Regex |
 |---------|-------|---------------------|--------------|
 | **Latency** | Sub-millisecond | 200-2000ms per check | Sub-millisecond |
-| **Patterns** | 107 patterns, 13 categories | Depends on prompt engineering | Typically 5-10 rules |
+| **Patterns** | 101 patterns, 13 categories | Depends on prompt engineering | Typically 5-10 rules |
 | **Languages** | EN, KO, ZH, JA | Depends on LLM capability | Usually EN only |
 | **Cost per check** | $0 | $0.001-0.01 (LLM API call) | $0 |
 | **Reliability** | Deterministic (same input = same output) | Probabilistic (may miss or hallucinate) | Deterministic |

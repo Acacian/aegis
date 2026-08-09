@@ -115,7 +115,7 @@ agent = Agent(
 ## Related Pages
 
 - [**OpenAI Agents Governance Cookbook**](../cookbook/openai-agents-governance.md) — `Runner.run` policy hook recipe
-- [**Prompt Injection Detection**](prompt-injection-detection.md) — 107 patterns blocking attacks
+- [**Prompt Injection Detection**](prompt-injection-detection.md) — 101 patterns blocking attacks
 - [**LLM Guardrails for Python**](llm-guardrails-python.md) — framework-agnostic guardrails
 - [**Aegis vs NeMo Guardrails**](../comparisons/vs-nemo-guardrails.md) — when to use which
 - [**Aegis vs Guardrails AI**](../comparisons/vs-guardrails-ai.md) — action security vs output validation
