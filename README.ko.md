@@ -108,7 +108,7 @@ Aegis의 모든 거버넌스 기능 — 이상 탐지, 비용 예산, 드리프�
 
 `auto_instrument()`는 설치된 프레임워크만 감지해 패치합니다 — 하드 의존성 없음. [커스텀 adapter](https://acacian.github.io/aegis/guides/custom-adapters/)는 동일한 `BaseAdapter` 인터페이스를 사용합니다. 위 adapter는 전부 [통합 워크플로](.github/workflows/integration.yml)가 매일 최신 업스트림 릴리스에 대해 실제 진입점을 호출하고 가드레일 발화를 검증합니다 — 유닛 테스트는 프레임워크를 가짜로 대체하므로 업스트림 드리프트를 스스로 볼 수 없습니다.
 
-프레임워크가 네이티브 확장 지점을 제공하면 패치 대신 그것을 씁니다. Pydantic AI 통합은 코어 메인테이너 DouweM이 monkey-patch 설계를 반박한 뒤 이 방식으로 재구현됐고, 지금은 `AbstractCapability` 서브클래스([`src/aegis/contrib/pydantic_ai.py`](src/aegis/contrib/pydantic_ai.py))로 제공됩니다 — [pydantic-ai#4888](https://github.com/pydantic/pydantic-ai/pull/4888) 머지.
+프레임워크가 네이티브 확장 지점을 제공하면 패치 대신 그것을 씁니다. Pydantic AI 통합도 원래는 monkey-patch였는데, 코어 메인테이너 DouweM의 리뷰 — *"It doesn't look like those features are actually exposed as Pydantic AI capabilities?"* — 를 받고 네이티브 확장 API 위에 다시 만들었습니다. 지금은 `AbstractCapability` 서브클래스([`src/aegis/contrib/pydantic_ai.py`](src/aegis/contrib/pydantic_ai.py))로 제공됩니다. 리뷰 기록은 [pydantic-ai#4888](https://github.com/pydantic/pydantic-ai/pull/4888).
 
 ### 기본 가드레일
 

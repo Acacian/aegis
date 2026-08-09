@@ -115,7 +115,7 @@ One API. 12 agent frameworks + 3 protocol-level adapters.
 
 `auto_instrument()` detects what's installed and patches only those — no hard dependencies. [Custom adapters](https://acacian.github.io/aegis/guides/custom-adapters/) use the same `BaseAdapter` interface. Every adapter above is exercised against the current upstream release daily by the [integration workflow](.github/workflows/integration.yml), which drives each framework's real entrypoint and asserts a guardrail fires — the unit suite fakes these frameworks, so it cannot see upstream drift on its own.
 
-Where a framework offers a native extension point, Aegis uses it instead of patching. The Pydantic AI integration was rewritten this way after core maintainer DouweM pushed back on the monkey-patch design — it now ships as an `AbstractCapability` subclass ([`src/aegis/contrib/pydantic_ai.py`](src/aegis/contrib/pydantic_ai.py)), merged as [pydantic-ai#4888](https://github.com/pydantic/pydantic-ai/pull/4888).
+Where a framework offers a native extension point, Aegis uses it instead of patching. The Pydantic AI integration was monkey-patched until core maintainer DouweM reviewed it — *"It doesn't look like those features are actually exposed as Pydantic AI capabilities?"* — and it was rebuilt on the native extension API in response. It ships today as an `AbstractCapability` subclass ([`src/aegis/contrib/pydantic_ai.py`](src/aegis/contrib/pydantic_ai.py)); the review is [pydantic-ai#4888](https://github.com/pydantic/pydantic-ai/pull/4888).
 
 ### Default Guardrails
 
