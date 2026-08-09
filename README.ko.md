@@ -88,27 +88,31 @@ Aegis의 모든 거버넌스 기능 — 이상 탐지, 비용 예산, 드리프�
 
 하나의 API. 12개 에이전트 프레임워크 + 3개 프로토콜 레벨 adapter.
 
-| 프레임워크 | 훅 | 상태 |
-|-----------|-----|-----|
-| **LangChain** | `BaseChatModel.invoke/ainvoke`, `BaseTool.invoke/ainvoke` | Stable |
-| **CrewAI** | `Crew.kickoff/kickoff_async`, global `BeforeToolCallHook` | Stable |
-| **OpenAI Agents SDK** | `Runner.run`, `Runner.run_sync` | Stable |
-| **OpenAI API** | `Completions.create` (chat & completions) | Stable |
-| **Anthropic API** | `Messages.create` | Stable |
-| **LiteLLM** | `completion`, `acompletion` | Stable |
-| **Google GenAI** | `Models.generate_content` (신/구) | Stable |
-| **Google ADK** | `BasePlugin` 라이프사이클 (툴 호출, 에이전트 라우팅, 세션) | Stable |
-| **Pydantic AI** | `Agent.run`, `Agent.run_sync` | Stable |
-| **LlamaIndex** | `LLM.chat/achat/complete/acomplete`, `BaseQueryEngine.query/aquery` | Stable |
-| **Instructor** | `Instructor.create`, `AsyncInstructor.create` | Stable |
-| **DSPy** | `Module.__call__`, `LM.forward/aforward` | Stable |
-| **MCP** | 임의의 MCP 서버를 위한 전송 계층 프록시 (stdio / HTTP) | Stable |
-| **httpx** | 원시 HTTP 이그레스 미들웨어 (REST 에이전트, 웹훅) | Stable |
-| **Playwright** | 브라우징 에이전트를 위한 브라우저 컨텍스트 계측 | Stable |
+| 프레임워크 | 훅 | 통합 방식 |
+|-----------|-----|----------|
+| **Google ADK** | `BasePlugin` 라이프사이클 (툴 호출, 에이전트 라우팅, 세션) | **네이티브** — 패치는 플러그인 설치용 |
+| **CrewAI** | global `BeforeToolCallHook`, `Crew.kickoff/kickoff_async` | **하이브리드** — 툴 콜은 네이티브 훅, crew 진입은 패치 |
+| **Pydantic AI** | `AbstractCapability` · `Agent.run/run_sync` | **네이티브**(선택) · 패치(자동) |
+| **OpenAI Agents SDK** | `tool_input_guardrail`/`tool_output_guardrail` · `Runner.run/run_sync` | **네이티브**(선택) · 패치(자동) |
+| **LangChain** | `BaseChatModel.invoke/ainvoke`, `BaseTool.invoke/ainvoke` | 패치 |
+| **OpenAI API** | `Completions.create` (chat & completions) | 패치 |
+| **Anthropic API** | `Messages.create` | 패치 |
+| **LiteLLM** | `completion`, `acompletion` | 패치 |
+| **Google GenAI** | `Models.generate_content` (신/구) | 패치 |
+| **LlamaIndex** | 모든 구체 서브클래스의 `LLM.chat/achat/complete/acomplete`, `BaseQueryEngine.query/aquery` | 패치 |
+| **Instructor** | `Instructor.create`, `AsyncInstructor.create` | 패치 |
+| **DSPy** | `Module.__call__`, `LM.forward/aforward` | 패치 |
+| **MCP** | 임의의 MCP 서버를 위한 전송 계층 프록시 (stdio / HTTP) | 프록시 — 패치 없음 |
+| **httpx** | 원시 HTTP 이그레스용 `HttpxExecutor` (REST 에이전트, 웹훅) | 래퍼 — 패치 없음 |
+| **Playwright** | 브라우징 에이전트용 `PlaywrightExecutor` | 래퍼 — 패치 없음 |
 
 `auto_instrument()`는 설치된 프레임워크만 감지해 패치합니다 — 하드 의존성 없음. [커스텀 adapter](https://acacian.github.io/aegis/guides/custom-adapters/)는 동일한 `BaseAdapter` 인터페이스를 사용합니다. 위 adapter는 전부 [통합 워크플로](.github/workflows/integration.yml)가 매일 최신 업스트림 릴리스에 대해 실제 진입점을 호출하고 가드레일 발화를 검증합니다 — 유닛 테스트는 프레임워크를 가짜로 대체하므로 업스트림 드리프트를 스스로 볼 수 없습니다.
 
-프레임워크가 네이티브 확장 지점을 제공하면 패치 대신 그것을 씁니다. Pydantic AI 통합도 원래는 monkey-patch였는데, 코어 메인테이너 DouweM의 리뷰 — *"It doesn't look like those features are actually exposed as Pydantic AI capabilities?"* — 를 받고 네이티브 확장 API 위에 다시 만들었습니다. 지금은 `AbstractCapability` 서브클래스([`src/aegis/contrib/pydantic_ai.py`](src/aegis/contrib/pydantic_ai.py))로 제공됩니다. 리뷰 기록은 [pydantic-ai#4888](https://github.com/pydantic/pydantic-ai/pull/4888).
+**통합 정책.** **실제로 차단할 수 있는** 네이티브 확장 지점이 있으면 항상 그쪽을 씁니다. Google ADK의 `BasePlugin`과 CrewAI의 `BeforeToolCallHook`이 그런 경우고, 이때 `auto_instrument()`는 네이티브 객체를 설치할 만큼만 패치합니다. Pydantic AI와 OpenAI Agents SDK는 선택형 네이티브 구현(`AbstractCapability`, `tool_input_guardrail`)과 무코드용 패치 경로를 함께 제공합니다. 나머지는 차단 가능한 훅이 없어서 패치합니다 — 원시 OpenAI/Anthropic SDK와 DSPy는 훅 자체가 없고, LlamaIndex의 instrumentation dispatcher는 이벤트는 쏘지만 핸들러 예외를 삼켜서 관측만 되고 집행이 안 됩니다.
+
+이 정책을 문서화하게 된 계기가 Pydantic AI입니다. 원래 monkey-patch였는데 코어 메인테이너 DouweM의 리뷰 — *"It doesn't look like those features are actually exposed as Pydantic AI capabilities?"* — 를 받고 네이티브 확장 API 위에 다시 만들었습니다 ([`src/aegis/contrib/pydantic_ai.py`](src/aegis/contrib/pydantic_ai.py), 리뷰 기록은 [pydantic-ai#4888](https://github.com/pydantic/pydantic-ai/pull/4888)).
+
+패치는 선호가 아니라 **최후 수단**입니다. 업스트림 변화에 가장 노출된 부분이고, 통합 워크플로가 존재하는 이유가 그것입니다.
 
 ### 기본 가드레일
 

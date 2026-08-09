@@ -95,27 +95,31 @@ Every governance feature in Aegis — anomaly detection, cost budgets, drift, ca
 
 One API. 12 agent frameworks + 3 protocol-level adapters.
 
-| Framework | Hook | Status |
-|-----------|------|--------|
-| **LangChain** | `BaseChatModel.invoke/ainvoke`, `BaseTool.invoke/ainvoke` | Stable |
-| **CrewAI** | `Crew.kickoff/kickoff_async`, global `BeforeToolCallHook` | Stable |
-| **OpenAI Agents SDK** | `Runner.run`, `Runner.run_sync` | Stable |
-| **OpenAI API** | `Completions.create` (chat & completions) | Stable |
-| **Anthropic API** | `Messages.create` | Stable |
-| **LiteLLM** | `completion`, `acompletion` | Stable |
-| **Google GenAI** | `Models.generate_content` (new + legacy) | Stable |
-| **Google ADK** | `BasePlugin` lifecycle (tool calls, agent routing, sessions) | Stable |
-| **Pydantic AI** | `Agent.run`, `Agent.run_sync` | Stable |
-| **LlamaIndex** | `LLM.chat/achat/complete/acomplete`, `BaseQueryEngine.query/aquery` | Stable |
-| **Instructor** | `Instructor.create`, `AsyncInstructor.create` | Stable |
-| **DSPy** | `Module.__call__`, `LM.forward/aforward` | Stable |
-| **MCP** | Transport-layer proxy for any MCP server (stdio / HTTP) | Stable |
-| **httpx** | Middleware for raw HTTP egress (REST agents, webhooks) | Stable |
-| **Playwright** | Browser context instrumentation for browsing agents | Stable |
+| Framework | Hook | Integration |
+|-----------|------|-------------|
+| **Google ADK** | `BasePlugin` lifecycle (tool calls, agent routing, sessions) | **Native** — the patch only installs the plugin |
+| **CrewAI** | global `BeforeToolCallHook`, `Crew.kickoff/kickoff_async` | **Hybrid** — native hook for tool calls, patch for crew entry |
+| **Pydantic AI** | `AbstractCapability` · `Agent.run/run_sync` | **Native** (opt-in) · Patch (auto) |
+| **OpenAI Agents SDK** | `tool_input_guardrail`/`tool_output_guardrail` · `Runner.run/run_sync` | **Native** (opt-in) · Patch (auto) |
+| **LangChain** | `BaseChatModel.invoke/ainvoke`, `BaseTool.invoke/ainvoke` | Patch |
+| **OpenAI API** | `Completions.create` (chat & completions) | Patch |
+| **Anthropic API** | `Messages.create` | Patch |
+| **LiteLLM** | `completion`, `acompletion` | Patch |
+| **Google GenAI** | `Models.generate_content` (new + legacy) | Patch |
+| **LlamaIndex** | `LLM.chat/achat/complete/acomplete` on every concrete subclass, `BaseQueryEngine.query/aquery` | Patch |
+| **Instructor** | `Instructor.create`, `AsyncInstructor.create` | Patch |
+| **DSPy** | `Module.__call__`, `LM.forward/aforward` | Patch |
+| **MCP** | Transport-layer proxy for any MCP server (stdio / HTTP) | Proxy — no patching |
+| **httpx** | `HttpxExecutor` for raw HTTP egress (REST agents, webhooks) | Wrapper — no patching |
+| **Playwright** | `PlaywrightExecutor` for browsing agents | Wrapper — no patching |
 
 `auto_instrument()` detects what's installed and patches only those — no hard dependencies. [Custom adapters](https://acacian.github.io/aegis/guides/custom-adapters/) use the same `BaseAdapter` interface. Every adapter above is exercised against the current upstream release daily by the [integration workflow](.github/workflows/integration.yml), which drives each framework's real entrypoint and asserts a guardrail fires — the unit suite fakes these frameworks, so it cannot see upstream drift on its own.
 
-Where a framework offers a native extension point, Aegis uses it instead of patching. The Pydantic AI integration was monkey-patched until core maintainer DouweM reviewed it — *"It doesn't look like those features are actually exposed as Pydantic AI capabilities?"* — and it was rebuilt on the native extension API in response. It ships today as an `AbstractCapability` subclass ([`src/aegis/contrib/pydantic_ai.py`](src/aegis/contrib/pydantic_ai.py)); the review is [pydantic-ai#4888](https://github.com/pydantic/pydantic-ai/pull/4888).
+**Integration policy.** Native extension points win wherever one exists that can actually *block* — Google ADK's `BasePlugin` and CrewAI's `BeforeToolCallHook` both do, and there `auto_instrument()` patches only enough to install the native object. Pydantic AI and the OpenAI Agents SDK ship native implementations you opt into (`AbstractCapability`, `tool_input_guardrail`) alongside a patch-based path for the zero-code case. Everything else is patched because no blocking hook exists: the raw OpenAI/Anthropic SDKs and DSPy expose none, and LlamaIndex's instrumentation dispatcher emits events but swallows handler exceptions, so it can observe and not enforce.
+
+The Pydantic AI integration is the reason this policy is written down. It was monkey-patched until core maintainer DouweM reviewed it — *"It doesn't look like those features are actually exposed as Pydantic AI capabilities?"* — and was rebuilt on the native extension API in response ([`src/aegis/contrib/pydantic_ai.py`](src/aegis/contrib/pydantic_ai.py); the review is [pydantic-ai#4888](https://github.com/pydantic/pydantic-ai/pull/4888)).
+
+Patching is the fallback, not the preference — it is the part most exposed to upstream change, which is why the integration workflow exists.
 
 ### Default Guardrails
 
