@@ -121,7 +121,7 @@ Where a framework offers a native extension point, Aegis uses it instead of patc
 
 | Guardrail | Default | What it catches |
 |-----------|---------|-----------------|
-| **Prompt injection** | Block | 10 attack categories, 85+ patterns, multi-language (EN/KO/ZH/JA) |
+| **Prompt injection** | Block | 13 attack categories, 101 patterns, multi-language (EN/KO/ZH/JA) |
 | **PII detection** | Warn | 13 categories (email, credit card, SSN, IBAN, API keys, etc.) |
 | **Prompt leak** | Warn | System prompt extraction attempts |
 | **Toxicity** | Warn | Harmful, violent, or abusive content |

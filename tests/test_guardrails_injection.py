@@ -464,3 +464,16 @@ class TestInjectionCommand:
         g = InjectionGuardrail()
         result = g.check("The file is at /home/user/docs/report.pdf")
         assert result.passed is True
+
+
+def test_documented_category_and_pattern_counts_match_reality():
+    """The counts in README and docs/faq.md must match what ships.
+
+    These numbers had drifted three ways at once — README said 10 categories /
+    85+ patterns, docs/faq.md said 13 / 107, and the code had 13 / 101. Pin them
+    here so adding patterns fails loudly until the docs follow.
+    """
+    guardrail = InjectionGuardrail()
+
+    assert len(guardrail._categories) == 13
+    assert sum(len(p) for p in guardrail._patterns.values()) == 101
