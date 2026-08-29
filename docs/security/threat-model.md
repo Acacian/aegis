@@ -68,7 +68,7 @@ Out of scope: the user's application code, the AI models called through Aegis, i
 
 **Mitigations:**
 - Unicode normalization before pattern matching
-- 85+ patterns across 10 categories
+- 109 patterns across 13 categories
 - Multi-language support (KO, ZH, JA)
 - 3 sensitivity levels including aggressive mode
 - Rule pack ecosystem for community-contributed patterns

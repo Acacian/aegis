@@ -83,7 +83,7 @@
       "Real-time risk evaluation (<1ms, LRU-cached)",
       "14 preset policies (general + industry)",
       "PII Scanner — live detection of 12 PII categories with Luhn validation",
-      "Injection Detector — prompt injection detection across 10 attack categories",
+      "Injection Detector — prompt injection detection across 13 attack categories",
       "MCP Security Scanner — tool poisoning and rug-pull detection",
       "Cost Circuit Breaker — 17-model cost tracking demo",
       "Audit Chain Visualizer — SHA-256 hash-linked tamper-evident log",
@@ -491,7 +491,7 @@ aegis.auto_instrument(
             <tr style="text-align:left;border-bottom:1px solid var(--border)">
               <th style="padding:6px 8px" data-i18n="guard.header.name">Guardrail</th><th style="padding:6px 8px" data-i18n="guard.header.default">Default</th><th style="padding:6px 8px" data-i18n="guard.header.catches">Catches</th>
             </tr>
-            <tr><td style="padding:6px 8px"><strong data-i18n="guard.injection">Prompt injection</strong></td><td style="padding:6px 8px;color:var(--red,#f44)" data-i18n="common.block">Block</td><td style="padding:6px 8px" data-i18n="guard.injection.catches">85+ patterns, multi-language (EN/KO/ZH/JA)</td></tr>
+            <tr><td style="padding:6px 8px"><strong data-i18n="guard.injection">Prompt injection</strong></td><td style="padding:6px 8px;color:var(--red,#f44)" data-i18n="common.block">Block</td><td style="padding:6px 8px" data-i18n="guard.injection.catches">109 patterns, 9 languages (EN/KO/ZH/JA/ES/DE/FR/TH/VI)</td></tr>
             <tr><td style="padding:6px 8px"><strong data-i18n="guard.pii">PII detection</strong></td><td style="padding:6px 8px;color:var(--yellow,#fa0)" data-i18n="common.warn">Warn</td><td style="padding:6px 8px" data-i18n="guard.pii.catches">12 categories (email, credit card, SSN, API keys…)</td></tr>
             <tr><td style="padding:6px 8px"><strong data-i18n="guard.leak">Prompt leak</strong></td><td style="padding:6px 8px;color:var(--yellow,#fa0)" data-i18n="common.warn">Warn</td><td style="padding:6px 8px" data-i18n="guard.leak.catches">System prompt extraction attempts</td></tr>
             <tr><td style="padding:6px 8px"><strong data-i18n="guard.toxicity">Toxicity</strong></td><td style="padding:6px 8px;color:var(--yellow,#fa0)" data-i18n="common.warn">Warn</td><td style="padding:6px 8px" data-i18n="guard.toxicity.catches">Harmful/abusive content (opt-in to block)</td></tr>

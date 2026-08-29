@@ -19,7 +19,7 @@ import aegis
 aegis.auto_instrument()
 
 # Every LLM call across all installed frameworks is now governed:
-# - Prompt injection detection (85+ patterns, blocks attacks)
+# - Prompt injection detection (109 patterns, blocks attacks)
 # - PII detection (13 categories, warns on exposure)
 # - Toxicity filtering (warns on harmful content)
 # - Prompt leak detection (warns on system prompt extraction)
@@ -64,7 +64,7 @@ print(result.passed)   # False
 print(result.matches)  # [InjectionMatch(category="instruction_override", ...)]
 ```
 
-Categories: system prompt extraction, role hijacking, instruction override, delimiter injection, encoding evasion, multi-language attacks (EN/KO/ZH/JA), indirect injection, data exfiltration, SQL injection, SSRF, command injection, jailbreak patterns, context manipulation.
+Categories: system prompt extraction, role hijacking, instruction override, delimiter injection, encoding evasion, multi-language attacks (EN/KO/ZH/JA/ES/DE/FR/TH/VI), indirect injection, data exfiltration, SQL injection, SSRF, command injection, jailbreak patterns, context manipulation.
 
 ### PII Detection (Default: Warn)
 
@@ -173,7 +173,7 @@ This scans Python files for ungoverned LLM calls, tool definitions, subprocess c
 - [**LiteLLM Security**](litellm-security.md) — multi-provider LLM call guardrails
 
 ### By Concern
-- [**Prompt Injection Detection**](prompt-injection-detection.md) — 101 patterns, 13 categories
+- [**Prompt Injection Detection**](prompt-injection-detection.md) — 109 patterns, 13 categories
 - [**PII Detection for AI Agents**](pii-detection-ai-agent.md) — 13 categories with Luhn validation
 - [**AI Agent Audit Trail**](ai-agent-audit-trail.md) — SHA-256 hash-chained logging
 - [**AI Agent Vulnerability Scanner**](ai-agent-vulnerability-scanner.md) — `aegis scan` for any codebase

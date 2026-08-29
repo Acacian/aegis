@@ -13,7 +13,7 @@ This document maps Aegis capabilities to each OWASP Agentic AI risk category. It
 
 | # | OWASP Risk | Aegis Coverage | Key Feature |
 |---|-----------|----------------|-------------|
-| 01 | Agent Goal Hijack | **Partial** | Prompt injection detection (85+ patterns, multi-language) |
+| 01 | Agent Goal Hijack | **Partial** | Prompt injection detection (109 patterns, 9 languages) |
 | 02 | Tool Misuse | **Full** | YAML policy engine — per-tool allow/deny/review gates |
 | 03 | Identity & Privilege Abuse | **Full** | Agent trust chain, RBAC (12 permissions), delegation tokens |
 | 04 | Supply Chain Vulnerabilities | **Full** | MCP tool poisoning scanner, SHA-256 pinning, SBOM, vuln DB |
@@ -31,7 +31,7 @@ This document maps Aegis capabilities to each OWASP Agentic AI risk category. It
 **Risk:** Agents redirected by hidden instructions in external content.
 
 **Aegis mitigation:**
-- `InjectionGuardrail`: 10 attack categories, 85+ compiled regex patterns
+- `InjectionGuardrail`: 13 attack categories, 109 compiled regex patterns
 - Multi-language: Korean, Chinese (simplified + traditional), Japanese
 - 3 sensitivity levels: low (high-confidence only), medium (recommended), high (aggressive)
 - Delimiter injection detection: `<|endoftext|>`, ChatML tokens, XML role tags

@@ -105,7 +105,7 @@ All deterministic regex. No LLM calls. No network. Sub-millisecond.
 
 | Guardrail | Default | Coverage |
 |-----------|---------|----------|
-| **Prompt injection** | Block | 85+ patterns, 13 categories, 4 languages (EN/KO/ZH/JA) |
+| **Prompt injection** | Block | 109 patterns, 13 categories, 9 languages (EN/KO/ZH/JA/ES/DE/FR/TH/VI) |
 | **PII detection** | Warn | 13 categories — email, credit card, SSN, API keys, IBAN |
 | **Toxicity** | Warn | Harmful, violent, abusive content |
 | **Prompt leak** | Warn | System prompt extraction attempts |
@@ -236,7 +236,7 @@ Framework and problem-specific guides. Each page is a drop-in recipe for one con
 
 ### By Problem
 
-- [**Prompt Injection Detection**](solutions/prompt-injection-detection.md) — 101 patterns, 13 categories, 4 languages
+- [**Prompt Injection Detection**](solutions/prompt-injection-detection.md) — 109 patterns, 13 categories, 9 languages
 - [**PII Detection for AI Agents**](solutions/pii-detection-ai-agent.md) — Luhn-validated cards, SSN, API keys, 12 categories
 - [**AI Agent Vulnerability Scanner**](solutions/ai-agent-vulnerability-scanner.md) — find ungoverned calls in any Python codebase
 - [**AI Agent Permission Control**](solutions/ai-agent-permission-control.md) — declarative allow/deny/approve rules

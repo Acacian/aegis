@@ -125,7 +125,7 @@ Patching is the fallback, not the preference — it is the part most exposed to 
 
 | Guardrail | Default | What it catches |
 |-----------|---------|-----------------|
-| **Prompt injection** | Block | 13 attack categories, 101 patterns, multi-language (EN/KO/ZH/JA) |
+| **Prompt injection** | Block | 13 attack categories, 109 patterns, 9 languages (EN/KO/ZH/JA/ES/DE/FR/TH/VI) |
 | **PII detection** | Warn | 13 categories (email, credit card, SSN, IBAN, API keys, etc.) |
 | **Prompt leak** | Warn | System prompt extraction attempts |
 | **Toxicity** | Warn | Harmful, violent, or abusive content |

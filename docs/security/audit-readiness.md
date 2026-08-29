@@ -32,7 +32,7 @@ This document prepares Aegis for an independent security audit. It describes wha
 - Fail-closed: verify unmatched actions are not silently allowed
 
 ### 2. Injection Detection Soundness
-- Pattern coverage: verify 85+ patterns match documented attacks
+- Pattern coverage: verify 109 patterns match documented attacks
 - Unicode handling: verify normalization prevents evasion
 - Sensitivity levels: verify high catches more than medium catches more than low
 - No false negatives on known attack corpus

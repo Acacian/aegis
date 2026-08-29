@@ -101,7 +101,7 @@ Aegis detects 13 PII categories (email, phone, SSN, credit card, API keys, etc.)
 | Feature | Aegis | CrewAI Built-in | DIY Hooks |
 |---------|-------|----------------|-----------|
 | **Integration** | 2 lines | N/A | Per-tool manual hooks |
-| **Injection detection** | 85+ patterns, 4 languages | None | Manual regex |
+| **Injection detection** | 109 patterns, 9 languages | None | Manual regex |
 | **PII detection** | 13 categories, Luhn-validated | None | Manual regex |
 | **Cross-agent scanning** | Automatic (kickoff patch) | None | Manual |
 | **Tool call policy** | YAML declarative | None | Python if/else |
@@ -121,7 +121,7 @@ Aegis auto-instruments when imported. Your crew script stays completely untouche
 ## Related Pages
 
 - [**CrewAI Governance Cookbook**](../cookbook/crewai-governance.md) — end-to-end recipe for `Crew.kickoff` policy hooks
-- [**Prompt Injection Detection**](prompt-injection-detection.md) — 101 patterns, 13 categories, 4 languages
+- [**Prompt Injection Detection**](prompt-injection-detection.md) — 109 patterns, 13 categories, 9 languages
 - [**PII Detection for AI Agents**](pii-detection-ai-agent.md) — Luhn-validated cards, SSN, IBAN, API keys
 - [**LLM Guardrails for Python**](llm-guardrails-python.md) — framework-agnostic guardrails reference
 - [**Aegis vs NeMo Guardrails**](../comparisons/vs-nemo-guardrails.md) — deterministic regex vs LLM-based dialog rails

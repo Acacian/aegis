@@ -65,7 +65,7 @@ Key strengths:
 | **Approval workflows** | No | 7 built-in handlers (CLI, Slack, Discord, Telegram, email, webhook, custom) |
 | **Action-level audit trail** | No | Yes (SQLite, JSONL, webhook, Python logging) |
 | **Auto-instrumentation** | No (explicit Guard wrapping) | Yes (`aegis.auto_instrument()`) |
-| **Runtime guardrails** | Content validators (toxicity, PII, etc.) | Prompt injection (85+ patterns), PII (12 categories), toxicity, prompt leak |
+| **Runtime guardrails** | Content validators (toxicity, PII, etc.) | Prompt injection (109 patterns), PII (12 categories), toxicity, prompt leak |
 | **Framework support** | OpenAI, Anthropic, Cohere, LiteLLM, Hugging Face | LangChain, CrewAI, OpenAI Agents SDK, OpenAI, Anthropic, MCP, httpx, Playwright |
 | **Community ecosystem** | Guardrails Hub (validator marketplace) | YAML policy patterns + cookbook recipes |
 | **License** | Apache 2.0 | MIT |

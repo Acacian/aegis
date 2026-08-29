@@ -36,7 +36,7 @@ AEGIS_INSTRUMENT=1 python my_agent.py
 
 Every AI call is now checked on both input and output:
 
-- **Prompt injection** -- blocked (10 attack categories, 85+ patterns)
+- **Prompt injection** -- blocked (13 attack categories, 109 patterns)
 - **Toxicity** -- blocked (harmful/abusive content)
 - **PII** -- warned (12 categories: email, credit card, SSN, API keys, etc.)
 - **Prompt leak** -- warned (system prompt extraction attempts)

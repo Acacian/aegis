@@ -64,7 +64,7 @@ agent = Agent(
 
 This approach requires:
 
-- Writing detection logic for every attack category (13 categories, 85+ patterns)
+- Writing detection logic for every attack category (13 categories, 109 patterns)
 - Maintaining and updating patterns as new attacks emerge
 - Adding PII detection, toxicity filtering separately
 - Building your own audit trail
@@ -105,7 +105,7 @@ agent = Agent(
 | Feature | Aegis auto_instrument | OpenAI SDK Built-in | DIY |
 |---------|----------------------|--------------------|----|
 | **Setup** | 2 lines | Class per guardrail | Full custom |
-| **Injection detection** | 85+ patterns, 4 languages | Write your own | Write your own |
+| **Injection detection** | 109 patterns, 9 languages | Write your own | Write your own |
 | **PII detection** | 13 categories | Write your own | Write your own |
 | **Audit trail** | Built-in | None | DIY |
 | **Latency** | Sub-millisecond | Depends on impl | Depends on impl |
@@ -115,7 +115,7 @@ agent = Agent(
 ## Related Pages
 
 - [**OpenAI Agents Governance Cookbook**](../cookbook/openai-agents-governance.md) — `Runner.run` policy hook recipe
-- [**Prompt Injection Detection**](prompt-injection-detection.md) — 101 patterns blocking attacks
+- [**Prompt Injection Detection**](prompt-injection-detection.md) — 109 patterns blocking attacks
 - [**LLM Guardrails for Python**](llm-guardrails-python.md) — framework-agnostic guardrails
 - [**Aegis vs NeMo Guardrails**](../comparisons/vs-nemo-guardrails.md) — when to use which
 - [**Aegis vs Guardrails AI**](../comparisons/vs-guardrails-ai.md) — action security vs output validation

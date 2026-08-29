@@ -138,7 +138,7 @@ Minimal. Aegis keeps the policy rules in memory (typically < 1KB for 100 rules) 
 Policies are loaded from trusted YAML files, not user input. The YAML parser rejects custom tags and constructors. If you load policies from external sources, validate them with `aegis validate` first.
 
 ### Can Aegis prevent prompt injection?
-Yes. Since v0.4, Aegis includes built-in runtime guardrails that inspect and filter LLM prompts and responses. Prompt injection detection (13 attack categories, 101 patterns, multi-language), PII detection and masking (13 categories including Luhn-validated credit cards, SSNs, IBAN, API keys), and toxicity filtering all run automatically on every input and output when auto-instrumentation is active. Aegis also governs **actions** (API calls, database queries, file operations), so it provides defense in depth at both the prompt level and the action level.
+Yes. Since v0.4, Aegis includes built-in runtime guardrails that inspect and filter LLM prompts and responses. Prompt injection detection (13 attack categories, 109 patterns, 9 languages), PII detection and masking (13 categories including Luhn-validated credit cards, SSNs, IBAN, API keys), and toxicity filtering all run automatically on every input and output when auto-instrumentation is active. Aegis also governs **actions** (API calls, database queries, file operations), so it provides defense in depth at both the prompt level and the action level.
 
 ### Is there a way to enforce Aegis in production?
 Aegis is a library — it relies on the developer routing all agent actions through `runtime.run_one()`. For stronger enforcement in containerized environments, see the [Security Model guide](guides/security-model.md) which covers Docker defense-in-depth patterns.

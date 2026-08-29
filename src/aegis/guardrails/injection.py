@@ -141,6 +141,13 @@ def _compile(
     return (name, re.compile(pattern, flags), confidence, sensitivity)
 
 
+# ``_normalize_text`` runs NFKC before matching, and NFKC decomposes Thai SARA AM
+# (U+0E33 "ำ") into NIKHAHIT + SARA AA (U+0E4D U+0E32). A pattern spelled
+# with the composed character therefore never fires against normalized input.
+# Thai patterns below interpolate this so both spellings match.
+_TH_AM = "(?:\u0e33|\u0e4d\u0e32)"
+
+
 # -- Category: system_prompt_extraction ------------------------------------
 
 _SYSTEM_PROMPT_EXTRACTION: list[PatternEntry] = [
@@ -521,6 +528,72 @@ _MULTI_LANGUAGE_INJECTION: list[PatternEntry] = [
         "fr_ignore_previous",
         r"(?:ignore[rz]?|oublie[rz]?)\s+(?:toutes?\s+)?(?:les?\s+)?"
         r"(?:instructions?|règles?|directives?)\s+(?:précédentes?|antérieures?)",
+        confidence="high",
+        sensitivity="medium",
+    ),
+    # Thai -- written without inter-word spaces, so every morpheme boundary
+    # takes an optional \s* rather than a required \s+.
+    _compile(
+        "th_ignore_previous",
+        r"(?:เพิกเฉย|ละเว้น|ไม่ต้องสนใจ|ลืม|ยกเลิก)\s*"
+        rf"(?:ค{_TH_AM}สั่ง|ค{_TH_AM}แนะน{_TH_AM}|ข้อก{_TH_AM}หนด|กฎ|พรอมต์)\s*(?:ทั้งหมด)?\s*"
+        r"(?:ก่อนหน้า(?:นี้)?|ข้างต้น|เดิม)",
+        confidence="high",
+        sensitivity="low",
+    ),
+    _compile(
+        "th_you_are_now",
+        r"(?:(?:ตอนนี้|จากนี้ไป|ต่อไปนี้|นับจากนี้)\s*คุณ\s*(?:เป็น|คือ|จะเป็น)"
+        r"|บทบาทใหม่ของคุณ"
+        rf"|แกล้ง\s*ท{_TH_AM}\s*เป็น\s*ว่า\s*คุณ\s*(?:เป็น|คือ))",
+        confidence="high",
+        sensitivity="low",
+    ),
+    _compile(
+        "th_show_prompt",
+        rf"(?:แสดง|บอก|เปิดเผย|พิมพ์|ท{_TH_AM}ซ้{_TH_AM})\s*(?:ให้\s*(?:ฉัน|ผม|เรา))?\s*"
+        rf"(?:พรอมต์|ค{_TH_AM}สั่ง|ค{_TH_AM}แนะน{_TH_AM}|กฎ)\s*(?:ระบบ|เริ่มต้น|ดั้งเดิม|ของคุณ)",
+        confidence="high",
+        sensitivity="medium",
+    ),
+    _compile(
+        "th_new_instructions",
+        rf"(?:ค{_TH_AM}สั่ง|ค{_TH_AM}แนะน{_TH_AM}|ข้อก{_TH_AM}หนด|กฎ)\s*ใหม่\s*(?:ของคุณ)?\s*"
+        r"(?:คือ|มีดังนี้|ดังนี้)\s*[:：]?",
+        confidence="high",
+        sensitivity="medium",
+    ),
+    # Vietnamese
+    _compile(
+        "vi_ignore_previous",
+        r"(?:bỏ\s+qua|phớt\s+lờ|quên(?:\s+đi)?|hủy\s+bỏ|không\s+cần\s+tuân\s+theo)\s+"
+        r"(?:tất\s+cả\s+)?(?:mọi\s+|các\s+|những\s+)?"
+        r"(?:hướng\s+dẫn|chỉ\s+dẫn|chỉ\s+thị|quy\s+tắc|câu\s+lệnh|lệnh)\s+"
+        r"(?:trước(?:\s+đó)?|phía\s+trên|ở\s+trên|bên\s+trên)",
+        confidence="high",
+        sensitivity="low",
+    ),
+    _compile(
+        "vi_you_are_now",
+        r"(?:(?:bây\s+giờ|từ\s+(?:bây\s+)?giờ|kể\s+từ\s+giờ)\s+bạn\s+(?:là|sẽ\s+là)"
+        r"|vai\s+trò\s+mới\s+của\s+bạn"
+        r"|(?:hãy\s+)?giả\s+(?:vờ|bộ|định)\s+(?:rằng\s+)?bạn\s+là)",
+        confidence="high",
+        sensitivity="low",
+    ),
+    _compile(
+        "vi_show_prompt",
+        r"(?:hiển\s+thị|tiết\s+lộ|in\s+ra|lặp\s+lại"
+        r"|cho\s+(?:tôi|mình)\s+xem|nói\s+cho\s+(?:tôi|mình)\s+biết)\s+"
+        r"(?:lời\s+nhắc|prompt|hướng\s+dẫn|chỉ\s+thị|quy\s+tắc)\s+"
+        r"(?:hệ\s+thống|ban\s+đầu|gốc|của\s+bạn)",
+        confidence="high",
+        sensitivity="medium",
+    ),
+    _compile(
+        "vi_new_instructions",
+        r"(?:hướng\s+dẫn|chỉ\s+thị|quy\s+tắc|câu\s+lệnh)\s+mới\s*"
+        r"(?:của\s+bạn)?\s*(?:là|như\s+sau)?\s*[:：]",
         confidence="high",
         sensitivity="medium",
     ),

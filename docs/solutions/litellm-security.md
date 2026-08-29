@@ -87,7 +87,7 @@ response = litellm.completion(
 | Feature | Aegis | LiteLLM Callbacks | DIY Middleware |
 |---------|-------|------------------|----------------|
 | **Setup** | 2 lines | Custom callback class | Custom per endpoint |
-| **Injection detection** | 85+ patterns, 4 languages | Write your own | Write your own |
+| **Injection detection** | 109 patterns, 9 languages | Write your own | Write your own |
 | **PII detection** | 13 categories | Write your own | Write your own |
 | **Audit trail** | Built-in (SQLite + JSONL) | success/failure hooks | DIY |
 | **Latency** | Sub-millisecond | Depends on impl | Depends on impl |
@@ -102,7 +102,7 @@ AEGIS_INSTRUMENT=1 python my_litellm_app.py
 ## Related Pages
 
 - [**LiteLLM Governance Cookbook**](../cookbook/litellm-governance.md) — `completion`/`acompletion` recipe
-- [**Prompt Injection Detection**](prompt-injection-detection.md) — 101 patterns, multi-language
+- [**Prompt Injection Detection**](prompt-injection-detection.md) — 109 patterns, 9 languages
 - [**PII Detection for AI Agents**](pii-detection-ai-agent.md) — 13 categories
 - [**LLM Guardrails for Python**](llm-guardrails-python.md) — framework-agnostic reference
 - [**AI Agent Cost Governance**](ai-agent-cost-governance.md) — per-provider budget caps

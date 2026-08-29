@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Thai and Vietnamese prompt-injection patterns** (#29). Eight new entries in
+  `multi_language_injection` — ignore-previous, you-are-now, show-system-prompt,
+  and new-instructions for each language. Injection coverage goes from 101 to 109
+  patterns across 13 categories and 9 languages.
+
+### Fixed
+
+- **Thai patterns are now written against NFKC-normalized text.** `detect()`
+  NFKC-normalizes before matching, and NFKC decomposes Thai SARA AM (U+0E33 "ำ")
+  into U+0E4D U+0E32. A pattern spelled with the composed character never fires.
+  Thai patterns interpolate `_TH_AM`, which accepts both spellings, and a test
+  pins the behaviour.
+- **Stale guardrail counts across the docs site, README, llms.txt and the
+  playground.** The number was still reported as "85+ patterns", "107 patterns"
+  and "10 categories" in 20 places that the 0.9.4 and 1.0.0 corrections missed —
+  including `playground/js/i18n.js`, which overrides the rendered HTML at runtime,
+  so the page served the old figure regardless of the markup. All live claims now
+  read 109 / 13 / 9. Historical CHANGELOG entries keep their original numbers.
+
 ## [1.0.0] — 2026-08-09
 
 First stable release. Nothing here is a new feature — 1.0.0 is a statement about

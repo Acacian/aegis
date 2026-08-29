@@ -33,7 +33,7 @@
 
 | Capability | Mechanism | Default | Latency |
 |---|---|---|---|
-| Prompt injection detection | 107 deterministic regex patterns, 13 categories, 4 languages (EN/KO/ZH/JA) | Block | <1ms |
+| Prompt injection detection | 109 deterministic regex patterns, 13 categories, 9 languages (EN/KO/ZH/JA/ES/DE/FR/TH/VI) | Block | <1ms |
 | PII detection + masking | 13 categories incl. Luhn-validated cards, SSN, IBAN, API keys | Warn (configurable to mask) | <1ms |
 | Toxicity detection | Harmful/violent/abusive content via keyword pre-filter + regex | Warn | <1ms |
 | Prompt leak detection | System prompt extraction attempt patterns | Warn | <1ms |
