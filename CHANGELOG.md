@@ -24,6 +24,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   from an order number or a phone number, and a `\d{9}` rule fired on 3 of 12
   benign business lines under measurement. UK numbers need the keyword.
 
+- **`aegis check policy`** (#26). Prints the policy decision — risk level,
+  approval mode, matched rule — for each `type:target` action, one aligned line
+  each, with no runtime and no trace file. `--strict` turns it into a CI gate:
+  exit 1 when an action is blocked, 2 when one needs approval. `--json` emits the
+  same result machine-readably. It lives beside `aegis check drift` rather than
+  taking a bare policy path, because `check` is already a subcommand namespace.
+
 ### Fixed
 
 - **Thai patterns are now written against NFKC-normalized text.** `detect()`
@@ -41,6 +48,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `ALL_CATEGORIES` has held 13 since `passport` was added, and `vs-ms-agt.md`
   still cited "800+ LoC" for a 1,078-line module. Corrected, including both the
   English and Korean `guard.pii.catches` strings in `playground/js/i18n.js`.
+- **`docs/cookbook/ci-governance.md` claimed a CI step that cannot fail.** It
+  described `aegis simulate` in CI as failing "if any simulated action produces
+  an unexpected result", but `simulate` always exits 0 and the bundled GitHub
+  Action wraps it unchanged — so a blocked action never stopped a pipeline built
+  from that page. The page now says what `simulate` does and shows
+  `aegis check policy --strict` for gating.
 
 ## [1.0.0] — 2026-08-09
 

@@ -420,3 +420,173 @@ class TestErrors:
         report = json.loads(captured.out)
         assert report["tool_calls"] == 8  # malformed line skipped
         assert "skipping malformed" in captured.err
+
+
+# ---------------------------------------------------------------------------
+# aegis check policy — issue #26
+# ---------------------------------------------------------------------------
+
+_POLICY_YAML = """\
+version: "1"
+defaults:
+  risk_level: medium
+  approval: approve
+rules:
+  - name: read_safe
+    match:
+      type: read
+    risk_level: low
+    approval: auto
+  - name: no_deletes
+    match:
+      type: delete
+    risk_level: critical
+    approval: block
+  - name: bulk_ops
+    match:
+      type: bulk_update
+    risk_level: high
+    approval: approve
+"""
+
+
+def _write_policy(path: Path) -> Path:
+    path.write_text(_POLICY_YAML)
+    return path
+
+
+class TestCheckPolicy:
+    def test_reports_risk_mode_and_rule_per_action(
+        self,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        policy = _write_policy(tmp_path / "policy.yaml")
+        with pytest.raises(SystemExit) as exc:
+            main(["check", "policy", str(policy), "read:crm", "delete:db", "bulk_update:crm"])
+        assert exc.value.code == 0
+
+        out = capsys.readouterr().out
+        assert "read:crm" in out
+        assert "LOW" in out and "auto" in out and "read_safe" in out
+        assert "CRITICAL" in out and "block" in out and "no_deletes" in out
+        assert "HIGH" in out and "approve" in out and "bulk_ops" in out
+
+    def test_columns_align(
+        self,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """The arrow lines up regardless of action-name length."""
+        policy = _write_policy(tmp_path / "policy.yaml")
+        with pytest.raises(SystemExit):
+            main(["check", "policy", str(policy), "read:crm", "bulk_update:crm"])
+        lines = [ln for ln in capsys.readouterr().out.splitlines() if ln.strip()]
+        assert len({ln.index("→") for ln in lines}) == 1
+
+    def test_bare_type_means_every_target(
+        self,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        policy = _write_policy(tmp_path / "policy.yaml")
+        with pytest.raises(SystemExit):
+            main(["check", "policy", str(policy), "delete"])
+        assert "delete:*" in capsys.readouterr().out
+
+    def test_unmatched_action_falls_through_to_defaults(
+        self,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        policy = _write_policy(tmp_path / "policy.yaml")
+        with pytest.raises(SystemExit):
+            main(["check", "policy", str(policy), "frobnicate:thing"])
+        out = capsys.readouterr().out
+        assert "MEDIUM" in out
+        assert "<default>" in out
+
+    def test_json_output_schema(
+        self,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        policy = _write_policy(tmp_path / "policy.yaml")
+        with pytest.raises(SystemExit):
+            main(["check", "policy", str(policy), "read:crm", "delete:db", "--json"])
+        payload = json.loads(capsys.readouterr().out)
+
+        assert payload["rules"] == 3
+        assert [r["action"] for r in payload["results"]] == ["read:crm", "delete:db"]
+        assert payload["results"][0] == {
+            "action": "read:crm",
+            "risk": "LOW",
+            "approval": "auto",
+            "rule": "read_safe",
+            "allowed": True,
+        }
+        assert payload["summary"] == {
+            "total": 2,
+            "blocked": 1,
+            "approval_required": 0,
+            "auto": 1,
+        }
+
+    def test_strict_blocked_exits_1(self, tmp_path: Path) -> None:
+        policy = _write_policy(tmp_path / "policy.yaml")
+        with pytest.raises(SystemExit) as exc:
+            main(["check", "policy", str(policy), "read:crm", "delete:db", "--strict"])
+        assert exc.value.code == 1
+
+    def test_strict_approval_exits_2(self, tmp_path: Path) -> None:
+        policy = _write_policy(tmp_path / "policy.yaml")
+        with pytest.raises(SystemExit) as exc:
+            main(["check", "policy", str(policy), "read:crm", "bulk_update:crm", "--strict"])
+        assert exc.value.code == 2
+
+    def test_strict_all_auto_exits_0(self, tmp_path: Path) -> None:
+        policy = _write_policy(tmp_path / "policy.yaml")
+        with pytest.raises(SystemExit) as exc:
+            main(["check", "policy", str(policy), "read:crm", "--strict"])
+        assert exc.value.code == 0
+
+    def test_without_strict_blocked_still_exits_0(self, tmp_path: Path) -> None:
+        """Reporting mode: the gate only bites under --strict."""
+        policy = _write_policy(tmp_path / "policy.yaml")
+        with pytest.raises(SystemExit) as exc:
+            main(["check", "policy", str(policy), "delete:db"])
+        assert exc.value.code == 0
+
+    def test_missing_policy_file(
+        self,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        with pytest.raises(SystemExit) as exc:
+            main(["check", "policy", str(tmp_path / "nope.yaml"), "read:crm"])
+        assert exc.value.code == 2
+        assert "not found" in capsys.readouterr().err
+
+    def test_malformed_policy_file(
+        self,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        bad = tmp_path / "bad.yaml"
+        bad.write_text("rules: [this is: not: valid")
+        with pytest.raises(SystemExit) as exc:
+            main(["check", "policy", str(bad), "read:crm"])
+        assert exc.value.code == 2
+        assert "failed to load policy" in capsys.readouterr().err
+
+    def test_bare_check_still_reports_usage(
+        self,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """`aegis check` with no sub-subcommand lists both kinds."""
+        with pytest.raises(SystemExit) as exc:
+            main(["check"])
+        assert exc.value.code == 2
+        err = capsys.readouterr().err
+        assert "check drift" in err
+        assert "check policy" in err

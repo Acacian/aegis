@@ -1,4 +1,15 @@
-"""CLI command for ``aegis check drift`` — offline tool distribution drift check.
+"""CLI commands for ``aegis check`` — offline, deterministic pre-flight checks.
+
+Two kinds:
+
+``aegis check drift``
+    Tool distribution entropy drift on a saved JSONL trace.
+
+``aegis check policy``
+    Policy decision for a list of actions, without a runtime. Unlike
+    ``aegis simulate``, which prints a report and always exits 0, this is built
+    to sit in CI: one aligned line per action and an exit code that reflects the
+    outcome.
 
 Stdlib-only by design (privacy + 30-second-reproducible pillar).
 
@@ -226,11 +237,44 @@ def register(subparsers: argparse._SubParsersAction) -> None:  # type: ignore[ty
         help="Exit with code 1 if mode is 'collapse'.",
     )
 
+    policy_parser = check_subs.add_parser(
+        "policy",
+        help="Policy decision per action, no runtime (pre-flight gate)",
+    )
+    policy_parser.add_argument(
+        "policy_file",
+        type=Path,
+        help="Path to the policy YAML file.",
+    )
+    policy_parser.add_argument(
+        "actions",
+        nargs="+",
+        help="Actions as type:target (e.g. read:crm delete:db). A bare type is treated as type:*.",
+    )
+    policy_parser.add_argument(
+        "--json",
+        action="store_true",
+        dest="emit_json",
+        help="Emit machine-readable JSON to stdout.",
+    )
+    policy_parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="Exit 1 if any action is blocked, 2 if any needs approval.",
+    )
+
 
 def run(args: argparse.Namespace) -> int:
     """Execute the ``check`` command. Returns the exit code."""
-    if getattr(args, "check_kind", None) != "drift":
-        print("usage: aegis check drift --trace TRACE [--window N]", file=sys.stderr)
+    kind = getattr(args, "check_kind", None)
+    if kind == "policy":
+        return _run_policy(args)
+    if kind != "drift":
+        print(
+            "usage: aegis check drift --trace TRACE [--window N]\n"
+            "       aegis check policy POLICY ACTION [ACTION ...]",
+            file=sys.stderr,
+        )
         return 2
 
     trace_path: Path = args.trace
@@ -267,4 +311,95 @@ def run(args: argparse.Namespace) -> int:
 
     if args.strict and score.get("mode") == "collapse":
         return 1
+    return 0
+
+
+# ---------------------------------------------------------------------------
+# aegis check policy
+# ---------------------------------------------------------------------------
+
+
+def _parse_action_spec(spec: str) -> tuple[str, str]:
+    """Split a ``type:target`` spec. A bare type means every target."""
+    action_type, _, target = spec.partition(":")
+    return action_type, target or "*"
+
+
+def _run_policy(args: argparse.Namespace) -> int:
+    """Print the policy decision for each action. Returns the exit code.
+
+    Exit codes are the point of this command over ``aegis simulate``, which
+    reports the same decisions but always exits 0. Under ``--strict`` a blocked
+    action fails the run, which is what makes it usable as a CI gate.
+    """
+    # Imported lazily: `aegis check drift` must stay stdlib-only at import time.
+    from aegis.cli import colors
+    from aegis.core.action import Action
+    from aegis.core.policy import Policy
+
+    policy_path: Path = args.policy_file
+    if not policy_path.exists():
+        print(f"error: policy file not found: {policy_path}", file=sys.stderr)
+        return 2
+
+    try:
+        policy = Policy.from_yaml(str(policy_path))
+    except Exception as exc:
+        print(f"error: failed to load policy: {exc}", file=sys.stderr)
+        return 2
+
+    decisions = [policy.evaluate(Action(*_parse_action_spec(spec))) for spec in args.actions]
+
+    blocked = sum(1 for d in decisions if not d.is_allowed)
+    approvals = sum(1 for d in decisions if d.is_allowed and d.approval.value == "approve")
+
+    if args.emit_json:
+        json.dump(
+            {
+                "policy": str(policy_path),
+                "rules": len(policy.rules),
+                "results": [
+                    {
+                        "action": f"{d.action.type}:{d.action.target}",
+                        "risk": d.risk_level.name,
+                        "approval": d.approval.value,
+                        "rule": d.matched_rule,
+                        "allowed": d.is_allowed,
+                    }
+                    for d in decisions
+                ],
+                "summary": {
+                    "total": len(decisions),
+                    "blocked": blocked,
+                    "approval_required": approvals,
+                    "auto": len(decisions) - blocked - approvals,
+                },
+            },
+            sys.stdout,
+            indent=2,
+        )
+        sys.stdout.write("\n")
+    else:
+        # Width the columns to the content so the arrows line up and the output
+        # diffs cleanly between runs.
+        specs = [f"{d.action.type}:{d.action.target}" for d in decisions]
+        spec_w = max(len(s) for s in specs)
+        risk_w = max(len(d.risk_level.name) for d in decisions)
+        mode_w = max(len(d.approval.value) for d in decisions)
+
+        for spec, d in zip(specs, decisions, strict=True):
+            rule = d.matched_rule if d.matched_rule else "<default>"
+            # Pad on the plain name — risk_color() wraps the text in ANSI codes,
+            # which count toward an f-string width and would break alignment.
+            risk = d.risk_level.name
+            risk_cell = colors.risk_color(risk) + " " * (risk_w - len(risk))
+            print(
+                f"  {spec:<{spec_w}} → {risk_cell}  {d.approval.value:<{mode_w}}  (rule: {rule})"
+            )
+
+    if args.strict:
+        if blocked:
+            return 1
+        if approvals:
+            return 2
     return 0

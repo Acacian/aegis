@@ -62,8 +62,11 @@ jobs:
 
 ### Validation + simulation
 
-Add `simulate` to test specific actions against the policy. The step fails if
-any simulated action produces an unexpected result:
+Add `simulate` to print the policy decision for specific actions. Note that
+`aegis simulate` is a **reporting** command — it always exits 0, so this step
+shows you the decisions but does not fail the build on a blocked action. To
+gate the build, see [Failing the build on a blocked action](#failing-the-build-on-a-blocked-action)
+below.
 
 ```yaml
 # .github/workflows/aegis.yml
@@ -103,6 +106,38 @@ Actions: 3
 Summary: 3 actions
   1 auto-execute, 1 need approval, 1 blocked
 ```
+
+### Failing the build on a blocked action
+
+`aegis check policy` reports the same decisions as `aegis simulate` but is built
+to be a gate: one aligned line per action, and under `--strict` an exit code that
+reflects the outcome — `1` if any action is blocked, `2` if any needs approval,
+`0` otherwise. No runtime and no trace file are involved; it is policy evaluation
+only.
+
+```yaml
+# .github/workflows/aegis.yml
+      - run: pip install agent-aegis
+      - run: aegis validate policy.yaml
+      - name: Fail if any action would be blocked
+        run: aegis check policy policy.yaml read:crm write:crm delete:crm --strict
+```
+
+```
+  read:crm    → LOW       auto     (rule: read_auto)
+  write:crm   → MEDIUM    approve  (rule: write_approve)
+  delete:crm  → CRITICAL  block    (rule: delete_block)
+```
+
+The step above exits 1 because `delete:crm` is blocked. Drop `--strict` to report
+without gating, or add `--json` for a downstream job to consume:
+
+```bash
+aegis check policy policy.yaml read:crm delete:db --json
+```
+
+Use this when a blocked action means the pipeline should stop. Use `aegis test`
+when you want to assert that specific actions produce specific decisions.
 
 ### Multiple policy files
 
@@ -516,6 +551,8 @@ This workflow ensures that:
 | Validate a policy | `aegis validate policy.yaml` |
 | Simulate actions | `aegis simulate policy.yaml read:crm delete:db` |
 | Simulation as JSON | `aegis simulate policy.yaml read:crm --format json` |
+| Pre-flight decision per action | `aegis check policy policy.yaml read:crm delete:db` |
+| Gate CI on a blocked action | `aegis check policy policy.yaml delete:db --strict` |
 | Generate starter policy | `aegis init` |
 | Print policy JSON schema | `aegis schema` |
 | View audit log | `aegis audit` |

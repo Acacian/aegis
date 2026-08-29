@@ -409,6 +409,7 @@ aegis init                              # Generate starter policy
 aegis validate policy.yaml              # Validate syntax
 aegis plan current.yaml proposed.yaml   # Preview policy changes
 aegis test policy.yaml tests.yaml       # Policy regression testing
+aegis check policy policy.yaml read:crm # Policy decision per action (CI gate)
 aegis audit                             # View audit log
 aegis serve policy.yaml                 # REST API + dashboard
 aegis probe policy.yaml                 # Adversarial policy testing

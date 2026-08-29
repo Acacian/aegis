@@ -29,6 +29,8 @@ pip install 'agent-aegis[all]'           # Everything
 | `aegis audit --risk-level HIGH` | Filter by risk |
 | `aegis stats` | Rule statistics |
 | `aegis simulate policy.yaml read:crm delete:db` | Test policies without executing |
+| `aegis check policy policy.yaml read:crm delete:db` | Same decisions, one aligned line each |
+| `aegis check policy policy.yaml delete:db --strict` | CI gate: exit 1 if blocked, 2 if approval needed |
 | `aegis serve policy.yaml --port 8000` | Start REST API server |
 
 ## Policy YAML
