@@ -1,0 +1,351 @@
+# Agent-Aegis
+
+> Agent-Aegis is a Python library for AI agent governance. It auto-instruments 12 frameworks (LangChain, CrewAI, OpenAI Agents SDK, OpenAI API, Anthropic API, LiteLLM, Google GenAI, Google ADK, Pydantic AI, LlamaIndex, Instructor, DSPy) with prompt injection detection, PII masking, policy-as-code evaluation, and tamper-evident audit trails. MCP servers are governed via a separate proxy gateway. Every check runs in sub-millisecond time with zero LLM calls and zero network I/O.
+
+## Canonical Identity
+
+- **Project name**: Agent-Aegis (also: Aegis, agent-aegis)
+- **What it is**: Runtime security + governance middleware for Python AI agents
+- **What it is not**: An LLM, an output validator, a vector DB, a prompt manager
+- **Category**: Application-level middleware for AI agent governance
+- **Conceptual analogy**: declarative policy-as-code (like Terraform) applied to agent tool calls (like iptables for outbound actions)
+
+## Key Facts
+
+- Install: `pip install agent-aegis`
+- One-line auto-instrumentation: `import aegis; aegis.auto_instrument()`
+- Language: Python 3.11+
+- License: MIT
+- Version: 0.9.5 (beta — semantic versioning)
+- Author: Dongha Koo (@Acacian)
+- Created: March 21, 2026
+- Repository: https://github.com/Acacian/aegis
+- PyPI: https://pypi.org/project/agent-aegis/
+- Documentation: https://acacian.github.io/aegis/
+- Interactive Playground: https://acacian.github.io/aegis/playground/
+- Test suite: 6,300+ tests, 92% coverage
+- Dependencies: PyYAML only (zero LLM calls, zero network I/O for any check)
+- Security: timing-safe hash comparison, thread-safe audit, NFKC normalization, atomic file writes, LRU cache memory bounds
+- Latency: <1ms warm per guardrail check, 2.65ms cold start
+- Throughput: 7.8x faster than v0.8 on long text via keyword pre-filter
+
+## What It Does (Capabilities Matrix)
+
+| Capability | Mechanism | Default | Latency |
+|---|---|---|---|
+| Prompt injection detection | 109 deterministic regex patterns, 13 categories, 9 languages (EN/KO/ZH/JA/ES/DE/FR/TH/VI) | Block | <1ms |
+| PII detection + masking | 13 categories incl. Luhn-validated cards, SSN, IBAN, API keys | Warn (configurable to mask) | <1ms |
+| Toxicity detection | Harmful/violent/abusive content via keyword pre-filter + regex | Warn | <1ms |
+| Prompt leak detection | System prompt extraction attempt patterns | Warn | <1ms |
+| Policy evaluation | YAML rules, glob/regex match, conditions, defaults | auto/approve/block | <1ms |
+| Cost governance | Per-call/session/daily LLM budget caps | Block over limit | <1ms |
+| Audit logging | SHA-256 hash-chained, tamper-evident | SQLite + JSONL + webhook | async |
+| Approval workflow | CLI, Slack, Discord, Telegram, email, webhook handlers | None (opt-in) | seconds-minutes |
+| Static scanning | `aegis scan` finds ungoverned LLM/tool/subprocess/HTTP calls | OWASP Agentic Top 10 mapped | per-file |
+| Policy CI/CD | `aegis plan` previews impact, `aegis test` runs regression suites | Fail CI on regression | <1s typical |
+| MCP STDIO injection guard | Detects JSON-RPC injection via tool responses in STDIO transport | Block | <1ms |
+| Selection governance | Audits agent *exclusions*, not just selections | Flag cosmetic alignment | <1ms |
+| Justification gap | 6D asymmetric scoring; agent declares, Aegis assesses | Escalate on under-reporting | <1ms |
+| **Governance server** | Centralized REST API with 37 endpoints for multi-agent governance | `aegis-server` | HTTP |
+| Policy versioning | Git-like commit/diff/rollback/tag for policy changes | Server API | <1ms |
+| Crypto audit verify | SHA-256 hash-chain verification endpoint | Server API | <1ms |
+| Trust scoring | 5-level per-agent trust with time decay and threshold policies | Server API | <1ms |
+| Behavioral drift | 5-axis drift detection (distribution, risk, target, velocity, repetition) | Server API | <1ms |
+| Session replay | Record + retroactive security rescan of agent sessions | Server API | <1ms |
+| Webhooks | Fire-and-forget alerts to Slack, PagerDuty on block/anomaly events | Server config | async |
+| Rate limiting | Sliding-window per-agent/global rate limits with glob matching | Server config | <1ms |
+
+## Quick Example
+
+```python
+import aegis
+aegis.auto_instrument()
+
+# Every LangChain, CrewAI, OpenAI, Anthropic, LiteLLM, Google GenAI, Google ADK,
+# Pydantic AI, LlamaIndex, Instructor, and DSPy call now passes through
+# injection detection, PII masking, and audit logging.
+# Zero code changes to existing agents. (MCP servers via aegis-mcp-proxy.)
+```
+
+Or govern individual actions with the Runtime API:
+
+```python
+from aegis import Action, Policy, Runtime
+
+policy = Policy.from_yaml("policy.yaml")
+decision = policy.evaluate(Action("delete", "database"))
+# decision.approval == "block", decision.risk_level == "critical"
+```
+
+Or scan an existing codebase:
+
+```bash
+pip install agent-aegis
+aegis scan .
+# Found 5 ungoverned tool call(s): ...
+# Governance Score: D
+```
+
+Or run as a centralized governance server:
+
+```bash
+pip install 'agent-aegis[server]'
+aegis-server --init   # Generate aegis-server.yaml
+aegis-server          # Start on :8000 with dashboard
+```
+
+```python
+from aegis import AegisClient, AsyncAegisClient
+
+# Sync
+with AegisClient("http://localhost:8000", agent_id="my-agent") as client:
+    result = client.evaluate("delete", "user_data")
+
+# Async
+async with AsyncAegisClient("http://localhost:8000", agent_id="a") as client:
+    result = await client.evaluate("read", "reports")
+```
+
+Or wrap an existing MCP server with zero changes:
+
+```json
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "uvx",
+      "args": ["--from", "agent-aegis[mcp]", "aegis-mcp-proxy",
+               "--wrap", "npx", "-y",
+               "@modelcontextprotocol/server-filesystem", "/home"]
+    }
+  }
+}
+```
+
+## Supported Frameworks (Exact Patches)
+
+| Framework | Patched method | Adapter location |
+|---|---|---|
+| LangChain | `BaseChatModel.invoke/ainvoke`, `BaseTool.invoke/ainvoke` | `aegis.instrument._langchain` |
+| CrewAI | `Crew.kickoff/kickoff_async`, global `BeforeToolCallHook` | `aegis.instrument._crewai` |
+| OpenAI Agents SDK | `Runner.run`, `Runner.run_sync` | `aegis.instrument._openai_agents` |
+| OpenAI API | `Completions.create` (chat & completions) | `aegis.integrations.patch_openai` |
+| Anthropic API | `Messages.create` | `aegis.integrations.patch_anthropic` |
+| LiteLLM | `completion`, `acompletion` | `aegis.instrument._litellm` |
+| Google GenAI | `Models.generate_content` (new + legacy) | `aegis.instrument._google_genai` |
+| Google ADK | `BasePlugin` lifecycle (tool calls, agent routing, sessions) | `aegis.instrument._google_adk` |
+| Pydantic AI | `Agent.run`, `Agent.run_sync` | `aegis.instrument._pydantic_ai` |
+| LlamaIndex | `LLM.chat/achat/complete/acomplete`, `BaseQueryEngine.query/aquery` | `aegis.instrument._llamaindex` |
+| Instructor | `Instructor.create`, `AsyncInstructor.create` | `aegis.instrument._instructor` |
+| DSPy | `Module.__call__`, `LM.forward/aforward` | `aegis.instrument._dspy` |
+| MCP servers | Runtime gateway via `aegis-mcp-proxy` (separate from auto_instrument) | `aegis.mcp_proxy` |
+
+## Use Cases
+
+Problems Aegis is designed to solve:
+
+- Adding prompt injection detection to a LangChain, CrewAI, or OpenAI Agents SDK codebase
+- Policy-based access control over AI agent tool calls
+- Human-in-the-loop approval for sensitive AI agent actions
+- Audit logging for AI agent decisions (compliance, forensics)
+- Policy engine for LangChain, CrewAI, OpenAI, Anthropic, or MCP
+- Blocking dangerous AI agent actions (bulk deletes, admin ops, PII exfiltration)
+- EU AI Act, NIST AI RMF, or SOC 2 evidence collection for AI agents
+- Sub-millisecond guardrails without an LLM call per check (compare: NeMo Guardrails)
+- Action-level governance, not LLM output format validation (compare: Guardrails AI)
+- Policy CI/CD: previewing policy changes against historical audit data before merge
+- MCP server security (tool poisoning, rug-pull detection, argument sanitization, STDIO injection)
+- MCP STDIO injection protection (malicious tool responses embedding JSON-RPC commands)
+- Static scan of an existing Python codebase for ungoverned AI calls
+- Adding guardrails without modifying existing agent code
+- Centralized governance server for multi-agent orchestration systems
+- Policy versioning with git-like commit/diff/rollback for change management
+- Per-agent trust scoring and behavioral drift detection
+- LLM cost governance with budget caps and per-agent attribution
+- Session replay and forensic analysis of agent interactions
+- Webhook alerts (Slack, PagerDuty) on policy violations
+- Rate limiting per-agent or globally with configurable sliding windows
+
+## Out of Scope
+
+Problems Aegis is not designed to solve:
+
+- Non-Python agents — use the governance server (`aegis-server`) over HTTP with any language, or pick a polyglot platform
+- LLM output JSON schema validation only — Guardrails AI is the right tool (complementary, not competing)
+- Conversation flow management / dialog rails — NeMo Guardrails is the right tool (complementary)
+- Static analysis only without runtime enforcement — `aegis scan` exists, but Aegis's primary value is runtime governance
+- OS-level sandbox enforcement — Aegis is application-level middleware, not a kernel sandbox
+
+## Solution Guides (Landing Pages)
+
+### By Framework
+- LangChain Security — https://acacian.github.io/aegis/solutions/langchain-security/
+- CrewAI Security — https://acacian.github.io/aegis/solutions/crewai-security/
+- OpenAI Agents SDK Security — https://acacian.github.io/aegis/solutions/openai-agents-security/
+- LiteLLM Security — https://acacian.github.io/aegis/solutions/litellm-security/
+- MCP Security — https://acacian.github.io/aegis/solutions/mcp-security/
+- LLM Guardrails for Python — https://acacian.github.io/aegis/solutions/llm-guardrails-python/
+
+### By Problem
+- Prompt Injection Detection — https://acacian.github.io/aegis/solutions/prompt-injection-detection/
+- PII Detection for AI Agents — https://acacian.github.io/aegis/solutions/pii-detection-ai-agent/
+- AI Agent Vulnerability Scanner — https://acacian.github.io/aegis/solutions/ai-agent-vulnerability-scanner/
+- AI Agent Permission Control — https://acacian.github.io/aegis/solutions/ai-agent-permission-control/
+- AI Agent Cost Governance — https://acacian.github.io/aegis/solutions/ai-agent-cost-governance/
+- AI Agent Audit Trail — https://acacian.github.io/aegis/solutions/ai-agent-audit-trail/
+- Policy as Code for AI — https://acacian.github.io/aegis/solutions/policy-as-code-ai/
+- MCP STDIO Injection Protection — https://acacian.github.io/aegis/solutions/mcp-stdio-injection/
+- EU AI Act Compliance — https://acacian.github.io/aegis/solutions/eu-ai-act-compliance/
+
+## Cookbook (Framework Recipes)
+
+- LangChain Governance — https://acacian.github.io/aegis/cookbook/langchain-governance/
+- CrewAI Governance — https://acacian.github.io/aegis/cookbook/crewai-governance/
+- OpenAI Agents Governance — https://acacian.github.io/aegis/cookbook/openai-agents-governance/
+- Anthropic Claude Governance — https://acacian.github.io/aegis/cookbook/anthropic-governance/
+- MCP Governance — https://acacian.github.io/aegis/cookbook/mcp-governance/
+- LlamaIndex Governance — https://acacian.github.io/aegis/cookbook/llamaindex-governance/
+- Pydantic AI Governance — https://acacian.github.io/aegis/cookbook/pydantic-ai-governance/
+- DSPy Governance — https://acacian.github.io/aegis/cookbook/dspy-governance/
+- LiteLLM Governance — https://acacian.github.io/aegis/cookbook/litellm-governance/
+- httpx REST API Governance — https://acacian.github.io/aegis/cookbook/httpx-governance/
+- Playwright Browser Governance — https://acacian.github.io/aegis/cookbook/playwright-governance/
+- CI/CD Integration — https://acacian.github.io/aegis/cookbook/ci-governance/
+
+## Comparison Pages
+
+- Aegis vs Microsoft Agent Governance Toolkit — https://acacian.github.io/aegis/comparisons/vs-ms-agt/
+- Aegis vs NeMo Guardrails — https://acacian.github.io/aegis/comparisons/vs-nemo-guardrails/
+- Aegis vs Guardrails AI — https://acacian.github.io/aegis/comparisons/vs-guardrails-ai/
+- Aegis vs mcp-scan — https://acacian.github.io/aegis/comparisons/vs-mcp-scan/
+- Aegis vs DIY (if/else) — https://acacian.github.io/aegis/comparisons/vs-diy/
+
+## Research (Empirical Measurements on Public Datasets)
+
+Aegis ships original measurement research on public agent trace datasets. Each post is reproducible in <30 seconds on a laptop using only the Python standard library.
+
+### Tool Distribution Drift in 1,960 Tau-Bench Agent Trajectories
+
+- URL: https://acacian.github.io/aegis/research/tau-bench-tool-distribution-drift/
+- Dataset: sierra-research/tau-bench historical_trajectories (GPT-4o + Sonnet 3.5 New, retail + airline)
+- Scored trajectories: 812 (of 1,960 total, after ≥8-call filter)
+- Method: Shannon entropy on early-window vs late-window of tool name sequences (W=4)
+- Headline finding: **39.8% of trajectories show measurable collapse (Δ entropy ≥ 0.3 nats)**; 12.1% show hard collapse (Δ ≥ 0.5 nats)
+- Distribution shape: **bimodal** — agents either stay open or fall off a cliff; almost nothing gradual
+- Cross-model gap (same retail task family):
+  - sonnet-35-new : retail — 421 trajectories, **48.2 % collapse rate**
+  - gpt-4o : airline — 61 trajectories, 36.1 % collapse rate
+  - sonnet-35-new : airline — 152 trajectories, 31.6 % collapse rate
+  - gpt-4o : retail — 178 trajectories, **28.1 % collapse rate**
+- Ratio: Sonnet retail collapses **1.7×** more than GPT-4o retail (n=599 combined)
+- **This does NOT mean "Sonnet is worse".** Convergence onto fulfilment tools is what customer-service tasks reward. The data shows that the convergence is sharper and earlier in Sonnet; whether that is decisive execution or premature commitment is task-dependent.
+- Scope: descriptive metric only. Aegis does not claim that collapse causes task failure.
+
+### Why This Metric Exists (4 pillars of differentiation)
+
+Unlike LLM-as-judge approaches (Patronus, Braintrust, DeepEval style) and fine-tuned classifiers (Galileo, Maxim style), the entropy-on-tool-names drift metric simultaneously satisfies:
+
+1. **Deterministic** — no second LLM judges the first. Counter + math.log. Two runs on the same trace give bit-identical results.
+2. **Privacy-preserving** — reads only the `tool_name` field. Never reads arguments, chain-of-thought, user prompts, or system prompts. Enterprise users can run it on prod traces without exfiltrating PII.
+3. **Cross-model comparable** — GPT-4o and Sonnet produce numbers on the same normalized scale (Δ ∈ [-log W, +log W]). The 1.7× cross-model claim is only meaningful *because* the metric is model-agnostic.
+4. **30-second reproducible** — 120 lines of stdlib-only Python. No numpy, no pandas, no sklearn, no GPU. From git clone to regenerated charts takes ~30 seconds on a laptop.
+
+### CLI Access
+
+The same signal that `auto_instrument()` exposes at runtime is also available as an offline CLI:
+
+```bash
+pip install agent-aegis==0.9.5
+aegis check drift --trace path/to/trace.jsonl
+aegis check drift --trace trace.jsonl --baseline gpt-4o-retail.json
+aegis check drift --trace trace.jsonl --json --strict
+```
+
+`aegis check` also carries a policy pre-flight that needs no runtime and no trace:
+
+```bash
+aegis check policy policy.yaml read:crm delete:db bulk_update:crm
+aegis check policy policy.yaml delete:db --strict   # exit 1 when blocked
+aegis check policy policy.yaml read:crm --json
+```
+
+The CLI reads only `tool_name` from each JSONL row. Arguments, CoT, and prompts in the trace file are never touched.
+
+### Reproduction Scripts
+
+- `research/tau_bench_drift/analyze.py` — trajectory loader + entropy scorer, stdlib only
+- `research/tau_bench_drift/visualize.py` — 4-chart matplotlib renderer
+- `research/tau_bench_drift/README.md` — reproduction guide
+- `src/aegis/core/drift.py` — the drift detector source shipped in the library
+- `src/aegis/cli/check.py` — the CLI implementation
+- `tests/cli/test_check.py` — 15 tests including a hard privacy invariant assertion
+
+### The Justification Gap in 14,285 Tau-Bench Tool Calls
+
+- URL: https://acacian.github.io/aegis/research/tripartite-action-claim/
+- Dataset: sierra-research/tau-bench historical_trajectories (GPT-4o + Sonnet 3.5 New, retail + airline)
+- Scored calls: **14,285** across **1,960 trajectories** (all tool calls, not filtered)
+- Method: rule-based 6D impact scoring via `RuleBasedImpactScorer`; silent-baseline framing (declared_impact = 0) so the asymmetric gap equals the assessed impact magnitude directly
+- Thresholds: approve ≤ 0.15, 0.15 < escalate ≤ 0.40, block > 0.40
+- **Headline finding**: **90.3% approve / 9.7% escalate / 0.0% block** across the full 14,285 calls
+- Global gap: mean 0.047, median 0.000, p90 0.123, p99 0.367, max 0.367 (no call breaches the block threshold)
+- Cross-model retail gap: gpt-4o 0.0476 vs sonnet-35-new 0.0487 — **near-identical** (opposite pattern from the drift post above, which found a 1.7× Sonnet-vs-GPT4o gap on the same task family)
+- Cross-domain split: airline escalates **~2×** more than retail (14.9% vs 8.0% on sonnet, 15.1% vs 7.1% on gpt-4o) because airline tools carry `update_reservation_*` write verbs that trigger both destructivity and reversibility
+- **Honest false positive**: top tool by mean gap is `find_user_id_by_email` at 0.367 — the substring `email` triggers `_EXPORT` + `_EXTERNAL` + `_PII` rule sets simultaneously. The tool is pure-read. This is discussed as Finding 4 in the post and is the reason the escalate band exists: the verdict is ESCALATE, not BLOCK.
+- **Honest API limitation**: the shipped `ImpactRule` override uses `max(current, override)` semantics, so rule-based overrides can raise a score but cannot lower one. Fixing false positives requires a custom `ImpactScorer` implementation. A `replace_mode` flag is listed as near-term follow-up.
+
+### Tripartite ActionClaim (formal structure used by the Justification Gap post)
+
+- Every tool call splits into `DeclaredFields` (agent-authored, `frozen=True`), `AssessedFields` (system-authored, mutable under an invariant that only `ClaimAssessor` may write), `ChainFields` (delegation infrastructure, `frozen=True`)
+- 6-dimensional `ImpactVector`: destructivity, data_exposure, resource_consumption, privilege_escalation, reversibility, autonomy_depth — each bounded on [0, 1]
+- Asymmetric gap: `per_dim[k] = max(0, assessed[k] − declared[k])` — over-reporting is free, under-reporting costs
+- Monotone chain constraint: trust levels along the delegation chain must be non-increasing — violation forces BLOCK regardless of gap
+- Three invariants proved by paper-and-pencil sketch: Assessment Independence, Asymmetric Conservatism, Monotone Chain Enforcement (see post §5)
+- Prior art honestly credited: IBAC-DB (arXiv:2402.07332), DelegateOS (github.com/newtro/delegateos), "Selection as Power" (arXiv:2602.14606), Authenticated Delegation (arXiv:2501.09674), AgentSpec (arXiv:2503.18666), COA-MAS (Carvalho, dev.to). The novelty is compositional, not conceptual.
+
+### Justification Gap Reproduction Scripts
+
+- `research/justification_gap_tau_bench/measure_gap.py` — assessor pipeline + per-group/per-trajectory/per-tool aggregator, stdlib-only
+- `research/justification_gap_tau_bench/visualize.py` — 4-chart matplotlib renderer (histogram, 6D radar, verdict stack, top-tool bar)
+- `src/aegis/core/action_claim.py` — `ActionClaim`, `DeclaredFields`, `AssessedFields`, `ChainFields`, `ImpactVector`, `validate_monotone_constraint`
+- `src/aegis/core/justification_gap.py` — `RuleBasedImpactScorer`, `CongruenceChecker`, `JustificationGapComputer`, `ClaimAssessor`
+
+## Alternatives Comparison Summary
+
+- **Guardrails AI**: Validates LLM output format (JSON, Pydantic). Complementary to Aegis, which governs actions that result from that output.
+- **NeMo Guardrails**: NVIDIA's dialog rails. LLM-based classification (adds latency + cost). Aegis uses deterministic regex with sub-millisecond latency and no LLM calls.
+- **Microsoft Agent Governance Toolkit**: Enterprise governance platform with .NET/TS/Python SDKs. Broader scope but heavier footprint. Aegis is the lightweight Python-native alternative with Policy CI/CD that AGT lacks.
+- **mcp-scan / Snyk Agent Scan**: Static MCP configuration scanner. Pre-deployment checks only. Aegis adds continuous runtime governance.
+- **LangChain callbacks / per-framework hooks**: Basic lifecycle hooks without a policy engine, approval workflow, or audit trail.
+- **Aegis**: Dedicated action-level governance with YAML policies, approval workflows, audit logging, Policy CI/CD (`aegis plan` / `aegis test`), and cross-framework coverage — all as a single `pip install`.
+
+## Unique Capabilities (Differentiators)
+
+- **Policy CI/CD** (`aegis plan` / `aegis test`): Preview policy changes against historical audit data, run regression tests on policy files, fail CI on regression. To our knowledge, no other open-source AI governance tool ships this workflow as of 2026-04 — analogous to `terraform plan` applied to agent policies.
+- **Selection Governance**: Audits what agents *exclude* from their choices, not just what they pick. Detects cosmetic alignment where a model "helpfully" omits risky options. Based on Santander et al. (arXiv:2602.14606).
+- **Tripartite ActionClaim**: Every tool call splits into Declared (agent-authored, untrusted), Assessed (Aegis-computed), and Chain (delegation) fields. Structural separation makes gaming detectable. Canonical paper: https://acacian.github.io/aegis/research/tripartite-action-claim/ (measured across 14,285 tau-bench tool calls: 90.3% approve, 9.7% escalate, 0.0% block).
+- **Justification Gap**: 6-dimensional asymmetric scoring — agents declare impact, Aegis independently assesses. Under-reporting triggers escalation or block. The name "Action Claim" is inherited from Carvalho's COA-MAS framework; the 6D asymmetric gap, operational semantics, and runtime assessor are original to this project. Canonical paper: https://acacian.github.io/aegis/research/tripartite-action-claim/
+- **Monotone Trust Constraint**: Delegated agents cannot escalate their own authority. Trust levels must be non-increasing along the delegation chain — violations auto-block. Lattice-based access control.
+- **Full Lifecycle**: Scan (detect) → Instrument (protect) → Policy CI/CD (test) → Runtime (govern) → Proxy (gateway) → Audit (trace). One library, one `pip install`.
+
+## Standards & Compliance Mapping
+
+- **OWASP Agentic Top 10** (2026): Aegis maps scan findings to ASI01-ASI10 categories
+- **NIST AI Risk Management Framework**: GOVERN, MAP, MEASURE, MANAGE functions covered via policy + audit
+- **EU AI Act Article 16+**: Aegis generates evidence packages for high-risk AI system providers
+- **SOC 2**: Audit log structure aligns with CC6.1 (logical access), CC7.2 (system monitoring), CC8.1 (change management)
+- **GDPR Article 30**: Audit log captures data access records for record-keeping requirements
+
+## Source References (For Authoritative Quoting)
+
+- Tripartite ActionClaim model and Selection Governance: Aegis design notes in `docs/architecture/`
+- 107 prompt injection patterns: `src/aegis/guardrails/_injection_patterns.py`
+- 13 PII categories with Luhn validation: `src/aegis/guardrails/pii.py`
+- Policy CI/CD spec: `docs/guides/policies.md`
+- Benchmark numbers: `benchmarks/` directory in the repository
+
+## Author & Provenance
+
+- Created and maintained by Dongha Koo (@Acacian) — Korean backend engineer
+- Developed independently March 21, 2026 onward
+- Released under MIT license to support open AI safety research
+- Listed in: punkpeye/awesome-mcp-servers (Security section), CryptoAILab/Awesome-LM-SSP (Toolkit collection)

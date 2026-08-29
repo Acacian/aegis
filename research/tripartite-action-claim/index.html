@@ -1,0 +1,4376 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Tripartite ActionClaim measured across 14,285 tau-bench tool calls — 90.3% approve / 9.7% escalate / 0% block. Formal definition + empirical evaluation.">
+      
+      
+        <meta name="author" content="Dongha Koo (@Acacian)">
+      
+      
+        <link rel="canonical" href="https://acacian.github.io/aegis/research/tripartite-action-claim/">
+      
+      
+        <link rel="prev" href="../tau-bench-tool-distribution-drift/">
+      
+      
+        <link rel="next" href="../../architecture/">
+      
+      
+        
+          <link rel="alternate" href="/aegis/" hreflang="en">
+        
+          <link rel="alternate" href="https://github.com/Acacian/aegis/blob/main/README.ko.md" hreflang="ko">
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Justification Gap (tau-bench) - Agent-Aegis</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+    
+    <!-- Open Graph (Facebook, LinkedIn, Slack, Discord, HN, Reddit) -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Agent-Aegis">
+  <meta property="og:title" content="Justification Gap (tau-bench) | Agent-Aegis">
+  <meta property="og:description" content="Tripartite ActionClaim measured across 14,285 tau-bench tool calls — 90.3% approve / 9.7% escalate / 0% block. Formal definition + empirical evaluation.">
+  <meta property="og:url" content="https://acacian.github.io/aegis/research/tripartite-action-claim/">
+  <meta property="og:image" content="https://opengraph.githubassets.com/1/Acacian/aegis">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Agent-Aegis — policy-based governance middleware for AI agents">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:locale:alternate" content="ko_KR">
+
+  <!-- Twitter Card (X) -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Justification Gap (tau-bench) | Agent-Aegis">
+  <meta name="twitter:description" content="Tripartite ActionClaim measured across 14,285 tau-bench tool calls — 90.3% approve / 9.7% escalate / 0% block. Formal definition + empirical evaluation.">
+  <meta name="twitter:image" content="https://opengraph.githubassets.com/1/Acacian/aegis">
+  <meta name="twitter:image:alt" content="Agent-Aegis — policy-based governance middleware for AI agents">
+  <meta name="twitter:creator" content="@Acacian">
+  <meta name="twitter:site" content="@Acacian">
+
+  <!-- SEO extras -->
+  <meta name="keywords" content="AI agent governance, LLM security, prompt injection detection, AI agent guardrails, LangChain security, CrewAI security, MCP security, Python, policy as code, EU AI Act compliance, PII detection, AI agent audit trail, llm guardrails python, openai agents security, agentic security, AI agent permission control">
+  <meta name="author" content="Dongha Koo (@Acacian)">
+  <meta name="theme-color" content="#3f51b5">
+  <meta name="color-scheme" content="light dark">
+  <meta name="apple-mobile-web-app-title" content="Agent-Aegis">
+  <meta name="application-name" content="Agent-Aegis">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+
+  <!-- Explicit crawler hints for AI search engines -->
+  <meta name="GPTBot" content="index, follow">
+  <meta name="ChatGPT-User" content="index, follow">
+  <meta name="Claude-Web" content="index, follow">
+  <meta name="PerplexityBot" content="index, follow">
+
+  <!-- hreflang for Korean readme alternate -->
+  <link rel="alternate" hreflang="en" href="https://acacian.github.io/aegis/research/tripartite-action-claim/">
+  <link rel="alternate" hreflang="ko" href="https://github.com/Acacian/aegis/blob/main/README.ko.md">
+  <link rel="alternate" hreflang="x-default" href="https://acacian.github.io/aegis/research/tripartite-action-claim/">
+
+  <!-- Preconnect to GitHub for faster OG image fetch -->
+  <link rel="preconnect" href="https://opengraph.githubassets.com" crossorigin>
+
+  <!-- JSON-LD: SoftwareApplication (primary entity for every page) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Agent-Aegis",
+    "alternateName": ["Aegis", "agent-aegis"],
+    "applicationCategory": "DeveloperApplication",
+    "applicationSubCategory": "SecurityApplication",
+    "operatingSystem": "Linux, macOS, Windows",
+    "description": "Policy-based governance middleware for AI agents. Auto-instruments LangChain, CrewAI, OpenAI Agents SDK, OpenAI API, Anthropic API, LiteLLM, Google GenAI, Google ADK, Pydantic AI, LlamaIndex, Instructor, and DSPy with prompt injection detection, PII masking, and audit trail in one line of code. MCP servers via aegis-mcp-proxy.",
+    "url": "https://acacian.github.io/aegis/",
+    "sameAs": [
+      "https://github.com/Acacian/aegis",
+      "https://pypi.org/project/agent-aegis/",
+      "https://pypi.org/project/langchain-aegis/"
+    ],
+    "downloadUrl": "https://pypi.org/project/agent-aegis/",
+    "installUrl": "https://pypi.org/project/agent-aegis/",
+    "softwareVersion": "0.9.3",
+    "license": "https://opensource.org/licenses/MIT",
+    "programmingLanguage": "Python",
+    "codeRepository": "https://github.com/Acacian/aegis",
+    "author": {
+      "@type": "Person",
+      "name": "Dongha Koo",
+      "alternateName": "Acacian",
+      "url": "https://github.com/Acacian"
+    },
+    "publisher": {
+      "@type": "Person",
+      "name": "Dongha Koo",
+      "url": "https://github.com/Acacian"
+    },
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD",
+      "availability": "https://schema.org/InStock"
+    },
+    "keywords": "AI agent governance, LLM security, prompt injection detection, policy as code, EU AI Act compliance, PII detection, audit trail, LangChain guardrails, CrewAI security, MCP security",
+    "featureList": [
+      "One-line auto-instrumentation for 12 Python AI frameworks (LangChain, CrewAI, OpenAI Agents SDK, OpenAI API, Anthropic API, LiteLLM, Google GenAI, Google ADK, Pydantic AI, LlamaIndex, Instructor, DSPy). MCP servers governed via aegis-mcp-proxy gateway.",
+      "Prompt injection detection with 109 deterministic regex patterns across 13 attack categories",
+      "PII detection across 13 categories including Luhn-validated credit cards, SSNs, IBAN, API keys",
+      "Policy CI/CD: aegis plan previews impact of policy changes, aegis test runs regression suites",
+      "Sub-millisecond policy evaluation with zero LLM calls and zero network I/O",
+      "Tamper-evident SHA-256 hash-chained audit trail to SQLite, JSONL, and SIEM endpoints",
+      "Human-in-the-loop approval handlers for Slack, Discord, Telegram, CLI, email, and webhook",
+      "Multi-language prompt injection patterns: English, Korean, Chinese, Japanese",
+      "OWASP Agentic Top 10, NIST AI RMF, and EU AI Act compliance mapping"
+    ],
+    "softwareRequirements": "Python 3.11+"
+  }
+  </script>
+
+  <!-- JSON-LD: WebSite (sitelinks search box hint) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "Agent-Aegis Documentation",
+    "url": "https://acacian.github.io/aegis/",
+    "description": "Documentation for Agent-Aegis, the Python library for AI agent governance.",
+    "inLanguage": "en",
+    "publisher": {
+      "@type": "Person",
+      "name": "Dongha Koo",
+      "url": "https://github.com/Acacian"
+    },
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": {
+        "@type": "EntryPoint",
+        "urlTemplate": "https://acacian.github.io/aegis/?q={search_term_string}"
+      },
+      "query-input": "required name=search_term_string"
+    }
+  }
+  </script><script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Aegis",
+        "item": "https://acacian.github.io/aegis/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Research",
+        "item": "https://acacian.github.io/aegis/research/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": "Justification Gap (tau-bench)",
+        "item": "https://acacian.github.io/aegis/research/tripartite-action-claim/"
+      }
+    ]
+  }
+  </script><!-- JSON-LD: ScholarlyArticle (research posts)
+         Strongest schema for LLM crawlers (GPTBot, PerplexityBot, Claude-Web)
+         when the page reports empirical measurement. Fields matter:
+         - citation: link to the underlying dataset
+         - measurementTechnique: one-liner of the method
+         - abstract: machine-readable summary for RAG chunking
+         - isBasedOn: upstream dataset
+         - creativeWorkStatus: "Published" signals stable cite-ability
+
+         Per-post assets (images, variableMeasured, measurementTechnique, keywords, about[0])
+         are dispatched on page.url so a new research page can be added by extending
+         the if/elif chain below without duplicating the shared schema envelope.
+    --><script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "ScholarlyArticle",
+      "headline": "Justification Gap (tau-bench) | Agent-Aegis",
+      "name": "Justification Gap (tau-bench) | Agent-Aegis",
+      "description": "Tripartite ActionClaim measured across 14,285 tau-bench tool calls \u2014 90.3% approve / 9.7% escalate / 0% block. Formal definition + empirical evaluation.",
+      "abstract": "Tripartite ActionClaim measured across 14,285 tau-bench tool calls \u2014 90.3% approve / 9.7% escalate / 0% block. Formal definition + empirical evaluation.",
+      "url": "https://acacian.github.io/aegis/research/tripartite-action-claim/",
+      "image": ["https://acacian.github.io/aegis/assets/research/jg-histogram.png", "https://acacian.github.io/aegis/assets/research/jg-radar.png", "https://acacian.github.io/aegis/assets/research/jg-verdict-by-group.png", "https://acacian.github.io/aegis/assets/research/jg-top-tools.png"],
+      "inLanguage": "en",
+      "datePublished": "2026-04-11",
+      "dateModified": "2026-04-11",
+      "creativeWorkStatus": "Published",
+      "learningResourceType": "Research report",
+      "articleSection": "Research",
+      "author": {
+        "@type": "Person",
+        "name": "Dongha Koo",
+        "alternateName": "Acacian",
+        "url": "https://github.com/Acacian",
+        "affiliation": {
+          "@type": "Organization",
+          "name": "Agent-Aegis (independent)"
+        }
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Agent-Aegis",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://opengraph.githubassets.com/1/Acacian/aegis"
+        }
+      },
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "https://acacian.github.io/aegis/research/tripartite-action-claim/"
+      },
+      "about": [
+        {
+          "@type": "Thing",
+          "name": "AI agent justification gap \u2014 declared vs Aegis-assessed tool impact"
+        },
+        {
+          "@type": "SoftwareApplication",
+          "name": "Agent-Aegis",
+          "url": "https://acacian.github.io/aegis/"
+        }
+      ],
+      "isBasedOn": {
+        "@type": "Dataset",
+        "name": "tau-bench historical trajectories",
+        "url": "https://github.com/sierra-research/tau-bench/tree/main/historical_trajectories",
+        "creator": {
+          "@type": "Organization",
+          "name": "Sierra Research"
+        }
+      },
+      "citation": [
+        {
+          "@type": "CreativeWork",
+          "name": "sierra-research/tau-bench",
+          "url": "https://github.com/sierra-research/tau-bench"
+        }
+      ],
+      "variableMeasured": ["Asymmetric justification gap per tool call (L2-normalized, sqrt(6))", "6-dimensional assessed ImpactVector (destructivity, data_exposure, resource_consumption, privilege_escalation, reversibility, autonomy_depth)", "Claim verdict share per model:domain group (approve / escalate / block)", "Per-tool mean gap ranking"],
+      "measurementTechnique": "Silent-baseline Tripartite ActionClaim assessment \u2014 declared ImpactVector fixed at zero and gap = max(0, assessed - declared) computed via RuleBasedImpactScorer on stdlib-only code path",
+      "isPartOf": {
+        "@type": "WebSite",
+        "name": "Agent-Aegis Documentation",
+        "url": "https://acacian.github.io/aegis/"
+      },
+      "keywords": "tau-bench, justification gap, tripartite ActionClaim, 6D impact vector, silent baseline, GPT-4o, Claude Sonnet 3.5 New, AI agent governance, cosmetic alignment, monotone trust"
+    }
+    </script>
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="amber">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#the-justification-gap-in-14285-tau-bench-tool-calls" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Agent-Aegis" class="md-header__button md-logo" aria-label="Agent-Aegis" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Agent-Aegis
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Justification Gap (tau-bench)
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="amber"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="amber"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+      <div class="md-header__option">
+  <div class="md-select">
+    
+    <button class="md-header__button md-icon" aria-label="Select language">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m12.87 15.07-2.54-2.51.03-.03A17.5 17.5 0 0 0 14.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2zm-2.62 7 1.62-4.33L19.12 17z"/></svg>
+    </button>
+    <div class="md-select__inner">
+      <ul class="md-select__list">
+        
+          <li class="md-select__item">
+            <a href="/aegis/" hreflang="en" class="md-select__link">
+              English
+            </a>
+          </li>
+        
+          <li class="md-select__item">
+            <a href="https://github.com/Acacian/aegis/blob/main/README.ko.md" hreflang="ko" class="md-select__link">
+              한국어
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</div>
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Acacian/aegis" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Acacian/aegis
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Agent-Aegis" class="md-nav__button md-logo" aria-label="Agent-Aegis" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Agent-Aegis
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Acacian/aegis" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Acacian/aegis
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/concepts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/why-governance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Why Governance?
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/policies/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Writing Policies
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/integrations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Integrations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/dashboard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dashboard
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/mcp-governance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Governance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/alternatives/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Aegis vs Alternatives
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/custom-adapters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Custom Adapters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/approval-handlers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Approval Handlers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/rest-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Governance Server
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/security-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/deployment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/policy-patterns/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Policy Patterns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/governance-checklist/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Governance Checklist
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/runtime/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runtime
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/policy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Policy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Action & Result
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adapters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adapters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/audit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/anomaly/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Anomaly Detection
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/compliance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compliance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/dashboard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dashboard API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/stability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Stability
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Solutions
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Solutions
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../solutions/langchain-security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LangChain Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../solutions/crewai-security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CrewAI Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../solutions/openai-agents-security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OpenAI Agents Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../solutions/litellm-security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LiteLLM Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../solutions/mcp-security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../solutions/mcp-stdio-injection/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP STDIO Injection Protection
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../solutions/llm-guardrails-python/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LLM Guardrails for Python
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../solutions/ai-agent-vulnerability-scanner/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AI Agent Vulnerability Scanner
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../solutions/prompt-injection-detection/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Prompt Injection Detection
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../solutions/pii-detection-ai-agent/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PII Detection
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../solutions/eu-ai-act-compliance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    EU AI Act Compliance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../solutions/ai-agent-audit-trail/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audit Trail
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../solutions/policy-as-code-ai/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Policy as Code
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../solutions/ai-agent-cost-governance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cost Governance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../solutions/ai-agent-permission-control/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Permission Control
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Comparisons
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Comparisons
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../comparisons/vs-ms-agt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Aegis vs MS Agent Governance Toolkit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../comparisons/vs-nemo-guardrails/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Aegis vs NeMo Guardrails
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../comparisons/vs-guardrails-ai/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Aegis vs Guardrails AI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../comparisons/vs-mcp-scan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Aegis vs mcp-scan
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../comparisons/vs-diy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Aegis vs DIY
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cookbook
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Cookbook
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/langchain-governance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LangChain Governance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/crewai-governance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CrewAI Governance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/openai-agents-governance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OpenAI Agents Governance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/anthropic-governance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Anthropic Claude Governance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/mcp-governance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Governance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/llamaindex-governance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LlamaIndex Governance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/pydantic-ai-governance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pydantic AI Governance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/dspy-governance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DSPy Governance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/litellm-governance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LiteLLM Governance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/httpx-governance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    httpx REST API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/playwright-governance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Playwright Browser
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/ci-governance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CI/CD Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/gradio-playground/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gradio Playground
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/docker-rest-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docker REST API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Research
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Research
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tau-bench-tool-distribution-drift/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tool Distribution Drift (tau-bench)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Justification Gap (tau-bench)
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Justification Gap (tau-bench)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-what-problem-does-this-catch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. What problem does this catch?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-related-work-honest-accounting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Related Work (honest accounting)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-tripartite-actionclaim-formal-definition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Tripartite ActionClaim: formal definition
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Tripartite ActionClaim: formal definition">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-declaredfields-agent-authored-frozen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 DeclaredFields (agent-authored, frozen)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-assessedfields-system-authored-mutable-under-invariant" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 AssessedFields (system-authored, mutable under invariant)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-chainfields-infrastructure-frozen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 ChainFields (infrastructure, frozen)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34-the-6-dimensional-impactvector" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.4 The 6-dimensional ImpactVector
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#35-asymmetric-justification-gap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.5 Asymmetric justification gap
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-operational-semantics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Operational Semantics
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-soundness-paper-and-pencil-sketch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Soundness (paper-and-pencil sketch)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-empirical-evaluation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Empirical Evaluation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Empirical Evaluation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1 Setup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#62-finding-1-the-bulk-of-calls-sit-inside-the-approve-band" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.2 Finding 1: the bulk of calls sit inside the approve band
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#63-finding-2-domain-matters-more-than-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.3 Finding 2: domain matters more than model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#64-finding-3-the-6d-impact-profile-is-domain-shaped" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.4 Finding 3: the 6D impact profile is domain-shaped
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#65-finding-4-the-worst-offending-tools-are-transparent-to-inspect" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.5 Finding 4: the worst-offending tools are transparent to inspect
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#66-trajectory-level-rollup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.6 Trajectory-level rollup
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-why-measure-this-in-four-points" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Why measure this, in four points
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7. Why measure this, in four points">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#71-deterministic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.1 Deterministic
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#72-privacy-preserving" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.2 Privacy-preserving
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#73-cross-model-comparable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.3 Cross-model comparable
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#74-reproducible-in-under-a-minute" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.4 Reproducible in under a minute
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-using-the-assessor-on-your-own-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Using the assessor on your own agent
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="8. Using the assessor on your own agent">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#81-patching-a-false-positive-and-an-honest-api-limitation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.1 Patching a false positive (and an honest API limitation)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-limitations-and-future-work" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Limitations and future work
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="9. Limitations and future work">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#where-this-goes-next" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where this goes next
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-data-and-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Data and code
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../playground/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Playground
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../playground/challenge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Challenge
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../enterprise/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Enterprise
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cheatsheet/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cheatsheet
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://github.com/Acacian/aegis/tree/main/examples" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../faq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FAQ
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-what-problem-does-this-catch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. What problem does this catch?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-related-work-honest-accounting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Related Work (honest accounting)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-tripartite-actionclaim-formal-definition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Tripartite ActionClaim: formal definition
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Tripartite ActionClaim: formal definition">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-declaredfields-agent-authored-frozen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 DeclaredFields (agent-authored, frozen)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-assessedfields-system-authored-mutable-under-invariant" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 AssessedFields (system-authored, mutable under invariant)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-chainfields-infrastructure-frozen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 ChainFields (infrastructure, frozen)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34-the-6-dimensional-impactvector" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.4 The 6-dimensional ImpactVector
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#35-asymmetric-justification-gap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.5 Asymmetric justification gap
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-operational-semantics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Operational Semantics
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-soundness-paper-and-pencil-sketch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Soundness (paper-and-pencil sketch)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-empirical-evaluation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Empirical Evaluation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Empirical Evaluation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1 Setup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#62-finding-1-the-bulk-of-calls-sit-inside-the-approve-band" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.2 Finding 1: the bulk of calls sit inside the approve band
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#63-finding-2-domain-matters-more-than-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.3 Finding 2: domain matters more than model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#64-finding-3-the-6d-impact-profile-is-domain-shaped" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.4 Finding 3: the 6D impact profile is domain-shaped
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#65-finding-4-the-worst-offending-tools-are-transparent-to-inspect" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.5 Finding 4: the worst-offending tools are transparent to inspect
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#66-trajectory-level-rollup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.6 Trajectory-level rollup
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-why-measure-this-in-four-points" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Why measure this, in four points
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7. Why measure this, in four points">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#71-deterministic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.1 Deterministic
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#72-privacy-preserving" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.2 Privacy-preserving
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#73-cross-model-comparable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.3 Cross-model comparable
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#74-reproducible-in-under-a-minute" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.4 Reproducible in under a minute
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-using-the-assessor-on-your-own-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Using the assessor on your own agent
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="8. Using the assessor on your own agent">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#81-patching-a-false-positive-and-an-honest-api-limitation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.1 Patching a false positive (and an honest API limitation)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-limitations-and-future-work" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Limitations and future work
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="9. Limitations and future work">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#where-this-goes-next" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where this goes next
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-data-and-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Data and code
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/Acacian/aegis/edit/main/docs/research/tripartite-action-claim.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="the-justification-gap-in-14285-tau-bench-tool-calls">The Justification Gap in 14,285 Tau-Bench Tool Calls<a class="headerlink" href="#the-justification-gap-in-14285-tau-bench-tool-calls" title="Permanent link">&para;</a></h1>
+<p><strong>TL;DR.</strong> We define <strong>Tripartite ActionClaim</strong>, a runtime policy structure that structurally separates agent-declared intent (<code>DeclaredFields</code>) from independently assessed impact (<code>AssessedFields</code>) and delegation chain state (<code>ChainFields</code>), and we compute a per-call <em>asymmetric justification gap</em> over six impact dimensions. We ran the assessor on the public <a href="https://github.com/sierra-research/tau-bench/tree/main/historical_trajectories">sierra-research/tau-bench historical_trajectories</a> dataset in the <em>silent-baseline framing</em> — the agent declares zero impact on every call — so the gap equals the assessed impact magnitude directly. Across <strong>14,285 tool calls over 1,960 trajectories</strong> (GPT-4o + Sonnet 3.5 New, retail + airline), <strong>90.3%</strong> of calls fall inside the approve band (gap ≤ 0.15), <strong>9.7%</strong> escalate (0.15 &lt; gap ≤ 0.40), and <strong>0.0%</strong> block (gap &gt; 0.40). Airline trajectories escalate 2× more often than retail. The top tool by mean gap — <code>find_user_id_by_email</code> at 0.367 on 695 calls — is a transparent rule-based false positive that we discuss in §9 and use to justify the escalate-not-block design.</p>
+<p>This post is the result of running Aegis's <code>ClaimAssessor</code> (<code>src/aegis/core/justification_gap.py</code>) against the public tau-bench dataset. All measurement code, raw numbers, and chart-generation scripts are in <code>research/justification_gap_tau_bench/</code> and linked at the bottom.</p>
+<h2 id="1-what-problem-does-this-catch">1. What problem does this catch?<a class="headerlink" href="#1-what-problem-does-this-catch" title="Permanent link">&para;</a></h2>
+<p>The core alignment failure we target is <strong>cosmetic self-reporting</strong>: an agent that <em>says</em> it is doing something innocuous while <em>actually</em> taking an action with measurable risk. Three concrete variants:</p>
+<ol>
+<li><strong>Silent destructive action.</strong> Agent declares no impact (<code>declared_impact = 0</code>) but calls <code>delete_order</code> with <code>bulk=True</code>. The system should catch this <em>without trusting the declaration</em>.</li>
+<li><strong>Cosmetic alignment.</strong> Agent declares low impact and calls a tool whose name contains an innocent verb (<code>update_</code>) that masks a destructive side effect. The assessment must be independent of the declaration to catch this.</li>
+<li><strong>Authority drift along a delegation chain.</strong> Sub-agent inherits privileges above its principal's trust level. This needs a monotone constraint on chain authority, not just per-call checks.</li>
+</ol>
+<p>None of these require the agent to be malicious — all three show up in benign trajectories as token-efficiency shortcuts or framing drift. The measurement in §6 finds 9.7% of tau-bench calls land in the "declared nothing, assessed something" escalate band on a dataset that has no adversarial prompts at all.</p>
+<h2 id="2-related-work-honest-accounting">2. Related Work (honest accounting)<a class="headerlink" href="#2-related-work-honest-accounting" title="Permanent link">&para;</a></h2>
+<p>We want to be careful with novelty claims, because the ideas surrounding this post have prior art spread across at least five research communities. Here is the honest picture:</p>
+<p><strong>IBAC (Intent-Based Access Control).</strong> <a href="https://arxiv.org/abs/2402.07332">Intent-Based Access Control: Using LLMs to Intelligently Manage Access Control (arXiv:2402.07332)</a> introduces the IBAC-DB framework: policies are expressed as a <em>Natural Language Access Control Matrix</em> (NLACM) that states intent, and the system synthesizes the realized database access-control primitives from the NLACM via an LLM. This is the same <em>shape</em> as DeclaredFields vs AssessedFields — declared intent and realized mechanism are two structurally separate artifacts. IBAC-DB is the canonical prior art for the split. Our work extends the idea from SQL access control to general tool-call governance.</p>
+<p><strong>DelegateOS.</strong> <a href="https://github.com/newtro/delegateos">DelegateOS (github.com/newtro/delegateos)</a> is a middleware project providing cryptographic delegation tokens with <em>monotonic attenuation</em>: sub-agents can only receive narrower scope than their delegator. Our <code>validate_monotone_constraint</code> is a direct instance of the same idea, without the cryptography — we enforce the non-increasing trust property structurally on an in-process tuple. We cite DelegateOS as the prior art for monotonic attenuation on LLM delegation chains; we do not claim novelty on the concept itself. What we add is running the constraint alongside the justification gap in a single evaluation pass.</p>
+<p><strong>"Selection as Power" (arXiv:2602.14606).</strong> <a href="https://arxiv.org/html/2602.14606">Towards Selection as Power: Bounding Decision Authority in Autonomous Agents (arXiv:2602.14606)</a> formalizes <em>cosmetic alignment</em> as a structurally distinct failure mode and introduces the CEFL framing (external candidate generation, mechanically governed reducer, entropy commit–reveal, rationale validation, circuit breakers) for bounding selection authority <em>outside</em> the agent's optimization space. Our asymmetric gap is motivated by the same concern — we only penalize <em>under-reporting</em> (assessed &gt; declared) because over-reporting is conservative and safe, and under-reporting is the exact cosmetic-alignment failure mode that paper describes.</p>
+<p><strong>COA-MAS (Rudson Carvalho).</strong> <a href="https://dev.to/rudsoncarvalho/coa-mas-v2-a-meta-framework-for-cross-domain-multi-agent-governance-4mji">COA-MAS v2 (Carvalho, dev.to)</a> introduces the <strong>Action Claim contract</strong> and the AASG enforcement boundary as the core intra-domain governance primitive. We inherit the <em>name</em> ActionClaim from COA-MAS — the term is Carvalho's, not ours. What we add is a concrete dataclass realization with frozen/mutable boundaries, a 6-dimensional asymmetric gap metric, and a runtime assessor that fills the assessed fields in-process. COA-MAS treats the Action Claim as a contract artifact; we treat it as a live object the policy evaluates against. The two views are complementary.</p>
+<p><strong>Authenticated Delegation.</strong> <a href="https://arxiv.org/abs/2501.09674">Authenticated Delegation and Authorized AI Agents (South et al., arXiv:2501.09674)</a> extends OAuth 2.0 and OpenID Connect with agent-specific credentials and metadata to produce signed delegation chains with auditable accountability. We do not do cryptography here — we verify the <em>structural</em> non-increasing property on trust levels, which is weaker but sufficient for in-process runtime checking.</p>
+<p><strong>AgentSpec.</strong> <a href="https://arxiv.org/abs/2503.18666">AgentSpec: Customizable Runtime Enforcement for Safe and Reliable LLM Agents (Wang &amp; Poskitt, arXiv:2503.18666)</a> is a lightweight DSL for specifying and enforcing runtime constraints on LLM agents via triggers, predicates, and enforcement actions (<code>user_inspection</code>, <code>llm_self_examine</code>, <code>invoke_action</code>). Our approach is complementary: AgentSpec is the <em>language</em> in which a policy is written; the tripartite ActionClaim is the <em>runtime data structure</em> the policy is evaluated against. The two compose.</p>
+<p><strong>What we claim is novel.</strong> Not any single idea above. The novelty is <strong>compositional</strong>: to our knowledge, no other <strong>open-source Python runtime library</strong> (1) type-enforces the tripartite split at the dataclass level (<code>frozen=True</code> on DeclaredFields and ChainFields, mutable on AssessedFields under a written invariant that only the assessor may write), (2) computes an <strong>asymmetric</strong> 6-dimensional justification gap, (3) enforces the monotone chain constraint, and (4) does all three in a single evaluation pass that returns a policy verdict. If we are wrong about this combination being novel, please open an issue on the repo with a counter-example and we will retract.</p>
+<h2 id="3-tripartite-actionclaim-formal-definition">3. Tripartite ActionClaim: formal definition<a class="headerlink" href="#3-tripartite-actionclaim-formal-definition" title="Permanent link">&para;</a></h2>
+<p>We model every agent-proposed action as a single <code>ActionClaim</code> object with three field groups. Each group has distinct authorship and mutability rules.</p>
+<h3 id="31-declaredfields-agent-authored-frozen">3.1 <code>DeclaredFields</code> (agent-authored, frozen)<a class="headerlink" href="#31-declaredfields-agent-authored-frozen" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>DeclaredFields = (
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    proposed_transition : str,
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    target              : str,
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    justification       : str,
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    originating_goal    : str,
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    preconditions       : dict,
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    declared_impact     : ImpactVector
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>)
+</code></pre></div>
+<p>The agent fills all six fields. The dataclass is <code>frozen=True</code> — once created, the system cannot mutate it. This is deliberate: if governance could rewrite the agent's declaration, we would lose the evidence of what the agent actually said, and any audit trail would be suspect.</p>
+<h3 id="32-assessedfields-system-authored-mutable-under-invariant">3.2 <code>AssessedFields</code> (system-authored, mutable under invariant)<a class="headerlink" href="#32-assessedfields-system-authored-mutable-under-invariant" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>AssessedFields = (
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    impact_profile      : ImpactVector,
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    justification_gap   : float,
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    risk_level          : int,
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    congruence_score    : float,
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    assessed_at         : datetime,
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    assessor_version    : str
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>)
+</code></pre></div>
+<p>This is the only non-frozen group. The written invariant (enforced by code review and unit tests, not by the type system) is:</p>
+<blockquote>
+<p><strong>Assessment Independence Invariant.</strong> Only <code>ClaimAssessor.assess(claim)</code> may set any field in <code>AssessedFields</code>. No other code path in the library touches these fields. The assessor MUST compute <code>impact_profile</code> without referencing <code>declared.declared_impact</code>.</p>
+</blockquote>
+<p>This matters because the whole point of the tripartite split is to have a number the agent <em>cannot</em> influence. If <code>impact_profile</code> depended on <code>declared_impact</code>, the agent could game the gap by declaring whatever value minimizes the computed distance.</p>
+<h3 id="33-chainfields-infrastructure-frozen">3.3 <code>ChainFields</code> (infrastructure, frozen)<a class="headerlink" href="#33-chainfields-infrastructure-frozen" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>ChainFields = (
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    delegation_chain    : tuple[DelegationChainEntry, ...],
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    chain_depth         : int,
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    principal           : str,
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    monotone_constraint : bool,
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    chain_id            : str
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>)
+</code></pre></div>
+<p>Where each <code>DelegationChainEntry</code> is <code>(agent_id, trust_level, capabilities, delegated_at, reason)</code>. The chain is appended to only when a new sub-agent is created; individual entries are never mutated.</p>
+<h3 id="34-the-6-dimensional-impactvector">3.4 The 6-dimensional ImpactVector<a class="headerlink" href="#34-the-6-dimensional-impactvector" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>ImpactVector = (
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    destructivity         ∈ [0, 1],
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    data_exposure         ∈ [0, 1],
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    resource_consumption  ∈ [0, 1],
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    privilege_escalation  ∈ [0, 1],
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    reversibility         ∈ [0, 1],
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    autonomy_depth        ∈ [0, 1]
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>)
+</code></pre></div>
+<p>All six dimensions are bounded on <code>[0, 1]</code> with <code>__post_init__</code> validation. <code>destructivity</code> measures how much state the action can remove (<code>delete</code>/<code>drop</code>/<code>wipe</code>). <code>data_exposure</code> measures PII or external-sink risk. <code>resource_consumption</code> tracks <code>count</code>/<code>limit</code>/<code>batch_size</code> parameters. <code>privilege_escalation</code> looks for <code>admin</code>/<code>sudo</code>/<code>role</code> keywords. <code>reversibility</code> measures whether the action can be undone. <code>autonomy_depth</code> maps the delegation chain depth to a dimension value.</p>
+<h3 id="35-asymmetric-justification-gap">3.5 Asymmetric justification gap<a class="headerlink" href="#35-asymmetric-justification-gap" title="Permanent link">&para;</a></h3>
+<p>Given declared vector <code>d</code> and assessed vector <code>a</code>, the per-dimension gap is:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>per_dim[k] = max(0, a[k] − d[k])     (asymmetric — over-reporting is free)
+</code></pre></div>
+<p>The global gap is the normalized L2 norm:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>gap = min(1, sqrt(sum(per_dim[k]²)) / sqrt(6))
+</code></pre></div>
+<p>Dividing by <code>sqrt(6)</code> normalizes the maximum possible raw L2 (a vector of all 1s minus all 0s) back into <code>[0, 1]</code>. The asymmetric step is critical: an agent that <em>over-reports</em> a call as more destructive than it actually is should not be penalized — that's a conservative declaration. Only <em>under-reporting</em> increases the gap.</p>
+<h2 id="4-operational-semantics">4. Operational Semantics<a class="headerlink" href="#4-operational-semantics" title="Permanent link">&para;</a></h2>
+<p>We give the evaluation pipeline as a single small-step inference rule. Let <code>C</code> be an <code>ActionClaim</code>, <code>P</code> a policy, <code>S</code> an impact scorer, <code>G</code> a gap computer, <code>K</code> a congruence checker, and <code>M</code> the monotone chain validator.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>──────────────────────────────────────────────────────────   (T-Score)
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>  S(C.declared) → a                [assessed ImpactVector]
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>───────────────────────────────────────────────────────────  (T-Gap)
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>  G(C.declared.declared_impact, a) → (gap, per_dim, v)
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>    where v = APPROVE    if gap ≤ 0.15
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>          v = ESCALATE   if 0.15 &lt; gap ≤ 0.40
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>          v = BLOCK      if gap &gt; 0.40
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>────────────────────────────────   (T-Monotone)
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>  M(C.chain.delegation_chain) → m
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>    where m = True  iff ∀i≥1. chain[i].trust ≤ chain[i−1].trust
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>          m = False otherwise
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>
+<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a>──────────────────────────────────────────────────────   (T-Commit)
+<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a>  C' = C with AssessedFields(a, gap, risk(a), K(C),
+<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a>                              now(), version)
+<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a>  v' = BLOCK  if m = False
+<a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a>  v' = v      otherwise
+<a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a>  verdict(C') = v'
+</code></pre></div>
+<p><code>T-Score</code> is pure: it reads <code>C.declared</code> and emits <code>a</code> without consulting <code>C.declared.declared_impact</code>. <code>T-Gap</code> is the only place both sides meet. <code>T-Monotone</code> is an independent structural check that <strong>overrides the verdict to BLOCK</strong> whenever the chain is non-monotone — this composition is what makes the chain constraint non-bypassable by gap manipulation alone.</p>
+<p>The final verdict is deterministic: given the same <code>C</code>, <code>S</code>, <code>G</code>, <code>K</code>, and <code>M</code>, every run returns the same <code>v'</code>. There is no model in the evaluation loop, no randomness, no hidden state.</p>
+<h2 id="5-soundness-paper-and-pencil-sketch">5. Soundness (paper-and-pencil sketch)<a class="headerlink" href="#5-soundness-paper-and-pencil-sketch" title="Permanent link">&para;</a></h2>
+<p>We state three invariants the pipeline is supposed to preserve and sketch why each holds. This is not a mechanized proof — we reject the Lean/Coq route for this version because the added defense burden on a solo maintainer outweighs the formal gain for a rule-based system with a fixed ruleset (see §9 Limitations). What we <em>can</em> do is verify each invariant holds by inspection of the implementation, and restate it as a unit-testable property.</p>
+<p><strong>Invariant 1 (Assessment Independence).</strong> For any claim <code>C</code>, the value <code>S(C.declared)</code> does not depend on <code>C.declared.declared_impact</code>.</p>
+<p><em>Sketch.</em> By construction. <code>RuleBasedImpactScorer.score</code> reads <code>claim.declared.proposed_transition</code>, <code>claim.declared.target</code>, and <code>claim.declared.preconditions</code>; it never references <code>claim.declared.declared_impact</code>. This is a syntactic property of the code, checkable by grep, and expressed as a property test: for any two claims that differ only in <code>declared_impact</code>, <code>S</code> returns identical vectors. We ship this as <code>tests/test_claim_assessor.py::test_scorer_ignores_declared_impact</code>.</p>
+<p><strong>Invariant 2 (Asymmetric Conservatism).</strong> For any declared vector <code>d</code> and assessed vector <code>a</code>, <code>gap(d, a) ≤ gap(0, a)</code>.</p>
+<p><em>Sketch.</em> <code>gap(d, a)</code> sums <code>max(0, a[k] − d[k])²</code> over <code>k</code>. Since <code>d[k] ≥ 0</code> by type constraint and <code>max(0, a[k] − d[k]) ≤ max(0, a[k] − 0) = a[k]</code> for <code>d[k] ≥ 0</code>, each summand is bounded by the corresponding summand of <code>gap(0, a)</code>. The L2 norm is monotone in summands, so the inequality holds after normalization and clipping. Concretely: a claim that <em>over-reports</em> any dimension can only have a smaller or equal gap than the silent baseline. This is the property that lets us compute the silent baseline once and use it as an upper bound on what gap the same action would produce under any honest declaration.</p>
+<p><strong>Invariant 3 (Monotone Chain Enforcement).</strong> For any claim <code>C</code>, if <code>validate_monotone_constraint(C.chain.delegation_chain)</code> returns <code>False</code>, then <code>ClaimAssessor.assess(C).verdict == BLOCK</code>, regardless of gap.</p>
+<p><em>Sketch.</em> In <code>ClaimAssessor.assess</code>, after computing the gap-derived verdict <code>v</code>, the final step is:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">if</span> <span class="ow">not</span> <span class="n">claim</span><span class="o">.</span><span class="n">is_monotone_valid</span><span class="p">:</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>    <span class="n">claim</span><span class="o">.</span><span class="n">verdict</span> <span class="o">=</span> <span class="n">ClaimVerdict</span><span class="o">.</span><span class="n">BLOCK</span>
+</code></pre></div>
+<p>which is literally a post-hoc override. The invariant holds trivially. It is expressed as a unit test: any chain with a rising trust level yields BLOCK regardless of what <code>declared_impact</code> says.</p>
+<p>These three invariants together give the structural guarantee the framework is built on: <em>a claim cannot evade assessment by choosing its declaration, and it cannot evade the chain check by any declaration</em>. We do not claim soundness of the scoring rules themselves — the rules are approximations of real impact and §9 discusses their limits.</p>
+<h2 id="6-empirical-evaluation">6. Empirical Evaluation<a class="headerlink" href="#6-empirical-evaluation" title="Permanent link">&para;</a></h2>
+<h3 id="61-setup">6.1 Setup<a class="headerlink" href="#61-setup" title="Permanent link">&para;</a></h3>
+<p>We ran the full pipeline (<code>RuleBasedImpactScorer</code> + <code>JustificationGapComputer</code> at thresholds 0.15/0.40 + <code>CongruenceChecker</code>) over every tool call in the tau-bench <code>historical_trajectories</code> dataset. The full script is <a href="https://github.com/Acacian/aegis/blob/main/research/justification_gap_tau_bench/measure_gap.py"><code>research/justification_gap_tau_bench/measure_gap.py</code></a>.</p>
+<p>Every claim was constructed in the <em>silent-baseline framing</em>: <code>declared_impact = ImpactVector()</code> (all zeros). In this framing, the gap equals the assessed impact magnitude directly. This is the worst-case declaration (maximum possible gap), so the measured numbers are an upper bound on what any honest agent would see.</p>
+<p>Totals: <strong>14,285 tool calls</strong> across <strong>1,960 trajectories</strong>, four model:domain groups (<code>gpt-4o:retail</code>, <code>gpt-4o:airline</code>, <code>sonnet-35-new:retail</code>, <code>sonnet-35-new:airline</code>).</p>
+<h3 id="62-finding-1-the-bulk-of-calls-sit-inside-the-approve-band">6.2 Finding 1: the bulk of calls sit inside the approve band<a class="headerlink" href="#62-finding-1-the-bulk-of-calls-sit-inside-the-approve-band" title="Permanent link">&para;</a></h3>
+<p><img alt="Global justification gap distribution across 14,285 tau-bench tool calls" src="../../assets/research/jg-histogram.png" /></p>
+<table>
+<thead>
+<tr>
+<th>Statistic</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>n</td>
+<td>14,285</td>
+</tr>
+<tr>
+<td>mean gap</td>
+<td>0.047</td>
+</tr>
+<tr>
+<td>median</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>p90</td>
+<td>0.1225</td>
+</tr>
+<tr>
+<td>p99</td>
+<td>0.3674</td>
+</tr>
+<tr>
+<td>max</td>
+<td>0.3674</td>
+</tr>
+</tbody>
+</table>
+<p><strong>90.3% approve / 9.7% escalate / 0.0% block.</strong> The distribution is heavily front-loaded (median is zero). The p99 is 0.3674 — the maximum observed gap across all 14,285 calls — which sits comfortably under the 0.40 block threshold. <em>No trajectory in the entire dataset triggers a block verdict.</em> This is good news for the rule set: tau-bench is a benign customer-service benchmark, so we should not be blocking anything, and we aren't.</p>
+<h3 id="63-finding-2-domain-matters-more-than-model">6.3 Finding 2: domain matters more than model<a class="headerlink" href="#63-finding-2-domain-matters-more-than-model" title="Permanent link">&para;</a></h3>
+<p><img alt="Verdict shares by model:domain group" src="../../assets/research/jg-verdict-by-group.png" /></p>
+<table>
+<thead>
+<tr>
+<th>Group</th>
+<th>Calls</th>
+<th>Approve</th>
+<th>Escalate</th>
+<th>Block</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>gpt-4o : retail</td>
+<td>3,274</td>
+<td>92.9%</td>
+<td>7.1%</td>
+<td>0.0%</td>
+</tr>
+<tr>
+<td>sonnet-35-new : retail</td>
+<td>7,086</td>
+<td>92.0%</td>
+<td>8.0%</td>
+<td>0.0%</td>
+</tr>
+<tr>
+<td>gpt-4o : airline</td>
+<td>1,164</td>
+<td>84.9%</td>
+<td>15.1%</td>
+<td>0.0%</td>
+</tr>
+<tr>
+<td>sonnet-35-new : airline</td>
+<td>2,761</td>
+<td>85.2%</td>
+<td>14.9%</td>
+<td>0.0%</td>
+</tr>
+</tbody>
+</table>
+<p>Two observations:</p>
+<ul>
+<li><strong>Cross-model retail is nearly identical</strong> (gpt-4o 92.9% vs sonnet-35-new 92.0%). This is the opposite pattern from our <a href="../tau-bench-tool-distribution-drift/">prior drift post</a>, which found Sonnet retail trajectories collapsing 1.7× more than GPT-4o on the same task family. The signal here is structural (tool-name destructivity) rather than behavioral (tool-mix entropy), so it sees the domain's tool catalog, not the model's behavior within it.</li>
+<li><strong>Airline escalates ~2× more than retail</strong> across both models. Airline-specific tools (<code>update_reservation_flights</code>, <code>update_reservation_baggages</code>, <code>transfer_to_human_agents</code>) carry write-verb and human-escalation signals that the rule-based scorer flags. Whether these <em>should</em> escalate is a policy question — we discuss this in §6.5.</li>
+</ul>
+<h3 id="64-finding-3-the-6d-impact-profile-is-domain-shaped">6.4 Finding 3: the 6D impact profile is domain-shaped<a class="headerlink" href="#64-finding-3-the-6d-impact-profile-is-domain-shaped" title="Permanent link">&para;</a></h3>
+<p><img alt="Mean 6D impact profile per group (radar)" src="../../assets/research/jg-radar.png" /></p>
+<p>The radar shows the per-group mean on each of the six impact dimensions. Two dimensions dominate and two are entirely zero:</p>
+<table>
+<thead>
+<tr>
+<th>Dimension</th>
+<th>gpt-4o:retail</th>
+<th>gpt-4o:airline</th>
+<th>sonnet-35:retail</th>
+<th>sonnet-35:airline</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>destructivity</td>
+<td>0.057</td>
+<td>0.094</td>
+<td>0.054</td>
+<td>0.065</td>
+</tr>
+<tr>
+<td>data_exposure</td>
+<td>0.061</td>
+<td>0.024</td>
+<td>0.067</td>
+<td>0.028</td>
+</tr>
+<tr>
+<td>resource_consumption</td>
+<td>0.000</td>
+<td>0.000</td>
+<td>0.000</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>privilege_escalation</td>
+<td>0.000</td>
+<td>0.000</td>
+<td>0.000</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>reversibility</td>
+<td>0.000</td>
+<td>0.031</td>
+<td>0.000</td>
+<td>0.028</td>
+</tr>
+<tr>
+<td>autonomy_depth</td>
+<td>0.000</td>
+<td>0.000</td>
+<td>0.000</td>
+<td>0.000</td>
+</tr>
+</tbody>
+</table>
+<p>Three dimensions are flat zero across the entire dataset:</p>
+<ul>
+<li><code>resource_consumption</code> — no tau-bench tool carries <code>count</code>/<code>limit</code>/<code>batch_size</code> parameters above 1.</li>
+<li><code>privilege_escalation</code> — no tool name contains admin/role/bypass keywords.</li>
+<li><code>autonomy_depth</code> — tau-bench is single-agent, so <code>chain_depth = 0</code> everywhere.</li>
+</ul>
+<p>This is a property of <strong>the benchmark</strong>, not the framework. On a dataset with sub-agents and bulk operations, these dimensions would light up. The usefulness of 6D is exactly that it can represent zero-active dimensions without breaking the gap computation.</p>
+<p>The two active dimensions split by domain:</p>
+<ul>
+<li><strong>Retail</strong> carries elevated <code>data_exposure</code> (0.06-0.07) because the retail tool catalog includes tools whose names contain <code>email</code>, <code>name</code>, <code>address</code> keywords (PII indicators).</li>
+<li><strong>Airline</strong> carries elevated <code>destructivity</code> (0.06-0.09) and <code>reversibility</code> (0.03) because reservation-modifying tools (<code>update_reservation_flights</code>, <code>cancel_reservation</code>) trigger write/cancel verbs in the rule-based scorer.</li>
+</ul>
+<h3 id="65-finding-4-the-worst-offending-tools-are-transparent-to-inspect">6.5 Finding 4: the worst-offending tools are transparent to inspect<a class="headerlink" href="#65-finding-4-the-worst-offending-tools-are-transparent-to-inspect" title="Permanent link">&para;</a></h3>
+<p><img alt="Top 12 tools by mean assessed gap" src="../../assets/research/jg-top-tools.png" /></p>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Calls</th>
+<th>Mean Gap</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>find_user_id_by_email</code></td>
+<td>695</td>
+<td><strong>0.367</strong></td>
+<td><code>email</code> is in <em>three</em> rule sets at once — <code>_EXPORT</code> (action verb), <code>_EXTERNAL</code> (target sink), and <code>_PII</code> (parameter keys from tau-bench) — so all three data-exposure conditions fire and the scorer returns <code>data_exposure = 0.9</code> <strong>(false positive — see below)</strong>.</td>
+</tr>
+<tr>
+<td><code>transfer_to_human_agents</code></td>
+<td>283</td>
+<td>0.220</td>
+<td><code>transfer</code> is in <code>_EXPORT</code> → <code>data_exposure = 0.5</code>. Unknown verb category → <code>destructivity = 0.2</code> (default fallback). Combined L2 → 0.220.</td>
+</tr>
+<tr>
+<td><code>send_certificate</code></td>
+<td>30</td>
+<td>0.220</td>
+<td>Identical pattern: <code>send</code> → <code>data_exposure = 0.5</code>, unknown category → <code>destructivity = 0.2</code>.</td>
+</tr>
+<tr>
+<td><code>update_reservation_flights</code></td>
+<td>287</td>
+<td>0.173</td>
+<td><code>update</code> → write verb, <code>destructivity = 0.3</code>, <code>reversibility = 0.3</code>.</td>
+</tr>
+<tr>
+<td><code>update_reservation_baggages</code></td>
+<td>66</td>
+<td>0.173</td>
+<td>Same pattern.</td>
+</tr>
+<tr>
+<td><code>update_reservation_passengers</code></td>
+<td>24</td>
+<td>0.173</td>
+<td>Same pattern.</td>
+</tr>
+<tr>
+<td><code>modify_pending_order_items</code></td>
+<td>458</td>
+<td>0.123</td>
+<td><code>modify</code> → write verb.</td>
+</tr>
+<tr>
+<td><code>modify_pending_order_address</code></td>
+<td>227</td>
+<td>0.123</td>
+<td>Same pattern.</td>
+</tr>
+<tr>
+<td><code>modify_user_address</code></td>
+<td>119</td>
+<td>0.123</td>
+<td>Same pattern.</td>
+</tr>
+<tr>
+<td><code>modify_pending_order_payment</code></td>
+<td>18</td>
+<td>0.123</td>
+<td>Same pattern.</td>
+</tr>
+<tr>
+<td><code>exchange_delivered_order_items</code></td>
+<td>416</td>
+<td>0.082</td>
+<td>Below the approve threshold.</td>
+</tr>
+<tr>
+<td><code>return_delivered_order_items</code></td>
+<td>489</td>
+<td>0.082</td>
+<td>Below the approve threshold.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>The <code>find_user_id_by_email</code> case is the most informative row in the entire study.</strong> This is a pure-read tool — it takes an email and returns a user ID — yet it receives the highest mean gap (0.367) in the dataset. The reason is a triple collision in the rule set: the substring <code>email</code> sits in <code>_EXPORT</code> (action verbs), <code>_EXTERNAL</code> (external sinks), and <code>_PII</code> (parameter patterns) simultaneously. Because <code>measure_gap.py</code> uses the tool name as both the action and the target (that's the silent-baseline framing for a benchmark where no semantic target is available), the token <code>email</code> fires all three set memberships and the scorer returns <code>data_exposure = 0.9</code>. The rule-based scorer, reading only the tool name, cannot tell whether "email" is <em>present as an argument name</em> or <em>present as a destination the action exports to</em>. It conservatively assumes exposure.</p>
+<p>This is a real limitation, but it is also exactly the limitation the escalate-not-block design is built around. Note what actually happens at this tool's gap of 0.367: the verdict is <strong>ESCALATE</strong> (0.15 &lt; 0.367 ≤ 0.40), not BLOCK. The policy surfaces the call for human review; it does not kill the agent. A false positive at this level is a UX problem, not a correctness problem. The system designer fixes it by adding an explicit <code>ImpactRule</code> override for <code>find_user_id_by_email</code> with <code>data_exposure = 0.0</code>, which the rule-based scorer picks up automatically.</p>
+<p>If we had set the block threshold at 0.25, this tool would break tau-bench. At 0.40, it escalates to human review — which is the intended behavior for "I don't know for sure, but the name pattern is suspicious."</p>
+<h3 id="66-trajectory-level-rollup">6.6 Trajectory-level rollup<a class="headerlink" href="#66-trajectory-level-rollup" title="Permanent link">&para;</a></h3>
+<p>Aggregating the 14,285 calls back to 1,960 trajectories by taking the max and mean per trajectory:</p>
+<table>
+<thead>
+<tr>
+<th>Statistic</th>
+<th>max gap per trajectory</th>
+<th>mean gap per trajectory</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>n</td>
+<td>1,960</td>
+<td>1,960</td>
+</tr>
+<tr>
+<td>mean</td>
+<td>0.197</td>
+<td>0.051</td>
+</tr>
+<tr>
+<td>median</td>
+<td>0.173</td>
+<td>0.041</td>
+</tr>
+<tr>
+<td>p90</td>
+<td>0.367</td>
+<td>0.102</td>
+</tr>
+<tr>
+<td>p99</td>
+<td>0.367</td>
+<td>0.220</td>
+</tr>
+<tr>
+<td>max</td>
+<td>0.367</td>
+<td>0.367</td>
+</tr>
+</tbody>
+</table>
+<p>Only ~10% of trajectories contain <em>any</em> call that crosses the escalate threshold (p90 of max-gap = 0.367, which is the dataset-wide max). And <strong>no trajectory has a mean gap over 0.367</strong>, which means no trajectory is <em>consistently</em> in the escalate band throughout. The pattern is: most trajectories are clean, some have one or two flagged tools clustered near the end, and none trip the block verdict.</p>
+<h2 id="7-why-measure-this-in-four-points">7. Why measure this, in four points<a class="headerlink" href="#7-why-measure-this-in-four-points" title="Permanent link">&para;</a></h2>
+<h3 id="71-deterministic">7.1 Deterministic<a class="headerlink" href="#71-deterministic" title="Permanent link">&para;</a></h3>
+<p>The entire pipeline is token matching, dict lookups, and arithmetic. No LLM judge, no fine-tuned classifier, no external service. Two runs on the same trace produce bit-identical verdicts, which means you can compare GPT-4o output today to Sonnet output tomorrow without worrying that the <em>evaluator</em> drifted between runs.</p>
+<h3 id="72-privacy-preserving">7.2 Privacy-preserving<a class="headerlink" href="#72-privacy-preserving" title="Permanent link">&para;</a></h3>
+<p>The assessor reads <code>tool_name</code>, <code>target</code>, and argument <em>keys</em> — not argument values. Chain-of-thought text, user prompts, and PII inside argument strings can stay on the agent's machine. This is a property most LLM-judge tools cannot offer because, by definition, they need to read the conversation.</p>
+<h3 id="73-cross-model-comparable">7.3 Cross-model comparable<a class="headerlink" href="#73-cross-model-comparable" title="Permanent link">&para;</a></h3>
+<p>Because the gap is computed over the tool call alone, GPT-4o and Sonnet 3.5 New produce gap numbers on the same <code>[0, 1]</code> scale. The near-identical retail gap (0.0476 vs 0.0487) and 2× airline/retail split in §6.3 are only meaningful <em>because</em> the metric is model-agnostic.</p>
+<h3 id="74-reproducible-in-under-a-minute">7.4 Reproducible in under a minute<a class="headerlink" href="#74-reproducible-in-under-a-minute" title="Permanent link">&para;</a></h3>
+<p>The full measurement pipeline is <strong>~400 lines of stdlib-only Python</strong>. No numpy, no pandas, no sklearn. The dataset is public. The scripts are linked below. From <code>git clone</code> to regenerated numbers takes about 45 seconds of CPU time on a laptop.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/Acacian/aegis
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="nb">cd</span><span class="w"> </span>aegis
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># (download tau-bench historical trajectories — see research/justification_gap_tau_bench/README when available)</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>python<span class="w"> </span>research/justification_gap_tau_bench/measure_gap.py<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">    </span>--input<span class="w"> </span>.cache/traces/tau_bench_all.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="w">    </span>--output<span class="w"> </span>.cache/analysis/justification_gap_results.json
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>python<span class="w"> </span>research/justification_gap_tau_bench/visualize.py
+</code></pre></div>
+<h2 id="8-using-the-assessor-on-your-own-agent">8. Using the assessor on your own agent<a class="headerlink" href="#8-using-the-assessor-on-your-own-agent" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">aegis.core.action_claim</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>    <span class="n">ActionClaim</span><span class="p">,</span> <span class="n">DeclaredFields</span><span class="p">,</span> <span class="n">ChainFields</span><span class="p">,</span> <span class="n">ImpactVector</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="p">)</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">aegis.core.justification_gap</span><span class="w"> </span><span class="kn">import</span> <span class="n">ClaimAssessor</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="n">assessor</span> <span class="o">=</span> <span class="n">ClaimAssessor</span><span class="p">()</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="n">claim</span> <span class="o">=</span> <span class="n">ActionClaim</span><span class="p">(</span>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>    <span class="n">declared</span><span class="o">=</span><span class="n">DeclaredFields</span><span class="p">(</span>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>        <span class="n">proposed_transition</span><span class="o">=</span><span class="s2">"delete_user"</span><span class="p">,</span>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>        <span class="n">target</span><span class="o">=</span><span class="s2">"user:42"</span><span class="p">,</span>
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a>        <span class="n">justification</span><span class="o">=</span><span class="s2">"user requested account deletion"</span><span class="p">,</span>
+<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a>        <span class="n">preconditions</span><span class="o">=</span><span class="p">{</span><span class="s2">"user_id"</span><span class="p">:</span> <span class="mi">42</span><span class="p">,</span> <span class="s2">"soft_delete"</span><span class="p">:</span> <span class="kc">False</span><span class="p">},</span>
+<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a>        <span class="n">declared_impact</span><span class="o">=</span><span class="n">ImpactVector</span><span class="p">(</span><span class="n">destructivity</span><span class="o">=</span><span class="mf">0.5</span><span class="p">),</span>  <span class="c1"># agent's own estimate</span>
+<a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a>    <span class="p">),</span>
+<a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a>    <span class="n">chain</span><span class="o">=</span><span class="n">ChainFields</span><span class="p">(</span><span class="n">chain_depth</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
+<a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a><span class="p">)</span>
+<a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a>
+<a id="__codelineno-9-19" name="__codelineno-9-19" href="#__codelineno-9-19"></a><span class="n">assessor</span><span class="o">.</span><span class="n">assess</span><span class="p">(</span><span class="n">claim</span><span class="p">)</span>
+<a id="__codelineno-9-20" name="__codelineno-9-20" href="#__codelineno-9-20"></a>
+<a id="__codelineno-9-21" name="__codelineno-9-21" href="#__codelineno-9-21"></a><span class="nb">print</span><span class="p">(</span><span class="n">claim</span><span class="o">.</span><span class="n">verdict</span><span class="p">)</span>                       <span class="c1"># ClaimVerdict.APPROVE / ESCALATE / BLOCK</span>
+<a id="__codelineno-9-22" name="__codelineno-9-22" href="#__codelineno-9-22"></a><span class="nb">print</span><span class="p">(</span><span class="n">claim</span><span class="o">.</span><span class="n">assessed</span><span class="o">.</span><span class="n">justification_gap</span><span class="p">)</span>    <span class="c1"># float in [0, 1]</span>
+<a id="__codelineno-9-23" name="__codelineno-9-23" href="#__codelineno-9-23"></a><span class="nb">print</span><span class="p">(</span><span class="n">claim</span><span class="o">.</span><span class="n">assessed</span><span class="o">.</span><span class="n">impact_profile</span><span class="o">.</span><span class="n">as_dict</span><span class="p">())</span>
+</code></pre></div>
+<p>In the example above, the agent declared <code>destructivity = 0.5</code> but the scorer will compute <code>destructivity = 0.7</code> for a non-bulk <code>delete_*</code> call. The asymmetric gap penalizes the 0.2 under-report. If the agent had declared <code>destructivity = 0.7</code> or higher, the gap would be zero and the verdict would approve.</p>
+<h3 id="81-patching-a-false-positive-and-an-honest-api-limitation">8.1 Patching a false positive (and an honest API limitation)<a class="headerlink" href="#81-patching-a-false-positive-and-an-honest-api-limitation" title="Permanent link">&para;</a></h3>
+<p>The cleanest fix for the <code>find_user_id_by_email</code> case from §6.5 is to replace the scorer with one that is narrower than the default:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">aegis.core.justification_gap</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>    <span class="n">ClaimAssessor</span><span class="p">,</span> <span class="n">RuleBasedImpactScorer</span><span class="p">,</span> <span class="n">ImpactScorer</span><span class="p">,</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="p">)</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">aegis.core.action_claim</span><span class="w"> </span><span class="kn">import</span> <span class="n">ActionClaim</span><span class="p">,</span> <span class="n">ImpactVector</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="k">class</span><span class="w"> </span><span class="nc">TauBenchScorer</span><span class="p">:</span>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="w">    </span><span class="sd">"""Wraps the default scorer and zeros out known false positives."""</span>
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_default</span> <span class="o">=</span> <span class="n">RuleBasedImpactScorer</span><span class="p">()</span>
+<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>
+<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">score</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">claim</span><span class="p">:</span> <span class="n">ActionClaim</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ImpactVector</span><span class="p">:</span>
+<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a>        <span class="n">name</span> <span class="o">=</span> <span class="n">claim</span><span class="o">.</span><span class="n">declared</span><span class="o">.</span><span class="n">proposed_transition</span>
+<a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a>        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">"find_user_id_by_email"</span><span class="p">,</span> <span class="s2">"find_user_id_by_name_zip"</span><span class="p">,</span>
+<a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a>                    <span class="s2">"get_user_details"</span><span class="p">,</span> <span class="s2">"get_order_details"</span><span class="p">}:</span>
+<a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a>            <span class="k">return</span> <span class="n">ImpactVector</span><span class="p">()</span>   <span class="c1"># pure-read, zero impact</span>
+<a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="n">claim</span><span class="p">)</span>
+<a id="__codelineno-10-17" name="__codelineno-10-17" href="#__codelineno-10-17"></a>
+<a id="__codelineno-10-18" name="__codelineno-10-18" href="#__codelineno-10-18"></a><span class="n">assessor</span> <span class="o">=</span> <span class="n">ClaimAssessor</span><span class="p">(</span><span class="n">impact_scorer</span><span class="o">=</span><span class="n">TauBenchScorer</span><span class="p">())</span>
+</code></pre></div>
+<p><strong>Honest API limitation.</strong> The shipped <code>ImpactRule</code> override path is <em>not</em> sufficient to fix this case, because rule overrides are applied with <code>max(current, override)</code> semantics — they can only raise a score, not lower it. A rule with <code>data_exposure: 0.0</code> on <code>find_user_id_by_email</code> would be a no-op against the default score of 0.9. Fixing this without a custom scorer will require an API change — adding a <code>replace_mode</code> flag to <code>ImpactRule</code> — and is listed in §9 as near-term follow-up work. We surface the limitation here so that users do not mistakenly try the <code>ImpactRule</code> path and wonder why it does not bite.</p>
+<h2 id="9-limitations-and-future-work">9. Limitations and future work<a class="headerlink" href="#9-limitations-and-future-work" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Rule-based scorer is a floor, not a ceiling.</strong> The six dimension scorers match on English verb keywords and a few parameter patterns. They will systematically miss:</li>
+<li>Foreign-language tool names (a tool called <code>주문_삭제</code> will score zero destructivity).</li>
+<li>Domain-specific verbs not in the keyword set.</li>
+<li>Semantic destruction hidden in benign verb names (a <code>reconcile_accounts</code> tool that silently deletes old rows).</li>
+<li>Tool names that happen to share a substring with a PII keyword, producing false positives — <code>find_user_id_by_email</code> is the canonical example (§6.5).</li>
+</ul>
+<p>The framework explicitly supports a pluggable <code>ImpactScorer</code> protocol; §8.1 shows how to install a custom scorer that zeroes known false positives. We are not claiming the rule-based scorer is accurate — we are claiming the <em>structure</em> is correct and the rules are debuggable and patchable.</p>
+<ul>
+<li>
+<p><strong><code>ImpactRule</code> overrides are max-only.</strong> The shipped <code>ImpactRule</code> override path uses <code>max(current, override)</code> semantics (see §8.1). It can raise a score but cannot lower one, which means it cannot patch false positives — only escalate false negatives. Fixing this requires adding a <code>replace_mode</code> flag to <code>ImpactRule</code> (or equivalent) and is a near-term API change. We flag this explicitly so the published measurement and the patchability story stay consistent.</p>
+</li>
+<li>
+<p><strong>Silent baseline is an upper bound on real deployments.</strong> An agent that actually fills <code>declared_impact</code> with honest numbers will see smaller gaps than what we measure here. The 9.7% escalate rate is the <em>worst case</em>; a well-declared agent should see escalate rates close to zero except on truly novel calls.</p>
+</li>
+<li>
+<p><strong>No mechanized proof.</strong> The soundness sketches in §5 are paper-and-pencil. We considered mechanizing the invariants in Lean 4 but decided against it for this version — the defense burden on a solo maintainer outweighs the formal gain for a rule set that is itself an approximation. A mechanized proof makes sense once the scoring rules are themselves formalized as a small deterministic language, which is future work.</p>
+</li>
+<li>
+<p><strong>No cryptographic chain check.</strong> <code>ChainFields</code> stores the delegation chain as a plain Python tuple. Cryptographically signed chains (as in <a href="https://arxiv.org/abs/2501.09674">South et al., arXiv:2501.09674</a>) and <a href="https://github.com/newtro/delegateos">DelegateOS's</a> Ed25519-signed DCT tokens are out of scope for this runtime library. We rely on the in-process assumption that the chain was constructed correctly by the hosting application.</p>
+</li>
+<li>
+<p><strong>Single-dataset benchmark.</strong> All findings in §6 are on tau-bench's 1,960 customer-service trajectories. Different domains (coding agents, scientific agents, browsing agents) will produce different gap distributions. The methodology transfers; the absolute numbers will not.</p>
+</li>
+<li>
+<p><strong>Threshold choice is conservative, not optimized.</strong> We picked 0.15/0.40 by inspection. A production deployment should learn thresholds per-tenant based on acceptable false-positive rates for escalation (how often human review is triggered for benign calls) and acceptable false-negative rates for blocks (how often a genuinely dangerous call slips into the approve band).</p>
+</li>
+</ul>
+<h3 id="where-this-goes-next">Where this goes next<a class="headerlink" href="#where-this-goes-next" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>LLM-judge impact scorer (Tier 2).</strong> Replace <code>RuleBasedImpactScorer</code> with an LLM call that produces the 6D vector. Same protocol, different implementation. We expect this to fix <code>find_user_id_by_email</code>-style false positives at the cost of determinism.</li>
+<li><strong>Mechanized Invariants 1-3.</strong> Once the scoring language is stable, re-express Invariants 1, 2, and 3 in Lean 4 and extract a certified evaluation function.</li>
+<li><strong>Cross-dataset measurement.</strong> Run the same pipeline over SWE-bench trajectories, WebArena trajectories, and any public coding-agent trace that ships a tool call log.</li>
+<li><strong>Threshold search.</strong> Grid search <code>(approve_max, escalate_max)</code> over held-out tau-bench trajectories to find the pair that minimizes human-review cost at a given miss rate.</li>
+</ul>
+<h2 id="10-data-and-code">10. Data and code<a class="headerlink" href="#10-data-and-code" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Measurement script:</strong> <a href="https://github.com/Acacian/aegis/blob/main/research/justification_gap_tau_bench/measure_gap.py"><code>research/justification_gap_tau_bench/measure_gap.py</code></a></li>
+<li><strong>Visualization script:</strong> <a href="https://github.com/Acacian/aegis/blob/main/research/justification_gap_tau_bench/visualize.py"><code>research/justification_gap_tau_bench/visualize.py</code></a></li>
+<li><strong>Core implementation:</strong></li>
+<li><a href="https://github.com/Acacian/aegis/blob/main/src/aegis/core/action_claim.py"><code>src/aegis/core/action_claim.py</code></a> — <code>ActionClaim</code>, <code>DeclaredFields</code>, <code>AssessedFields</code>, <code>ChainFields</code>, <code>ImpactVector</code>, <code>validate_monotone_constraint</code></li>
+<li><a href="https://github.com/Acacian/aegis/blob/main/src/aegis/core/justification_gap.py"><code>src/aegis/core/justification_gap.py</code></a> — <code>RuleBasedImpactScorer</code>, <code>CongruenceChecker</code>, <code>JustificationGapComputer</code>, <code>ClaimAssessor</code></li>
+<li><strong>Raw tau-bench data:</strong> <a href="https://github.com/sierra-research/tau-bench/tree/main/historical_trajectories">sierra-research/tau-bench historical_trajectories</a></li>
+<li><strong>Aegis repo:</strong> <a href="https://github.com/Acacian/aegis">github.com/Acacian/aegis</a></li>
+</ul>
+<p>If you want the per-call scored JSONL (14,285 rows × 10 columns with verdict, gap, and 6D vector), open an issue on the repo.</p>
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
+<ol>
+<li><em>Intent-Based Access Control: Using LLMs to Intelligently Manage Access Control</em> (IBAC-DB, NLACM framework). arXiv:<a href="https://arxiv.org/abs/2402.07332">2402.07332</a>.</li>
+<li><em>DelegateOS: Multi-agent delegation and orchestration protocol — Biscuit-based DCTs, delegation chains, trust scoring, MCP integration.</em> <a href="https://github.com/newtro/delegateos">github.com/newtro/delegateos</a>.</li>
+<li><em>Towards Selection as Power: Bounding Decision Authority in Autonomous Agents.</em> arXiv:<a href="https://arxiv.org/html/2602.14606">2602.14606</a>.</li>
+<li>South, T., et al. (2025). <em>Authenticated Delegation and Authorized AI Agents.</em> arXiv:<a href="https://arxiv.org/abs/2501.09674">2501.09674</a>.</li>
+<li>Wang, H., &amp; Poskitt, C. M. (2025). <em>AgentSpec: Customizable Runtime Enforcement for Safe and Reliable LLM Agents.</em> arXiv:<a href="https://arxiv.org/abs/2503.18666">2503.18666</a>. ICSE '26.</li>
+<li>Carvalho, R. <em>COA-MAS v2: A Meta-Framework for Cross-Domain Multi-Agent Governance.</em> <a href="https://dev.to/rudsoncarvalho/coa-mas-v2-a-meta-framework-for-cross-domain-multi-agent-governance-4mji">dev.to/rudsoncarvalho</a>.</li>
+<li>Sierra Research. (2024). <em>tau-bench: Benchmarking Tool-Agent-User Interaction in Real-World Domains.</em> <a href="https://github.com/sierra-research/tau-bench">github.com/sierra-research/tau-bench</a>.</li>
+</ol>
+
+
+
+
+
+
+
+  
+  
+
+
+
+  
+
+
+
+  <form class="md-feedback" name="feedback" hidden>
+    <fieldset>
+      <legend class="md-feedback__title">
+        Was this page helpful?
+      </legend>
+      <div class="md-feedback__inner">
+        <div class="md-feedback__list">
+          
+            <button class="md-feedback__icon md-icon" type="submit" title="Helpful" data-md-value="1">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 12a8 8 0 0 0-8-8 8 8 0 0 0-8 8 8 8 0 0 0 8 8 8 8 0 0 0 8-8m2 0a10 10 0 0 1-10 10A10 10 0 0 1 2 12 10 10 0 0 1 12 2a10 10 0 0 1 10 10M10 9.5c0 .8-.7 1.5-1.5 1.5S7 10.3 7 9.5 7.7 8 8.5 8s1.5.7 1.5 1.5m7 0c0 .8-.7 1.5-1.5 1.5S14 10.3 14 9.5 14.7 8 15.5 8s1.5.7 1.5 1.5m-5 7.73c-1.75 0-3.29-.73-4.19-1.81L9.23 14c.45.72 1.52 1.23 2.77 1.23s2.32-.51 2.77-1.23l1.42 1.42c-.9 1.08-2.44 1.81-4.19 1.81"/></svg>
+            </button>
+          
+            <button class="md-feedback__icon md-icon" type="submit" title="Needs work" data-md-value="0">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 12a8 8 0 0 0-8-8 8 8 0 0 0-8 8 8 8 0 0 0 8 8 8 8 0 0 0 8-8m2 0a10 10 0 0 1-10 10A10 10 0 0 1 2 12 10 10 0 0 1 12 2a10 10 0 0 1 10 10m-6.5-4c.8 0 1.5.7 1.5 1.5s-.7 1.5-1.5 1.5-1.5-.7-1.5-1.5.7-1.5 1.5-1.5M10 9.5c0 .8-.7 1.5-1.5 1.5S7 10.3 7 9.5 7.7 8 8.5 8s1.5.7 1.5 1.5m2 4.5c1.75 0 3.29.72 4.19 1.81l-1.42 1.42C14.32 16.5 13.25 16 12 16s-2.32.5-2.77 1.23l-1.42-1.42C8.71 14.72 10.25 14 12 14"/></svg>
+            </button>
+          
+        </div>
+        <div class="md-feedback__note">
+          
+            <div data-md-value="1" hidden>
+              
+              
+                
+              
+              
+              
+              
+            </div>
+          
+            <div data-md-value="0" hidden>
+              
+              
+                
+              
+              
+              
+              
+            </div>
+          
+        </div>
+      </div>
+    </fieldset>
+  </form>
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 Dongha Koo — MIT License
+    </div>
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://github.com/Acacian/aegis" target="_blank" rel="noopener" title="Agent-Aegis on GitHub" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+    <a href="https://pypi.org/project/agent-aegis/" target="_blank" rel="noopener" title="Agent-Aegis on PyPI" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.8 200.5c-7.7-30.9-22.3-54.2-53.4-54.2h-40.1v47.4c0 36.8-31.2 67.8-66.8 67.8H172.7c-29.2 0-53.4 25-53.4 54.3v101.8c0 29 25.2 46 53.4 54.3 33.8 9.9 66.3 11.7 106.8 0 26.9-7.8 53.4-23.5 53.4-54.3v-40.7H226.2v-13.6h160.2c31.1 0 42.6-21.7 53.4-54.2 11.2-33.5 10.7-65.7 0-108.6M286.2 444.7a20.4 20.4 0 1 1 0-40.7 20.4 20.4 0 1 1 0 40.7M167.8 248.1h106.8c29.7 0 53.4-24.5 53.4-54.3V91.9c0-29-24.4-50.7-53.4-55.6-35.8-5.9-74.7-5.6-106.8.1-45.2 8-53.4 24.7-53.4 55.6v40.7h106.9v13.6h-147c-31.1 0-58.3 18.7-66.8 54.2-9.8 40.7-10.2 66.1 0 108.6 7.6 31.6 25.7 54.2 56.8 54.2H101v-48.8c0-35.3 30.5-66.4 66.8-66.4m-6.6-183.4a20.4 20.4 0 1 1 0 40.8 20.4 20.4 0 1 1 0-40.8"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.sections", "navigation.expand", "navigation.top", "content.code.copy", "content.code.annotate", "content.action.edit", "search.highlight", "search.share"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
