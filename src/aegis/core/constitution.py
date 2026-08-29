@@ -184,8 +184,14 @@ class AgentConstitution:
         import yaml
 
         with open(path, encoding="utf-8") as f:
-            data = yaml.safe_load(f) or {}
-        return cls.from_dict(data.get("constitution", data))
+            loaded = yaml.safe_load(f)
+
+        # safe_load returns Any — a YAML file can hold a scalar or a list just
+        # as easily as a mapping. Narrow both the document and the section so
+        # from_dict always receives a dict, whatever the file turns out to be.
+        data: dict[str, Any] = loaded if isinstance(loaded, dict) else {}
+        section = data.get("constitution", data)
+        return cls.from_dict(section if isinstance(section, dict) else {})
 
     def to_dict(self) -> dict[str, Any]:
         """Serialize the constitution to a plain dictionary."""
