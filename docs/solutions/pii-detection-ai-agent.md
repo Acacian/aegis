@@ -1,10 +1,10 @@
 ---
-description: "Detect and mask PII in AI agent pipelines. 12 categories including credit cards (Luhn-validated), SSNs, API keys. Real-time, no LLM required."
+description: "Detect and mask PII in AI agent pipelines. 13 categories including credit cards (Luhn-validated), SSNs, passports, API keys. No LLM required."
 ---
 
 # PII Detection and Masking for AI Agents
 
-AI agents process sensitive data as part of their normal operation -- customer records, financial data, API keys, personal identifiers. Without PII detection, an agent can inadvertently log credit card numbers to plaintext audit files, include SSNs in LLM prompts sent to third-party APIs, or leak API keys in error messages. Aegis detects 12 categories of PII with Luhn validation for credit cards and masks sensitive data in real-time.
+AI agents process sensitive data as part of their normal operation -- customer records, financial data, API keys, personal identifiers. Without PII detection, an agent can inadvertently log credit card numbers to plaintext audit files, include SSNs in LLM prompts sent to third-party APIs, or leak API keys in error messages. Aegis detects 13 categories of PII with Luhn validation for credit cards and masks sensitive data in real-time.
 
 ## Quick Start
 

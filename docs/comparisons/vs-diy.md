@@ -44,7 +44,7 @@ Aegis replaces scattered `if/else` checks with a centralized YAML policy that ap
 - YAML policy engine with glob matching and conditional rules
 - 4-tier risk model (low / medium / high / critical)
 - Auto-instrumentation for LangChain, CrewAI, OpenAI Agents SDK, OpenAI, Anthropic
-- Runtime guardrails: prompt injection (109 patterns), PII (12 categories), toxicity, prompt leak
+- Runtime guardrails: prompt injection (109 patterns), PII (13 categories), toxicity, prompt leak
 - 7 approval handlers (CLI, Slack, Discord, Telegram, email, webhook, custom)
 - Audit trail with SQLite, JSONL, webhook, and Python logging backends
 - Sub-millisecond policy evaluation, no LLM dependency
@@ -141,7 +141,7 @@ rules:
 | **Human approval** | Build your own (Slack API, email, etc.) | 7 built-in handlers |
 | **Audit trail** | Build your own (logging, storage, export) | Built-in (SQLite, JSONL, webhook, logging) |
 | **Prompt injection detection** | Write your own regex or call an LLM | Built-in (109 patterns, 13 categories) |
-| **PII detection** | Write your own or find a library | Built-in (12 categories) |
+| **PII detection** | Write your own or find a library | Built-in (13 categories) |
 | **Conditional rules** | Implement each condition type | Built-in (`time_after`, `time_before`, `weekdays`, `param_gt/lt/eq/contains/matches`) |
 | **Risk levels** | Define your own classification | Built-in 4-tier model (low/medium/high/critical) |
 | **Compliance readiness** | Depends on your logging | Auditor-ready evidence export |

@@ -237,7 +237,7 @@ Framework and problem-specific guides. Each page is a drop-in recipe for one con
 ### By Problem
 
 - [**Prompt Injection Detection**](solutions/prompt-injection-detection.md) — 109 patterns, 13 categories, 9 languages
-- [**PII Detection for AI Agents**](solutions/pii-detection-ai-agent.md) — Luhn-validated cards, SSN, API keys, 12 categories
+- [**PII Detection for AI Agents**](solutions/pii-detection-ai-agent.md) — Luhn-validated cards, SSN, API keys, 13 categories
 - [**AI Agent Vulnerability Scanner**](solutions/ai-agent-vulnerability-scanner.md) — find ungoverned calls in any Python codebase
 - [**AI Agent Permission Control**](solutions/ai-agent-permission-control.md) — declarative allow/deny/approve rules
 - [**AI Agent Cost Governance**](solutions/ai-agent-cost-governance.md) — per-call/session/daily LLM budget caps

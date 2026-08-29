@@ -149,6 +149,11 @@ class TransformResult:
 
 _PIIPattern = tuple[str, re.Pattern[str], str, str]
 
+# Standalone passport shape: 1-2 letters + 7-8 digits, not embedded in a longer
+# alphanumeric run. Held at module level so detection can recognise a match of
+# this pattern by shape, independent of the keyword language.
+_STANDALONE_PASSPORT = re.compile(r"(?<![A-Za-z0-9])[A-Z]{1,2}[0-9]{7,8}(?![A-Za-z0-9])")
+
 
 def _build_patterns() -> list[_PIIPattern]:
     """Build and compile all PII detection patterns.
@@ -496,17 +501,41 @@ def _build_patterns() -> list[_PIIPattern]:
     )
 
     # -- 12. Passport numbers -------------------------------------------------
-    # Common formats: 1-2 letters followed by 6-9 digits.
-    # Korean passport: M or S followed by 8 digits.
+    # With an explicit keyword nearby, the number itself can be anything a
+    # passport authority issues: 1-2 letters + 6-9 digits (US, KR, most of the
+    # EU) or all digits (UK, which issues a bare 9-digit number). The letter
+    # prefix is optional here precisely so UK numbers are caught -- they cannot
+    # be recognised standalone, see _passport_context_ok below.
     patterns.append(
         (
             "passport",
             re.compile(
-                r"(?i)(?:passport\s*(?:no|number|#|num)?[\s:]*)"
-                r"[A-Z]{1,2}[0-9]{6,9}",
+                r"(?i)(?:passport|travel\s*document|여권(?:\s*번호)?|护照(?:号码?)?|パスポート)"
+                r"\s*(?:no\.?|number|num|#)?[\s:]*"
+                r"(?:[A-Z]{1,2}[0-9]{6,9}|[0-9]{8,9})",
             ),
             "critical",
             "Passport number (with keyword context)",
+        )
+    )
+
+    # Standalone passport numbers -- 1-2 letters followed by 7-8 digits. This
+    # shape covers US (1 letter + 8 digits) and Korean (M/S/R/D/O + 8 digits)
+    # passports, but it is also the shape of purchase orders, SKUs, error codes
+    # and build artifacts. Matches are filtered by _passport_context_ok, which
+    # rejects any hit introduced by a label that names something else.
+    #
+    # There is deliberately no standalone pattern for UK passports. A UK number
+    # is nine bare digits, which is indistinguishable from an order number, a
+    # transaction id or a phone number; measured against ordinary business text
+    # a bare \d{9} rule fired on 3 of 12 benign lines. UK numbers are detected
+    # by the keyword-context pattern above instead.
+    patterns.append(
+        (
+            "passport",
+            _STANDALONE_PASSPORT,
+            "high",
+            "Passport number (standalone format)",
         )
     )
 
@@ -552,6 +581,77 @@ ALL_CATEGORIES: list[str] = sorted(set(cat for cat, _, _, _ in _PII_PATTERNS))
 # ---------------------------------------------------------------------------
 # Luhn algorithm for credit card validation
 # ---------------------------------------------------------------------------
+
+
+# Labels that introduce an identifier shaped like a passport number but which is
+# not one. Checked against the text immediately preceding a standalone match.
+_PASSPORT_DISQUALIFIERS: frozenset[str] = frozenset(
+    {
+        "account",
+        "acct",
+        "artifact",
+        "batch",
+        "build",
+        "case",
+        "code",
+        "customer",
+        "employee",
+        "emp",
+        "error",
+        "invoice",
+        "inv",
+        "id",
+        "item",
+        "job",
+        "order",
+        "part",
+        "po",
+        "product",
+        "ref",
+        "reference",
+        "serial",
+        "sku",
+        "ticket",
+        "tracking",
+        "transaction",
+        "txn",
+    }
+)
+
+# How far back to look for a disqualifying label.
+_PASSPORT_LOOKBACK = 32
+
+_PASSPORT_WORD = re.compile(r"[A-Za-z]+")
+
+# A passport keyword anywhere in the lookback window outranks a disqualifier --
+# "send the invoice and your passport A12345678" is a passport number.
+_PASSPORT_KEYWORDS: frozenset[str] = frozenset({"passport", "travel", "document"})
+
+
+def _passport_context_ok(text: str, start: int) -> bool:
+    """Return ``True`` when a standalone passport match is not mislabelled.
+
+    ``[A-Z]{1,2}[0-9]{7,8}`` is the shape of a US or Korean passport number and
+    equally the shape of ``PO P12345678`` or ``SKU AB1234567``. Scan the words
+    immediately preceding the match: a passport keyword accepts it outright,
+    otherwise any word naming a different kind of identifier rejects it.
+
+    The label is not always adjacent -- "Employee ID E1234567" and "The build
+    artifact is A20260829" both put the telling word two or three tokens back --
+    so the whole window is examined, not just the nearest word.
+
+    Args:
+        text: The full (normalized) content being scanned.
+        start: Start offset of the candidate match.
+
+    Returns:
+        ``False`` when the match is introduced by a disqualifying label.
+    """
+    prefix = text[max(0, start - _PASSPORT_LOOKBACK) : start]
+    words = {w.lower() for w in _PASSPORT_WORD.findall(prefix)}
+    if words & _PASSPORT_KEYWORDS:
+        return True
+    return not (words & _PASSPORT_DISQUALIFIERS)
 
 
 def _luhn_check(number: str) -> bool:
@@ -721,6 +821,15 @@ class PIIGuardrail:
 
                 # Extra validation for IBANs: mod-97 check.
                 if cat == "iban" and not _iban_check(matched_text):
+                    continue
+
+                # Standalone passport numbers: reject hits introduced by a label
+                # that names a different kind of identifier (PO, SKU, ticket...).
+                if (
+                    cat == "passport"
+                    and _STANDALONE_PASSPORT.fullmatch(matched_text)
+                    and not _passport_context_ok(normalized, m.start())
+                ):
                     continue
 
                 masked = self._mask_text(matched_text, cat)

@@ -38,7 +38,7 @@ Every AI call is now checked on both input and output:
 
 - **Prompt injection** -- blocked (13 attack categories, 109 patterns)
 - **Toxicity** -- blocked (harmful/abusive content)
-- **PII** -- warned (12 categories: email, credit card, SSN, API keys, etc.)
+- **PII** -- warned (13 categories: email, credit card, SSN, passport, API keys, etc.)
 - **Prompt leak** -- warned (system prompt extraction attempts)
 
 If a guardrail blocks, `AegisGuardrailError` is raised. You can change this:

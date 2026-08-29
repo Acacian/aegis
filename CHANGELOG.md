@@ -13,6 +13,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `multi_language_injection` — ignore-previous, you-are-now, show-system-prompt,
   and new-instructions for each language. Injection coverage goes from 101 to 109
   patterns across 13 categories and 9 languages.
+- **Standalone passport-number detection** (#28). `passport` previously matched
+  only when the word "passport" sat next to the number. It now also detects the
+  bare `[A-Z]{1,2}[0-9]{7,8}` shape used by US and Korean passports, and the
+  keyword form recognises `여권`, `护照`, `パスポート` and "travel document" as
+  well as all-digit UK numbers. Standalone matches are filtered by a context
+  guard that rejects anything introduced by a label naming a different kind of
+  identifier — purchase order, SKU, ticket, employee ID, build artifact. There is
+  deliberately no bare nine-digit rule: a UK passport number is indistinguishable
+  from an order number or a phone number, and a `\d{9}` rule fired on 3 of 12
+  benign business lines under measurement. UK numbers need the keyword.
 
 ### Fixed
 
@@ -27,6 +37,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   including `playground/js/i18n.js`, which overrides the rendered HTML at runtime,
   so the page served the old figure regardless of the markup. All live claims now
   read 109 / 13 / 9. Historical CHANGELOG entries keep their original numbers.
+- **Stale PII category counts.** Thirteen live claims said "12 categories" while
+  `ALL_CATEGORIES` has held 13 since `passport` was added, and `vs-ms-agt.md`
+  still cited "800+ LoC" for a 1,078-line module. Corrected, including both the
+  English and Korean `guard.pii.catches` strings in `playground/js/i18n.js`.
 
 ## [1.0.0] — 2026-08-09
 

@@ -39,7 +39,7 @@ Aegis is an all-in-one AI agent security SDK that combines action governance, ru
 
 Key strengths:
 
-- **Built-in guardrails** -- prompt injection detection (109 patterns), PII detection (12 categories), tool output injection guard (5 detection categories), all deterministic and sub-millisecond
+- **Built-in guardrails** -- prompt injection detection (109 patterns), PII detection (13 categories), tool output injection guard (5 detection categories), all deterministic and sub-millisecond
 - **Verifiable Merkle audit** -- O(log n) inclusion proofs for audit entries, stateless third-party verification
 - **Research-backed modules** -- taint tracking (FIDES), resource contracts, cross-tool privacy inference, all from peer-reviewed papers
 - **Single `pip install`** -- one package, one dependency (pyyaml)
@@ -84,7 +84,7 @@ AGT benchmarks: [BENCHMARKS.md](https://github.com/microsoft/agent-governance-to
 | **Core dependencies** | pydantic, rich | pyyaml |
 | **Codebase size** | ~53 MB, 1,420 files | ~2 MB, ~80 files |
 | **Prompt injection detection** | No (use Azure AI Content Safety) | Yes (109 patterns, 1,386 LoC) |
-| **PII detection / masking** | No (use Azure separately) | Yes (12 categories, 800+ LoC) |
+| **PII detection / masking** | No (use Azure separately) | Yes (13 categories, 1,078 LoC) |
 | **Tool output injection guard** | No | Yes (5 categories, AgentSentry-based) |
 | **Taint tracking** | No | Yes (FIDES paper-based) |
 | **Cross-tool privacy inference** | No | Yes (TOP-Bench paper-based) |

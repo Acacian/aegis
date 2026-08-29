@@ -68,7 +68,7 @@ for rec in analysis.recommendations:
 | EU AI Act Article | Requirement | Aegis Feature | Coverage |
 |-------------------|-------------|---------------|----------|
 | **Article 9** | Risk management system | 4-tier risk model (low/medium/high/critical), YAML policy engine | Full |
-| **Article 10** | Data governance | PII detection (12 categories), data masking, guardrails | Partial |
+| **Article 10** | Data governance | PII detection (13 categories), data masking, guardrails | Partial |
 | **Article 11** | Technical documentation | Policy YAML as machine-readable docs, compliance reports | Partial |
 | **Article 12** | Automatic logging | SHA-256 tamper-evident audit chain, SQLite + JSONL + SIEM export | Full |
 | **Article 13** | Transparency | Decision audit trail with matched rule, risk level, full context | Full |

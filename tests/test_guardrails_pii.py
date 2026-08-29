@@ -445,6 +445,118 @@ class TestPIIIBAN:
         assert result.detected
 
 
+class TestPIIPassport:
+    """Passport detection tests — issue #28."""
+
+    @pytest.mark.parametrize(
+        "text",
+        [
+            "Passport A12345678 issued in 2024.",
+            "My passport number is M12345678.",
+            "Passport no. 987654321",
+            "Passport: 123456789 (United Kingdom)",
+            "여권번호 M12345678 입니다.",
+            "护照号码 E12345678",
+            "パスポート TK1234567",
+            "Travel document AB1234567 attached.",
+        ],
+        ids=[
+            "us_with_keyword",
+            "kr_with_keyword",
+            "uk_passport_no",
+            "uk_bare_digits_with_keyword",
+            "korean_keyword",
+            "chinese_keyword",
+            "japanese_keyword",
+            "travel_document",
+        ],
+    )
+    def test_detects_passport_with_keyword(self, text):
+        g = PIIGuardrail(categories=["passport"])
+        result = g.check(text)
+        assert result.detected
+        assert "passport" in result.categories_found
+
+    @pytest.mark.parametrize(
+        "text",
+        [
+            "Please verify A12345678 before boarding.",
+            "Traveller M12345678 checked in.",
+            "Documents for AB1234567 are ready.",
+        ],
+        ids=["us_standalone", "kr_standalone", "two_letter_standalone"],
+    )
+    def test_detects_standalone_passport(self, text):
+        g = PIIGuardrail(categories=["passport"])
+        result = g.check(text)
+        assert result.detected
+
+    @pytest.mark.parametrize(
+        "text",
+        [
+            "Order 123456789 shipped yesterday.",
+            "Transaction id 987654321 completed.",
+            "The build artifact is A20260829 from the nightly job.",
+            "Invoice INV2026001 and PO P12345678 are attached.",
+            "Error code E12345678 was returned by the gateway.",
+            "Tracking number 1Z999AA10123456784.",
+            "Product SKU AB1234567 is out of stock.",
+            "Employee ID E1234567 requested leave.",
+            "The population reached 123456789 last year.",
+            "Ticket T1234567 was closed by support.",
+            "Serial number XY9876543 on the label.",
+            "Call us at 415 555 0132 or 4155550132.",
+        ],
+        ids=[
+            "order_number",
+            "transaction_id",
+            "build_artifact",
+            "purchase_order",
+            "error_code",
+            "tracking_number",
+            "sku",
+            "employee_id",
+            "population_figure",
+            "ticket_id",
+            "serial_number",
+            "phone_number",
+        ],
+    )
+    def test_no_false_positive_on_other_identifiers(self, text):
+        """The standalone shape is also every other business identifier.
+
+        ``[A-Z]{1,2}[0-9]{7,8}`` matches purchase orders, SKUs, error codes and
+        build artifacts. A label naming one of those in the preceding window
+        disqualifies the match.
+        """
+        g = PIIGuardrail(categories=["passport"])
+        result = g.check(text)
+        assert not result.detected, f"False positive on: {text!r}"
+
+    def test_passport_keyword_outranks_disqualifier(self):
+        """A passport keyword in the window wins over a disqualifying label."""
+        g = PIIGuardrail(categories=["passport"])
+        result = g.check("Please send the invoice and your passport A12345678")
+        assert result.detected
+
+    def test_no_bare_nine_digit_rule(self):
+        """UK numbers are keyword-only by design.
+
+        A UK passport number is nine bare digits, indistinguishable from an
+        order number or a phone number. Detecting it standalone would fire on
+        ordinary business text, so it is caught by keyword context instead.
+        """
+        g = PIIGuardrail(categories=["passport"])
+        assert not g.check("Reference 123456789 for your records.").detected
+        assert g.check("Passport 123456789").detected
+
+    def test_passport_masks_digits_and_keeps_prefix(self):
+        g = PIIGuardrail(categories=["passport"], action="mask")
+        result = g.check_and_transform("Passport A12345678 issued in 2024.")
+        assert "A12345678" not in result.content
+        assert "A********" in result.content
+
+
 class TestPIIMisc:
     def test_repr(self):
         g = PIIGuardrail()

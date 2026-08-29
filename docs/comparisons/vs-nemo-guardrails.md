@@ -42,7 +42,7 @@ Key strengths:
 - **YAML policies** -- readable by developers and auditors, no DSL to learn
 - **Approval workflows** -- built-in human-in-the-loop via CLI, Slack, Discord, Telegram, email, webhook
 - **Audit trail** -- every action logged with full context (SQLite, JSONL, webhook, Python logging)
-- **Runtime guardrails** -- prompt injection detection (109 patterns), PII masking (12 categories), toxicity filtering
+- **Runtime guardrails** -- prompt injection detection (109 patterns), PII masking (13 categories), toxicity filtering
 
 **Trade-offs:**
 

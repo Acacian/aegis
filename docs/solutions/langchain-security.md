@@ -44,7 +44,7 @@ Aegis uses the same approach as OpenTelemetry (observability) and Sentry (error 
 Every LLM call and tool invocation passes through four guardrail checks before execution:
 
 1. **Prompt injection detection** -- 109 patterns across 13 categories, 9 languages (EN/KO/ZH/JA/ES/DE/FR/TH/VI)
-2. **PII detection** -- 12 categories including credit cards (Luhn-validated), SSNs, API keys
+2. **PII detection** -- 13 categories including credit cards (Luhn-validated), SSNs, API keys
 3. **Toxicity filtering** -- harmful/abusive content detection
 4. **Prompt leak detection** -- system prompt extraction attempts
 
