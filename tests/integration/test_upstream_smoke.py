@@ -73,8 +73,10 @@ def test_dspy_blocks_injection():
     dspy = pytest.importorskip("dspy")
 
     lm = dspy.LM("openai/gpt-4o-mini", api_key="sk-test")
+    # lm(...) is the public entry point on every DSPy version: it reaches
+    # LM.forward before 3.5 and LM.__call__'s own execution path from 3.5 on.
     with pytest.raises(AegisGuardrailError):
-        lm.forward(prompt=PAYLOAD)
+        lm(PAYLOAD)
 
 
 def test_litellm_blocks_injection():
