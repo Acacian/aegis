@@ -11,7 +11,7 @@ from aegis.server.app import create_app
 def async_client():
     """Return an AsyncAegisClient connected to a test server."""
     try:
-        from starlette.testclient import TestClient
+        import starlette  # noqa: F401
     except ImportError:
         pytest.skip("starlette not installed")
     try:
@@ -20,8 +20,10 @@ def async_client():
         pytest.skip("httpx not installed")
 
     app = create_app(enable_dashboard=False)
-    test_client = TestClient(app)
-    transport = test_client._transport
+    # ASGITransport is httpx's async in-process transport. Wrapping TestClient's
+    # sync transport in MockTransport hands AsyncClient a sync byte stream,
+    # which current httpx rejects with a bare AssertionError.
+    transport = httpx.ASGITransport(app=app)
 
     from aegis.client import AsyncAegisClient
 
@@ -34,7 +36,7 @@ def async_client():
     client._heartbeat_interval = 300
     client._auto_register = False
     client._http = httpx.AsyncClient(
-        transport=httpx.MockTransport(transport.handle_request),
+        transport=transport,
         base_url="http://testserver",
         timeout=10.0,
     )
