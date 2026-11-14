@@ -215,7 +215,7 @@ aegis test new.yaml tests.yaml --regression old.yaml   # 회귀 검사
 또는 PR 시점에 보호되지 않은 호출을 차단:
 
 ```yaml
-- uses: Acacian/aegis@v1.0.0
+- uses: Acacian/aegis@v1.1.0
   with:
     command: scan
     fail-on-ungoverned: true

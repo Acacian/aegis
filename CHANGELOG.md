@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] — 2026-11-14
+
+### Security
+
+- **DSPy LM calls went ungoverned on DSPy 3.4 and 3.5.** The DSPy adapter
+  wrapped only `LM.forward` / `LM.aforward`. DSPy 3.4 moved `lm(...)` and
+  `lm.acall(...)` — the path every DSPy adapter and module uses — onto
+  `dspy.clients.execution`, so those calls no longer passed through `forward` and
+  were never checked; only a direct `lm.forward(...)` was. DSPy 3.5 then removed
+  `forward` altogether, so `patch_dspy()` raised `AttributeError` on its first
+  line, `auto_instrument()` logged a warning and moved on, and DSPy was left with
+  no guardrails at all — `Module.__call__` included, since it is patched after
+  the LM. The adapter now wraps every LM entry point the installed DSPy defines
+  (`__call__`, `acall`, `forward`, `aforward`) and reads the 3.5 request shapes
+  (lm15 `Request`, adapter `Prompt`, `Response`). A context variable marks an LM
+  call in progress, so where one entry point delegates to another (DSPy ≤ 3.3)
+  only the outermost runs the guardrails. The upstream smoke test calls `lm(...)`
+  instead of `lm.forward(...)` and passes against DSPy 3.3.1, 3.4.1 and 3.5.0.
+
 ### Added
 
 - **Thai and Vietnamese prompt-injection patterns** (#29). Eight new entries in

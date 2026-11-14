@@ -222,7 +222,7 @@ aegis test new.yaml tests.yaml --regression old.yaml   # Regression check
 Or block ungoverned calls at PR time:
 
 ```yaml
-- uses: Acacian/aegis@v1.0.0
+- uses: Acacian/aegis@v1.1.0
   with:
     command: scan
     fail-on-ungoverned: true
