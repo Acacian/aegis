@@ -83,7 +83,7 @@ dev = [
     # upper bound: an unpinned `mypy>=1.10` resolved to 2.x in CI while the
     # local venv sat on 1.19, and main went red on a commit that touched
     # neither the reported file nor anything near it. Bump these deliberately.
-    "ruff>=0.16.5,<0.17",
+    "ruff>=0.16.5,<0.18",
     "mypy>=2.3,<3",
     "types-PyYAML>=6.0",
     "playwright>=1.40",
